@@ -193,13 +193,23 @@ tr:hover .acts{opacity:1;}
 
 .fg{margin-bottom:13px;}
 .fg label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);letter-spacing:.04em;margin-bottom:5px;}
-.fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],.fg select,.fg textarea{
-  width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
-  padding:8px 11px;font-size:14px;font-family:var(--zh);color:var(--text-primary);
-  outline:none;transition:border-color .15s;resize:vertical;
+.fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],.fg input[type=url],.fg input[type=password],.fg select,.fg textarea{
+  -webkit-appearance:none;-moz-appearance:none;appearance:none;
+  width:100%;height:40px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
+  padding:0 11px;font-size:14px;font-family:var(--zh);color:var(--text-primary);
+  outline:none;transition:border-color .15s;
+  line-height:normal;-webkit-tap-highlight-color:transparent;
 }
+.fg textarea{height:auto;min-height:80px;padding:9px 11px;resize:vertical;line-height:1.5;}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent-mid);background:var(--surface);}
 .fg input::placeholder,.fg textarea::placeholder{color:var(--text-muted);}
+/* select 关掉默认外观后,补一个墨绿 SVG 下拉箭头 */
+.fg select{padding-right:34px;cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='none' stroke='%232B4D3F' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;}
+/* iOS 日期输入框:文字垂直居中且靠左 */
+.fg input[type=date]{min-height:40px;line-height:1.4;}
+.fg input[type=date]::-webkit-date-and-time-value{text-align:left;height:38px;line-height:38px;}
 .frow2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
 
 /* star picker */
@@ -219,8 +229,8 @@ tr:hover .acts{opacity:1;}
 .tiwrap:focus-within{border-color:var(--accent-mid);background:var(--surface);}
 .tchip{display:inline-flex;align-items:center;gap:3px;background:var(--accent-light);color:var(--accent);border-radius:4px;padding:2px 7px;font-size:12px;font-weight:600;}
 .tchip button{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:13px;padding:0;line-height:1;}
-.tinput{border:none;outline:none;background:none;font-size:13px;font-family:var(--zh);color:var(--text-primary);flex:1;min-width:70px;padding:2px 3px;}
-.tadd-btn{background:var(--accent-light);color:var(--accent);border:none;border-radius:6px;width:28px;height:26px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-weight:700;font-family:var(--en);}
+.tinput{-webkit-appearance:none;appearance:none;border:none;outline:none;background:none;font-size:13px;font-family:var(--zh);color:var(--text-primary);flex:1;min-width:70px;padding:2px 3px;height:28px;}
+.tadd-btn{background:var(--accent-light);color:var(--accent);border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-weight:700;font-family:var(--en);}
 .tadd-btn:hover{background:var(--accent);color:#fff;}
 .tadd-btn:active{transform:scale(.95);}
 /* 常用标签区 */
@@ -346,14 +356,14 @@ tr:hover .acts{opacity:1;}
     border-radius:var(--rlg);box-shadow:var(--shadow);
     padding:12px 14px;margin-bottom:10px;
     display:grid;
-    grid-template-columns:46px 1fr auto;
+    /* 分类 + 标签同一行: 用 4 列 grid, 分类与标签都落在中间, 评分/状态在右 */
+    grid-template-columns:46px auto 1fr auto;
     grid-template-areas:
-      "cover name   status"
-      "cover cat    score"
-      "note  note   note"
-      "tags  tags   tags"
-      "acts  acts   acts";
-    gap:6px 12px;align-items:center;
+      "cover name name    status"
+      "cover cat  tags    score"
+      "note  note note    note"
+      "acts  acts acts    acts";
+    gap:6px 10px;align-items:center;
   }
   tbody tr:hover{background:var(--surface);}
   tbody tr td{padding:0;border:none;}
@@ -362,13 +372,16 @@ tr:hover .acts{opacity:1;}
   tbody tr td.c-cover-td{grid-area:cover;padding:0;}
   tbody tr td:nth-child(2){grid-area:name;}      /* 名称+作者 */
   tbody tr td:nth-child(3){grid-area:note;}      /* 备注 */
-  tbody tr td:nth-child(4){grid-area:cat;}       /* 分类 */
-  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:3px;}/* 标签 */
-  tbody tr td:nth-child(6){grid-area:score;justify-self:end;}/* 评分 */
+  tbody tr td:nth-child(4){grid-area:cat;align-self:center;}     /* 分类胶囊 */
+  /* 标签紧跟在分类后面,同一行,横排可换行 */
+  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:4px;align-items:center;align-self:center;justify-self:start;min-width:0;}
+  tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;}/* 评分 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
   tbody tr td:nth-child(8){display:none;}        /* 观看时间 隐藏 */
   tbody tr td:nth-child(9){grid-area:status;justify-self:end;}/* 状态 */
   tbody tr td:nth-child(10){grid-area:acts;justify-self:end;}/* 操作 */
+  /* 分类或标签为空时该格不占空间(避免出现幽灵空隙) */
+  tbody tr td:nth-child(4):empty,tbody tr td:nth-child(5):empty{display:none;}
 
   .cover{width:46px;height:62px;border-radius:6px;font-size:20px;}
   .cname{font-size:15px;font-weight:700;}
@@ -391,7 +404,16 @@ tr:hover .acts{opacity:1;}
   }
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
-  .fg select,.fg textarea{font-size:16px;padding:10px 12px;} /* 16px 防止 iOS 自动放大 */
+  .fg input[type=url],.fg input[type=password],
+  .fg select,.fg textarea{font-size:16px;height:44px;padding:0 12px;} /* 16px 防 iOS 自动放大, 44px 是 iOS 推荐触控高度 */
+  .fg textarea{height:auto;min-height:88px;padding:10px 12px;}
+  .fg input[type=date]{min-height:44px;}
+  .fg input[type=date]::-webkit-date-and-time-value{height:42px;line-height:42px;}
+  .fg select{padding-right:36px;background-position:right 14px center;}
+  /* 标签输入区: 16px 防 iOS 放大, 让外框看起来和其他输入框等高 */
+  .tiwrap{padding:6px 8px;min-height:44px;}
+  .tinput{font-size:16px;height:30px;}
+  .tadd-btn{width:32px;height:32px;font-size:20px;}
   .sstar{font-size:26px;}
   .btn{padding:10px 18px;font-size:14px;}
   .mftr{flex-wrap:wrap;}
