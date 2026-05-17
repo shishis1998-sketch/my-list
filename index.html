@@ -161,6 +161,7 @@ td{padding:9px 12px;vertical-align:top;}
 td.c-cover-td{padding:10px 4px 10px 12px;vertical-align:middle;}
 
 .cname{font-weight:600;font-size:14px;color:var(--text-primary);line-height:1.3;}
+.cyear{font-weight:500;color:var(--text-muted);font-family:var(--en);font-size:13px;margin-left:2px;}
 .csub{font-size:11px;color:var(--text-muted);margin-top:2px;}
 .cnote{font-size:12px;color:var(--text-secondary);display:block;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5;}
 
@@ -219,6 +220,21 @@ tr:hover .acts{opacity:1;}
 .tchip{display:inline-flex;align-items:center;gap:3px;background:var(--accent-light);color:var(--accent);border-radius:4px;padding:2px 7px;font-size:12px;font-weight:600;}
 .tchip button{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:13px;padding:0;line-height:1;}
 .tinput{border:none;outline:none;background:none;font-size:13px;font-family:var(--zh);color:var(--text-primary);flex:1;min-width:70px;padding:2px 3px;}
+.tadd-btn{background:var(--accent-light);color:var(--accent);border:none;border-radius:6px;width:28px;height:26px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-weight:700;font-family:var(--en);}
+.tadd-btn:hover{background:var(--accent);color:#fff;}
+.tadd-btn:active{transform:scale(.95);}
+/* 常用标签区 */
+.tsugg-wrap{margin-top:8px;}
+.tsugg-lbl{font-size:11px;color:var(--text-muted);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.tsugg-lbl::before{content:'';display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--text-muted);}
+.tsugg-list{display:flex;flex-wrap:wrap;gap:5px;}
+.tsugg{display:inline-flex;align-items:center;gap:3px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);border-radius:4px;padding:3px 9px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--zh);}
+.tsugg::before{content:'+';color:var(--text-muted);font-weight:700;margin-right:1px;}
+.tsugg:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent-light);}
+.tsugg:hover::before{color:var(--accent-mid);}
+.tsugg:active{transform:scale(.95);}
+.tsugg-more{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:11px;font-family:var(--zh);font-weight:600;padding:3px 6px;}
+.tsugg-more:hover{text-decoration:underline;}
 
 .mftr{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border-soft);}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;font-family:var(--zh);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
@@ -232,9 +248,17 @@ tr:hover .acts{opacity:1;}
 /* cat manager */
 .cml{display:flex;flex-direction:column;gap:6px;margin-bottom:13px;}
 .cmi{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
+.cm-emoji-btn{width:32px;height:32px;font-size:20px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;padding:0;}
+.cm-emoji-btn:hover{border-color:var(--accent-mid);background:var(--accent-light);}
 .cminput{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:var(--zh);color:var(--text-primary);padding:0;}
 .cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:3px;border-radius:4px;display:flex;transition:all .1s;}
 .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
+/* Emoji 选择面板 */
+.emoji-panel{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);box-shadow:0 4px 20px rgba(0,0,0,.1);padding:10px;display:none;z-index:120;width:280px;}
+.emoji-panel.open{display:block;}
+.emoji-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.emoji-cell{width:34px;height:34px;font-size:20px;background:none;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .1s;padding:0;}
+.emoji-cell:hover{background:var(--accent-light);}
 .addcatrow{display:flex;gap:8px;align-items:center;}
 
 /* confirm */
@@ -644,10 +668,15 @@ tr:hover .acts{opacity:1;}
       <input type="text" id="f-cover" placeholder="https://...">
     </div>
     <div class="fg">
-      <label>标签（回车或逗号添加）</label>
-      <div class="tiwrap" onclick="document.getElementById('tinput').focus()">
+      <label>标签（回车、逗号或 + 添加）</label>
+      <div class="tiwrap" onclick="if(event.target===this)document.getElementById('tinput').focus()">
         <div id="tchips" style="display:contents"></div>
-        <input type="text" class="tinput" id="tinput" placeholder="输入后按回车...">
+        <input type="text" class="tinput" id="tinput" placeholder="输入后按回车或点 +">
+        <button type="button" class="tadd-btn" id="taddBtn" title="添加标签" onclick="addTagFromInput()">+</button>
+      </div>
+      <div class="tsugg-wrap" id="tsuggWrap" style="display:none">
+        <div class="tsugg-lbl"><span id="tsuggCatLbl">该分类</span>常用标签</div>
+        <div class="tsugg-list" id="tsuggList"></div>
       </div>
     </div>
     <div class="fg">
@@ -663,12 +692,12 @@ tr:hover .acts{opacity:1;}
 
 <!-- ===== CAT MANAGER ===== -->
 <div class="moverlay" id="catmodal">
-  <div class="mbox" style="max-width:400px" onclick="event.stopPropagation()">
+  <div class="mbox" style="max-width:400px;position:relative" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">管理分类</div>
       <button class="mclose" onclick="closeCatMgr()">✕</button>
     </div>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">修改名称、颜色或删除分类。删除后的记录自动归入第一个分类。</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">点击 emoji 修改图标，修改名称、颜色或删除分类。删除后的记录自动归入第一个分类。</p>
     <div class="cml" id="cml"></div>
     <div class="addcatrow">
       <input type="text" id="newcatname" placeholder="新分类名称" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:14px;font-family:var(--zh);outline:none;">
@@ -678,6 +707,10 @@ tr:hover .acts{opacity:1;}
     <div class="mftr">
       <button class="btn btn-g" onclick="closeCatMgr()">取消</button>
       <button class="btn btn-p" onclick="saveCats()">保存</button>
+    </div>
+    <!-- Emoji 选择面板 -->
+    <div class="emoji-panel" id="emojiPanel">
+      <div class="emoji-grid" id="emojiGrid"></div>
     </div>
   </div>
 </div>
@@ -800,6 +833,19 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function h2r(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function getCat(id){return cats.find(c=>c.id===id)||{name:id,color:'#888',emoji:'📌'};}
+// 分类名包含「电影」「剧」「书」→ 标题加《》
+function needsBrackets(catName){
+  if(!catName)return false;
+  return /电影|剧|书/.test(catName);
+}
+// 给名称包装书名号（按分类判断）+ 拼年份
+function fmtTitle(item){
+  const cat=getCat(item.type);
+  const nm=esc(item.name||'');
+  const wrapped=needsBrackets(cat.name)?`《${nm}》`:nm;
+  const yr=item.year?esc(item.year):'—';
+  return `${wrapped}<span class="cyear">（${yr}）</span>`;
+}
 
 function boot(){
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
@@ -1070,7 +1116,7 @@ function render(){
     return `<tr>
       <td class="c-cover-td">${coverH}</td>
       <td>
-        <div class="cname">${esc(item.name)}</div>
+        <div class="cname">${fmtTitle(item)}</div>
         ${item.creator?`<div class="csub">${esc(item.creator)}</div>`:''}
       </td>
       <td><div class="cnote">${item.note?`💬 ${esc(item.note)}`:'<span style="color:var(--text-muted)">—</span>'}</div></td>
@@ -1143,7 +1189,7 @@ function setScore(v,el){
 
 // ── Modal ─────────────────────────────────────────────────────────
 function openAdd(){
-  editId=null; curTags=[];
+  editId=null; curTags=[]; tsuggExpanded=false;
   document.getElementById('mtitle').textContent='添加记录';
   document.getElementById('f-name').value='';
   renderTypeSelect();
@@ -1162,7 +1208,7 @@ function openAdd(){
 }
 function openEdit(id){
   const item=data.find(d=>d.id===id); if(!item)return;
-  editId=id; curTags=[...(item.tags||[])];
+  editId=id; curTags=[...(item.tags||[])]; tsuggExpanded=false;
   document.getElementById('mtitle').textContent='编辑记录';
   renderTypeSelect();
   document.getElementById('f-name').value=item.name;
@@ -1201,20 +1247,63 @@ function saveRec(){
 }
 
 // ── Tags ──────────────────────────────────────────────────────────
+let tsuggExpanded=false;
 function renderChips(){
   document.getElementById('tchips').innerHTML=curTags.map((t,i)=>
     `<span class="tchip">${esc(t)}<button onclick="rmTag(${i})" type="button">×</button></span>`
   ).join('');
+  renderTsugg();
 }
 function rmTag(i){curTags.splice(i,1);renderChips();}
+function addTagFromInput(){
+  const inp=document.getElementById('tinput');
+  const v=inp.value.trim().replace(/,$/,'');
+  if(v&&!curTags.includes(v)){curTags.push(v);renderChips();}
+  inp.value='';
+  inp.focus();
+}
+function pickSuggTag(t){
+  if(!curTags.includes(t)){curTags.push(t);renderChips();}
+}
+// 统计当前编辑分类下的常用标签（按频率排）
+function getSuggTags(){
+  const typeEl=document.getElementById('f-type');
+  const curType=typeEl?typeEl.value:'';
+  if(!curType)return[];
+  const cnt={};
+  data.forEach(d=>{
+    if(d.type!==curType)return;
+    if(editId&&d.id===editId)return; // 当前编辑的不计入
+    (d.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;});
+  });
+  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+}
+function renderTsugg(){
+  const wrap=document.getElementById('tsuggWrap');
+  const all=getSuggTags();
+  const avail=all.filter(t=>!curTags.includes(t));
+  if(!avail.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const cat=getCat(document.getElementById('f-type').value);
+  document.getElementById('tsuggCatLbl').textContent=cat.name||'该分类';
+  const LIMIT=6;
+  const shown=tsuggExpanded?avail:avail.slice(0,LIMIT);
+  let html=shown.map(t=>`<button type="button" class="tsugg" onclick="pickSuggTag('${esc(t).replace(/'/g,"\\'")}')">${esc(t)}</button>`).join('');
+  if(!tsuggExpanded&&avail.length>LIMIT){
+    html+=`<button type="button" class="tsugg-more" onclick="tsuggExpanded=true;renderTsugg();">展开（共 ${avail.length} 个）</button>`;
+  }else if(tsuggExpanded&&avail.length>LIMIT){
+    html+=`<button type="button" class="tsugg-more" onclick="tsuggExpanded=false;renderTsugg();">收起</button>`;
+  }
+  document.getElementById('tsuggList').innerHTML=html;
+}
 document.getElementById('tinput').addEventListener('keydown',function(e){
   if(e.key==='Enter'||e.key===','){
     e.preventDefault();
-    const v=this.value.trim().replace(/,$/,'');
-    if(v&&!curTags.includes(v)){curTags.push(v);renderChips();}
-    this.value='';
+    addTagFromInput();
   } else if(e.key==='Backspace'&&!this.value&&curTags.length){curTags.pop();renderChips();}
 });
+// 切换分类时刷新常用标签
+document.getElementById('f-type').addEventListener('change',()=>{tsuggExpanded=false;renderTsugg();});
 
 // ── Delete ────────────────────────────────────────────────────────
 function askDel(id){
@@ -1237,12 +1326,45 @@ function closeCatMgr(){document.getElementById('catmodal').classList.remove('ope
 function renderCml(){
   document.getElementById('cml').innerHTML=editCats.map((c,i)=>`
     <div class="cmi">
+      <button type="button" class="cm-emoji-btn" onclick="openEmojiPanel(this,${i})" title="点击修改图标">${c.emoji||'📌'}</button>
       <input type="color" value="${c.color}" onchange="editCats[${i}].color=this.value" style="width:28px;height:28px;padding:1px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--bg);flex-shrink:0">
       <input class="cminput" type="text" value="${esc(c.name)}" oninput="editCats[${i}].name=this.value" placeholder="分类名称">
       <button class="cmdel" onclick="rmCat(${i})">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
       </button>
     </div>`).join('');
+}
+// 可选 emoji 列表（低饱和、影视书音乐综艺等场景）
+const EMOJI_POOL=['🎬','📺','📚','🎵','🎭','🎮','📰','🎨','🍿','📱','🎤','🎧','📖','✍️','🖼️','🏛️','⚽','🏀','🎯','🎲','🍳','✈️','📷','💡','🌟','🔖','📌','📝','🎪','🎠','🏆','💼'];
+function openEmojiPanel(btn,idx){
+  const panel=document.getElementById('emojiPanel');
+  const grid=document.getElementById('emojiGrid');
+  grid.innerHTML=EMOJI_POOL.map(e=>`<button type="button" class="emoji-cell" onclick="pickEmoji(${idx},'${e}')">${e}</button>`).join('');
+  const box=btn.closest('.mbox');
+  const rect=btn.getBoundingClientRect();
+  const boxRect=box.getBoundingClientRect();
+  let left=rect.left-boxRect.left;
+  let top=rect.bottom-boxRect.top+6;
+  // 防止溢出右边
+  if(left+280>boxRect.width-10)left=boxRect.width-290;
+  if(left<10)left=10;
+  panel.style.left=left+'px';
+  panel.style.top=top+'px';
+  panel.classList.add('open');
+  // 点别处关闭
+  setTimeout(()=>document.addEventListener('click',closeEmojiOnOutside),0);
+}
+function closeEmojiOnOutside(e){
+  const panel=document.getElementById('emojiPanel');
+  if(!panel.contains(e.target)&&!e.target.classList.contains('cm-emoji-btn')){
+    panel.classList.remove('open');
+    document.removeEventListener('click',closeEmojiOnOutside);
+  }
+}
+function pickEmoji(idx,emoji){
+  editCats[idx].emoji=emoji;
+  renderCml();
+  document.getElementById('emojiPanel').classList.remove('open');
 }
 function rmCat(i){editCats.splice(i,1);renderCml();}
 function addCat(){
