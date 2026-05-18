@@ -596,6 +596,12 @@ tr:hover .acts{opacity:1;}
   .note-title{font-size:15px;}
   .fg textarea.note-body{min-height:200px;font-size:16px;}
   .fmt-btn{height:34px;min-width:36px;font-size:14px;}
+  /* 备忘卡片字段行压缩（手机端）*/
+  .memo-field{padding:0 12px;min-height:36px;}
+  .memo-field-label{font-size:12px;}
+  .memo-field-value{font-size:13px;line-height:1.3;}
+  .memo-btn{width:24px;height:24px;}
+  .memo-btn svg{width:14px;height:14px;}
 }
 
 /* ── 备忘子分类专用样式（账号面板）─────────────────────────────── */
@@ -604,10 +610,12 @@ tr:hover .acts{opacity:1;}
 .memo-title{flex:1;font-size:15px;font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .memo-title.empty{color:var(--text-muted);font-weight:400;font-style:italic;}
 .memo-date{font-size:11px;color:var(--text-muted);flex-shrink:0;font-variant-numeric:tabular-nums;font-family:var(--en);}
-.memo-lock{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;}
+.memo-lock{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;cursor:pointer;background:none;border:none;padding:0;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:background .15s,transform .1s,opacity .15s;}
 .memo-lock.locked{color:var(--accent);background:var(--accent-light);}
 .memo-lock.unlocked{color:var(--text-muted);opacity:0.55;}
-.memo-lock svg{width:13px;height:13px;display:block;}
+.memo-lock:active{transform:scale(0.92);background:rgba(43,77,63,0.18);opacity:1;}
+@media (hover:hover){.memo-lock:hover{opacity:1;background:var(--accent-light);}}
+.memo-lock svg{width:13px;height:13px;display:block;pointer-events:none;}
 
 .memo-fields{background:var(--bg);border-radius:var(--r);padding:4px 0;margin-bottom:10px;}
 .memo-fields:empty{display:none;}
@@ -2160,7 +2168,7 @@ function renderMemoCard(n){
     : '';
   return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
-      <span class="memo-lock ${lockCls}" title="${lockTitle}">${lockIcon}</span>
+      <button class="memo-lock ${lockCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${lockTitle}" type="button">${lockIcon}</button>
       <div class="memo-title${titleCls}">${esc(title)}</div>
       <div class="memo-date">${fmtNoteDate(n.updatedAt)}</div>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">
@@ -2227,6 +2235,38 @@ function rmMemoCustomField(i){
 function toggleMemoLocal(){
   curMemoLocal=!curMemoLocal;
   document.getElementById('memoLocalToggle').classList.toggle('on',curMemoLocal);
+}
+
+// 卡片上的锁按钮：直切 localOnly + 立即同步
+async function toggleNoteLocal(id){
+  const n=notes.find(x=>x.id===id);
+  if(!n)return;
+  const wasLocal=!!n.localOnly;
+  // 先切状态、存本地、立即重绘
+  n.localOnly=!wasLocal;
+  n.updatedAt=new Date().toISOString();
+  localStorage.setItem(NSK,JSON.stringify(notes));
+  render();
+  // 未配置同步 → 纯本地模式，不用推
+  if(!getToken()){return;}
+  // 取消防抖中的待推送（避免被旧的覆盖）
+  clearTimeout(syncTimer);
+  // 🔓 → 🔒：必须等推送结果，失败要还原 + 提示
+  if(!wasLocal){
+    try{
+      await syncPush();
+      if(lastSyncErr){throw new Error(lastSyncErr);}
+    }catch(e){
+      // 还原
+      n.localOnly=false;
+      localStorage.setItem(NSK,JSON.stringify(notes));
+      render();
+      toast('⚠️ 云端删除失败，请检查网络');
+    }
+  }else{
+    // 🔒 → 🔓：触发普通推送（不等结果，失败由现有徽章提示）
+    scheduleSyncPush();
+  }
 }
 
 function renderNoteChips(){
