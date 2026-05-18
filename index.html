@@ -496,6 +496,107 @@ tr:hover .acts{opacity:1;}
   .content{padding:10px;}
   .ssort{font-size:13px;}
 }
+
+/* ===== NOTES (笔记功能) ===== */
+/* 侧边栏「笔记」入口的展开/收起 chevron */
+.nitem .chev{margin-left:6px;font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block;line-height:1;}
+.nitem.expanded .chev{transform:rotate(90deg);}
+.nitem.on .chev{color:var(--accent);}
+/* 笔记子分类容器（侧边栏） */
+.nsub{display:flex;flex-direction:column;gap:2px;padding-left:16px;margin-top:2px;overflow:hidden;max-height:0;transition:max-height .25s ease-out;}
+.nsub.open{max-height:400px;}
+.nsub .nitem{padding:6px 10px;font-size:12px;}
+.nsub .nitem .ncnt{font-size:10px;}
+
+/* 笔记顶部子分类胶囊条（替代 .frow，仅笔记模式显示） */
+.nfrow{
+  background:var(--surface);border-bottom:1px solid var(--border-soft);
+  padding:7px 22px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+}
+.nfrow .flbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-family:var(--en);flex-shrink:0;}
+/* nfchips 容器透明化,让胶囊直接参与父级 flex */
+.nfrow #nfchips{display:contents;}
+.nfrow .nfchip{
+  display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);
+  font-family:var(--zh);transition:all .12s;white-space:nowrap;flex-shrink:0;
+}
+.nfrow .nfchip:hover{border-color:var(--accent-mid);color:var(--accent);}
+.nfrow .nfchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.nfrow .nfchip-cnt{font-size:10px;opacity:.7;margin-left:4px;font-family:var(--en);}
+.nfrow .nfchip.on .nfchip-cnt{opacity:.85;}
+.nfrow .nfsep{width:1px;height:14px;background:var(--border);margin:0 3px;flex-shrink:0;}
+.nfrow .nfchip-dashed{border-style:dashed;color:var(--accent-mid);}
+.nfrow .nfchip-dashed:hover{border-style:solid;background:var(--accent-light);}
+
+/* 笔记卡片列表 */
+.note-list{display:flex;flex-direction:column;gap:10px;}
+.note-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
+  padding:14px 16px;cursor:pointer;box-shadow:var(--shadow);
+  transition:border-color .15s, background .15s;
+}
+.note-card:hover{border-color:var(--accent-mid);background:var(--surface);}
+.note-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+.note-title{flex:1;font-size:15px;font-weight:700;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;}
+.note-title.empty{color:var(--text-muted);font-weight:500;font-style:italic;}
+.note-date{font-size:11px;color:var(--text-muted);flex-shrink:0;font-family:var(--en);}
+.note-preview{font-size:13px;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px;}
+.note-preview.empty{color:var(--text-muted);font-style:italic;}
+.note-preview .pv-h{font-weight:700;color:var(--text-primary);}
+.note-preview .pv-b{font-weight:700;}
+.note-preview .pv-li::before{content:"• ";color:var(--accent-mid);}
+.note-foot{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.note-subcat{
+  font-size:11px;height:22px;padding:0 10px;line-height:1;
+  background:var(--accent-light);color:var(--accent);
+  border-radius:20px;display:inline-flex;align-items:center;font-weight:700;
+  border:1px solid transparent;box-sizing:border-box;
+}
+.note-act{
+  background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;
+  color:var(--text-muted);transition:all .1s;display:inline-flex;align-items:center;
+  margin-left:auto;
+}
+.note-act:hover{background:var(--danger-bg);color:var(--danger);}
+
+/* 格式工具栏（笔记编辑器） */
+.fmt-bar{display:flex;align-items:center;gap:5px;margin-bottom:6px;flex-wrap:wrap;}
+.fmt-btn{
+  height:30px;min-width:32px;padding:0 10px;line-height:1;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--text-primary);
+  font-size:13px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--zh);transition:all .12s;
+}
+.fmt-btn:hover{border-color:var(--accent-mid);color:var(--accent);background:var(--accent-light);}
+.fmt-hint{font-size:11px;color:var(--text-muted);margin-left:auto;}
+
+/* 笔记正文 textarea 加高 */
+.fg textarea.note-body{min-height:180px;font-family:var(--zh);line-height:1.65;}
+
+/* 笔记子分类管理弹窗里的列表（复用 .cml/.cmi 但去掉颜色和emoji） */
+.cmi-note{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
+.cmi-note .cminput{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:var(--zh);color:var(--text-primary);padding:0;}
+.cmi-note .cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:3px;border-radius:4px;display:flex;transition:all .1s;}
+.cmi-note .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
+
+/* 手机端笔记适配 */
+@media (max-width: 768px){
+  .nfrow{
+    padding:8px 14px;flex-wrap:nowrap;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  .nfrow::-webkit-scrollbar{display:none;}
+  .nfrow .nfchip{padding:6px 13px;font-size:13px;}
+  .nfrow .flbl{font-size:11px;}
+  .note-card{padding:12px 14px;}
+  .note-title{font-size:15px;}
+  .fg textarea.note-body{min-height:200px;font-size:16px;}
+  .fmt-btn{height:34px;min-width:36px;font-size:14px;}
+}
 </style>
 </head>
 <body>
@@ -522,6 +623,13 @@ tr:hover .acts{opacity:1;}
       <span class="ncnt" id="cnt-all">0</span>
     </button>
     <div id="cat-nav"></div>
+    <!-- 笔记入口（一直显示） -->
+    <button class="nitem" id="nav-notes" onclick="filterCat('notes:all')">
+      <span class="dot" style="background:var(--accent)"></span>笔记
+      <span class="ncnt" id="cnt-notes">0</span>
+      <span class="chev">›</span>
+    </button>
+    <div class="nsub" id="nsub"></div>
   </div>
   <div class="nsec">
     <div class="nlbl">视图</div>
@@ -579,7 +687,7 @@ tr:hover .acts{opacity:1;}
   </div>
 
   <!-- FILTER ROW -->
-  <div class="frow">
+  <div class="frow" id="frow">
     <span class="flbl">状态</span>
     <span class="fchip on" onclick="setStatus('all',this)">全部</span>
     <span class="fchip" onclick="setStatus('completed',this)">已完成</span>
@@ -595,6 +703,14 @@ tr:hover .acts{opacity:1;}
     <span class="fchip" onclick="setScore('12',this)">≤2/5</span>
   </div>
 
+  <!-- NOTES FILTER ROW (仅笔记模式显示) -->
+  <div class="nfrow" id="nfrow" style="display:none">
+    <span class="flbl">子分类</span>
+    <div id="nfchips"></div>
+    <div class="nfsep"></div>
+    <span class="nfchip nfchip-dashed" onclick="openNoteSubMgr()">＋ 管理子分类</span>
+  </div>
+
   <!-- CONTENT -->
   <div class="content">
     <div class="sbar" id="sbar"></div>
@@ -602,7 +718,7 @@ tr:hover .acts{opacity:1;}
       <div class="vtitle" id="vtitle">全部</div>
       <div class="vcnt" id="vcnt"></div>
     </div>
-    <div class="twrap">
+    <div class="twrap" id="twrap">
       <table id="tbl">
         <colgroup>
           <col class="c-cover"><col class="c-name"><col class="c-note"><col class="c-cat">
@@ -622,6 +738,13 @@ tr:hover .acts{opacity:1;}
         <h3>暂无记录</h3>
         <p>点击右上角「添加记录」开始收录</p>
       </div>
+    </div>
+    <!-- 笔记列表容器（仅笔记模式显示） -->
+    <div class="note-list" id="nlist" style="display:none"></div>
+    <div id="nempty" class="empty" style="display:none">
+      <div class="empty-ic">📓</div>
+      <h3>暂无笔记</h3>
+      <p>点击右上角「添加记录」开始记录想法</p>
     </div>
   </div>
 </div><!-- /main -->
@@ -820,6 +943,71 @@ tr:hover .acts{opacity:1;}
   </div>
 </div>
 
+<!-- ===== NOTE EDITOR MODAL ===== -->
+<div class="moverlay" id="noteModal">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mtitle" id="nm-title">新建笔记</div>
+      <button class="mclose" onclick="closeNoteModal()">✕</button>
+    </div>
+    <div class="fg">
+      <label>标题</label>
+      <input type="text" id="nf-title" placeholder="可留空">
+    </div>
+    <div class="fg">
+      <label>子分类</label>
+      <select id="nf-sub"></select>
+    </div>
+    <div class="fg">
+      <label>正文</label>
+      <div class="fmt-bar">
+        <button type="button" class="fmt-btn" onclick="noteFmt('h')" title="标题">H</button>
+        <button type="button" class="fmt-btn" onclick="noteFmt('b')" title="粗体"><b>B</b></button>
+        <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
+        <span class="fmt-hint">选中文字后点按钮加格式</span>
+      </div>
+      <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
+    </div>
+    <div class="fg">
+      <label>标签（回车、逗号或 + 添加）</label>
+      <div class="tiwrap" onclick="if(event.target===this)document.getElementById('ntinput').focus()">
+        <div id="ntchips" style="display:contents"></div>
+        <input type="text" class="tinput" id="ntinput" placeholder="输入后按回车或点 +">
+        <button type="button" class="tadd-btn" id="ntaddBtn" title="添加标签" onclick="addNoteTagFromInput()">+</button>
+      </div>
+      <div class="tsugg-wrap" id="ntsuggWrap" style="display:none">
+        <div class="tsugg-lbl">笔记常用标签</div>
+        <div class="tsugg-list" id="ntsuggList"></div>
+      </div>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-d" onclick="askDelNote()" id="nm-del-btn" style="display:none;margin-right:auto">删除</button>
+      <button class="btn btn-g" onclick="closeNoteModal()">取消</button>
+      <button class="btn btn-p" onclick="saveNote()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOTE SUBCATS MANAGER ===== -->
+<div class="moverlay" id="nsubModal">
+  <div class="mbox" style="max-width:400px" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mtitle">管理笔记子分类</div>
+      <button class="mclose" onclick="closeNoteSubMgr()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">修改名称或删除子分类。删除后的笔记自动归入第一个子分类。</p>
+    <div class="cml" id="nsub-list"></div>
+    <div class="addcatrow">
+      <input type="text" id="new-nsub-name" placeholder="新子分类名称" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:14px;font-family:var(--zh);outline:none;">
+      <button class="btn btn-g" onclick="addNoteSub()">+ 添加</button>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-g" onclick="closeNoteSubMgr()">取消</button>
+      <button class="btn btn-p" onclick="saveNoteSubs()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TOAST ===== -->
 <div class="toast" id="toast">
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -829,11 +1017,15 @@ tr:hover .acts{opacity:1;}
 <script>
 // ── Data ─────────────────────────────────────────────────────────
 const SK='my_list_v4', CK='my_list_cats_v3';
+const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
 const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
+let notes=[], noteSubs=[];
 let curCat='all', curSearch='', curSort='date-desc', curStatus='all', curScore='all';
+let curNoteSub='all'; // 笔记子分类筛选
 let editId=null, curTags=[], delId=null, editCats=[], starVal=0;
+let editNoteId=null, curNoteTags=[], editNoteSubs=[];
 let syncTimer=null, isSyncing=false, lastSyncErr=null;
 
 const DCATS=[
@@ -849,6 +1041,7 @@ const SMAP={
   want:{lbl:'待看/读',c:'#92400E',bg:'#FEF3C7'},
   dropped:{lbl:'放弃',c:'#6B7280',bg:'#F3F4F6'},
 };
+const DEFAULT_NOTE_SUBS=['灵感','备忘','读书笔记'];
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function h2r(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
@@ -872,6 +1065,9 @@ function boot(){
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
   try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
   if(!cats||!cats.length) cats=DCATS.map(c=>({...c}));
+  try{notes=JSON.parse(localStorage.getItem(NSK))||[];}catch{notes=[];}
+  try{const s=JSON.parse(localStorage.getItem(NSUBK));noteSubs=s||null;}catch{noteSubs=null;}
+  if(!noteSubs||!noteSubs.length) noteSubs=DEFAULT_NOTE_SUBS.slice();
   if(!data.length) seed();
   migrateWatchDate();
   // 启动后尝试从云端拉取最新数据(若已配置)
@@ -904,6 +1100,14 @@ function persistCats(){
   localStorage.setItem(CK,JSON.stringify(cats));
   scheduleSyncPush();
 }
+function persistNotes(){
+  localStorage.setItem(NSK,JSON.stringify(notes));
+  scheduleSyncPush();
+}
+function persistNoteSubs(){
+  localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
+  scheduleSyncPush();
+}
 
 // ── GitHub Gist Sync ─────────────────────────────────────────────
 function getToken(){return localStorage.getItem(TK_KEY)||'';}
@@ -931,7 +1135,8 @@ async function syncPush(){
     const payload={
       version:1,
       updatedAt:new Date().toISOString(),
-      data, categories:cats
+      data, categories:cats,
+      notes, noteSubs
     };
     const body={
       description:'My Media Tracker Data (auto-synced)',
@@ -982,14 +1187,19 @@ async function syncPull(silent){
     // 比较 updatedAt,如果云端较新就采用;首次拉取(本地无修改记录)直接采用
     data=remote.data;
     if(Array.isArray(remote.categories)&&remote.categories.length)cats=remote.categories;
+    // 笔记数据兼容:旧 Gist 没有 notes/noteSubs 字段时保持现状
+    if(Array.isArray(remote.notes)) notes=remote.notes;
+    if(Array.isArray(remote.noteSubs)&&remote.noteSubs.length) noteSubs=remote.noteSubs;
     // 拉取后也检查一次迁移(去掉标记重跑)
     localStorage.removeItem('my_list_migrated_watchdate_v1');
     migrateWatchDate();
     localStorage.setItem(SK,JSON.stringify(data));
     localStorage.setItem(CK,JSON.stringify(cats));
+    localStorage.setItem(NSK,JSON.stringify(notes));
+    localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
     isSyncing=false;updateSyncBadge();
     if(typeof render==='function'){renderTypeSelect();render();}
-    if(!silent)toast('✓ 已从云端同步 '+data.length+' 条');
+    if(!silent)toast('✓ 已从云端同步 '+data.length+' 条记录、'+notes.length+' 条笔记');
     return true;
   }catch(e){
     isSyncing=false;lastSyncErr=e.message||String(e);updateSyncBadge();
@@ -1108,6 +1318,26 @@ function renderSidebar(){
       <span class="dot" style="background:${c.color}"></span>${esc(c.name)}
       <span class="ncnt">${cnt[c.id]||0}</span>
     </button>`).join('');
+  // 笔记侧边栏
+  renderNotesSidebar();
+}
+
+function renderNotesSidebar(){
+  document.getElementById('cnt-notes').textContent=notes.length;
+  const subCnt={};
+  noteSubs.forEach(s=>subCnt[s]=0);
+  notes.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
+  const items=[`<button class="nitem ${curCat==='notes:all'?'on':''}" onclick="filterCat('notes:all')">
+      <span class="dot" style="background:var(--accent-mid)"></span>全部
+      <span class="ncnt">${notes.length}</span>
+    </button>`];
+  noteSubs.forEach(s=>{
+    items.push(`<button class="nitem ${curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
+      <span class="dot" style="background:var(--border)"></span>${esc(s)}
+      <span class="ncnt">${subCnt[s]||0}</span>
+    </button>`);
+  });
+  document.getElementById('nsub').innerHTML=items.join('');
 }
 
 function renderTypeSelect(){
@@ -1118,6 +1348,8 @@ function renderTypeSelect(){
 }
 
 function render(){
+  // 笔记模式分流
+  if(isNoteMode()){ renderNotes(); renderSidebar(); return; }
   const L=filtered();
   const tbody=document.getElementById('tbody');
   const empty=document.getElementById('empty');
@@ -1184,15 +1416,64 @@ function toggleSidebar(open){
   document.body.style.overflow=open?'hidden':'';
 }
 
+// 当前是否处于笔记模式
+function isNoteMode(){return typeof curCat==='string'&&curCat.indexOf('notes')===0;}
+
 // ── Filters ───────────────────────────────────────────────────────
 function filterCat(cat){
-  curCat=cat;render();
+  curCat=cat;
+  // 解析笔记模式的子分类
+  if(isNoteMode()){
+    const parts=cat.split(':');
+    curNoteSub=parts[1]||'all';
+  }
+  applyModeUI();
+  render();
   // 手机端点完分类自动关闭抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
 }
+
+// 切换主区域 UI（媒体模式 vs 笔记模式）
+function applyModeUI(){
+  const notes=isNoteMode();
+  document.getElementById('frow').style.display=notes?'none':'';
+  document.getElementById('nfrow').style.display=notes?'':'none';
+  document.getElementById('twrap').style.display=notes?'none':'';
+  document.getElementById('nlist').style.display=notes?'':'none';
+  // 添加按钮文字
+  const lbl=document.querySelector('.addbtn .lbl-text');
+  if(lbl) lbl.textContent=notes?'添加笔记':'添加记录';
+  // 排序下拉切换
+  const ssort=document.querySelector('.ssort');
+  if(notes){
+    // 切换成笔记的三种排序
+    if(!ssort.dataset.noteMode){
+      ssort.dataset.mediaHTML=ssort.innerHTML;
+      ssort.dataset.mediaVal=ssort.value;
+      ssort.innerHTML='<option value="n-updated">最近修改</option><option value="n-created">最新创建</option><option value="n-title">标题字母序</option>';
+      ssort.value='n-updated';
+      ssort.dataset.noteMode='1';
+      curSort='n-updated';
+    }
+  }else{
+    if(ssort.dataset.noteMode){
+      ssort.innerHTML=ssort.dataset.mediaHTML;
+      ssort.value=ssort.dataset.mediaVal||'date-desc';
+      curSort=ssort.value;
+      delete ssort.dataset.noteMode;
+    }
+  }
+  // 搜索 placeholder
+  const sinp=document.querySelector('.sbox input');
+  if(sinp) sinp.placeholder=notes?'搜索笔记标题、正文、标签...':'搜索名称、作者、标签、备注...';
+  // 侧边栏笔记入口展开/收起
+  const navN=document.getElementById('nav-notes');
+  const nsub=document.getElementById('nsub');
+  if(notes){navN.classList.add('expanded','on');nsub.classList.add('open');}
+  else{navN.classList.remove('expanded','on');nsub.classList.remove('open');}
+}
 function onSearch(v){curSearch=v;render();}
 function onSort(v){curSort=v;render();}
-
 function setStatus(v,el){
   curStatus=v;
   document.querySelectorAll('.frow .fchip').forEach(c=>{
@@ -1210,6 +1491,8 @@ function setScore(v,el){
 
 // ── Modal ─────────────────────────────────────────────────────────
 function openAdd(){
+  // 笔记模式分流
+  if(isNoteMode()){ openNoteNew(); return; }
   editId=null; curTags=[]; tsuggExpanded=false;
   document.getElementById('mtitle').textContent='添加记录';
   document.getElementById('f-name').value='';
@@ -1409,7 +1692,7 @@ function saveCats(){
 
 // ── Import / Export ───────────────────────────────────────────────
 function exportJSON(){
-  const b=new Blob([JSON.stringify({data,categories:cats},null,2)],{type:'application/json'});
+  const b=new Blob([JSON.stringify({data,categories:cats,notes,noteSubs},null,2)],{type:'application/json'});
   dl(b,'我的清单_'+today()+'.json'); toast('已导出 JSON');
 }
 function exportCSV(){
@@ -1428,14 +1711,23 @@ function importJSON(e){
   r.onload=ev=>{
     try{
       const p=JSON.parse(ev.target.result);
-      let imp,ic;
-      if(Array.isArray(p)){imp=p;}else{imp=p.data||[];ic=p.categories;}
+      let imp,ic,ino,insub;
+      if(Array.isArray(p)){imp=p;}else{imp=p.data||[];ic=p.categories;ino=p.notes;insub=p.noteSubs;}
       if(!Array.isArray(imp))throw 0;
       if(ic&&ic.length){cats=ic;persistCats();renderTypeSelect();}
+      // 笔记导入:存在则合并(按 id 去重)
+      let addedN=0;
+      if(Array.isArray(ino)){
+        const exN=new Set(notes.map(n=>n.id));
+        ino.forEach(n=>{if(!exN.has(n.id)){notes.push(n);addedN++;}});
+        persistNotes();
+      }
+      if(Array.isArray(insub)&&insub.length){noteSubs=insub;persistNoteSubs();}
       const ex=new Set(data.map(d=>d.id));let added=0;
       imp.forEach(item=>{if(!ex.has(item.id)){data.push(item);added++;}});
-      persist();render();toast(`导入完成，新增 ${added} 条`);
-    }catch{toast('导入失败：格式不正确');}
+      persist();render();
+      toast(`导入完成,记录 +${added} 条,笔记 +${addedN} 条`);
+    }catch{toast('导入失败:格式不正确');}
   };
   r.readAsText(file); e.target.value='';
 }
@@ -1595,6 +1887,301 @@ function renderCalDetail(){
     listEl.appendChild(div);
   });
 }
+
+// ── Notes (笔记功能) ─────────────────────────────────────────────
+function nuid(){return 'n_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+
+function filteredNotes(){
+  let L=notes.slice();
+  if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
+  if(curSearch){
+    const q=curSearch.toLowerCase();
+    L=L.filter(n=>(n.title||'').toLowerCase().includes(q)||
+      (n.body||'').toLowerCase().includes(q)||
+      (n.tags||[]).some(t=>t.toLowerCase().includes(q)));
+  }
+  if(curSort==='n-updated') L.sort((a,b)=>b.updatedAt-a.updatedAt);
+  else if(curSort==='n-created') L.sort((a,b)=>b.createdAt-a.createdAt);
+  else if(curSort==='n-title') L.sort((a,b)=>(a.title||'').localeCompare(b.title||'','zh'));
+  return L;
+}
+
+function notePreviewInline(body){
+  const lines=(body||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  return lines.slice(0,3).map(line=>{
+    if(line.startsWith('# ')) return `<span class="pv-h">${esc(line.slice(2))}</span>`;
+    if(line.startsWith('- ')) return `<span class="pv-li">${esc(line.slice(2))}</span>`;
+    return esc(line).replace(/\*\*(.+?)\*\*/g,'<span class="pv-b">$1</span>');
+  }).join(' · ');
+}
+
+function fmtNoteDate(ts){
+  if(!ts) return '';
+  const d=new Date(ts),n=new Date();
+  if(d.toDateString()===n.toDateString()){
+    const h=String(d.getHours()).padStart(2,'0'),m=String(d.getMinutes()).padStart(2,'0');
+    return h+':'+m;
+  }
+  const sameYear=d.getFullYear()===n.getFullYear();
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return sameYear?(mm+'-'+dd):(d.getFullYear()+'-'+mm+'-'+dd);
+}
+
+function renderNotes(){
+  // 顶部子分类胶囊条
+  renderNoteChips();
+  // 标题
+  const subName=curNoteSub==='all'?'全部笔记':curNoteSub;
+  document.getElementById('vtitle').textContent=subName;
+  const L=filteredNotes();
+  document.getElementById('vcnt').textContent=L.length+' 条笔记';
+  // 笔记不显示统计卡片
+  document.getElementById('sbar').innerHTML='';
+  // 渲染列表
+  const list=document.getElementById('nlist');
+  const empty=document.getElementById('nempty');
+  if(!L.length){
+    list.style.display='none';
+    empty.style.display='block';
+    return;
+  }
+  list.style.display='';
+  empty.style.display='none';
+  list.innerHTML=L.map(n=>{
+    const title=n.title||'（无标题）';
+    const titleCls=n.title?'':' empty';
+    const preview=notePreviewInline(n.body);
+    const prevCls=n.body?'':' empty';
+    return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
+      <div class="note-head">
+        <div class="note-title${titleCls}">${esc(title)}</div>
+        <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
+      </div>
+      <div class="note-preview${prevCls}">${preview||'（无内容）'}</div>
+      <div class="note-foot">
+        <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
+        ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
+        <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderNoteChips(){
+  const subCnt={};
+  noteSubs.forEach(s=>subCnt[s]=0);
+  notes.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
+  const chips=[`<span class="nfchip ${curNoteSub==='all'?'on':''}" onclick="filterCat('notes:all')">全部<span class="nfchip-cnt">${notes.length}</span></span>`];
+  noteSubs.forEach(s=>{
+    const safe=esc(s).replace(/'/g,"\\'");
+    chips.push(`<span class="nfchip ${curNoteSub===s?'on':''}" onclick="filterCat('notes:${safe}')">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></span>`);
+  });
+  document.getElementById('nfchips').innerHTML=chips.join('');
+}
+
+// 编辑器
+function openNoteEdit(id){
+  const n=notes.find(x=>x.id===id);
+  if(!n)return;
+  editNoteId=id;
+  curNoteTags=(n.tags||[]).slice();
+  document.getElementById('nm-title').textContent='编辑笔记';
+  document.getElementById('nf-title').value=n.title||'';
+  document.getElementById('nf-body').value=n.body||'';
+  renderNoteSubSelect();
+  document.getElementById('nf-sub').value=n.subCat||noteSubs[0]||'灵感';
+  document.getElementById('ntinput').value='';
+  document.getElementById('nm-del-btn').style.display='';
+  renderNoteChips2();
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function openNoteNew(){
+  editNoteId=null;
+  curNoteTags=[];
+  document.getElementById('nm-title').textContent='新建笔记';
+  document.getElementById('nf-title').value='';
+  document.getElementById('nf-body').value='';
+  renderNoteSubSelect();
+  document.getElementById('nf-sub').value=(curNoteSub!=='all'&&noteSubs.includes(curNoteSub))?curNoteSub:(noteSubs[0]||'灵感');
+  document.getElementById('ntinput').value='';
+  document.getElementById('nm-del-btn').style.display='none';
+  renderNoteChips2();
+  document.getElementById('noteModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nf-title').focus(),60);
+}
+
+function closeNoteModal(){
+  document.getElementById('noteModal').classList.remove('open');
+}
+
+function renderNoteSubSelect(){
+  document.getElementById('nf-sub').innerHTML=noteSubs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+}
+
+function saveNote(){
+  const title=document.getElementById('nf-title').value.trim();
+  const body=document.getElementById('nf-body').value;
+  const sub=document.getElementById('nf-sub').value;
+  if(!title&&!body.trim()){toast('标题和正文不能都为空');return;}
+  const now=Date.now();
+  if(editNoteId){
+    const n=notes.find(x=>x.id===editNoteId);
+    if(n){n.title=title;n.body=body;n.subCat=sub;n.tags=curNoteTags.slice();n.updatedAt=now;}
+    toast('笔记已更新');
+  }else{
+    notes.unshift({id:nuid(),title,body,subCat:sub,tags:curNoteTags.slice(),createdAt:now,updatedAt:now});
+    toast('已添加笔记');
+  }
+  persistNotes();
+  closeNoteModal();
+  render();
+}
+
+function askDelNote(){
+  if(!editNoteId)return;
+  if(!confirm('删除这条笔记？此操作不可撤销。'))return;
+  notes=notes.filter(x=>x.id!==editNoteId);
+  persistNotes();
+  closeNoteModal();
+  render();
+  toast('已删除');
+}
+
+function askDelNoteById(id){
+  if(!confirm('删除这条笔记？此操作不可撤销。'))return;
+  notes=notes.filter(x=>x.id!==id);
+  persistNotes();
+  render();
+  toast('已删除');
+}
+
+// 格式按钮
+function noteFmt(kind){
+  const ta=document.getElementById('nf-body');
+  const start=ta.selectionStart,end=ta.selectionEnd;
+  const before=ta.value.slice(0,start);
+  const sel=ta.value.slice(start,end);
+  const after=ta.value.slice(end);
+  if(kind==='b'){
+    const ins='**'+(sel||'粗体文字')+'**';
+    ta.value=before+ins+after;
+    ta.selectionStart=ta.selectionEnd=start+ins.length;
+  }else if(kind==='h'||kind==='li'){
+    const prefix=kind==='h'?'# ':'- ';
+    const lineStart=before.lastIndexOf('\n')+1;
+    const newBefore=before.slice(0,lineStart)+prefix+before.slice(lineStart);
+    ta.value=newBefore+sel+after;
+    ta.selectionStart=ta.selectionEnd=newBefore.length+sel.length;
+  }
+  ta.focus();
+}
+
+// 笔记标签
+function renderNoteChips2(){
+  document.getElementById('ntchips').innerHTML=curNoteTags.map((t,i)=>
+    `<span class="tchip">${esc(t)}<button onclick="rmNoteTag(${i})" type="button">×</button></span>`
+  ).join('');
+  renderNoteTsugg();
+}
+function rmNoteTag(i){curNoteTags.splice(i,1);renderNoteChips2();}
+function addNoteTagFromInput(){
+  const inp=document.getElementById('ntinput');
+  const v=inp.value.trim().replace(/,$/,'');
+  if(v&&!curNoteTags.includes(v)){curNoteTags.push(v);renderNoteChips2();}
+  inp.value='';
+  inp.focus();
+}
+function pickNoteSuggTag(t){
+  if(!curNoteTags.includes(t)){curNoteTags.push(t);renderNoteChips2();}
+}
+function getNoteSuggTags(){
+  const cnt={};
+  notes.forEach(n=>{
+    if(editNoteId&&n.id===editNoteId)return;
+    (n.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;});
+  });
+  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+}
+let ntsuggExpanded=false;
+function renderNoteTsugg(){
+  const wrap=document.getElementById('ntsuggWrap');
+  const all=getNoteSuggTags();
+  const avail=all.filter(t=>!curNoteTags.includes(t));
+  if(!avail.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const LIMIT=6;
+  const shown=ntsuggExpanded?avail:avail.slice(0,LIMIT);
+  let html=shown.map(t=>`<button type="button" class="tsugg" onclick="pickNoteSuggTag('${esc(t).replace(/'/g,"\\'")}')">${esc(t)}</button>`).join('');
+  if(!ntsuggExpanded&&avail.length>LIMIT){
+    html+=`<button type="button" class="tsugg-more" onclick="ntsuggExpanded=true;renderNoteTsugg();">展开（共 ${avail.length} 个）</button>`;
+  }else if(ntsuggExpanded&&avail.length>LIMIT){
+    html+=`<button type="button" class="tsugg-more" onclick="ntsuggExpanded=false;renderNoteTsugg();">收起</button>`;
+  }
+  document.getElementById('ntsuggList').innerHTML=html;
+}
+
+// 笔记子分类管理弹窗
+function openNoteSubMgr(){
+  editNoteSubs=noteSubs.slice();
+  renderNoteSubList();
+  document.getElementById('new-nsub-name').value='';
+  document.getElementById('nsubModal').classList.add('open');
+}
+function closeNoteSubMgr(){
+  document.getElementById('nsubModal').classList.remove('open');
+}
+function renderNoteSubList(){
+  document.getElementById('nsub-list').innerHTML=editNoteSubs.map((s,i)=>`
+    <div class="cmi-note">
+      <input class="cminput" type="text" value="${esc(s)}" oninput="editNoteSubs[${i}]=this.value" placeholder="子分类名称">
+      <button class="cmdel" onclick="rmNoteSubLocal(${i})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+function rmNoteSubLocal(i){editNoteSubs.splice(i,1);renderNoteSubList();}
+function addNoteSub(){
+  const name=document.getElementById('new-nsub-name').value.trim();
+  if(!name)return;
+  if(editNoteSubs.includes(name)){toast('已存在同名子分类');return;}
+  editNoteSubs.push(name);
+  document.getElementById('new-nsub-name').value='';
+  renderNoteSubList();
+}
+function saveNoteSubs(){
+  const clean=editNoteSubs.map(s=>s.trim()).filter(Boolean);
+  if(!clean.length){toast('至少保留一个子分类');return;}
+  // 检测重复
+  const seen=new Set();
+  const unique=[];
+  for(const s of clean){if(!seen.has(s)){seen.add(s);unique.push(s);}}
+  noteSubs=unique;
+  persistNoteSubs();
+  // 把已不存在子分类的笔记归入第一个
+  const valid=new Set(noteSubs);
+  notes.forEach(n=>{if(!valid.has(n.subCat))n.subCat=noteSubs[0];});
+  persistNotes();
+  // 若当前筛选的子分类被删,回到全部
+  if(curNoteSub!=='all'&&!valid.has(curNoteSub)){curNoteSub='all';curCat='notes:all';}
+  closeNoteSubMgr();
+  render();
+  toast('子分类已更新');
+}
+
+// 笔记标签输入 keydown 监听
+document.getElementById('ntinput').addEventListener('keydown',function(e){
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    addNoteTagFromInput();
+  }else if(e.key==='Backspace'&&!this.value&&curNoteTags.length){
+    curNoteTags.pop();
+    renderNoteChips2();
+  }
+});
 
 // ── Init ─────────────────────────────────────────────────────────
 boot(); renderTypeSelect(); render();
