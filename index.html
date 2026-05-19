@@ -312,12 +312,15 @@ tr:hover .acts{opacity:1;}
   }
   .sidebar.open{transform:translateX(0);}
 
-  /* 主区域占满 */
-  .main{width:100%;}
+  /* 主区域占满 (手机端去掉 overflow,让 topbar 的 sticky 真正粘住浏览器视口顶部) */
+  .main{width:100%;overflow:visible;}
 
-  /* 顶栏 */
+  /* 顶栏 - 固定吸顶 */
   .topbar{
     padding:10px 14px;gap:8px;flex-wrap:wrap;
+    position:sticky;top:0;z-index:30;
+    /* 加一点底部阴影，让滑动时和下方内容有视觉分隔 */
+    box-shadow:0 1px 0 var(--border),0 4px 12px rgba(0,0,0,.04);
   }
   .menubtn{display:inline-flex;}
   .sbox{order:3;flex:1 1 100%;}      /* 搜索框换行,占满整行 */
@@ -596,10 +599,10 @@ tr:hover .acts{opacity:1;}
   .note-title{font-size:15px;}
   .fg textarea.note-body{min-height:200px;font-size:16px;}
   .fmt-btn{height:34px;min-width:36px;font-size:14px;}
-  /* 备忘卡片字段行（手机端也是 40px 锁死）*/
-  .memo-field{padding:0 12px;height:40px;}
+  /* 备忘卡片字段行（手机端 34px 锁死）*/
+  .memo-field{padding:0 12px;height:34px;}
   .memo-field-label{font-size:12px;}
-  .memo-field-value{font-size:13px;line-height:40px;}
+  .memo-field-value{font-size:13px;line-height:34px;}
   .memo-btn{width:24px;height:24px;}
   .memo-btn svg{width:14px;height:14px;}
 }
@@ -619,10 +622,10 @@ tr:hover .acts{opacity:1;}
 
 .memo-fields{background:var(--bg);border-radius:var(--r);padding:4px 0;margin-bottom:10px;}
 .memo-fields:empty{display:none;}
-.memo-field{display:flex;align-items:center;gap:10px;padding:0 12px;height:40px;border-top:1px solid var(--border-soft);box-sizing:border-box;}
+.memo-field{display:flex;align-items:center;gap:10px;padding:0 12px;height:34px;border-top:1px solid var(--border-soft);box-sizing:border-box;}
 .memo-field:first-child{border-top:none;}
 .memo-field-label{flex-shrink:0;font-size:11px;color:var(--text-muted);min-width:42px;font-weight:500;line-height:1;}
-.memo-field-value{flex:1;font-size:13px;color:var(--text-primary);font-family:var(--en);letter-spacing:0.3px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;min-width:0;line-height:40px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
+.memo-field-value{flex:1;font-size:13px;color:var(--text-primary);font-family:var(--en);letter-spacing:0.3px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;min-width:0;line-height:34px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
 .memo-field-value::-webkit-scrollbar{display:none;}
 .memo-field-value.masked{letter-spacing:2px;color:var(--text-secondary);}
 .memo-field-value.note{font-family:var(--zh);letter-spacing:0;}
