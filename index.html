@@ -566,6 +566,44 @@ tr:hover .acts{opacity:1;}
 }
 .note-act:hover{background:var(--danger-bg);color:var(--danger);}
 
+/* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
+.note-card.collect{position:relative;}
+.note-card.collect .note-preview{
+  /* 取消默认 2 行截断，改用容器 max-height 控制 */
+  display:block;-webkit-line-clamp:unset;-webkit-box-orient:unset;
+  white-space:pre-wrap;
+  max-height:42px;            /* 折叠时约 2 行 */
+  overflow:hidden;
+  position:relative;
+  transition:max-height .25s ease;
+}
+/* 折叠时底部渐变遮罩：暗示「下面还有内容」 */
+.note-card.collect:not(.expanded) .note-preview::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
+  background:linear-gradient(to bottom, rgba(253,252,248,0), var(--surface));
+  pointer-events:none;
+}
+.note-card.collect.expanded .note-preview{
+  max-height:none;
+  overflow:visible;
+}
+/* 折叠/展开指示器（小箭头） */
+.collect-toggle{
+  font-size:11px;color:var(--accent-mid);
+  display:inline-flex;align-items:center;gap:3px;
+  margin-right:auto;font-weight:600;
+  user-select:none;
+}
+.collect-toggle .arr{display:inline-block;transition:transform .2s;line-height:1;}
+.note-card.collect.expanded .collect-toggle .arr{transform:rotate(180deg);}
+
+/* 编辑按钮（✏️）：和删除按钮同款风格 */
+.note-edit{
+  background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;
+  color:var(--text-muted);transition:all .1s;display:inline-flex;align-items:center;
+}
+.note-edit:hover{background:var(--accent-light);color:var(--accent);}
+
 /* 读书笔记时间线按钮（笔记卡片底栏） */
 .tl-btn{
   height:22px;padding:0 10px;line-height:1;
@@ -2218,6 +2256,32 @@ function renderNotes(){
     if(n.subCat==='备忘') return renderMemoCard(n);
     const title=n.title||'（无标题）';
     const titleCls=n.title?'':' empty';
+    // ── 「收集」子分类：卡片可展开/收起显示全文 ──
+    if(n.subCat==='收集'){
+      const fullBody=esc(n.body||'');
+      const isLong=(n.body||'').length>40||(n.body||'').includes('\n');
+      const toggleHtml=isLong
+        ? `<span class="collect-toggle"><span class="arr">▾</span>展开</span>`
+        : '';
+      return `<div class="note-card collect" onclick="toggleCollectCard('${n.id}', event)">
+        <div class="note-head">
+          <div class="note-title${titleCls}">${esc(title)}</div>
+          <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
+        </div>
+        <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
+        <div class="note-foot">
+          ${toggleHtml}
+          <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
+          ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
+          <button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }
     // 读书笔记用按段落分行的预览；其他笔记走原版
     const isBook=isBookNote(n);
     const preview=isBook?bookNotePreview(n.body):notePreviewInline(n.body);
@@ -2241,6 +2305,26 @@ function renderNotes(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── 「收集」卡片点击展开/收起 ─────────────────────────
+// 选中文字时不切换（避免妨碍复制）；点按钮和链接也不触发（已用 stopPropagation 兜底）
+function toggleCollectCard(id, ev){
+  // 如果用户正在选文字，不切换
+  const sel=window.getSelection&&window.getSelection().toString();
+  if(sel&&sel.length>0) return;
+  const card=ev&&ev.currentTarget;
+  if(!card) return;
+  card.classList.toggle('expanded');
+  // 同步切换胶囊文字「展开 ⇄ 收起」
+  const t=card.querySelector('.collect-toggle');
+  if(t){
+    const expanded=card.classList.contains('expanded');
+    // 用 textContent 安全地改文字，但要保留 .arr 子元素
+    const arr=t.querySelector('.arr');
+    t.textContent=expanded?'收起':'展开';
+    if(arr) t.insertBefore(arr, t.firstChild);
+  }
 }
 
 // ── 读书笔记时间线 ────────────────────────────────────────────
