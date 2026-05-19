@@ -566,6 +566,48 @@ tr:hover .acts{opacity:1;}
 }
 .note-act:hover{background:var(--danger-bg);color:var(--danger);}
 
+/* 读书笔记时间线按钮（笔记卡片底栏） */
+.tl-btn{
+  height:22px;padding:0 10px;line-height:1;
+  background:var(--accent-light);color:var(--accent);
+  border:1px solid transparent;border-radius:20px;
+  font-size:11px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:var(--zh);box-sizing:border-box;
+  transition:background .12s;
+}
+.tl-btn:hover{background:rgba(43,77,63,0.16);}
+.tl-btn[disabled]{opacity:.4;cursor:not-allowed;}
+
+/* 读书笔记时间线弹窗 */
+.tl-sub{font-size:12px;color:var(--text-muted);margin-top:2px;font-family:var(--en);}
+.tl{position:relative;padding-left:28px;margin-top:6px;}
+.tl::before{
+  content:"";position:absolute;left:8px;top:6px;bottom:6px;
+  width:2px;background:var(--accent);opacity:.25;border-radius:2px;
+}
+.tl-item{position:relative;padding-bottom:20px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-dot{
+  position:absolute;left:-24px;top:4px;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+}
+.tl-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
+.tl-ch{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px;line-height:1.4;}
+.tl-text{
+  font-size:13px;line-height:1.7;color:var(--text-secondary);
+  white-space:pre-wrap;background:var(--bg);
+  border:1px solid var(--border-soft);border-radius:var(--r);
+  padding:10px 12px;
+}
+.tl-nochap{
+  font-size:13px;color:var(--text-muted);background:var(--bg);
+  border-radius:var(--r);padding:14px;line-height:1.6;text-align:center;
+}
+.tl-nochap b{color:var(--accent);}
+
 /* 格式工具栏（笔记编辑器） */
 .fmt-bar{display:flex;align-items:center;gap:5px;margin-bottom:6px;flex-wrap:wrap;}
 .fmt-btn{
@@ -1082,6 +1124,20 @@ tr:hover .acts{opacity:1;}
       <button class="btn btn-g" onclick="closeNoteModal()">取消</button>
       <button class="btn btn-p" onclick="saveNote()">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== READING TIMELINE MODAL ===== -->
+<div class="moverlay" id="tlModal" onclick="if(event.target===this)closeTimeline()">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div style="flex:1;min-width:0">
+        <div class="mtitle" id="tl-title">时间线</div>
+        <div class="tl-sub" id="tl-sub">共 0 章</div>
+      </div>
+      <button class="mclose" onclick="closeTimeline()">✕</button>
+    </div>
+    <div id="tl-body"></div>
   </div>
 </div>
 
@@ -2072,6 +2128,9 @@ function renderNotes(){
     const titleCls=n.title?'':' empty';
     const preview=notePreviewInline(n.body);
     const prevCls=n.body?'':' empty';
+    const tlBtn=isBookNote(n)
+      ? `<button class="tl-btn" onclick="event.stopPropagation();openTimeline('${n.id}')" title="查看时间线" type="button">📖 时间线</button>`
+      : '';
     return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
       <div class="note-head">
         <div class="note-title${titleCls}">${esc(title)}</div>
@@ -2081,12 +2140,58 @@ function renderNotes(){
       <div class="note-foot">
         <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
         ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
+        ${tlBtn}
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
         </button>
       </div>
     </div>`;
   }).join('');
+}
+
+// ── 读书笔记时间线 ────────────────────────────────────────────
+// 章节正则：可选 markdown #/##/###，第X章（中文数字/阿拉伯数字均可）
+const TL_CH_RE=/^#{0,3}\s*第[一二三四五六七八九十百零0-9]+章[^\n]*/gm;
+
+function isBookNote(n){return n&&n.subCat==='读书笔记';}
+
+function parseChapters(text){
+  if(!text) return [];
+  const matches=[...text.matchAll(TL_CH_RE)];
+  if(!matches.length) return [];
+  const chs=[];
+  for(let i=0;i<matches.length;i++){
+    const m=matches[i];
+    const start=m.index+m[0].length;
+    const end=i+1<matches.length?matches[i+1].index:text.length;
+    const title=m[0].replace(/^#{0,3}\s*/,'').trim();
+    const body=text.slice(start,end).trim();
+    chs.push({title,body});
+  }
+  return chs;
+}
+
+function openTimeline(id){
+  const n=(notes||[]).find(x=>x.id===id);
+  if(!n) return;
+  const chs=parseChapters(n.body);
+  document.getElementById('tl-title').textContent=n.title||'（无标题）';
+  document.getElementById('tl-sub').textContent=chs.length?`共 ${chs.length} 章`:'未识别到章节';
+  const body=document.getElementById('tl-body');
+  if(!chs.length){
+    body.innerHTML=`<div class="tl-nochap">这篇笔记里没有识别到章节标记。<br><br>在正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，时间线就会自动出现。</div>`;
+  }else{
+    body.innerHTML='<div class="tl">'+chs.map(c=>`<div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-ch">${esc(c.title)}</div>
+      ${c.body?`<div class="tl-text">${esc(c.body)}</div>`:''}
+    </div>`).join('')+'</div>';
+  }
+  document.getElementById('tlModal').classList.add('open');
+}
+
+function closeTimeline(){
+  document.getElementById('tlModal').classList.remove('open');
 }
 
 // ── 备忘子分类专用功能 ─────────────────────────────────────────
