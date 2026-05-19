@@ -640,16 +640,12 @@ tr:hover .acts{opacity:1;}
 .memo-btn svg{width:15px;height:15px;display:block;}
 .memo-btn.copied{color:var(--accent);background:var(--accent-light);}
 
-/* 备忘编辑器：自定义字段 */
-.cf-row{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
-.cf-key{width:90px;flex-shrink:0;height:44px;padding:0 12px;background:var(--bg);border:1px solid transparent;border-radius:var(--r);font-size:14px;color:var(--accent);font-weight:600;-webkit-appearance:none;box-sizing:border-box;font-family:var(--zh);}
+/* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
+.cf-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.cf-key{width:100%;height:34px;padding:0 12px;background:transparent;border:1px solid transparent;border-radius:var(--r);font-size:14px;color:var(--accent);font-weight:600;-webkit-appearance:none;box-sizing:border-box;font-family:var(--zh);}
 .cf-key:focus{outline:none;background:var(--surface);border-color:rgba(43,77,63,0.18);}
-.cf-val{flex:1;min-width:0;height:44px;padding:0 12px;background:var(--bg);border:1px solid transparent;border-radius:var(--r);font-size:16px;color:var(--text-primary);font-family:var(--en);-webkit-appearance:none;box-sizing:border-box;}
+.cf-val{width:100%;height:44px;padding:0 12px;background:var(--bg);border:1px solid transparent;border-radius:var(--r);font-size:16px;color:var(--text-primary);font-family:var(--en);-webkit-appearance:none;box-sizing:border-box;}
 .cf-val:focus{outline:none;background:var(--surface);border-color:rgba(43,77,63,0.18);}
-.cf-del{flex-shrink:0;width:36px;height:44px;background:none;border:none;cursor:pointer;color:var(--text-muted);border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;-webkit-appearance:none;}
-.cf-del:active{color:var(--danger);background:var(--danger-bg);}
-@media (hover:hover){.cf-del:hover{color:var(--danger);background:var(--danger-bg);}}
-.cf-del svg{width:16px;height:16px;display:block;}
 
 .add-field-btn{width:100%;height:40px;background:transparent;border:1px dashed rgba(43,77,63,0.18);color:var(--accent);border-radius:var(--r);font-size:13px;font-weight:600;font-family:var(--zh);cursor:pointer;margin-bottom:14px;transition:background .12s,border-color .12s;-webkit-appearance:none;}
 .add-field-btn:active{background:var(--accent-light);}
@@ -666,9 +662,6 @@ tr:hover .acts{opacity:1;}
 .local-toggle-title{font-size:14px;color:var(--accent);font-weight:600;margin-bottom:2px;}
 .local-toggle-desc{font-size:12px;color:var(--text-secondary);line-height:1.5;}
 
-@media (max-width:768px){
-  .cf-key{width:80px;}
-}
 </style>
 </head>
 <body>
@@ -2216,9 +2209,8 @@ function renderMemoCustomList(){
   const wrap=document.getElementById('mf-custom-list');
   wrap.innerHTML=curMemoCustom.map((cf,i)=>`
     <div class="cf-row">
-      <input class="cf-key" type="text" placeholder="字段名" value="${esc(cf.key||'')}" oninput="curMemoCustom[${i}].key=this.value" autocapitalize="off" autocorrect="off">
+      <input class="cf-key" type="text" placeholder="+ 字段名（留空自动删除）" value="${esc(cf.key||'')}" oninput="curMemoCustom[${i}].key=this.value" onblur="checkRmMemoCustomField(${i})" autocapitalize="off" autocorrect="off">
       <input class="cf-val" type="text" placeholder="内容" value="${esc(cf.value||'')}" oninput="curMemoCustom[${i}].value=this.value" autocapitalize="off" autocorrect="off" autocomplete="off">
-      <button type="button" class="cf-del" onclick="rmMemoCustomField(${i})" title="删除">${MEMO_ICON.delX}</button>
     </div>
   `).join('');
 }
@@ -2236,6 +2228,16 @@ function addMemoCustomField(){
 function rmMemoCustomField(i){
   curMemoCustom.splice(i,1);
   renderMemoCustomList();
+}
+
+function checkRmMemoCustomField(i){
+  const cf=curMemoCustom[i];
+  if(!cf)return;
+  // 键和值都为空时才自动删除，避免用户填了值还没填键就误删
+  if(!cf.key.trim() && !cf.value.trim()){
+    curMemoCustom.splice(i,1);
+    renderMemoCustomList();
+  }
 }
 
 function toggleMemoLocal(){
