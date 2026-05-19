@@ -312,8 +312,11 @@ tr:hover .acts{opacity:1;}
   }
   .sidebar.open{transform:translateX(0);}
 
-  /* 主区域占满 (手机端去掉 overflow,让 topbar 的 sticky 真正粘住浏览器视口顶部) */
-  .main{width:100%;overflow:visible;}
+  /* 主区域占满 (手机端去掉 overflow + 不限高,让 body 自然滚动,topbar 才能粘到视口顶部) */
+  .main{width:100%;overflow:visible;height:auto;min-height:100vh;}
+
+  /* 内容区不再自己滚动,跟随 body 滚动 */
+  .content{padding:14px;overflow:visible;flex:none;}
 
   /* 顶栏 - 固定吸顶 */
   .topbar{
@@ -340,8 +343,7 @@ tr:hover .acts{opacity:1;}
   .fchip{padding:6px 13px;font-size:13px;}
   .flbl{font-size:11px;}
 
-  /* 内容区 padding 收紧 */
-  .content{padding:14px;}
+  /* 内容区 vtitle 字号 */
   .vtitle{font-size:18px;}
 
   /* 统计卡片:网格 3 列 */
