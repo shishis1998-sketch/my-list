@@ -2282,14 +2282,14 @@ function renderNotes(){
     if(n.subCat==='备忘') return renderMemoCard(n);
     const title=n.title||'（无标题）';
     const titleCls=n.title?'':' empty';
-    // ── 「收集」子分类：卡片可展开/收起显示全文 ──
+    // ── 「收集」子分类：卡片可展开/收起显示全文（默认展开）──
     if(n.subCat==='收集'){
       const fullBody=esc(n.body||'');
       const isLong=(n.body||'').length>40||(n.body||'').includes('\n');
       const toggleHtml=isLong
-        ? `<span class="collect-toggle"><span class="arr">▾</span>展开</span>`
+        ? `<span class="collect-toggle"><span class="arr">▾</span>收起</span>`
         : '';
-      return `<div class="note-card collect" onclick="toggleCollectCard('${n.id}', event)">
+      return `<div class="note-card collect expanded" onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
           <div class="note-title${titleCls}">${esc(title)}</div>
           <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
