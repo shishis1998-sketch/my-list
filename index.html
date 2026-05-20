@@ -185,7 +185,7 @@ tr:hover .acts{opacity:1;}
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .moverlay.open{display:flex;}
-.mbox{background:var(--surface);border-radius:var(--rxl);padding:24px 28px;width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:92vh;overflow-y:auto;}
+.mbox{background:var(--surface);border-radius:var(--rxl);padding:24px 28px;width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border-soft);}
 .mtitle{font-size:16px;font-weight:700;color:var(--text-primary);}
 .mclose{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:5px 9px;cursor:pointer;color:var(--text-secondary);font-size:15px;line-height:1;transition:all .1s;}
@@ -2948,18 +2948,18 @@ boot(); renderTypeSelect(); render();
   // 注册所有现有弹窗
   document.querySelectorAll('.moverlay, .cal-overlay').forEach(watchOverlay);
 
-  // 触摸穿透兜底:弹窗外的滚动直接拦截(弹窗内部正常工作)
+  // 触摸穿透兜底:只有触摸点在弹窗"内容盒子"(.mbox/.cal-modal)内才放行
+  // 触摸点在暗色遮罩上 → 拦截,避免穿透到背景
   document.addEventListener('touchmove', function(e){
     if(!document.body.classList.contains('modal-open')) return;
-    // 找到触发点是否在某个 open 状态的 overlay 内部
     let node = e.target;
     while(node && node !== document.body){
-      if(node.classList && (node.classList.contains('moverlay') || node.classList.contains('cal-overlay'))){
-        if(node.classList.contains('open')) return; // 在弹窗内,放行
+      if(node.classList && (node.classList.contains('mbox') || node.classList.contains('cal-modal'))){
+        return; // 触摸点在内容盒子内,放行内部滚动
       }
       node = node.parentNode;
     }
-    e.preventDefault(); // 在弹窗外,拦截
+    e.preventDefault(); // 在遮罩或其他区域,拦截
   }, {passive:false});
 })();
 </script>
