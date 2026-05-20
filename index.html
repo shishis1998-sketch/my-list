@@ -400,13 +400,17 @@ tr:hover .acts{opacity:1;}
   .ibt{padding:8px;}
   .ibt svg{width:16px;height:16px;}
 
-  /* 弹窗 */
-  .moverlay{padding:0;align-items:flex-end;}
+  /* 弹窗 - 手机端全屏 */
+  .moverlay{padding:0;align-items:stretch;justify-content:stretch;}
   .mbox{
-    border-radius:var(--rxl) var(--rxl) 0 0;
-    max-width:100%;max-height:92vh;
+    border-radius:0;
+    max-width:100%;width:100%;max-height:none;height:100%;
   }
-  .mhdr{padding:18px 18px 12px;}
+  .mhdr{
+    padding:14px 18px 12px;
+    padding-top:calc(14px + env(safe-area-inset-top));
+    background:var(--surface);
+  }
   .mbody{padding:14px 18px;}
   .mftr{padding:12px 18px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
@@ -431,10 +435,10 @@ tr:hover .acts{opacity:1;}
   /* toast */
   .toast{left:14px;right:14px;bottom:14px;justify-content:center;}
 
-  /* 日历手机端 */
-  .cal-modal{max-height:95vh;border-radius:var(--rxl) var(--rxl) 0 0;}
-  .cal-overlay{align-items:flex-end;padding:0;}
-  .cal-hdr{padding:14px 16px 10px;}
+  /* 日历手机端 - 全屏 */
+  .cal-modal{max-height:none;height:100%;border-radius:0;}
+  .cal-overlay{align-items:stretch;justify-content:stretch;padding:0;}
+  .cal-hdr{padding:14px 16px 10px;padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
   .cal-title{font-size:15px;}
   .cal-scroll{padding:0 14px 4px;}
   .cal-day{min-height:60px;padding:5px;}
