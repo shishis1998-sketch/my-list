@@ -1676,8 +1676,8 @@ function filtered(){
     (d.note||'').toLowerCase().includes(q)||(d.tags||[]).some(t=>t.toLowerCase().includes(q)));
   }
   L.sort((a,b)=>{
-    if(curSort==='date-desc') return (b.date||'')>(a.date||'')?1:-1;
-    if(curSort==='date-asc')  return (a.date||'')>(b.date||'')?1:-1;
+    if(curSort==='date-desc') return (b.id||'')>(a.id||'')?1:-1;
+    if(curSort==='date-asc')  return (a.id||'')>(b.id||'')?1:-1;
     if(curSort==='watch-desc')return (b.watchDate||'')>(a.watchDate||'')?1:-1;
     if(curSort==='name-asc')  return a.name.localeCompare(b.name,'zh');
     if(curSort==='score-desc')return (b.score||0)-(a.score||0);
