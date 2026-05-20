@@ -185,8 +185,9 @@ tr:hover .acts{opacity:1;}
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .moverlay.open{display:flex;}
-.mbox{background:var(--surface);border-radius:var(--rxl);padding:24px 28px;width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border-soft);}
+.mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:24px 28px 14px;border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
+.mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 28px;}
 .mtitle{font-size:16px;font-weight:700;color:var(--text-primary);}
 .mclose{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:5px 9px;cursor:pointer;color:var(--text-secondary);font-size:15px;line-height:1;transition:all .1s;}
 .mclose:hover{background:var(--border);}
@@ -246,7 +247,7 @@ tr:hover .acts{opacity:1;}
 .tsugg-more{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:11px;font-family:var(--zh);font-weight:600;padding:3px 6px;}
 .tsugg-more:hover{text-decoration:underline;}
 
-.mftr{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border-soft);}
+.mftr{display:flex;justify-content:flex-end;gap:8px;padding:14px 28px 22px;border-top:1px solid var(--border-soft);flex:0 0 auto;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;font-family:var(--zh);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
 .btn-p{background:var(--accent);color:#fff;border-color:var(--accent);}
 .btn-p:hover{background:#1E3830;}
@@ -403,9 +404,11 @@ tr:hover .acts{opacity:1;}
   .moverlay{padding:0;align-items:flex-end;}
   .mbox{
     border-radius:var(--rxl) var(--rxl) 0 0;
-    max-width:100%;max-height:92vh;padding:20px 18px;
-    padding-bottom:calc(20px + env(safe-area-inset-bottom));
+    max-width:100%;max-height:92vh;
   }
+  .mhdr{padding:18px 18px 12px;}
+  .mbody{padding:14px 18px;}
+  .mftr{padding:12px 18px;padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
@@ -984,6 +987,7 @@ body.modal-open{
       <div class="mtitle" id="mtitle">添加记录</div>
       <button class="mclose" onclick="closeModal()">✕</button>
     </div>
+    <div class="mbody">
 
     <div class="fg">
       <label>名称 *</label>
@@ -1054,6 +1058,7 @@ body.modal-open{
       <label>备注</label>
       <textarea id="f-note" rows="3" placeholder="想说的话..."></textarea>
     </div>
+    </div><!-- /mbody -->
     <div class="mftr">
       <button class="btn btn-g" onclick="closeModal()">取消</button>
       <button class="btn btn-p" onclick="saveRec()">保存</button>
@@ -1068,6 +1073,7 @@ body.modal-open{
       <div class="mtitle">管理分类</div>
       <button class="mclose" onclick="closeCatMgr()">✕</button>
     </div>
+    <div class="mbody">
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">点击 emoji 修改图标，修改名称、颜色或删除分类。删除后的记录自动归入第一个分类。</p>
     <div class="cml" id="cml"></div>
     <div class="addcatrow">
@@ -1075,6 +1081,7 @@ body.modal-open{
       <input type="color" id="newcatcolor" value="#3D3580" style="width:40px;height:36px;padding:2px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--bg);">
       <button class="btn btn-g" onclick="addCat()">+ 添加</button>
     </div>
+    </div><!-- /mbody -->
     <div class="mftr">
       <button class="btn btn-g" onclick="closeCatMgr()">取消</button>
       <button class="btn btn-p" onclick="saveCats()">保存</button>
@@ -1105,6 +1112,7 @@ body.modal-open{
       <div class="mtitle">☁ 云同步设置</div>
       <button class="mclose" onclick="closeSyncCfg()">✕</button>
     </div>
+    <div class="mbody">
     <div id="sync-status-box" style="padding:10px 12px;border-radius:8px;background:var(--bg);margin-bottom:14px;font-size:13px;color:var(--text-secondary);"></div>
 
     <div class="fg">
@@ -1121,6 +1129,7 @@ body.modal-open{
         换设备时填上同一个 Gist ID 即可读取已有数据。可在 <a href="https://gist.github.com" target="_blank" style="color:var(--accent);text-decoration:underline">gist.github.com</a> 找到。
       </div>
     </div>
+    </div><!-- /mbody -->
 
     <div class="mftr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <button class="btn btn-d" onclick="clearSyncCfg()" id="sync-clear-btn">断开同步</button>
@@ -1177,6 +1186,7 @@ body.modal-open{
       <div class="mtitle" id="nm-title">新建笔记</div>
       <button class="mclose" onclick="closeNoteModal()">✕</button>
     </div>
+    <div class="mbody">
     <div class="fg">
       <label>标题</label>
       <input type="text" id="nf-title" placeholder="可留空">
@@ -1239,6 +1249,7 @@ body.modal-open{
         </div>
       </div>
     </div>
+    </div><!-- /mbody -->
     <div class="mftr">
       <button class="btn btn-d" onclick="askDelNote()" id="nm-del-btn" style="display:none;margin-right:auto">删除</button>
       <button class="btn btn-g" onclick="closeNoteModal()">取消</button>
@@ -1268,12 +1279,14 @@ body.modal-open{
       <div class="mtitle">管理笔记子分类</div>
       <button class="mclose" onclick="closeNoteSubMgr()">✕</button>
     </div>
+    <div class="mbody">
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">修改名称或删除子分类。删除后的笔记自动归入第一个子分类。</p>
     <div class="cml" id="nsub-list"></div>
     <div class="addcatrow">
       <input type="text" id="new-nsub-name" placeholder="新子分类名称" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:14px;font-family:var(--zh);outline:none;">
       <button class="btn btn-g" onclick="addNoteSub()">+ 添加</button>
     </div>
+    </div><!-- /mbody -->
     <div class="mftr">
       <button class="btn btn-g" onclick="closeNoteSubMgr()">取消</button>
       <button class="btn btn-p" onclick="saveNoteSubs()">保存</button>
