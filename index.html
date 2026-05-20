@@ -163,7 +163,32 @@ td.c-cover-td{padding:10px 4px 10px 12px;vertical-align:middle;}
 .cname{font-weight:600;font-size:14px;color:var(--text-primary);line-height:1.3;}
 .cyear{font-weight:500;color:var(--text-muted);font-family:var(--en);font-size:13px;margin-left:2px;}
 .csub{font-size:11px;color:var(--text-muted);margin-top:2px;}
-.cnote{font-size:12px;color:var(--text-secondary);display:block;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5;}
+.cnote{font-size:12px;color:var(--text-secondary);line-height:1.5;}
+/* 备注展开/收起：默认展开；折叠时限高+底部渐变遮罩 */
+.cnote-wrap{position:relative;}
+.cnote-wrap .cnote{display:block;white-space:pre-wrap;overflow:hidden;max-height:none;transition:max-height .25s ease;}
+/* 折叠态：电脑端约 3 行 */
+tr:not(.note-expanded) .cnote-wrap .cnote{max-height:66px;}
+tr:not(.note-expanded) .cnote-wrap .cnote::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
+  background:linear-gradient(to bottom, rgba(253,252,248,0), var(--surface));
+  pointer-events:none;
+}
+tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
+/* 备注胶囊：复用「收集」胶囊视觉风格 */
+.cnote-toggle{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:11px;color:var(--accent-mid);font-weight:600;
+  margin-top:6px;padding:3px 10px;border-radius:20px;
+  background:var(--accent-light);border:1px solid transparent;
+  cursor:pointer;user-select:none;
+  transition:background .15s, color .15s;
+  line-height:1;
+}
+.cnote-toggle:hover{background:rgba(43,77,63,.12);color:var(--accent);}
+.cnote-toggle:active{background:rgba(43,77,63,.18);}
+.cnote-toggle .arr{display:inline-block;transition:transform .2s;line-height:1;font-size:10px;}
+tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 
 .cbadge{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;line-height:1;border:1px solid transparent;box-sizing:border-box;}
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:20px;font-size:12px;font-weight:500;background:var(--bg);color:var(--text-secondary);white-space:nowrap;line-height:1;border:1px solid var(--border-soft);box-sizing:border-box;margin:1px 2px 1px 0;}
@@ -391,7 +416,9 @@ tr:hover .acts{opacity:1;}
   .cover{width:46px;height:62px;border-radius:6px;font-size:20px;}
   .cname{font-size:15px;font-weight:700;}
   .csub{font-size:12px;margin-top:2px;}
-  .cnote{font-size:13px;-webkit-line-clamp:2;}
+  .cnote{font-size:13px;}
+  /* 手机端折叠态：约 2 行 */
+  tr:not(.note-expanded) .cnote-wrap .cnote{max-height:42px;}
   .cbadge{height:24px;padding:0 12px;font-size:12px;}
   .ctag{height:24px;padding:0 12px;font-size:12px;}
 
@@ -1731,13 +1758,23 @@ function render(){
       ?`<div class="cover"><img src="${esc(item.cover)}" onerror="this.parentNode.textContent='${cat.emoji||'📌'}'"></div>`
       :`<div class="cover">${cat.emoji||'📌'}</div>`;
 
-    return `<tr>
+    // 备注：长内容（>40 字 或 含换行）才显示展开/收起胶囊，默认展开
+    const noteRaw=item.note||'';
+    const isLongNote=noteRaw.length>40||noteRaw.includes('\n');
+    const noteToggle=isLongNote
+      ? `<span class="cnote-toggle" onclick="event.stopPropagation();toggleCnoteCard('${item.id}', event)"><span class="arr">▾</span>收起</span>`
+      : '';
+    const noteCell=noteRaw
+      ? `<div class="cnote-wrap"><div class="cnote">💬 ${esc(noteRaw)}</div>${noteToggle}</div>`
+      : '<span style="color:var(--text-muted)">—</span>';
+
+    return `<tr data-id="${item.id}" class="note-expanded">
       <td class="c-cover-td">${coverH}</td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
         ${item.creator?`<div class="csub">${esc(item.creator)}</div>`:''}
       </td>
-      <td><div class="cnote">${item.note?`💬 ${esc(item.note)}`:'<span style="color:var(--text-muted)">—</span>'}</div></td>
+      <td>${noteCell}</td>
       <td><span class="cbadge" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span></td>
       <td>${tagsH||'<span style="color:var(--text-muted);font-size:11px">—</span>'}</td>
       <td>${starsHtml(item.score)}</td>
@@ -2407,6 +2444,27 @@ function toggleCollectCard(id, ev){
   if(t){
     const expanded=card.classList.contains('expanded');
     // 用 textContent 安全地改文字，但要保留 .arr 子元素
+    const arr=t.querySelector('.arr');
+    t.textContent=expanded?'收起':'展开';
+    if(arr) t.insertBefore(arr, t.firstChild);
+  }
+}
+
+// ── 媒体卡片「备注」展开/收起 ─────────────────────────
+// 默认展开；点底部胶囊切换；选中文字时不切换；找当前行 tr 切 note-expanded
+function toggleCnoteCard(id, ev){
+  const sel=window.getSelection&&window.getSelection().toString();
+  if(sel&&sel.length>0) return;
+  // 胶囊在 td 里，沿 DOM 上找最近的 tr
+  let row=ev&&ev.target;
+  while(row&&row.tagName!=='TR') row=row.parentElement;
+  if(!row) row=document.querySelector('tr[data-id="'+id+'"]');
+  if(!row) return;
+  row.classList.toggle('note-expanded');
+  // 同步切换胶囊文字「展开 ⇄ 收起」，保留 .arr 子节点
+  const t=row.querySelector('.cnote-toggle');
+  if(t){
+    const expanded=row.classList.contains('note-expanded');
     const arr=t.querySelector('.arr');
     t.textContent=expanded?'收起':'展开';
     if(arr) t.insertBefore(arr, t.firstChild);
