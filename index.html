@@ -606,6 +606,9 @@ tr:hover .acts{opacity:1;}
 .note-card.collect .note-title{font-size:17px;}
 .note-card.collect .note-preview{font-size:16px;}
 .note-card.collect .ctag{font-size:11px;}
+/* 收集卡片专属段距：6px → 12px（让空行段落更宽松）*/
+.note-card.collect .note-preview .rt-p{margin:0 0 12px 0;}
+.note-card.collect .note-preview .rt-p:last-child{margin-bottom:0;}
 .note-card.collect .note-preview{
   /* 取消默认 2 行截断，改用容器 max-height 控制 */
   display:block;-webkit-line-clamp:unset;-webkit-box-orient:unset;
