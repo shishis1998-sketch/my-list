@@ -658,21 +658,22 @@ tr:hover .acts{opacity:1;}
   content:"";position:absolute;left:8px;top:6px;bottom:6px;
   width:2px;background:var(--accent);opacity:.25;border-radius:2px;
 }
-.tl-item{position:relative;padding-bottom:20px;}
+.tl-item{position:relative;padding-bottom:20px;padding-left:18px;}
 .tl-item:last-child{padding-bottom:0;}
 .tl-dot{
-  position:absolute;left:-24px;top:4px;
+  position:absolute;left:-8px;top:2px;
   width:14px;height:14px;border-radius:50%;
   background:var(--surface);border:2px solid var(--accent);
   display:flex;align-items:center;justify-content:center;
 }
 .tl-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
-.tl-ch{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px;line-height:1.4;}
+.tl-ch{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px;line-height:1.4;margin-left:18px;}
 .tl-text{
-  font-size:13px;line-height:1.7;color:var(--text-secondary);
+  font-size:15px;line-height:1.7;color:var(--text-secondary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:10px 12px;
+  margin-left:18px;
 }
 .tl-nochap{
   font-size:13px;color:var(--text-muted);background:var(--bg);
@@ -692,22 +693,21 @@ tr:hover .acts{opacity:1;}
 }
 #tlModal #tl-body{
   flex:1 1 auto;overflow-y:auto;
-  padding:8px 24px 24px;
+  padding:8px 24px 24px 24px;
   -webkit-overflow-scrolling:touch;
 }
 @media(max-width:768px){
   #tlModal .mhdr{padding:14px 16px 12px;}
-  #tlModal #tl-body{padding:8px 16px 20px;}
+  #tlModal #tl-body{padding:8px 16px 20px 20px;}
 }
 
 /* 章节内段落小节点（数字+点 拆出来的段落） */
 .tl-para{
   position:relative;
   margin-top:10px;
-  padding-left:18px;
 }
 .tl-para::before{
-  content:"";position:absolute;left:-1px;top:0;bottom:-10px;
+  content:"";position:absolute;left:-1.5px;top:0;bottom:-10px;
   width:1px;background:var(--border);
 }
 .tl-para:last-child::before{bottom:6px;}
@@ -721,18 +721,21 @@ tr:hover .acts{opacity:1;}
   font-size:12px;color:var(--accent);
   font-weight:600;margin-bottom:3px;opacity:.7;
   font-family:var(--en);
+  margin-left:18px;
 }
 .tl-pbody{
-  font-size:14px;line-height:1.7;color:var(--text-secondary);
+  font-size:15px;line-height:1.7;color:var(--text-secondary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:8px 11px;
+  margin-left:18px;
 }
 
 /* 章内小标题节点（≤12 字非编号行） */
 .tl-phead{
   font-size:13px;font-weight:700;color:var(--accent);
   line-height:1.5;padding:2px 0;
+  margin-left:18px;
 }
 .tl-para.tl-hd{margin-top:12px;}
 .tl-para.tl-hd:first-child{margin-top:6px;}
