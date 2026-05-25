@@ -797,7 +797,9 @@ tr:hover .acts{opacity:1;}
 .fmt-hint{font-size:11px;color:var(--text-muted);margin-left:auto;}
 
 /* 笔记正文 textarea 加高 */
-.fg textarea.note-body{min-height:180px;font-family:var(--zh);line-height:1.65;}
+.fg textarea.note-body{min-height:180px;font-family:var(--zh);line-height:1.65;transition:min-height .2s;}
+/* 读书笔记子分类：正文框更高 */
+.fg textarea.note-body.is-book{min-height:400px;}
 
 /* 笔记子分类管理弹窗里的列表（复用 .cml/.cmi 但去掉颜色和emoji） */
 .cmi-note{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
@@ -817,6 +819,7 @@ tr:hover .acts{opacity:1;}
   .note-card{padding:12px 14px;}
   .note-title{font-size:15px;}
   .fg textarea.note-body{min-height:200px;font-size:16px;}
+  .fg textarea.note-body.is-book{min-height:340px;}
   .fmt-btn{height:34px;min-width:36px;font-size:14px;}
   /* 备忘卡片字段行（手机端 34px 锁死）*/
   .memo-field{padding:0 12px;height:34px;}
@@ -1264,7 +1267,7 @@ body.modal-open{
         <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
         <span class="fmt-hint">选中文字后点按钮加格式</span>
       </div>
-      <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
+      <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项" oninput="autoGrowNoteBody(this)"></textarea>
     </div>
     <!-- 备忘子分类专用：账号 / 密码 / 备注 / 自定义字段 -->
     <div id="memo-fields-group" style="display:none">
@@ -2685,9 +2688,13 @@ function memoCopy(e,value){
 function applyMemoEditorMode(){
   const sub=document.getElementById('nf-sub').value;
   const isMemo=(sub==='备忘');
+  const isBook=(sub==='读书笔记');
   document.getElementById('nf-body-group').style.display=isMemo?'none':'';
   document.getElementById('memo-fields-group').style.display=isMemo?'':'none';
   document.getElementById('memo-local-group').style.display=isMemo?'':'none';
+  const ta=document.getElementById('nf-body');
+  ta.classList.toggle('is-book',isBook);
+  autoGrowNoteBody(ta);
 }
 
 function renderMemoCustomList(){
@@ -2799,6 +2806,7 @@ function openNoteEdit(id){
   applyMemoEditorMode();
   renderNoteChips2();
   document.getElementById('noteModal').classList.add('open');
+  setTimeout(()=>autoGrowNoteBody(document.getElementById('nf-body')),30);
 }
 
 function openNoteNew(){
@@ -2823,6 +2831,13 @@ function openNoteNew(){
   renderNoteChips2();
   document.getElementById('noteModal').classList.add('open');
   setTimeout(()=>document.getElementById('nf-title').focus(),60);
+}
+
+// textarea 随内容自动增高
+function autoGrowNoteBody(ta){
+  if(!ta)return;
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
 }
 
 function closeNoteModal(){
