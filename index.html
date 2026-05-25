@@ -653,27 +653,28 @@ tr:hover .acts{opacity:1;}
 
 /* 读书笔记时间线弹窗 */
 .tl-sub{font-size:12px;color:var(--text-muted);margin-top:2px;font-family:var(--en);}
-.tl{position:relative;padding-left:28px;margin-top:6px;}
+.tl{position:relative;margin-top:6px;}
 .tl::before{
-  content:"";position:absolute;left:8px;top:6px;bottom:6px;
-  width:2px;background:var(--accent);opacity:.25;border-radius:2px;
+  content:"";position:absolute;left:11.5px;top:4px;bottom:4px;
+  width:1px;background:var(--border);
 }
-.tl-item{position:relative;padding-bottom:20px;padding-left:18px;}
+.tl-item{position:relative;padding-bottom:20px;}
 .tl-item:last-child{padding-bottom:0;}
 .tl-dot{
-  position:absolute;left:-8px;top:2px;
+  position:absolute;left:5px;top:2px;
   width:14px;height:14px;border-radius:50%;
   background:var(--surface);border:2px solid var(--accent);
   display:flex;align-items:center;justify-content:center;
+  z-index:1;
 }
 .tl-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
-.tl-ch{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px;line-height:1.4;margin-left:18px;}
+.tl-ch{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px;line-height:1.4;margin-left:28px;}
 .tl-text{
   font-size:15px;line-height:1.7;color:var(--text-secondary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:10px 12px;
-  margin-left:18px;
+  margin-left:28px;
 }
 .tl-nochap{
   font-size:13px;color:var(--text-muted);background:var(--bg);
@@ -702,40 +703,40 @@ tr:hover .acts{opacity:1;}
 }
 
 /* 章节内段落小节点（数字+点 拆出来的段落） */
+.tl-item.has-paras::before{
+  content:"";position:absolute;left:43.5px;top:24px;bottom:4px;
+  width:1px;background:var(--border);
+}
 .tl-para{
   position:relative;
   margin-top:10px;
 }
-.tl-para::before{
-  content:"";position:absolute;left:-1.5px;top:0;bottom:-10px;
-  width:1px;background:var(--border);
-}
-.tl-para:last-child::before{bottom:6px;}
 .tl-pdot{
-  position:absolute;left:-6px;top:5px;
+  position:absolute;left:39px;top:5px;
   width:10px;height:10px;border-radius:50%;
   background:var(--surface);border:1.5px solid var(--accent);
   opacity:.55;box-sizing:border-box;
+  z-index:1;
 }
 .tl-pnum{
   font-size:12px;color:var(--accent);
   font-weight:600;margin-bottom:3px;opacity:.7;
   font-family:var(--en);
-  margin-left:18px;
+  margin-left:60px;
 }
 .tl-pbody{
   font-size:15px;line-height:1.7;color:var(--text-secondary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:8px 11px;
-  margin-left:18px;
+  margin-left:60px;
 }
 
 /* 章内小标题节点（≤12 字非编号行） */
 .tl-phead{
   font-size:13px;font-weight:700;color:var(--accent);
   line-height:1.5;padding:2px 0;
-  margin-left:18px;
+  margin-left:60px;
 }
 .tl-para.tl-hd{margin-top:12px;}
 .tl-para.tl-hd:first-child{margin-top:6px;}
@@ -2566,7 +2567,7 @@ function openTimeline(id){
           </div>`;
         }).join('');
       }
-      return `<div class="tl-item">
+      return `<div class="tl-item${inner.includes('tl-para')?' has-paras':''}">
         <div class="tl-dot"></div>
         <div class="tl-ch">${esc(c.title)}</div>
         ${inner}
