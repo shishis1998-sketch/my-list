@@ -723,15 +723,15 @@ tr:hover .acts{opacity:1;}
   font-family:var(--en);
 }
 .tl-pbody{
-  font-size:13px;line-height:1.7;color:var(--text-secondary);
+  font-size:14px;line-height:1.7;color:var(--text-secondary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:8px 11px;
 }
 
-/* 章内小标题节点（≤20 字非编号行） */
+/* 章内小标题节点（≤12 字非编号行） */
 .tl-phead{
-  font-size:13px;font-weight:600;color:var(--accent);
+  font-size:13px;font-weight:700;color:var(--accent);
   line-height:1.5;padding:2px 0;
 }
 .tl-para.tl-hd{margin-top:12px;}
@@ -2500,7 +2500,7 @@ function parseChapters(text){
 // 小标题：非编号短行（≤20 字）；前言段：非编号长行（>20 字）
 // 注意：每行独立成块，编号段不吸收后续行，避免吞掉小标题
 const TL_PARA_RE=/^\s*(\d+)\.\s*/;
-const TL_HEADING_MAX=20;
+const TL_HEADING_MAX=12;
 function parseParagraphs(content){
   if(!content) return [];
   const lines=content.split('\n');
