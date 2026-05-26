@@ -676,13 +676,6 @@ tr:hover .acts{opacity:1;}
 }
 .tl-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
 .tl-ch{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:6px;line-height:1.4;margin-left:28px;}
-.tl-text{
-  font-size:15px;line-height:1.7;color:var(--text-secondary);
-  white-space:pre-wrap;background:var(--bg);
-  border:1px solid var(--border-soft);border-radius:var(--r);
-  padding:10px 12px;
-  margin-left:28px;
-}
 .tl-nochap{
   font-size:13px;color:var(--text-muted);background:var(--bg);
   border-radius:var(--r);padding:14px;line-height:1.6;text-align:center;
@@ -774,9 +767,9 @@ tr:hover .acts{opacity:1;}
 /* 收集卡片走块级富文本：取消 pre-wrap（块自己处理换行） */
 .note-card.collect .note-preview{white-space:normal;}
 /* 时间线段落里若有富文本块（<p>/<h*>/<ul>）：取消容器的 pre-wrap */
-.tl-pbody.has-rt,.tl-text.has-rt{white-space:normal;}
-.tl-pbody .rt-p,.tl-text .rt-p{margin:0 0 4px 0;}
-.tl-pbody .rt-p:last-child,.tl-text .rt-p:last-child{margin-bottom:0;}
+.tl-pbody.has-rt{white-space:normal;}
+.tl-pbody .rt-p{margin:0 0 4px 0;}
+.tl-pbody .rt-p:last-child{margin-bottom:0;}
 
 /* 读书笔记卡片预览：按段落分行（覆盖 .note-preview 的单行截断） */
 .note-preview.book{
@@ -2548,11 +2541,8 @@ function openTimeline(id){
       let inner='';
       if(!c.body){
         inner='';
-      }else if(blocks.length===1 && blocks[0].type==='pre' && !blocks[0].num){
-        // 整章一块纯文本，按老方式渲染
-        inner=`<div class="tl-text has-rt">${renderRich(blocks[0].text)}</div>`;
       }else{
-        // 按 block 类型分别渲染
+        // 统一按 block 类型分别渲染（单段正文也加 .tl-para 空心圆，保持视觉一致）
         inner=blocks.map(b=>{
           if(b.type==='heading'){
             return `<div class="tl-para tl-hd">
