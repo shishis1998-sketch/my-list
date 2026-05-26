@@ -689,17 +689,13 @@ tr:hover .acts{opacity:1;}
 .tl-head:active{background:var(--accent-light);}
 .tl-caret{
   font-size:11px;color:var(--text-muted);
-  transition:transform .2s ease;
   flex-shrink:0;font-family:var(--en);
 }
 .tl-item.open .tl-caret{transform:rotate(90deg);color:var(--accent);}
 
-/* 章节内容折叠容器 */
-.tl-inner{
-  max-height:0;overflow:hidden;
-  transition:max-height .25s ease;
-}
-.tl-item.open .tl-inner{max-height:8000px;}
+/* 章节内容折叠容器（瞬间展开/收起，无动画） */
+.tl-inner{display:none;}
+.tl-item.open .tl-inner{display:block;}
 
 /* 标题栏右上「展开全部/收起全部」按钮 */
 .tl-toolbar{display:flex;align-items:center;gap:6px;flex-shrink:0;}
@@ -2626,14 +2622,12 @@ function closeTimeline(){
   document.getElementById('tlModal').classList.remove('open');
 }
 
-// 手风琴：点章节展开/收起，同时只能开一个
+// 自由模式：点章节切换自身展开/收起，不影响其他章节
 function toggleChapter(idx){
   const items=document.querySelectorAll('#tl-body .tl-item');
   const target=items[idx];
   if(!target) return;
-  const wasOpen=target.classList.contains('open');
-  items.forEach(it=>it.classList.remove('open'));
-  if(!wasOpen) target.classList.add('open');
+  target.classList.toggle('open');
   syncTlAllBtn();
 }
 
