@@ -2797,62 +2797,78 @@ function applyMemoEditorMode(){
 }
 
 // ── 读书笔记正文框自画滚动条 ────────────────────────────────
-let _nfThumbBound=false, _nfHideTimer=null, _nfDragging=false;
+let _nfThumbBound=false, _nfHideTimer=null, _nfDragging=false, _nfOn=false, _nfDS=0, _nfSS=0;
+function _nfEls(){
+  return {
+    wrap:document.getElementById('nf-body-wrap'),
+    ta:document.getElementById('nf-body'),
+    thumb:document.getElementById('nf-thumb')
+  };
+}
+function _nfSync(){
+  const {wrap,ta,thumb}=_nfEls();
+  if(!wrap||!ta||!thumb||!_nfOn) return;
+  const sh=ta.scrollHeight, ch=ta.clientHeight;
+  if(sh<=ch+1){ wrap.classList.remove('has-scroll'); return; }
+  wrap.classList.add('has-scroll');
+  const trackTop=ta.offsetTop+10, trackH=ta.offsetHeight-20;
+  const th=Math.max(36, trackH*ch/sh*0.7);
+  const maxTop=trackH-th;
+  const top=trackTop + (ta.scrollTop/(sh-ch))*maxTop;
+  thumb.style.height=th+'px';
+  thumb.style.top=top+'px';
+}
+function _nfFlash(){
+  const {wrap}=_nfEls();
+  if(!wrap||!_nfOn||!wrap.classList.contains('has-scroll')) return;
+  wrap.classList.add('scrolling');
+  clearTimeout(_nfHideTimer);
+  _nfHideTimer=setTimeout(function(){ if(!_nfDragging) wrap.classList.remove('scrolling'); },1000);
+}
+function _nfDown(e){
+  if(!_nfOn) return;
+  const {ta}=_nfEls();
+  _nfDragging=true;
+  const {wrap}=_nfEls(); wrap.classList.add('scrolling'); clearTimeout(_nfHideTimer);
+  _nfDS=(e.touches?e.touches[0].clientY:e.clientY);
+  _nfSS=ta.scrollTop; e.preventDefault();
+}
+function _nfMove(e){
+  if(!_nfDragging) return;
+  const {ta}=_nfEls();
+  const y=(e.touches?e.touches[0].clientY:e.clientY);
+  const sh=ta.scrollHeight, ch=ta.clientHeight;
+  const trackH=ta.offsetHeight-20;
+  const th=Math.max(36, trackH*ch/sh*0.7);
+  const maxTop=trackH-th;
+  if(maxTop>0) ta.scrollTop=_nfSS+(y-_nfDS)*((sh-ch)/maxTop);
+  e.preventDefault();
+}
+function _nfUp(){ if(_nfDragging){ _nfDragging=false; _nfFlash(); } }
+function _nfBind(){
+  if(_nfThumbBound) return;
+  const {ta,thumb}=_nfEls();
+  if(!ta||!thumb) return;
+  ta.addEventListener('scroll',function(){_nfSync();_nfFlash();});
+  ta.addEventListener('input',_nfSync);
+  thumb.addEventListener('touchstart',_nfDown,{passive:false});
+  thumb.addEventListener('touchmove',_nfMove,{passive:false});
+  thumb.addEventListener('touchend',_nfUp);
+  thumb.addEventListener('mousedown',_nfDown);
+  window.addEventListener('mousemove',_nfMove);
+  window.addEventListener('mouseup',_nfUp);
+  window.addEventListener('resize',_nfSync);
+  _nfThumbBound=true;
+}
 function setupNfThumb(on){
-  const wrap=document.getElementById('nf-body-wrap');
-  const ta=document.getElementById('nf-body');
-  const thumb=document.getElementById('nf-thumb');
-  if(!wrap||!ta||!thumb) return;
+  const {wrap,thumb}=_nfEls();
+  if(!wrap||!thumb) return;
+  _nfOn=!!on;
   if(!on){ thumb.style.display='none'; wrap.classList.remove('has-scroll','scrolling'); return; }
   thumb.style.display='';
-
-  const MIN=36;
-  function sync(){
-    const sh=ta.scrollHeight, ch=ta.clientHeight;
-    if(sh<=ch+1){ wrap.classList.remove('has-scroll'); return; }
-    wrap.classList.add('has-scroll');
-    const trackTop=ta.offsetTop+10, trackH=ta.offsetHeight-20;
-    const th=Math.max(MIN, trackH*ch/sh*0.7);
-    const maxTop=trackH-th;
-    const top=trackTop + (ta.scrollTop/(sh-ch))*maxTop;
-    thumb.style.height=th+'px';
-    thumb.style.top=top+'px';
-  }
-  function flash(){
-    if(!wrap.classList.contains('has-scroll')) return;
-    wrap.classList.add('scrolling');
-    clearTimeout(_nfHideTimer);
-    _nfHideTimer=setTimeout(function(){ if(!_nfDragging) wrap.classList.remove('scrolling'); },1000);
-  }
-  function onDown(e){
-    _nfDragging=true; wrap.classList.add('scrolling'); clearTimeout(_nfHideTimer);
-    thumb._sy=(e.touches?e.touches[0].clientY:e.clientY);
-    thumb._ss=ta.scrollTop; e.preventDefault();
-  }
-  function onMove(e){
-    if(!_nfDragging) return;
-    const y=(e.touches?e.touches[0].clientY:e.clientY);
-    const sh=ta.scrollHeight, ch=ta.clientHeight;
-    const trackH=ta.offsetHeight-20;
-    const th=Math.max(MIN, trackH*ch/sh*0.7);
-    const maxTop=trackH-th;
-    ta.scrollTop=thumb._ss+(y-thumb._sy)*((sh-ch)/maxTop);
-    e.preventDefault();
-  }
-  function onUp(){ if(_nfDragging){ _nfDragging=false; flash(); } }
-
-  if(!_nfThumbBound){
-    ta.addEventListener('scroll',function(){sync();flash();});
-    ta.addEventListener('input',sync);
-    thumb.addEventListener('touchstart',onDown,{passive:false});
-    thumb.addEventListener('touchmove',onMove,{passive:false});
-    thumb.addEventListener('touchend',onUp);
-    thumb.addEventListener('mousedown',onDown);
-    window.addEventListener('mousemove',onMove);
-    window.addEventListener('mouseup',onUp);
-    _nfThumbBound=true;
-  }
-  setTimeout(sync,60);
+  _nfBind();
+  // 弹窗打开有动画/延迟，多跑几次重算高度，确保 has-scroll 正确
+  [80,250,500].forEach(t=>setTimeout(_nfSync,t));
 }
 
 function renderMemoCustomList(){
@@ -2964,6 +2980,7 @@ function openNoteEdit(id){
   applyMemoEditorMode();
   renderNoteChips2();
   document.getElementById('noteModal').classList.add('open');
+  setTimeout(()=>setupNfThumb(document.getElementById('nf-sub').value==='读书笔记'),120);
 }
 
 function openNoteNew(){
