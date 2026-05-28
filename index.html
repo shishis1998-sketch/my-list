@@ -849,6 +849,13 @@ tr:hover .acts{opacity:1;}
 .fg textarea.note-body{min-height:180px;font-family:var(--zh);line-height:1.65;}
 /* 读书笔记：固定高度，框内滚动 */
 .fg textarea.note-body.is-book{min-height:42vh;height:42vh;max-height:42vh;resize:none;overflow-y:auto;}
+/* 读书笔记正文框：自画滚动条（系统细条手机端无视宽度，故自己画一条墨绿滑块，滚动时淡入停手淡出） */
+.nf-body-wrap{position:relative;}
+.nf-body-wrap textarea.is-book{overflow-y:scroll;scrollbar-width:none;-ms-overflow-style:none;padding-right:22px;}
+.nf-body-wrap textarea.is-book::-webkit-scrollbar{display:none;}
+.nf-thumb{position:absolute;right:5px;width:12px;border-radius:6px;background:rgba(43,77,63,0.14);touch-action:none;opacity:0;transition:opacity .35s;display:none;z-index:2;}
+.nf-body-wrap.has-scroll.scrolling .nf-thumb{opacity:1;}
+.nf-thumb:active{background:rgba(43,77,63,0.30);}
 
 /* 笔记子分类管理弹窗里的列表（复用 .cml/.cmi 但去掉颜色和emoji） */
 .cmi-note{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
@@ -1316,7 +1323,10 @@ body.modal-open{
         <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
         <span class="fmt-hint">选中文字后点按钮加格式</span>
       </div>
-      <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
+      <div class="nf-body-wrap" id="nf-body-wrap">
+        <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
+        <div class="nf-thumb" id="nf-thumb"></div>
+      </div>
     </div>
     <!-- 备忘子分类专用：账号 / 密码 / 备注 / 自定义字段 -->
     <div id="memo-fields-group" style="display:none">
@@ -2783,6 +2793,66 @@ function applyMemoEditorMode(){
   document.getElementById('memo-local-group').style.display=isMemo?'':'none';
   const ta=document.getElementById('nf-body');
   ta.classList.toggle('is-book',isBook);
+  setupNfThumb(isBook);
+}
+
+// ── 读书笔记正文框自画滚动条 ────────────────────────────────
+let _nfThumbBound=false, _nfHideTimer=null, _nfDragging=false;
+function setupNfThumb(on){
+  const wrap=document.getElementById('nf-body-wrap');
+  const ta=document.getElementById('nf-body');
+  const thumb=document.getElementById('nf-thumb');
+  if(!wrap||!ta||!thumb) return;
+  if(!on){ thumb.style.display='none'; wrap.classList.remove('has-scroll','scrolling'); return; }
+  thumb.style.display='';
+
+  const MIN=36;
+  function sync(){
+    const sh=ta.scrollHeight, ch=ta.clientHeight;
+    if(sh<=ch+1){ wrap.classList.remove('has-scroll'); return; }
+    wrap.classList.add('has-scroll');
+    const trackTop=ta.offsetTop+10, trackH=ta.offsetHeight-20;
+    const th=Math.max(MIN, trackH*ch/sh*0.7);
+    const maxTop=trackH-th;
+    const top=trackTop + (ta.scrollTop/(sh-ch))*maxTop;
+    thumb.style.height=th+'px';
+    thumb.style.top=top+'px';
+  }
+  function flash(){
+    if(!wrap.classList.contains('has-scroll')) return;
+    wrap.classList.add('scrolling');
+    clearTimeout(_nfHideTimer);
+    _nfHideTimer=setTimeout(function(){ if(!_nfDragging) wrap.classList.remove('scrolling'); },1000);
+  }
+  function onDown(e){
+    _nfDragging=true; wrap.classList.add('scrolling'); clearTimeout(_nfHideTimer);
+    thumb._sy=(e.touches?e.touches[0].clientY:e.clientY);
+    thumb._ss=ta.scrollTop; e.preventDefault();
+  }
+  function onMove(e){
+    if(!_nfDragging) return;
+    const y=(e.touches?e.touches[0].clientY:e.clientY);
+    const sh=ta.scrollHeight, ch=ta.clientHeight;
+    const trackH=ta.offsetHeight-20;
+    const th=Math.max(MIN, trackH*ch/sh*0.7);
+    const maxTop=trackH-th;
+    ta.scrollTop=thumb._ss+(y-thumb._sy)*((sh-ch)/maxTop);
+    e.preventDefault();
+  }
+  function onUp(){ if(_nfDragging){ _nfDragging=false; flash(); } }
+
+  if(!_nfThumbBound){
+    ta.addEventListener('scroll',function(){sync();flash();});
+    ta.addEventListener('input',sync);
+    thumb.addEventListener('touchstart',onDown,{passive:false});
+    thumb.addEventListener('touchmove',onMove,{passive:false});
+    thumb.addEventListener('touchend',onUp);
+    thumb.addEventListener('mousedown',onDown);
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onUp);
+    _nfThumbBound=true;
+  }
+  setTimeout(sync,60);
 }
 
 function renderMemoCustomList(){
