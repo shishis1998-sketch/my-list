@@ -853,9 +853,10 @@ tr:hover .acts{opacity:1;}
 .nf-body-wrap{position:relative;}
 .nf-body-wrap textarea.is-book{overflow-y:scroll;scrollbar-width:none;-ms-overflow-style:none;padding-right:22px;}
 .nf-body-wrap textarea.is-book::-webkit-scrollbar{display:none;}
-.nf-thumb{position:absolute;right:5px;width:12px;border-radius:6px;background:rgba(43,77,63,0.14);touch-action:none;opacity:0;transition:opacity .35s;display:none;z-index:2;}
-.nf-body-wrap.has-scroll.scrolling .nf-thumb{opacity:1;}
-.nf-thumb:active{background:rgba(43,77,63,0.30);}
+.nf-thumb{position:absolute;right:0;width:22px;background:transparent;touch-action:none;display:none;z-index:5;cursor:grab;}
+.nf-thumb::before{content:"";position:absolute;right:5px;top:0;width:6px;height:100%;border-radius:3px;background:rgba(43,77,63,0.10);transition:background .3s;}
+.nf-thumb.active::before{background:rgba(43,77,63,0.30);}
+.nf-thumb:active::before{background:rgba(43,77,63,0.38);}
 
 /* 笔记子分类管理弹窗里的列表（复用 .cml/.cmi 但去掉颜色和emoji） */
 .cmi-note{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
@@ -2809,8 +2810,9 @@ function _nfSync(){
   const {wrap,ta,thumb}=_nfEls();
   if(!wrap||!ta||!thumb||!_nfOn) return;
   const sh=ta.scrollHeight, ch=ta.clientHeight;
-  if(sh<=ch+1){ wrap.classList.remove('has-scroll'); return; }
+  if(sh<=ch+4){ thumb.style.display='none'; wrap.classList.remove('has-scroll'); return; }
   wrap.classList.add('has-scroll');
+  thumb.style.display='block';
   const trackTop=ta.offsetTop+10, trackH=ta.offsetHeight-20;
   const th=Math.max(36, trackH*ch/sh*0.7);
   const maxTop=trackH-th;
@@ -2819,17 +2821,17 @@ function _nfSync(){
   thumb.style.top=top+'px';
 }
 function _nfFlash(){
-  const {wrap}=_nfEls();
-  if(!wrap||!_nfOn||!wrap.classList.contains('has-scroll')) return;
-  wrap.classList.add('scrolling');
+  const {thumb}=_nfEls();
+  if(!thumb||!_nfOn||thumb.style.display==='none') return;
+  thumb.classList.add('active');
   clearTimeout(_nfHideTimer);
-  _nfHideTimer=setTimeout(function(){ if(!_nfDragging) wrap.classList.remove('scrolling'); },1000);
+  _nfHideTimer=setTimeout(function(){ if(!_nfDragging) thumb.classList.remove('active'); },1000);
 }
 function _nfDown(e){
   if(!_nfOn) return;
-  const {ta}=_nfEls();
+  const {ta,thumb}=_nfEls();
   _nfDragging=true;
-  const {wrap}=_nfEls(); wrap.classList.add('scrolling'); clearTimeout(_nfHideTimer);
+  thumb.classList.add('active'); clearTimeout(_nfHideTimer);
   _nfDS=(e.touches?e.touches[0].clientY:e.clientY);
   _nfSS=ta.scrollTop; e.preventDefault();
 }
@@ -2864,11 +2866,10 @@ function setupNfThumb(on){
   const {wrap,thumb}=_nfEls();
   if(!wrap||!thumb) return;
   _nfOn=!!on;
-  if(!on){ thumb.style.display='none'; wrap.classList.remove('has-scroll','scrolling'); return; }
-  thumb.style.display='';
+  if(!on){ thumb.style.display='none'; wrap.classList.remove('has-scroll'); return; }
   _nfBind();
-  // 弹窗打开有动画/延迟，多跑几次重算高度，确保 has-scroll 正确
-  [80,250,500].forEach(t=>setTimeout(_nfSync,t));
+  // 弹窗打开有动画/延迟，密集重试重算高度+显隐，确保抓到真实尺寸
+  [60,150,300,500,800,1200].forEach(t=>setTimeout(_nfSync,t));
 }
 
 function renderMemoCustomList(){
