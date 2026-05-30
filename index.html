@@ -7,17 +7,30 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#2B4D3F">
 <title>我的清单</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#F5F3EE;--surface:#FDFCF9;--border:#E2DED6;--border-soft:#EDE9E1;
-  --text-primary:#1A1714;--text-secondary:#6B6560;--text-muted:#9E9891;
-  --accent:#2B4D3F;--accent-light:#E8F0ED;--accent-mid:#4A7B68;
+  /* === 圆润复古风：墨绿+米色，沿用原变量名 === */
+  --bg:#F0EBDF;--surface:#FDFBF4;--border:#D8D0BE;--border-soft:#E5DECF;
+  --text-primary:#23332C;--text-secondary:#5C6B62;--text-muted:#94A096;
+  --accent:#2B4D3F;--accent-light:#E2EDE7;--accent-mid:#4A7B68;
   --danger:#9B2020;--danger-bg:#FCEBEB;--gold:#C49A00;
-  --r:8px;--rlg:12px;--rxl:16px;
+  /* 圆润风新增 */
+  --surface-2:#F6F1E3;          /* 叠放底层衬色 */
+  --gold-soft:#F4E7BE;          /* 浅金填充 */
+  --ink:#2B4D3F;--ink-deep:#1E3830;
+  --round:'Baloo 2','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif; /* 圆胖标题/数字 */
+  --bd:1.5px;                   /* 统一描边粗细 */
+  --pop:none;   /* 去掉叠放投影 */
+  --pop-sm:none;
+  /* 圆角加大 */
+  --r:12px;--rlg:18px;--rxl:24px;
   --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
   --shadowlg:0 4px 20px rgba(0,0,0,.1),0 2px 6px rgba(0,0,0,.05);
   --zh:'Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif;
-  --en:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --en:'Baloo 2','Segoe UI',system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 /* 去掉按钮/链接/可点击元素被点击后残留的蓝色聚焦背景（安卓 Chromium）；
@@ -25,7 +38,13 @@
 button:focus,button:focus-visible,a:focus,a:focus-visible,
 .nitem:focus,.fchip:focus,.scard:focus,
 [onclick]:focus,[role="button"]:focus{outline:none;}
-body{font-family:var(--zh);background:var(--bg);color:var(--text-primary);min-height:100vh;font-size:14px;line-height:1.6;}
+body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:14px;line-height:1.6;
+  background:var(--bg);
+  background-image:
+    radial-gradient(at 15% 5%, rgba(74,123,104,.10), transparent 40%),
+    radial-gradient(at 85% 8%, rgba(196,154,0,.08), transparent 38%),
+    radial-gradient(at 70% 95%, rgba(43,77,63,.08), transparent 42%);
+  background-attachment:fixed;}
 
 /* ===== LAYOUT ===== */
 .app{display:flex;min-height:100vh;}
@@ -393,9 +412,9 @@ tr:hover .acts{opacity:1;}
   table{table-layout:auto;}
 
   tbody tr{
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:var(--rlg);box-shadow:var(--shadow);
-    padding:12px 14px;margin-bottom:10px;
+    background:var(--surface);border:var(--bd) solid var(--ink);
+    border-radius:var(--rlg);box-shadow:var(--pop-sm);
+    padding:13px 15px;margin-bottom:20px;
     display:grid;
     /* 4 列: 封面 / 分类(auto) / 标签(1fr,可挤压) / 右侧(状态+评分,贴右) */
     grid-template-columns:46px auto minmax(0,1fr) auto;
@@ -947,6 +966,172 @@ body.modal-open{
   width:100%;
   overflow:hidden;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   圆润复古风 · 视觉覆盖层（2026-05 合并）
+   只改外观：圆角 / 描边 / 投影 / 圆体字 / 胶囊；不动布局与 JS
+   ═══════════════════════════════════════════════════════════ */
+
+/* —— 圆体字：标题、数字、品牌 —— */
+.logo h1,.vtitle,.snum,.mtitle,.cname,.note-title,.tl-ch,.cal-title{
+  font-family:var(--round);font-weight:700;letter-spacing:.3px;
+}
+.logo h1{font-size:19px;}
+
+/* —— 三角/箭头：强制文字渲染，避免 iOS 变蓝色 emoji —— */
+.tl-caret,.cnote-toggle .arr,.collect-toggle .arr,#tl-allbtn,.tl-allbtn{
+  font-variant-emoji:text;
+}
+
+/* —— 顶栏「添加」改圆胶囊 —— */
+.addbtn{
+  font-family:var(--round);font-weight:700;
+  border:var(--bd) solid var(--ink);border-radius:999px;
+  box-shadow:var(--pop-sm);background:var(--ink);
+}
+.addbtn:hover{background:var(--ink-deep);}
+.addbtn:active{transform:scale(.96);}
+
+/* —— 搜索框圆胶囊 + 描边 —— */
+.sbox input{
+  border:var(--bd) solid var(--ink);border-radius:999px;
+  background:var(--surface);box-shadow:var(--pop-sm);padding-left:38px;
+}
+.sbox input:focus{background:var(--surface);border-color:var(--ink);}
+
+/* —— 排序下拉圆胶囊 —— */
+.ssort{border:var(--bd) solid var(--ink);border-radius:999px;background:var(--surface);font-family:var(--round);font-weight:600;}
+
+/* —— 筛选胶囊：圆 + 描边 + 轻投影 —— */
+.fchip{
+  font-family:var(--round);font-weight:600;
+  border:var(--bd) solid var(--ink);background:var(--surface);color:var(--ink);
+  box-shadow:none;
+}
+.fchip:hover{color:var(--ink);}
+.fchip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.fchip:active{transform:scale(.95);}
+
+/* —— 侧边栏导航项：选中态圆胶囊 —— */
+.nitem{border-radius:999px;font-family:var(--round);}
+.nitem.on{background:var(--ink);color:#fff;}
+.nitem.on .ncnt{background:#fff;color:var(--ink);}
+.ncnt{font-family:var(--round);}
+.sidebar{background:var(--surface);border-right:var(--bd) solid var(--ink);}
+
+/* —— 统计卡：圆角 + 描边（无投影）—— */
+.scard{
+  border:var(--bd) solid var(--ink);border-radius:var(--rlg);
+  background:var(--surface);box-shadow:none;
+}
+.snum{color:var(--ink);}
+
+/* —— 表格容器：圆角 + 描边（电脑端双栏）—— */
+@media(min-width:769px){
+  .twrap{border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
+}
+thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);font-family:var(--round);}
+
+/* —— 分类/状态徽章：圆 + 描边 —— */
+.cbadge{font-family:var(--round);font-weight:700;border:1.5px solid var(--ink);}
+.ctag{font-family:var(--zh);font-weight:600;border:1.5px solid var(--ink);background:var(--surface-2);border-radius:999px;}
+
+/* —— 评分文字用圆体 —— */
+.cscore,.sval{font-family:var(--round);}
+
+/* —— 弹窗：圆角 + 描边（无投影；桌面端；手机端全屏不加）—— */
+@media(min-width:769px){
+  .mbox{
+    border:var(--bd) solid var(--ink);border-radius:var(--rxl);
+    background:var(--surface);box-shadow:none;
+  }
+}
+.mhdr{border-bottom:1.5px solid rgba(43,77,63,.12);}
+.mtitle{color:var(--ink);}
+.mclose{border:var(--bd) solid var(--ink);border-radius:12px;background:var(--surface);box-shadow:none;}
+
+/* —— 表单输入框：圆角 + 描边 —— */
+.fg input[type=text],.fg input[type=number],.fg input[type=month],
+.fg input[type=date],.fg input[type=url],.fg input[type=password],
+.fg select,.fg textarea{
+  border:var(--bd) solid var(--ink);border-radius:12px;background:var(--surface);
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--ink);background:var(--surface);}
+.fg label{font-family:var(--round);font-weight:600;color:var(--ink);}
+
+/* —— 底栏按钮：圆胶囊 + 描边 + 轻投影 —— */
+.btn{
+  font-family:var(--round);font-weight:700;
+  border:var(--bd) solid var(--ink);border-radius:999px;
+  box-shadow:none;
+}
+.btn:active{transform:scale(.96);}
+.btn-p{background:var(--ink);color:#fff;}
+.btn-p:hover{background:var(--ink-deep);}
+.btn-g{background:var(--surface);color:var(--ink);}
+
+/* —— 标签输入框 + 标签胶囊 —— */
+.tiwrap{border:var(--bd) solid var(--ink);border-radius:14px;}
+.tiwrap:focus-within{border-color:var(--ink);}
+.tchip{border-radius:999px;font-family:var(--zh);}
+
+/* —— 星级选择器框 —— */
+.spick{border:var(--bd) solid var(--ink);border-radius:14px;}
+
+/* —— 确认对话框 —— */
+.cfbox{border:var(--bd) solid var(--ink);border-radius:var(--rxl);box-shadow:var(--pop);}
+.cfbox h3{font-family:var(--round);color:var(--ink);}
+
+/* —— 日历弹窗 —— */
+/* —— 日历弹窗（桌面端圆角描边；手机端全屏不加）—— */
+@media(min-width:769px){
+  .cal-modal{border:var(--bd) solid var(--ink);border-radius:var(--rxl);box-shadow:var(--pop);}
+}
+.cal-title{color:var(--ink);}
+.cal-todaybtn{border:var(--bd) solid var(--ink);font-family:var(--round);font-weight:700;}
+
+/* ═══ 笔记模块 ═══ */
+/* 子分类胶囊条 */
+.nfrow .nfchip{
+  font-family:var(--round);font-weight:600;
+  border:var(--bd) solid var(--ink);background:var(--surface);color:var(--ink);
+  box-shadow:none;
+}
+.nfrow .nfchip.on{background:var(--ink);color:#fff;}
+
+/* 笔记卡片：圆角 + 描边（无投影）*/
+.note-card{
+  border:var(--bd) solid var(--ink);border-radius:var(--rlg);
+  background:var(--surface);box-shadow:none;
+}
+.note-card:hover{border-color:var(--ink);background:var(--surface);}
+.note-title{color:var(--ink);}
+.note-date{font-family:var(--round);}
+
+/* 收集卡展开胶囊 / 备注展开胶囊 */
+.collect-toggle,.cnote-toggle{
+  font-family:var(--round);font-weight:700;
+  border:1.5px solid var(--ink);border-radius:999px;background:var(--accent-light);color:var(--ink);
+}
+.note-edit{
+  font-family:var(--round);font-weight:600;
+  border:1.5px solid var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);
+}
+
+/* 时间线：展开全部按钮 + 圆点描边 + 章节标题圆体 */
+.tl-allbtn{
+  font-family:var(--round);font-weight:700;
+  border:1.5px solid var(--ink);border-radius:999px;background:var(--accent-light);color:var(--ink);
+}
+.tl-dot{border-color:var(--ink);background:var(--surface);}
+.tl-pdot{border-color:var(--accent-mid);background:var(--surface);}
+.tl-ch{color:var(--ink);}
+.tl-caret{color:var(--accent-mid);}
+
+/* 备忘卡片 / 锁按钮 / 自定义字段框（若有）—— 圆角描边统一 */
+.memo-card,.scard.memo,.cf-row input,.cf-key,.cf-val{border-radius:10px;}
+/* —— 封面缩略图：圆角 + 描边 —— */
+.cover{border:1.5px solid var(--ink);border-radius:10px;background:var(--gold-soft);}
 
 </style>
 </head>
@@ -2632,7 +2817,7 @@ function openTimeline(id){
         <div class="tl-dot"></div>
         <div class="tl-head" onclick="toggleChapter(${idx})">
           <div class="tl-ch">${esc(c.title)}</div>
-          <span class="tl-caret">▶</span>
+          <span class="tl-caret">&#9656;</span>
         </div>
         <div class="tl-inner">${inner}</div>
       </div>`;
