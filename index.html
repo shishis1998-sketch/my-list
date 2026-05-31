@@ -201,7 +201,8 @@ tr:not(.note-expanded) .cnote-wrap .cnote::after{
 tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
 /* 备注胶囊：复用「收集」胶囊视觉风格 */
 .cnote-toggle{
-  display:inline-flex;align-items:center;gap:3px;
+  display:flex;width:fit-content;margin-left:auto;
+  align-items:center;gap:3px;
   font-size:11px;color:var(--accent-mid);font-weight:600;
   margin-top:6px;padding:3px 10px;border-radius:20px;
   background:var(--accent-light);border:1px solid transparent;
@@ -382,9 +383,9 @@ tr:hover .acts{opacity:1;}
   .sbox{order:3;flex:1 1 100%;}      /* 搜索框换行,占满整行 */
   .sbox input{height:40px;padding:0 12px 0 34px;font-size:14px;box-sizing:border-box;} /* 与排序框/+按钮等高 */
   .sbox svg{top:50%;}
-  .ssort{order:1;flex:1 1 auto;font-size:14px;padding:0 12px;height:40px;line-height:40px;border-radius:var(--r);box-sizing:border-box;}
-  .addbtn{order:2;padding:0;font-size:22px;font-weight:700;width:44px;height:40px;border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:0 0 auto;}
-  .addbtn span.lbl-text{display:none;} /* 手机端只显示 + 图标 */
+  .ssort{order:1;flex:3 1 0;min-width:0;font-size:14px;padding:0 12px;height:40px;line-height:40px;border-radius:var(--r);box-sizing:border-box;}
+  .addbtn{order:2;flex:2 1 0;min-width:0;padding:0 8px;gap:5px;font-size:14px;font-weight:700;height:40px;border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;line-height:1;white-space:nowrap;overflow:hidden;}
+  .addbtn span.lbl-text{display:inline;overflow:hidden;text-overflow:ellipsis;} /* 手机端显示文字 */
 
   /* 筛选条横向滑动,不换行 */
   .frow{
@@ -1991,6 +1992,7 @@ function renderTypeSelect(){
 }
 
 function render(){
+  syncAddBtn();
   // 笔记模式分流
   if(isNoteMode()){ renderNotes(); renderSidebar(); return; }
   const L=filtered();
@@ -2086,6 +2088,21 @@ function filterCat(cat){
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
 }
 
+// 添加按钮文案：跟随当前分类
+function syncAddBtn(){
+  const lbl=document.querySelector('.addbtn .lbl-text');
+  if(!lbl) return;
+  let txt;
+  if(isNoteMode()){
+    txt='添加笔记';
+  }else if(curCat==='all'){
+    txt='添加';
+  }else{
+    txt='添加'+getCat(curCat).name;
+  }
+  lbl.textContent=txt;
+}
+
 // 切换主区域 UI（媒体模式 vs 笔记模式）
 function applyModeUI(){
   const notes=isNoteMode();
@@ -2094,8 +2111,7 @@ function applyModeUI(){
   document.getElementById('twrap').style.display=notes?'none':'';
   document.getElementById('nlist').style.display=notes?'':'none';
   // 添加按钮文字
-  const lbl=document.querySelector('.addbtn .lbl-text');
-  if(lbl) lbl.textContent=notes?'添加笔记':'添加记录';
+  syncAddBtn();
   // 排序下拉切换
   const ssort=document.querySelector('.ssort');
   if(notes){
