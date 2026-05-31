@@ -439,7 +439,7 @@ tr:hover .acts{opacity:1;}
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
   tbody tr td:nth-child(8){display:none;}        /* 观看时间 隐藏 */
   tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态严格贴右 */
-  tbody tr td:nth-child(10){grid-area:acts;justify-self:end;}/* 操作 */
+  tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
   .cover{width:46px;height:62px;border-radius:6px;font-size:20px;}
   .cname{font-size:15px;font-weight:700;}
@@ -451,7 +451,7 @@ tr:hover .acts{opacity:1;}
   .ctag{height:24px;padding:0 12px;font-size:12px;}
 
   /* 操作按钮在手机端始终可见(没有 hover) */
-  .acts{opacity:1;gap:6px;}
+  .acts{opacity:1;gap:6px;justify-content:flex-end;}
   .ibt{padding:8px;}
   .ibt svg{width:16px;height:16px;}
 
