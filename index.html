@@ -2012,8 +2012,9 @@ function render(){
       :`<div class="cover">${cat.emoji||'📌'}</div>`;
 
     // 备注：长内容（>40 字 或 含换行）才显示展开/收起胶囊，默认展开
+    // 「剧集」分类备注一般很短，不显示胶囊，全部直接展开
     const noteRaw=item.note||'';
-    const isLongNote=noteRaw.length>40||noteRaw.includes('\n');
+    const isLongNote=(noteRaw.length>40||noteRaw.includes('\n'))&&cat.name!=='剧集';
     const noteToggle=isLongNote
       ? `<span class="cnote-toggle" onclick="event.stopPropagation();toggleCnoteCard('${item.id}', event)"><span class="arr">▾</span>收起</span>`
       : '';
