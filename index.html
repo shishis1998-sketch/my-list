@@ -634,9 +634,18 @@ tr:hover .acts{opacity:1;}
 
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
+/* 收集卡标题行：加淡分隔线区分标题与正文，按钮垂直居中 */
+.note-card.collect .note-head{align-items:center;padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid var(--border-soft);}
+.note-card.collect .note-head .note-edit,.note-card.collect .note-head .note-act{flex-shrink:0;margin-left:0;}
+.note-card.collect .note-head .note-edit{margin-left:4px;}
 /* 收集卡片专属字号：标题 17 / 正文 16 / 标签 11 */
 .note-card.collect .note-title{font-size:17px;}
 .note-card.collect .note-preview{font-size:16px;}
+/* 收集卡标签统一带边框风格：子分类胶囊也加描边、去灰底 */
+.note-card.collect .note-subcat{
+  background:var(--surface);color:var(--accent);
+  border:1.5px solid var(--ink);font-weight:600;
+}
 .note-card.collect .ctag{font-size:11px;}
 /* 收集卡片专属段距：6px → 12px（让空行段落更宽松）*/
 .note-card.collect .note-preview .rt-p{margin:0 0 12px 0;}
@@ -662,10 +671,10 @@ tr:hover .acts{opacity:1;}
 }
 /* 折叠/展开指示器（小箭头） */
 .collect-toggle{
-  font-size:11px;color:var(--accent-mid);
-  display:inline-flex;align-items:center;gap:3px;
-  margin-right:auto;font-weight:600;
-  user-select:none;
+  font-size:13px;color:var(--accent-mid);
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:22px;border-radius:6px;
+  font-weight:600;user-select:none;flex-shrink:0;
 }
 .collect-toggle .arr{display:inline-block;transition:transform .2s;line-height:1;}
 .note-card.collect.expanded .collect-toggle .arr{transform:rotate(180deg);}
@@ -1109,14 +1118,18 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .note-title{color:var(--ink);}
 .note-date{font-family:var(--round);}
 
-/* 收集卡展开胶囊 / 备注展开胶囊 */
-.collect-toggle,.cnote-toggle{
+/* 收集卡展开箭头 / 备注展开胶囊 */
+.cnote-toggle{
   font-family:var(--round);font-weight:700;
   border:1.5px solid var(--ink);border-radius:999px;background:var(--accent-light);color:var(--ink);
 }
+.collect-toggle{
+  font-family:var(--round);font-weight:700;
+  border:none;background:none;color:var(--accent-mid);
+}
 .note-edit{
   font-family:var(--round);font-weight:600;
-  border:1.5px solid var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);
+  border:none;background:none;color:var(--text-muted);
 }
 
 /* 时间线：展开全部按钮 + 圆点描边 + 章节标题圆体 */
@@ -2652,24 +2665,24 @@ function renderNotes(){
       const fullBody=renderRich(n.body||'');
       const isLong=(n.body||'').length>40||(n.body||'').includes('\n');
       const toggleHtml=isLong
-        ? `<span class="collect-toggle"><span class="arr">▾</span>收起</span>`
+        ? `<span class="collect-toggle" title="展开/收起"><span class="arr">▾</span></span>`
         : '';
       return `<div class="note-card collect expanded" onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
           <div class="note-title${titleCls}">${esc(title)}</div>
           <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
-        </div>
-        <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
-        <div class="note-foot">
-          ${toggleHtml}
-          <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
-          ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
           <button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </button>
           <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
           </button>
+        </div>
+        <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
+        <div class="note-foot">
+          ${toggleHtml}
+          <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
+          ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
         </div>
       </div>`;
     }
@@ -2707,15 +2720,7 @@ function toggleCollectCard(id, ev){
   const card=ev&&ev.currentTarget;
   if(!card) return;
   card.classList.toggle('expanded');
-  // 同步切换胶囊文字「展开 ⇄ 收起」
-  const t=card.querySelector('.collect-toggle');
-  if(t){
-    const expanded=card.classList.contains('expanded');
-    // 用 textContent 安全地改文字，但要保留 .arr 子元素
-    const arr=t.querySelector('.arr');
-    t.textContent=expanded?'收起':'展开';
-    if(arr) t.insertBefore(arr, t.firstChild);
-  }
+  // 箭头方向由 CSS 控制（.expanded .arr 旋转 180°），无需注入文字
 }
 
 // ── 媒体卡片「备注」展开/收起 ─────────────────────────
