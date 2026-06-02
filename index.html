@@ -103,16 +103,26 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .sbox input{
   display:block;width:100%;
   background:var(--bg);border:1px solid var(--border);border-radius:var(--r);
-  padding:8px 12px 8px 34px;
+  padding:8px 36px 8px 34px;
   font-size:13px;font-family:var(--zh);color:var(--text-primary);
   outline:none;transition:border-color .15s;
 }
 .sbox input:focus{border-color:var(--accent-mid);background:var(--surface);}
 .sbox input::placeholder{color:var(--text-muted);}
-.sbox svg{
+.sbox>svg{
   position:absolute;left:10px;top:50%;transform:translateY(-50%);
   color:var(--text-muted);pointer-events:none;flex-shrink:0;
 }
+.sclear{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;border:none;background:none;cursor:pointer;
+  color:var(--text-muted);border-radius:50%;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  -webkit-appearance:none;-webkit-tap-highlight-color:transparent;
+  transition:transform .1s,color .12s;
+}
+.sclear:active{transform:translateY(-50%) scale(.9);color:var(--accent);}
+@media (hover:hover){.sclear:hover{color:var(--accent);}}
 /* sort */
 .ssort{
   flex:0 0 auto;
@@ -381,8 +391,8 @@ tr:hover .acts{opacity:1;}
   }
   .menubtn{display:inline-flex;}
   .sbox{order:3;flex:1 1 100%;}      /* 搜索框换行,占满整行 */
-  .sbox input{height:40px;padding:0 12px 0 34px;font-size:14px;box-sizing:border-box;} /* 与排序框/+按钮等高 */
-  .sbox svg{top:50%;}
+  .sbox input{height:40px;padding:0 38px 0 34px;font-size:14px;box-sizing:border-box;} /* 与排序框/+按钮等高 */
+  .sbox>svg{top:50%;}
   .ssort{order:1;flex:3 1 0;min-width:0;font-size:14px;padding:0 12px;height:40px;line-height:40px;border-radius:var(--r);box-sizing:border-box;}
   .addbtn{order:2;flex:2 1 0;min-width:0;padding:0 8px;gap:5px;font-size:14px;font-weight:700;height:40px;border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;line-height:1;white-space:nowrap;overflow:hidden;}
   .addbtn span.lbl-text{display:inline;overflow:hidden;text-overflow:ellipsis;} /* 手机端显示文字 */
@@ -1221,6 +1231,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <div class="sbox">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" placeholder="搜索名称、作者、标签、备注..." oninput="onSearch(this.value)" autocomplete="off">
+      <button class="sclear" type="button" onclick="clearSearch()" title="清空" aria-label="清空搜索" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
     <select class="ssort" onchange="onSort(this.value)">
       <option value="date-desc">最近添加</option>
@@ -2155,7 +2168,19 @@ function applyModeUI(){
   if(notes){navN.classList.add('expanded','on');nsub.classList.add('open');}
   else{navN.classList.remove('expanded','on');nsub.classList.remove('open');}
 }
-function onSearch(v){curSearch=v;render();}
+function onSearch(v){curSearch=v;syncSearchClear();render();}
+function syncSearchClear(){
+  const btn=document.querySelector('.sclear');
+  if(btn) btn.style.display=curSearch?'inline-flex':'none';
+}
+function clearSearch(){
+  const inp=document.querySelector('.sbox input');
+  if(inp) inp.value='';
+  curSearch='';
+  syncSearchClear();
+  render();
+  if(inp) inp.focus();
+}
 function onSort(v){curSort=v;render();}
 function setStatus(v,el){
   curStatus=v;
