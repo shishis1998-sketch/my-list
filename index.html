@@ -744,9 +744,47 @@ tr:hover .acts{opacity:1;}
 }
 .tl-item.open .tl-caret{transform:rotate(90deg);color:var(--accent);}
 
+/* 章节标题旁编辑铅笔 */
+.tl-edit{
+  flex-shrink:0;background:none;border:none;cursor:pointer;font-size:14px;
+  width:28px;height:28px;border-radius:7px;display:inline-flex;
+  align-items:center;justify-content:center;color:var(--accent-mid);
+  opacity:.7;transition:transform .12s;
+}
+.tl-edit:active{transform:scale(.9);}
+
 /* 章节内容折叠容器（瞬间展开/收起，无动画） */
 .tl-inner{display:none;}
 .tl-item.open .tl-inner{display:block;}
+
+/* 时间线章节编辑弹窗 */
+#tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
+#tlEditModal .mhdr{flex:0 0 auto;margin:0;padding:18px 24px 14px;background:var(--surface);}
+#tlEditModal .tle-body{flex:1 1 auto;overflow-y:auto;padding:6px 24px 0;}
+.tle-ta{
+  width:100%;border:1.5px solid var(--border);border-radius:var(--r);
+  background:var(--surface);color:var(--text-primary);font-family:var(--zh);
+  font-size:16px;line-height:1.7;padding:12px 14px;resize:none;height:46vh;outline:none;
+}
+.tle-ta:focus{border-color:var(--accent-mid);}
+.tle-hint{font-size:12px;color:var(--text-muted);margin:8px 2px 0;line-height:1.6;}
+.tle-ftr{
+  flex:0 0 auto;display:flex;gap:10px;padding:14px 24px;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+}
+.tle-btn{
+  flex:1;border:none;border-radius:var(--rlg);font-size:15px;font-family:var(--zh);
+  font-weight:600;padding:13px 0;cursor:pointer;transition:transform .12s;
+}
+.tle-btn:active{transform:scale(.96);}
+.tle-save{background:var(--accent);color:#fff;}
+.tle-cancel{background:var(--accent-light);color:var(--accent);}
+@media(max-width:768px){
+  #tlEditModal .mhdr{padding:14px 16px 12px;}
+  #tlEditModal .tle-body{padding:6px 16px 0;}
+  .tle-ftr{padding:14px 16px;padding-bottom:calc(14px + env(safe-area-inset-bottom));}
+  .tle-ta{height:44vh;}
+}
 
 /* 标题栏右上「展开全部/收起全部」按钮 */
 .tl-toolbar{display:flex;align-items:center;gap:6px;flex-shrink:0;}
@@ -1608,6 +1646,27 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       </div>
     </div>
     <div id="tl-body"></div>
+  </div>
+</div>
+
+<!-- ===== 时间线章节编辑弹窗 ===== -->
+<div class="moverlay" id="tlEditModal" onclick="if(event.target===this)closeTlEdit()">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div style="flex:1;min-width:0">
+        <div class="mtitle" id="tle-title">编辑章节</div>
+        <div class="tl-sub">直接改这一章，含「第X章」标题和编号</div>
+      </div>
+      <button class="mclose" onclick="closeTlEdit()">✕</button>
+    </div>
+    <div class="tle-body">
+      <textarea class="tle-ta" id="tle-ta" placeholder="章节内容…"></textarea>
+      <div class="tle-hint">提示：保留「第X章」这一行，时间线才识别为章节；1. 2. 开头自动变编号段落。</div>
+    </div>
+    <div class="tle-ftr">
+      <button class="tle-btn tle-cancel" onclick="closeTlEdit()">取消</button>
+      <button class="tle-btn tle-save" onclick="saveTlEdit()">保存</button>
+    </div>
   </div>
 </div>
 
@@ -2786,7 +2845,8 @@ function parseChapters(text){
     const end=i+1<matches.length?matches[i+1].index:text.length;
     const title=m[0].replace(/^#{0,3}\s*/,'').trim();
     const body=text.slice(start,end).trim();
-    chs.push({title,body});
+    // chStart/chEnd：本章原文（含「第X章」标题行）在 body 中的字符区间，供精准替换
+    chs.push({title,body,chStart:m.index,chEnd:end,raw:text.slice(m.index,end)});
   }
   return chs;
 }
@@ -2817,7 +2877,18 @@ function parseParagraphs(content){
   return blocks;
 }
 
+let tlCurId=null;  // 当前时间线弹窗对应的笔记 id（供保存后重渲染）
+
 function openTimeline(id){
+  const n=(notes||[]).find(x=>x.id===id);
+  if(!n) return;
+  tlCurId=id;
+  renderTimelineBody(id);
+  document.getElementById('tlModal').classList.add('open');
+}
+
+// 渲染时间线主体（不开关弹窗，可重复调用）
+function renderTimelineBody(id){
   const n=(notes||[]).find(x=>x.id===id);
   if(!n) return;
   const chs=parseChapters(n.body);
@@ -2862,15 +2933,15 @@ function openTimeline(id){
       // 默认全部折叠，加 tl-head 容器（可点击）+ tl-inner 包装内容
       return `<div class="tl-item${hasParas?' has-paras':''}" data-idx="${idx}">
         <div class="tl-dot"></div>
-        <div class="tl-head" onclick="toggleChapter(${idx})">
-          <div class="tl-ch">${esc(c.title)}</div>
-          <span class="tl-caret">&#9656;</span>
+        <div class="tl-head">
+          <div class="tl-ch" onclick="toggleChapter(${idx})">${esc(c.title)}</div>
+          <button class="tl-edit" onclick="event.stopPropagation();openTlEdit('${id}',${idx})" title="编辑本章" type="button">&#9998;</button>
+          <span class="tl-caret" onclick="toggleChapter(${idx})">&#9656;</span>
         </div>
         <div class="tl-inner">${inner}</div>
       </div>`;
     }).join('')+'</div>';
   }
-  document.getElementById('tlModal').classList.add('open');
 }
 
 function closeTimeline(){
@@ -2907,6 +2978,59 @@ function syncTlAllBtn(){
   if(!btn||!items.length) return;
   const allOpen=[...items].every(it=>it.classList.contains('open'));
   btn.textContent=allOpen?'⇆ 收起全部':'⇅ 展开全部';
+}
+
+// ── 时间线章节就地编辑 ──────────────────────────────────────────
+let tlEditId=null, tlEditIdx=null;
+
+// 用 newRaw 替换 body 中第 idx 章的原文区间，保持其它章节与前言不变
+function replaceChapterInBody(body, idx, newRaw){
+  const chs=parseChapters(body);
+  if(!chs[idx]) return body;
+  const c=chs[idx];
+  let before=body.slice(0,c.chStart);
+  let after=body.slice(c.chEnd);
+  let mid=String(newRaw).replace(/\s+$/,'');
+  if(before && !before.endsWith('\n')) before+='\n';
+  if(after && !after.startsWith('\n')) after='\n'+after;
+  return before+mid+after;
+}
+
+function openTlEdit(id, idx){
+  const n=(notes||[]).find(x=>x.id===id);
+  if(!n) return;
+  const chs=parseChapters(n.body);
+  if(!chs[idx]) return;
+  tlEditId=id; tlEditIdx=idx;
+  document.getElementById('tle-title').textContent='编辑：'+chs[idx].title;
+  document.getElementById('tle-ta').value=chs[idx].raw.replace(/\s+$/,'');
+  document.getElementById('tlEditModal').classList.add('open');
+  setTimeout(()=>document.getElementById('tle-ta').focus(),120);
+}
+
+function closeTlEdit(){
+  document.getElementById('tlEditModal').classList.remove('open');
+  tlEditId=null; tlEditIdx=null;
+}
+
+function saveTlEdit(){
+  if(tlEditId==null||tlEditIdx==null){closeTlEdit();return;}
+  const n=(notes||[]).find(x=>x.id===tlEditId);
+  if(!n){closeTlEdit();return;}
+  const newRaw=document.getElementById('tle-ta').value;
+  // 记录当前展开的章节索引（章节数不变时索引一致，可恢复）
+  const openIdxs=[...document.querySelectorAll('#tl-body .tl-item')]
+    .map((it,i)=>it.classList.contains('open')?i:-1).filter(i=>i>=0);
+  n.body=replaceChapterInBody(n.body, tlEditIdx, newRaw);
+  n.updatedAt=Date.now();
+  persistNotes();
+  closeTlEdit();
+  // 就地重渲染时间线，弹窗保持打开
+  renderTimelineBody(tlCurId||tlEditId);
+  const items=document.querySelectorAll('#tl-body .tl-item');
+  openIdxs.forEach(i=>{if(items[i])items[i].classList.add('open');});
+  syncTlAllBtn();
+  toast('已保存');
 }
 
 // ── 备忘子分类专用功能 ─────────────────────────────────────────
