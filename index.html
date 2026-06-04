@@ -651,12 +651,17 @@ tr:hover .acts{opacity:1;}
 /* 收集卡片专属字号：标题 17 / 正文 16 / 标签 11 */
 .note-card.collect .note-title{font-size:17px;}
 .note-card.collect .note-preview{font-size:16px;}
-/* 收集卡标签统一带边框风格：子分类胶囊也加描边、去灰底 */
+/* 收集卡标签统一：墨绿浅底+墨绿字，去描边，尺寸锁死 */
 .note-card.collect .note-subcat{
-  background:var(--surface);color:var(--accent);
-  border:1.5px solid var(--ink);font-weight:600;
+  background:var(--accent-light);color:var(--accent);
+  border:none;font-weight:600;
+  font-size:11px;height:22px;padding:0 12px;
 }
-.note-card.collect .ctag{font-size:11px;background:var(--surface);}
+.note-card.collect .ctag{
+  font-size:11px;height:22px;padding:0 12px;font-weight:600;
+  background:rgba(92,122,153,0.14);color:#5C7A99;
+  border:none;
+}
 /* 收集卡标签区与正文拉开间距 */
 .note-card.collect .note-foot{margin-top:16px;}
 /* 收集卡片专属段距：6px → 12px（让空行段落更宽松）*/
