@@ -370,12 +370,15 @@ tr:hover .acts{opacity:1;}
   /* 侧边栏改成抽屉:默认隐藏在屏幕外,加 .open 滑入 */
   .sidebar{
     position:fixed;top:0;left:0;
-    width:80%;max-width:280px;height:100vh;
+    width:80%;max-width:280px;
+    height:100vh;height:100dvh;
     overflow-y:auto;-webkit-overflow-scrolling:touch;
     padding-bottom:calc(40px + env(safe-area-inset-bottom));
     transform:translateX(-100%);transition:transform .25s ease;
     z-index:50;box-shadow:var(--shadowlg);
   }
+  /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
+  .sidebar .nsec{flex-shrink:0;}
   .sidebar.open{transform:translateX(0);}
 
   /* 主区域占满 (手机端去掉 overflow + 不限高,让 body 自然滚动,topbar 才能粘到视口顶部) */
