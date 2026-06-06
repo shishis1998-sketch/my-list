@@ -2783,6 +2783,28 @@ function renderCalLegend(){
   el.innerHTML=cats.map(c=>`<span class="cal-legitem"><span class="cal-legdot" style="background:${c.color}"></span>${esc(c.name)}</span>`).join('');
 }
 
+function showCalNotePreview(id){
+  const note=notes.find(n=>n.id===id);
+  if(!note)return;
+  const existing=document.getElementById('calNotePreview');
+  if(existing)existing.remove();
+  const bodyHtml=esc(note.body||'').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  const tagsHtml=(note.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
+  const ov=document.createElement('div');
+  ov.id='calNotePreview';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+  ov.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);max-width:500px;width:100%;max-height:82vh;overflow-y:auto;padding:20px 20px 16px;position:relative;box-sizing:border-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border-soft);margin-bottom:14px">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);font-family:var(--round)">${esc(note.title||'')}</div>
+      <button onclick="document.getElementById('calNotePreview').remove()" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--text-muted);line-height:1;padding:0 0 0 14px;flex-shrink:0">×</button>
+    </div>
+    <div style="font-size:15px;color:var(--text-secondary);line-height:1.75;white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>
+    ${tagsHtml?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px">${tagsHtml}</div>`:''}
+  </div>`;
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
 function triggerCalMonthPick(){
   const inp=document.getElementById('calMonthPicker');
   inp.value=`${calYear}-${String(calMonth+1).padStart(2,'0')}`;
@@ -2911,15 +2933,15 @@ function renderCalDetail(){
     const div=document.createElement('div');
     div.className='cal-rec';
     if(r._isNote){
-      // 渲染 **粗体**（先 esc 防 XSS，再替换 **）
-      const previewHtml=esc((r.body||'').replace(/\n/g,' ')).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+      // 渲染 **粗体**（先 esc 防 XSS，再替换 **），保留换行
+      const previewHtml=esc(r.body||'').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
       div.innerHTML=`
         <div class="cal-rec-cover" style="background:var(--accent-light);color:var(--accent);font-size:16px;display:flex;align-items:center;justify-content:center">📝</div>
         <div class="cal-rec-info">
           <div class="cal-rec-name">${esc(r.subCat||'笔记')}</div>
-          <div class="cal-rec-meta" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal">${previewHtml}</div>
+          <div class="cal-rec-meta" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap">${previewHtml}</div>
         </div>`;
-      div.onclick=()=>{closeCalendar();openNoteEdit(r.id);};
+      div.onclick=()=>showCalNotePreview(r.id);
     }else{
       const c=getCat(r.type);
       const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
