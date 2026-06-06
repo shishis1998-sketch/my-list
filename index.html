@@ -2800,6 +2800,15 @@ function renderCal(){
     if(!byDate[item.watchDate])byDate[item.watchDate]=[];
     byDate[item.watchDate].push(item);
   });
+  // 收集笔记：标题为 YYYY/MM/DD 格式的也加入日历
+  const _noteCalRe=/^(\d{4})\/(\d{2})\/(\d{2})$/;
+  notes.forEach(note=>{
+    const m=note.title&&note.title.match(_noteCalRe);
+    if(!m)return;
+    const dk=`${m[1]}-${m[2]}-${m[3]}`;
+    if(!byDate[dk])byDate[dk]=[];
+    byDate[dk].push({_isNote:true,id:note.id,title:note.title,body:note.body||'',subCat:note.subCat||''});
+  });
 
   const now=new Date();
   const todayStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -2844,7 +2853,7 @@ function makeCalCell(day,isOther,dateStr,recs,isToday,isSel){
       recs.forEach(r=>{
         const dot=document.createElement('span');
         dot.className='cal-dot';
-        dot.style.background=getCat(r.type).color;
+        dot.style.background=r._isNote?'var(--accent)':getCat(r.type).color;
         badges.appendChild(dot);
       });
     }else{
@@ -2873,7 +2882,12 @@ function renderCalDetail(){
   hint.style.display='none';content.style.display='block';
 
   const [_,m,d]=calSelDate.split('-');
-  const recs=data.filter(r=>r.watchDate===calSelDate);
+  const mediaRecs=data.filter(r=>r.watchDate===calSelDate);
+  const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
+  const [cy,cm,cd]=calSelDate.split('-');
+  const titleDate=`${cy}/${cm}/${cd}`;
+  const noteRecs=notes.filter(n=>n.title===titleDate).map(n=>({_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||''}));
+  const recs=[...mediaRecs,...noteRecs];
   document.getElementById('calDetailTitle').textContent=`${parseInt(m)} 月 ${parseInt(d)} 日`;
   document.getElementById('calDetailCount').textContent=recs.length?`· ${recs.length} 条记录`:'';
 
@@ -2881,18 +2895,27 @@ function renderCalDetail(){
   listEl.innerHTML='';
   if(!recs.length){listEl.innerHTML='<div class="cal-empty">这一天没有记录</div>';return;}
   recs.forEach(r=>{
-    const c=getCat(r.type);
-    const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
     const div=document.createElement('div');
     div.className='cal-rec';
-    div.innerHTML=`
-      <div class="cal-rec-cover">${coverH}</div>
-      <div class="cal-rec-info">
-        <div class="cal-rec-name">${esc(r.name)}</div>
-        <div class="cal-rec-meta">${esc(c.name)}${r.year?' · '+r.year:''}${r.creator?' · '+esc(r.creator):''}${r.score?' · <span class="cal-rec-score">'+r.score+'/5</span>':''}</div>
-      </div>`;
-    // 点详情条目 → 关闭日历 → 打开编辑
-    div.onclick=()=>{closeCalendar();openEdit(r.id);};
+    if(r._isNote){
+      div.innerHTML=`
+        <div class="cal-rec-cover" style="background:var(--accent-light);color:var(--accent);font-size:16px;display:flex;align-items:center;justify-content:center">📝</div>
+        <div class="cal-rec-info">
+          <div class="cal-rec-name">${esc(r.subCat||'笔记')}</div>
+          <div class="cal-rec-meta">${esc((r.body||'').replace(/\n/g,' ').slice(0,60))}</div>
+        </div>`;
+      div.onclick=()=>{closeCalendar();openNoteEdit(r.id);};
+    }else{
+      const c=getCat(r.type);
+      const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
+      div.innerHTML=`
+        <div class="cal-rec-cover">${coverH}</div>
+        <div class="cal-rec-info">
+          <div class="cal-rec-name">${esc(r.name)}</div>
+          <div class="cal-rec-meta">${esc(c.name)}${r.year?' · '+r.year:''}${r.creator?' · '+esc(r.creator):''}${r.score?' · <span class="cal-rec-score">'+r.score+'/5</span>':''}</div>
+        </div>`;
+      div.onclick=()=>{closeCalendar();openEdit(r.id);};
+    }
     listEl.appendChild(div);
   });
 }
