@@ -529,8 +529,8 @@ tr:hover .acts{opacity:1;}
   .topbar{display:none;}
   /* 内容不被底部栏遮挡：操作行(~54)+tab行(~62)+安全区 */
   body{padding-bottom:calc(124px + env(safe-area-inset-bottom));}
-  /* 筛选条贴顶（顶部唯一固定的就是它）*/
-  .frow{position:sticky;top:0;z-index:30;}
+  /* 筛选条贴顶（媒体模式 .frow / 笔记模式 .nfrow）*/
+  .frow,.nfrow{position:sticky;top:0;z-index:30;}
 
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
@@ -2357,7 +2357,7 @@ function applyModeUI(){
   if(notes){navN.classList.add('expanded','on');nsub.classList.add('open');}
   else{navN.classList.remove('expanded','on');nsub.classList.remove('open');}
 }
-function onSearch(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();}
+function onSearch(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
 function syncSearchClear(){
   const btn=document.querySelector('.sclear');
   if(btn) btn.style.display=curSearch?'inline-flex':'none';
@@ -2380,7 +2380,16 @@ function clearSearch(){
   if(inp) inp.focus();
 }
 // 底部栏搜索
-function onSearchBB(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();}
+function onSearchBB(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
+// 搜索后把结果滚动到可见区顶部（手机端 body 滚动；桌面端 .content 滚动）
+function scrollResultsTop(){
+  if(window.matchMedia('(max-width: 768px)').matches){
+    window.scrollTo({top:0,behavior:'auto'});
+  }else{
+    const c=document.querySelector('.content');
+    if(c) c.scrollTop=0;
+  }
+}
 function clearSearchBB(){
   curSearch='';
   syncSearchInputs('');
