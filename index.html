@@ -802,8 +802,8 @@ tr:hover .acts{opacity:1;}
 .collect-toggle{
   font-size:13px;color:var(--accent-mid);
   display:inline-flex;align-items:center;justify-content:center;
-  width:24px;height:22px;border-radius:0;
-  font-weight:600;user-select:none;flex-shrink:0;
+  padding:0 4px;height:22px;border-radius:0;margin-left:auto;
+  font-weight:600;user-select:none;flex-shrink:0;cursor:pointer;
 }
 .collect-toggle .arr{display:inline-block;transition:transform .2s;line-height:1;}
 .note-card.collect.expanded .collect-toggle .arr{transform:rotate(180deg);}
@@ -1244,7 +1244,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   box-shadow:none;
 }
 .btn:active{transform:scale(.96);}
-.btn-p{background:var(--ink);color:#fff;}
+.btn-p{background:var(--accent);color:#fff;}
 .btn-p:hover{background:var(--ink-deep);}
 .btn-g{background:var(--surface);color:var(--text-primary);}
 
@@ -2988,7 +2988,7 @@ function renderNotes(){
       const fullBody=renderRich(n.body||'');
       const isLong=(n.body||'').length>40||(n.body||'').includes('\n');
       const toggleHtml=isLong
-        ? `<span class="collect-toggle" title="展开/收起"><span class="arr">▾</span></span>`
+        ? `<span class="collect-toggle" title="展开/收起">收起</span>`
         : '';
       return `<div class="note-card collect expanded" onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
@@ -2999,9 +2999,9 @@ function renderNotes(){
         </div>
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
         <div class="note-foot">
-          ${toggleHtml}
           <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
           ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
+          ${toggleHtml}
         </div>
       </div>`;
     }
@@ -3037,7 +3037,9 @@ function toggleCollectCard(id, ev){
   const card=ev&&ev.currentTarget;
   if(!card) return;
   card.classList.toggle('expanded');
-  // 箭头方向由 CSS 控制（.expanded .arr 旋转 180°），无需注入文字
+  // 同步展开/收起文字
+  const tg=card.querySelector('.collect-toggle');
+  if(tg) tg.textContent=card.classList.contains('expanded')?'收起':'展开';
 }
 
 // ── 媒体卡片「备注」展开/收起 ─────────────────────────
