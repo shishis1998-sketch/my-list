@@ -1187,7 +1187,7 @@ body.modal-open{
   box-shadow:none;
 }
 .fchip:hover{color:var(--text-primary);}
-.fchip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.fchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .fchip:active{transform:scale(.95);}
 
 /* —— 侧边栏导航项：选中态（极简：淡墨绿点缀，直角）—— */
@@ -1212,7 +1212,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 
 /* —— 分类/状态徽章：圆 + 描边 —— */
 .cbadge{font-family:var(--round);font-weight:700;border:1.5px solid var(--ink);}
-.ctag{font-family:var(--zh);font-weight:600;border:1.5px solid var(--ink);background:var(--surface-2);border-radius:0;}
+.ctag{font-family:var(--zh);font-weight:600;border:none;background:var(--surface-2);border-radius:0;}
 
 /* —— 评分文字用圆体 —— */
 .cscore,.sval{font-family:var(--round);}
@@ -2290,7 +2290,7 @@ function render(){
       <td>${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:12px;color:var(--text-muted)">${item.year||'—'}</td>
       <td style="font-family:var(--en);font-size:12px;color:var(--accent-mid);font-weight:600">${fmtWatch(item.watchDate)}</td>
-      <td><span style="background:${st.bg};color:${st.c};padding:3px 8px;border-radius:0;font-size:11px;font-weight:700">${st.lbl}</span></td>
+      <td><span style="color:${st.c};font-size:11px;font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
         <button class="ibt" onclick="openEdit('${item.id}')" title="编辑">编辑</button>
         <button class="ibt del" onclick="askDel('${item.id}')" title="删除">删除</button>
