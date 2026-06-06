@@ -2780,7 +2780,13 @@ function calToday(){
 
 function renderCalLegend(){
   const el=document.getElementById('calLegend');
-  el.innerHTML=cats.map(c=>`<span class="cal-legitem"><span class="cal-legdot" style="background:${c.color}"></span>${esc(c.name)}</span>`).join('');
+  const items=[
+    {name:'媒体',color:'#6B6B6B'},
+    {name:'收集',color:'#2B4D3F'},
+    {name:'读书笔记',color:'#8B4513'},
+    {name:'笔记',color:'#1A5F7A'},
+  ];
+  el.innerHTML=items.map(i=>`<span class="cal-legitem"><span class="cal-legdot" style="background:${i.color}"></span>${esc(i.name)}</span>`).join('');
 }
 
 function showCalNotePreview(id){
