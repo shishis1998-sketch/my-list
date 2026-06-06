@@ -5,32 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#2B4D3F">
+<meta name="theme-color" content="#F7F7F5">
 <title>我的清单</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* === 圆润复古风：墨绿+米色，沿用原变量名 === */
-  --bg:#F0EBDF;--surface:#FDFBF4;--border:#D8D0BE;--border-soft:#E5DECF;
-  --text-primary:#23332C;--text-secondary:#5C6B62;--text-muted:#94A096;
-  --accent:#2B4D3F;--accent-light:#E2EDE7;--accent-mid:#4A7B68;
-  --danger:#9B2020;--danger-bg:#FCEBEB;--gold:#C49A00;
-  /* 圆润风新增 */
-  --surface-2:#F6F1E3;          /* 叠放底层衬色 */
-  --gold-soft:#F4E7BE;          /* 浅金填充 */
-  --ink:#2B4D3F;--ink-deep:#1E3830;
-  --round:'Baloo 2','Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif; /* 圆胖标题/数字 */
-  --bd:1.5px;                   /* 统一描边粗细 */
-  --pop:none;   /* 去掉叠放投影 */
+  /* === 极简风：黑灰白底 + 一点墨绿点缀 === */
+  --bg:#F7F7F5;--surface:#FFFFFF;--border:#ECECEA;--border-soft:#F2F2F0;
+  --text-primary:#1A1A1A;--text-secondary:#6B6B6B;--text-muted:#9B9B9B;
+  --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-mid:#4A7B68;
+  --danger:#9B2020;--danger-bg:#FBEDED;--gold:#6B6B6B;
+  /* 极简风：次级浅灰块代替米色衬底 */
+  --surface-2:#F2F2F0;
+  --gold-soft:#EDEDEB;
+  --ink:#E4E4E2;--ink-deep:#1A1A1A;          /* ink 由墨绿描边改为极浅灰，几乎无边 */
+  --round:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; /* 标题/数字：系统字 */
+  --bd:1px;                     /* 描边粗细减细 */
+  --pop:none;
   --pop-sm:none;
-  /* 圆角加大 */
-  --r:12px;--rlg:18px;--rxl:24px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shadowlg:0 4px 20px rgba(0,0,0,.1),0 2px 6px rgba(0,0,0,.05);
-  --zh:'Microsoft YaHei','PingFang SC','Hiragino Sans GB',sans-serif;
-  --en:'Baloo 2','Segoe UI',system-ui,-apple-system,sans-serif;
+  /* 圆角全部归零（直角） */
+  --r:0px;--rlg:0px;--rxl:0px;
+  --shadow:none;
+  --shadowlg:none;
+  --zh:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  --en:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 /* 去掉按钮/链接/可点击元素被点击后残留的蓝色聚焦背景（安卓 Chromium）；
@@ -39,12 +36,7 @@ button:focus,button:focus-visible,a:focus,a:focus-visible,
 .nitem:focus,.fchip:focus,.scard:focus,
 [onclick]:focus,[role="button"]:focus{outline:none;}
 body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:14px;line-height:1.6;
-  background:var(--bg);
-  background-image:
-    radial-gradient(at 15% 5%, rgba(74,123,104,.10), transparent 40%),
-    radial-gradient(at 85% 8%, rgba(196,154,0,.08), transparent 38%),
-    radial-gradient(at 70% 95%, rgba(43,77,63,.08), transparent 42%);
-  background-attachment:fixed;}
+  background:var(--bg);}
 
 /* ===== LAYOUT ===== */
 .app{display:flex;min-height:100vh;}
@@ -234,7 +226,7 @@ tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 
 .acts{display:flex;gap:3px;opacity:0;transition:opacity .15s;}
 tr:hover .acts{opacity:1;}
-.ibt{background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;color:var(--text-muted);transition:all .1s;display:flex;align-items:center;}
+.ibt{background:none;border:none;cursor:pointer;padding:5px 10px;border-radius:5px;color:var(--text-muted);transition:all .1s;display:flex;align-items:center;font-size:13px;font-family:var(--zh);}
 .ibt:hover{background:var(--border);color:var(--text-primary);}
 .ibt.del:hover{background:var(--danger-bg);color:var(--danger);}
 
@@ -328,8 +320,7 @@ tr:hover .acts{opacity:1;}
 .cmi{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
 .cm-emoji-btn{width:32px;height:32px;font-size:20px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;padding:0;}
 .cm-emoji-btn:hover{border-color:var(--accent-mid);background:var(--accent-light);}
-.cminput{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:var(--zh);color:var(--text-primary);padding:0;}
-.cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:3px;border-radius:4px;display:flex;transition:all .1s;}
+.cminput{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:var(--zh);color:var(--text-primary);padding:0;}.cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:3px 9px;border-radius:4px;display:flex;transition:all .1s;font-size:13px;font-family:var(--zh);}
 .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
 /* Emoji 选择面板 */
 .emoji-panel{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);box-shadow:0 4px 20px rgba(0,0,0,.1);padding:10px;display:none;z-index:120;width:280px;}
@@ -432,9 +423,9 @@ tr:hover .acts{opacity:1;}
   table{table-layout:auto;}
 
   tbody tr{
-    background:var(--surface);border:var(--bd) solid var(--ink);
+    background:var(--surface);border:none;
     border-radius:var(--rlg);box-shadow:var(--pop-sm);
-    padding:13px 15px;margin-bottom:20px;
+    padding:13px 15px;margin-bottom:8px;
     display:grid;
     /* 4 列: 封面 / 分类(auto) / 标签(1fr,可挤压) / 右侧(状态+评分,贴右) */
     grid-template-columns:46px auto minmax(0,1fr) auto;
@@ -451,7 +442,7 @@ tr:hover .acts{opacity:1;}
   /* 按 td 顺序分配到 grid 区域 */
   tbody tr td.c-cover-td{grid-area:cover;padding:0;}
   tbody tr td:nth-child(2){grid-area:name;}      /* 名称+作者 */
-  tbody tr td:nth-child(3){grid-area:note;border-top:1px solid rgba(43,77,63,0.06);padding-top:8px;margin-top:4px;}      /* 备注: 顶部柔和分隔线(主题色 6% 透明度) */
+  tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}      /* 备注: 顶部柔和分隔线(中性浅灰) */
   tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊在 cat 列贴左 */
   tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:4px;align-items:center;align-self:center;justify-self:start;min-width:0;}/* 标签贴左排 */
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
@@ -471,8 +462,7 @@ tr:hover .acts{opacity:1;}
 
   /* 操作按钮在手机端始终可见(没有 hover) */
   .acts{opacity:1;gap:6px;justify-content:flex-end;}
-  .ibt{padding:8px;}
-  .ibt svg{width:16px;height:16px;}
+  .ibt{padding:6px 12px;}
 
   /* 弹窗 - 手机端全屏 */
   .moverlay{padding:0;align-items:stretch;justify-content:stretch;}
@@ -745,9 +735,9 @@ tr:hover .acts{opacity:1;}
   border:1px solid transparent;box-sizing:border-box;
 }
 .note-act{
-  background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;
+  background:none;border:none;cursor:pointer;padding:5px 10px;border-radius:5px;
   color:var(--text-muted);transition:all .1s;display:inline-flex;align-items:center;
-  margin-left:auto;
+  margin-left:auto;font-size:13px;font-family:var(--zh);
 }
 .note-act:hover{background:var(--danger-bg);color:var(--danger);}
 
@@ -809,8 +799,9 @@ tr:hover .acts{opacity:1;}
 
 /* 编辑按钮（✏️）：和删除按钮同款风格 */
 .note-edit{
-  background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;
+  background:none;border:none;cursor:pointer;padding:5px 10px;border-radius:5px;
   color:var(--text-muted);transition:all .1s;display:inline-flex;align-items:center;
+  font-size:13px;font-family:var(--zh);
 }
 .note-edit:hover{background:var(--accent-light);color:var(--accent);}
 
@@ -864,10 +855,10 @@ tr:hover .acts{opacity:1;}
 
 /* 章节标题旁编辑铅笔 */
 .tl-edit{
-  flex-shrink:0;background:none;border:none;cursor:pointer;font-size:14px;
-  width:28px;height:28px;border-radius:7px;display:inline-flex;
+  flex-shrink:0;background:none;border:none;cursor:pointer;font-size:13px;
+  padding:4px 9px;height:28px;border-radius:7px;display:inline-flex;
   align-items:center;justify-content:center;color:var(--accent-mid);
-  opacity:.7;transition:transform .12s;
+  opacity:.7;transition:transform .12s;font-family:var(--zh);
 }
 .tl-edit:active{transform:scale(.9);}
 
@@ -1056,7 +1047,7 @@ tr:hover .acts{opacity:1;}
 /* 笔记子分类管理弹窗里的列表（复用 .cml/.cmi 但去掉颜色和emoji） */
 .cmi-note{display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
 .cmi-note .cminput{flex:1;background:none;border:none;outline:none;font-size:14px;font-family:var(--zh);color:var(--text-primary);padding:0;}
-.cmi-note .cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:3px;border-radius:4px;display:flex;transition:all .1s;}
+.cmi-note .cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:3px 9px;border-radius:4px;display:flex;transition:all .1s;font-size:13px;font-family:var(--zh);}
 .cmi-note .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
 
 /* 手机端笔记适配 */
@@ -1197,14 +1188,14 @@ body.modal-open{
 
 /* —— 统计卡：圆角 + 描边（无投影）—— */
 .scard{
-  border:var(--bd) solid var(--ink);border-radius:var(--rlg);
+  border:none;border-radius:var(--rlg);
   background:var(--surface);box-shadow:none;
 }
 .snum{color:var(--ink);}
 
 /* —— 表格容器：圆角 + 描边（电脑端双栏）—— */
 @media(min-width:769px){
-  .twrap{border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
+  .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
 }
 thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);font-family:var(--round);}
 
@@ -1222,7 +1213,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     background:var(--surface);box-shadow:none;
   }
 }
-.mhdr{border-bottom:1.5px solid rgba(43,77,63,.12);}
+.mhdr{border-bottom:1px solid var(--border);}
 .mtitle{color:var(--ink);}
 .mclose{border:var(--bd) solid var(--ink);border-radius:12px;background:var(--surface);box-shadow:none;}
 
@@ -2290,12 +2281,8 @@ function render(){
       <td style="font-family:var(--en);font-size:12px;color:var(--accent-mid);font-weight:600">${fmtWatch(item.watchDate)}</td>
       <td><span style="background:${st.bg};color:${st.c};padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
-        <button class="ibt" onclick="openEdit('${item.id}')" title="编辑">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-        <button class="ibt del" onclick="askDel('${item.id}')" title="删除">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-        </button>
+        <button class="ibt" onclick="openEdit('${item.id}')" title="编辑">编辑</button>
+        <button class="ibt del" onclick="askDel('${item.id}')" title="删除">删除</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -2643,9 +2630,7 @@ function renderCml(){
       <button type="button" class="cm-emoji-btn" onclick="openEmojiPanel(this,${i})" title="点击修改图标">${c.emoji||'📌'}</button>
       <input type="color" value="${c.color}" onchange="editCats[${i}].color=this.value" style="width:28px;height:28px;padding:1px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--bg);flex-shrink:0">
       <input class="cminput" type="text" value="${esc(c.name)}" oninput="editCats[${i}].name=this.value" placeholder="分类名称">
-      <button class="cmdel" onclick="rmCat(${i})">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-      </button>
+      <button class="cmdel" onclick="rmCat(${i})">删除</button>
     </div>`).join('');
 }
 // 可选 emoji 列表（低饱和、影视书音乐综艺等场景）
@@ -2998,12 +2983,8 @@ function renderNotes(){
         <div class="note-head">
           <div class="note-title${titleCls}">${esc(title)}</div>
           <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
-          <button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </button>
-          <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-          </button>
+          <button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
+          <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>
         </div>
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
         <div class="note-foot">
@@ -3030,9 +3011,7 @@ function renderNotes(){
         <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
         ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
         ${tlBtn}
-        <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-        </button>
+        <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>
       </div>
     </div>`;
   }).join('');
@@ -3178,7 +3157,7 @@ function renderTimelineBody(id){
         <div class="tl-dot"></div>
         <div class="tl-head">
           <div class="tl-ch" onclick="toggleChapter(${idx})">${esc(c.title)}</div>
-          <button class="tl-edit" onclick="event.stopPropagation();openTlEdit('${id}',${idx})" title="编辑本章" type="button">&#9998;</button>
+          <button class="tl-edit" onclick="event.stopPropagation();openTlEdit('${id}',${idx})" title="编辑本章" type="button">编辑</button>
           <span class="tl-caret" onclick="toggleChapter(${idx})">&#9656;</span>
         </div>
         <div class="tl-inner">${inner}</div>
@@ -3357,9 +3336,7 @@ function renderMemoCard(n){
       <button class="memo-lock ${lockCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${lockTitle}" type="button">${lockIcon}</button>
       <div class="memo-title${titleCls}">${esc(title)}</div>
       <div class="memo-date">${fmtNoteDate(n.updatedAt)}</div>
-      <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-      </button>
+      <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
     <div class="memo-fields">${fieldsHtml}</div>
     ${tagsHtml}
@@ -3792,9 +3769,7 @@ function renderNoteSubList(){
   document.getElementById('nsub-list').innerHTML=editNoteSubs.map((s,i)=>`
     <div class="cmi-note">
       <input class="cminput" type="text" value="${esc(s)}" oninput="editNoteSubs[${i}]=this.value" placeholder="子分类名称">
-      <button class="cmdel" onclick="rmNoteSubLocal(${i})">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-      </button>
+      <button class="cmdel" onclick="rmNoteSubLocal(${i})">删除</button>
     </div>`).join('');
 }
 function rmNoteSubLocal(i){editNoteSubs.splice(i,1);renderNoteSubList();}
