@@ -461,7 +461,7 @@ tr:hover .acts{opacity:1;}
   .ctag{height:24px;padding:0 12px;font-size:12px;}
 
   /* 操作按钮在手机端始终可见(没有 hover) */
-  .acts{opacity:1;gap:6px;justify-content:flex-end;}
+  .acts{opacity:1;gap:2px;justify-content:flex-end;}
   .ibt{padding:6px 12px;}
 
   /* 弹窗 - 手机端全屏 */
@@ -725,7 +725,7 @@ tr:hover .acts{opacity:1;}
 .note-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .note-title{flex:1;font-size:15px;font-weight:700;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;}
 .note-title.empty{color:var(--text-muted);font-weight:500;font-style:italic;}
-.note-date{font-size:11px;color:var(--text-muted);flex-shrink:0;font-family:var(--en);}
+.note-date{font-size:13px;color:var(--text-muted);flex-shrink:0;font-family:var(--en);}
 .note-preview{font-size:13px;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px;}
 .note-preview.empty{color:var(--text-muted);font-style:italic;}
 .note-preview .pv-h{font-weight:700;color:var(--text-primary);}
@@ -744,6 +744,9 @@ tr:hover .acts{opacity:1;}
   margin-left:auto;font-size:13px;font-family:var(--zh);
 }
 .note-act:hover{background:var(--danger-bg);color:var(--danger);}
+/* 全局统一：编辑/删除按钮内边距收窄、互相靠近(所有分类卡片) */
+.note-edit,.note-act{padding-left:6px;padding-right:6px;}
+.note-edit + .note-act,.note-act + .note-act{margin-left:2px;}
 
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
@@ -1085,7 +1088,7 @@ tr:hover .acts{opacity:1;}
 .memo-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .memo-title{flex:1;font-size:15px;font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .memo-title.empty{color:var(--text-muted);font-weight:400;font-style:italic;}
-.memo-date{font-size:11px;color:var(--text-muted);flex-shrink:0;font-variant-numeric:tabular-nums;font-family:var(--en);}
+.memo-date{font-size:13px;color:var(--text-muted);flex-shrink:0;font-variant-numeric:tabular-nums;font-family:var(--en);}
 .memo-lock{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:0;cursor:pointer;background:none;border:none;padding:0;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:background .15s,transform .1s,opacity .15s;}
 .memo-lock.locked{color:var(--accent);background:var(--accent-light);}
 .memo-lock.unlocked{color:var(--text-muted);opacity:0.55;}
