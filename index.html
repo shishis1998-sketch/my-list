@@ -689,22 +689,24 @@ tr:hover .acts{opacity:1;}
 
 /* ===== 搜索紧凑模式：只显标题，点标题就地展开 ===== */
 /* 笔记：隐藏正文预览/底部标签，只留标题行；展开(.kw-open)后恢复 */
-.content.search-compact .note-card{cursor:pointer;}
-.content.search-compact .note-card .note-preview,
-.content.search-compact .note-card .note-foot,
-.content.search-compact .note-card .memo-fields,
-.content.search-compact .note-card .memo-extra{display:none;}
-.content.search-compact .note-card.kw-open .note-preview{display:-webkit-box;}
-.content.search-compact .note-card.kw-open .note-foot{display:flex;}
-.content.search-compact .note-card.kw-open .memo-fields{display:block;}
-.content.search-compact .note-card.kw-open .memo-extra{display:revert;}
-/* 标题行加一个小箭头提示可展开（普通/收集笔记 .note-head）*/
-.content.search-compact .note-card .note-head::after{
+/* 注意：收集卡(.collect)有自己的展开/收起系统，完全排除在紧凑模式外，避免规则打架 */
+.content.search-compact .note-card:not(.collect){cursor:pointer;}
+.content.search-compact .note-card:not(.collect) .note-preview,
+.content.search-compact .note-card:not(.collect) .note-foot,
+.content.search-compact .note-card:not(.collect) .memo-fields,
+.content.search-compact .note-card:not(.collect) .memo-extra{display:none;}
+/* 展开后恢复 */
+.content.search-compact .note-card:not(.collect).kw-open .note-preview{display:-webkit-box;}
+.content.search-compact .note-card:not(.collect).kw-open .note-foot{display:flex;}
+.content.search-compact .note-card:not(.collect).kw-open .memo-fields{display:block;}
+.content.search-compact .note-card:not(.collect).kw-open .memo-extra{display:revert;}
+/* 标题行加一个小箭头提示可展开 */
+.content.search-compact .note-card:not(.collect) .note-head::after{
   content:"▸";margin-left:auto;color:var(--text-muted);font-size:13px;
   transition:transform .12s;flex-shrink:0;font-variant-emoji:text;
 }
-.content.search-compact .note-card.kw-open .note-head::after{transform:rotate(90deg);}
-.content.search-compact .note-card .note-head{align-items:center;}
+.content.search-compact .note-card:not(.collect).kw-open .note-head::after{transform:rotate(90deg);}
+.content.search-compact .note-card:not(.collect) .note-head{align-items:center;}
 
 /* 媒体：紧凑时只显封面+名称+状态，隐藏备注/分类/标签/评分/操作 */
 .content.search-compact tbody tr td:nth-child(3),   /* 备注 */
@@ -778,6 +780,8 @@ tr:hover .acts{opacity:1;}
   /* 取消默认 2 行截断，改用容器 max-height 控制 */
   display:block;-webkit-line-clamp:unset;-webkit-box-orient:unset;
   white-space:pre-wrap;
+  overflow-wrap:anywhere;word-break:break-word;  /* 长文本/长串强制换行，绝不横向溢出 */
+  max-width:100%;min-width:0;
   max-height:50px;            /* 折叠时约 2 行（正文 16px × 行高 1.5 ≈ 24px/行）*/
   overflow:hidden;
   position:relative;
@@ -3851,6 +3855,8 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
     // 找到被点的卡片（笔记 .note-card 或 媒体行 tr）
     const card=e.target.closest('.note-card, tr[data-id]');
     if(!card||!content.contains(card)) return;
+    // 收集卡有自己的展开系统，不拦截，让它走 toggleCollectCard
+    if(card.classList.contains('collect')) return;
     card.classList.toggle('kw-open');
     e.stopPropagation();   // 阻断卡片自带 onclick（编辑/详情）
     e.preventDefault();
