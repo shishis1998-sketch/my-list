@@ -2277,7 +2277,7 @@ function render(){
   const contentEl=document.querySelector('.content');
   if(contentEl) contentEl.classList.toggle('search-compact', !!(curSearch&&curSearch.trim()));
   // 笔记模式分流
-  if(isNoteMode()){ renderNotes(); renderSidebar(); return; }
+  if(isNoteMode()){ renderNotes(); renderSidebar(); renderTagFilterRow(); return; }
   const L=filtered();
   const tbody=document.getElementById('tbody');
   const empty=document.getElementById('empty');
@@ -2526,8 +2526,14 @@ function setScore(v,el){
   el.classList.add('on'); render();
 }
 function getAllCurrentTags(){
-  let L=[...data];
-  if(curCat!=='all') L=L.filter(d=>d.type===curCat);
+  let L;
+  if(isNoteMode()){
+    L=notes.slice();
+    if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
+  } else {
+    L=[...data];
+    if(curCat!=='all') L=L.filter(d=>d.type===curCat);
+  }
   const cnt={};
   L.forEach(d=>(d.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;}));
   return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
@@ -3041,6 +3047,7 @@ function nuid(){return 'n_'+Date.now().toString(36)+Math.random().toString(36).s
 function filteredNotes(){
   let L=notes.slice();
   if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
+  if(curTag!=='all') L=L.filter(n=>(n.tags||[]).includes(curTag));
   if(curSearch){
     const q=curSearch.toLowerCase();
     L=L.filter(n=>{
