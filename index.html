@@ -2403,7 +2403,7 @@ function applyModeUI(){
     if(!ssort.dataset.noteMode){
       ssort.dataset.mediaHTML=ssort.innerHTML;
       ssort.dataset.mediaVal=ssort.value;
-      ssort.innerHTML='<option value="n-updated">最近修改</option><option value="n-created">最新创建</option><option value="n-title">标题字母序</option>';
+      ssort.innerHTML='<option value="n-updated">最近修改</option><option value="n-created">最新创建</option><option value="n-title-asc">标题 A→Z</option><option value="n-title-desc">标题 Z→A</option>';
       ssort.value='n-updated';
       ssort.dataset.noteMode='1';
       curSort='n-updated';
@@ -2488,7 +2488,7 @@ const SORT_OPTS_MEDIA=[
   ['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']
 ];
 const SORT_OPTS_NOTE=[
-  ['n-updated','最近修改'],['n-created','最新创建'],['n-title','标题字母序']
+  ['n-updated','最近修改'],['n-created','最新创建'],['n-title-asc','标题 A→Z'],['n-title-desc','标题 Z→A']
 ];
 function openSortSheet(){
   const sheet=document.getElementById('bbSortSheet');
@@ -3065,7 +3065,8 @@ function filteredNotes(){
   }
   if(curSort==='n-updated') L.sort((a,b)=>b.updatedAt-a.updatedAt);
   else if(curSort==='n-created') L.sort((a,b)=>b.createdAt-a.createdAt);
-  else if(curSort==='n-title') L.sort((a,b)=>(a.title||'').localeCompare(b.title||'','zh'));
+  else if(curSort==='n-title-asc') L.sort((a,b)=>(a.title||'').localeCompare(b.title||'','zh'));
+  else if(curSort==='n-title-desc') L.sort((a,b)=>(b.title||'').localeCompare(a.title||'','zh'));
   return L;
 }
 
