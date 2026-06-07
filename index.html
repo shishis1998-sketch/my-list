@@ -559,6 +559,7 @@ tr:hover .acts{opacity:1;}
     font-family:var(--zh);font-weight:700;font-size:14px;white-space:nowrap;max-width:50vw;overflow:hidden;}
   .bb-addbtn span{overflow:hidden;text-overflow:ellipsis;}
   .bb-sortbtn:active,.bb-addbtn:active{transform:scale(.96);}
+  .bb-sortbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 
   .bb-tabs{display:flex;align-items:stretch;}
   .bb-tab{flex:1;background:none;border:none;cursor:pointer;
@@ -1424,6 +1425,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <span class="fchip" onclick="setScore('4',this)">≥4/5</span>
     <span class="fchip" onclick="setScore('3',this)">≥3/5</span>
     <span class="fchip" onclick="setScore('12',this)">≤2/5</span>
+    <div class="fsep" id="ftag-sep" style="display:none"></div>
+    <span class="flbl" id="ftag-lbl" style="display:none">标签</span>
+    <div id="ftag-chips" style="display:contents"></div>
   </div>
 
   <!-- NOTES FILTER ROW (仅笔记模式显示) -->
@@ -1487,6 +1491,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <button class="bb-sortbtn" type="button" onclick="openSortSheet()" title="排序" aria-label="排序">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
     </button>
+    <button class="bb-sortbtn" id="bbTagBtn" type="button" onclick="openTagSheet()" title="标签筛选" aria-label="标签筛选">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+    </button>
     <button class="bb-addbtn" type="button" onclick="openAdd()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span id="bbAddLbl">添加</span>
@@ -1516,6 +1523,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 <!-- 排序选项弹层（底部抽屉式）-->
 <div class="bb-sortsheet" id="bbSortSheet" onclick="if(event.target===this)closeSortSheet()">
   <div class="bb-sortpanel" id="bbSortPanel"></div>
+</div>
+
+<!-- 标签筛选弹层（底部抽屉式）-->
+<div class="bb-sortsheet" id="bbTagSheet" onclick="if(event.target===this)closeTagSheet()">
+  <div class="bb-sortpanel" id="bbTagPanel"></div>
 </div>
 
 <!-- ===== ADD/EDIT MODAL ===== -->
@@ -1885,7 +1897,7 @@ const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:all', curSearch='', curSort='date-desc', curStatus='all', curScore='all';
+let curCat='notes:all', curSearch='', curSort='date-desc', curStatus='all', curScore='all', curTag='all';
 let curNoteSub='all'; // 笔记子分类筛选
 let editId=null, curTags=[], delId=null, editCats=[], starVal=0;
 let editNoteId=null, curNoteTags=[], editNoteSubs=[];
@@ -2187,6 +2199,7 @@ function filtered(){
     if(curScore==='12') L=L.filter(d=>!d.score||d.score<=2);
     else{const m=parseInt(curScore)-.5; L=L.filter(d=>d.score&&d.score>m);}
   }
+  if(curTag!=='all') L=L.filter(d=>(d.tags||[]).includes(curTag));
   if(curSearch){const q=curSearch.toLowerCase();L=L.filter(d=>
     d.name.toLowerCase().includes(q)||(d.creator||'').toLowerCase().includes(q)||
     (d.note||'').toLowerCase().includes(q)||(d.tags||[]).some(t=>t.toLowerCase().includes(q)));
@@ -2313,7 +2326,7 @@ function render(){
     </tr>`;
   }).join('');
 
-  renderStats(); renderSidebar();
+  renderStats(); renderSidebar(); renderTagFilterRow();
   document.getElementById('vtitle').textContent=curCat==='all'?'全部':getCat(curCat).name;
   document.getElementById('vcnt').textContent=L.length+' 条记录';
 }
@@ -2345,6 +2358,7 @@ function isNoteMode(){return typeof curCat==='string'&&curCat.indexOf('notes')==
 // ── Filters ───────────────────────────────────────────────────────
 function filterCat(cat){
   curCat=cat;
+  curTag='all';
   // 解析笔记模式的子分类
   if(isNoteMode()){
     const parts=cat.split(':');
@@ -2510,6 +2524,60 @@ function setScore(v,el){
     if(['全部','5/5','≥4/5','≥3/5','≤2/5'].includes(c.textContent.trim())) c.classList.remove('on');
   });
   el.classList.add('on'); render();
+}
+function getAllCurrentTags(){
+  let L=[...data];
+  if(curCat!=='all') L=L.filter(d=>d.type===curCat);
+  const cnt={};
+  L.forEach(d=>(d.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;}));
+  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+}
+function renderTagFilterRow(){
+  const tags=getAllCurrentTags();
+  const sep=document.getElementById('ftag-sep');
+  const lbl=document.getElementById('ftag-lbl');
+  const chips=document.getElementById('ftag-chips');
+  if(!sep||!lbl||!chips) return;
+  if(!tags.length){
+    sep.style.display='none'; lbl.style.display='none'; chips.innerHTML='';
+    if(curTag!=='all'){ curTag='all'; }
+    return;
+  }
+  sep.style.display=''; lbl.style.display='';
+  chips.innerHTML=['all',...tags].map(t=>{
+    const lbl2=t==='all'?'全部':t;
+    return `<span class="fchip${curTag===t?' on':''}" onclick="setTag('${esc(t).replace(/'/g,"\\'")}')">${esc(lbl2)}</span>`;
+  }).join('');
+  // sync mobile button active state
+  const btn=document.getElementById('bbTagBtn');
+  if(btn) btn.classList.toggle('active', curTag!=='all');
+}
+function setTag(v){
+  curTag=v;
+  render();
+}
+function openTagSheet(){
+  const sheet=document.getElementById('bbTagSheet');
+  const panel=document.getElementById('bbTagPanel');
+  const tags=getAllCurrentTags();
+  if(!tags.length){
+    panel.innerHTML='<div class="bb-sorthd">标签筛选</div><div style="padding:16px 22px;color:var(--text-muted);font-size:14px">当前分类暂无标签</div>';
+    sheet.classList.add('open'); return;
+  }
+  panel.innerHTML='<div class="bb-sorthd">标签筛选</div>'+
+    [['all','全部'],...tags.map(t=>[t,t])].map(([v,lbl])=>
+      `<button type="button" class="bb-sortopt${v===curTag?' on':''}" onclick="pickTag('${esc(v).replace(/'/g,"\\'")}')">`+
+      `${esc(lbl)}<span class="ck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span></button>`
+    ).join('');
+  sheet.classList.add('open');
+}
+function closeTagSheet(){
+  document.getElementById('bbTagSheet').classList.remove('open');
+}
+function pickTag(v){
+  curTag=v;
+  render();
+  closeTagSheet();
 }
 
 // ── Modal ─────────────────────────────────────────────────────────
