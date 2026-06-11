@@ -3473,14 +3473,11 @@ function renderMemoCard(n){
   const lockIcon=n.localOnly?MEMO_ICON.lockClosed:MEMO_ICON.lockOpen;
   const lockTitle=n.localOnly?'仅本机存储':'同步到云';
   const all=memoCollectFields(n);
-  const visible=all.slice(0,MEMO_VISIBLE_FIELDS);
-  const hidden=all.length-visible.length;
   let fieldsHtml='';
   if(!all.length){
     fieldsHtml='<div class="memo-empty-hint">（点击编辑添加内容）</div>';
   }else{
-    fieldsHtml=visible.map(f=>renderMemoFieldRow(n.id,f)).join('');
-    if(hidden>0) fieldsHtml+=`<div class="memo-more">+ ${hidden} 个字段（点击卡片查看）</div>`;
+    fieldsHtml=all.map(f=>renderMemoFieldRow(n.id,f)).join('');
   }
   const tagsHtml=(n.tags&&n.tags.length)
     ? `<div class="note-foot" style="margin-top:8px">${n.tags.slice(0,4).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}</div>`
