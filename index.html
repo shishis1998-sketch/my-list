@@ -3963,31 +3963,6 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   }
 });
 
-// ── 搜索紧凑模式：点标题就地展开/收起单张卡片 ──────────────────
-// 仅当 .content 处于 .search-compact 时拦截卡片点击：
-//   1. 切换该卡片的 .kw-open（CSS 控制展开内容）
-//   2. 阻止冒泡，避免触发 note-card 自带的 openNoteEdit / toggleCollectCard
-// 用捕获阶段（true）确保比卡片自身 onclick 更早执行
-(function(){
-  const content=document.querySelector('.content');
-  if(!content) return;
-  content.addEventListener('click', function(e){
-    if(!content.classList.contains('search-compact')) return; // 非搜索态，正常走原有点击
-    // 编辑/删除等按钮照常工作，不拦截
-    if(e.target.closest('button, a, .note-edit, .note-act, .ibt, .collect-toggle, .cnote-toggle, .tl-btn, .memo-lock, .copy-btn')) return;
-    // 选中文字时不切换
-    const sel=window.getSelection&&window.getSelection().toString();
-    if(sel&&sel.length>0) return;
-    // 找到被点的卡片（笔记 .note-card 或 媒体行 tr）
-    const card=e.target.closest('.note-card, tr[data-id]');
-    if(!card||!content.contains(card)) return;
-    // 收集卡有自己的展开系统，不拦截，让它走 toggleCollectCard
-    if(card.classList.contains('collect')) return;
-    card.classList.toggle('kw-open');
-    e.stopPropagation();   // 阻断卡片自带 onclick（编辑/详情）
-    e.preventDefault();
-  }, true);
-})();
 
 // ── 键盘适配（手机端）：用 visualViewport 算键盘高度，更新 --kb ──
 // 键盘弹起时：底部栏上移贴键盘 + body 留出空间 + 收起 tab，结果可滑动看全
