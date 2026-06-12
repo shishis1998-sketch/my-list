@@ -305,6 +305,13 @@ tr:hover .acts{opacity:1;}
 .tsugg:active{transform:scale(.95);}
 .tsugg-more{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:11px;font-family:var(--zh);font-weight:600;padding:3px 6px;}
 .tsugg-more:hover{text-decoration:underline;}
+/* 标签管理入口 + 列表 */
+.fg label.tlbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.tmgr-link{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:11px;font-weight:600;font-family:var(--zh);padding:0;letter-spacing:0;display:inline-flex;align-items:center;gap:3px;}
+.tmgr-link:hover{text-decoration:underline;}
+.tmgr-count{font-size:11px;color:var(--text-muted);min-width:18px;text-align:center;flex-shrink:0;}
+.cmi.tmgr-del{opacity:.5;}
+.cmi.tmgr-del .cminput{text-decoration:line-through;}
 
 .mftr{display:flex;justify-content:flex-end;gap:8px;padding:14px 28px 22px;border-top:1px solid var(--border-soft);flex:0 0 auto;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);font-size:13px;font-weight:600;font-family:var(--zh);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
@@ -1572,7 +1579,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <input type="text" id="f-cover" placeholder="https://...">
     </div>
     <div class="fg">
-      <label>标签（回车、逗号或 + 添加）</label>
+      <label class="tlbl-row">标签（回车、逗号或 + 添加）<button type="button" class="tmgr-link" onclick="openTagMgr('media')">⚙ 管理标签</button></label>
       <div class="tiwrap" onclick="if(event.target===this)document.getElementById('tinput').focus()">
         <div id="tchips" style="display:contents"></div>
         <input type="text" class="tinput" id="tinput" placeholder="输入后按回车或点 +">
@@ -1759,7 +1766,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       </div>
     </div>
     <div class="fg">
-      <label>标签（回车、逗号或 + 添加）</label>
+      <label class="tlbl-row">标签（回车、逗号或 + 添加）<button type="button" class="tmgr-link" onclick="openTagMgr('note')">⚙ 管理标签</button></label>
       <div class="tiwrap" onclick="if(event.target===this)document.getElementById('ntinput').focus()">
         <div id="ntchips" style="display:contents"></div>
         <input type="text" class="tinput" id="ntinput" placeholder="输入后按回车或点 +">
@@ -1847,6 +1854,25 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <div class="mftr">
       <button class="btn btn-g" onclick="closeNoteSubMgr()">取消</button>
       <button class="btn btn-p" onclick="saveNoteSubs()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAG MANAGER MODAL ===== -->
+<div class="moverlay" id="tagMgrModal" onclick="if(event.target===this)closeTagMgr()">
+  <div class="mbox" style="max-width:420px" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mtitle" id="tagMgrTitle">管理标签</div>
+      <button class="mclose" onclick="closeTagMgr()">✕</button>
+    </div>
+    <div class="mbody">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">修改名称即可重命名（会更新所有使用该标签的条目）；重命名为已有标签会自动合并；点「删除」或清空名称可移除该标签。右侧数字为使用次数。</p>
+      <div class="cml" id="tagMgrList"></div>
+      <div id="tagMgrEmpty" style="display:none;padding:14px 4px;color:var(--text-muted);font-size:13px">暂无标签</div>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-g" onclick="closeTagMgr()">取消</button>
+      <button class="btn btn-p" onclick="saveTagMgr()">保存</button>
     </div>
   </div>
 </div>
@@ -2684,6 +2710,71 @@ document.getElementById('tinput').addEventListener('keydown',function(e){
 });
 // 切换分类时刷新常用标签
 document.getElementById('f-type').addEventListener('change',()=>{tsuggExpanded=false;renderTsugg();});
+
+// ── Tag Manager (重命名 / 删除已有标签) ────────────────────────────
+let tagMgrScope='media', tagMgrEdits=[];
+function getTagCounts(scope){
+  const cnt={};
+  const list=scope==='note'?notes:data;
+  list.forEach(d=>(d.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;}));
+  return cnt;
+}
+function openTagMgr(scope){
+  tagMgrScope=scope;
+  const cnt=getTagCounts(scope);
+  tagMgrEdits=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b))
+    .map(t=>({old:t,name:t,count:cnt[t],del:false}));
+  document.getElementById('tagMgrTitle').textContent=scope==='note'?'管理笔记标签':'管理标签';
+  renderTagMgr();
+  document.getElementById('tagMgrModal').classList.add('open');
+}
+function closeTagMgr(){document.getElementById('tagMgrModal').classList.remove('open');}
+function renderTagMgr(){
+  const list=document.getElementById('tagMgrList');
+  const empty=document.getElementById('tagMgrEmpty');
+  if(!tagMgrEdits.length){list.innerHTML='';empty.style.display='';return;}
+  empty.style.display='none';
+  list.innerHTML=tagMgrEdits.map((t,i)=>`
+    <div class="cmi${t.del?' tmgr-del':''}">
+      <input class="cminput" type="text" value="${esc(t.name)}" oninput="tagMgrEdits[${i}].name=this.value" placeholder="标签名称"${t.del?' disabled':''}>
+      <span class="tmgr-count" title="使用次数">${t.count}</span>
+      <button type="button" class="cmdel" onclick="toggleTagDel(${i})">${t.del?'撤销':'删除'}</button>
+    </div>`).join('');
+}
+function toggleTagDel(i){tagMgrEdits[i].del=!tagMgrEdits[i].del;renderTagMgr();}
+function saveTagMgr(){
+  const renameMap={}, delSet=new Set();
+  tagMgrEdits.forEach(t=>{
+    const nn=t.name.trim();
+    if(t.del||!nn){delSet.add(t.old);return;}
+    if(nn!==t.old)renameMap[t.old]=nn;
+  });
+  const transform=(tags)=>{
+    const out=[];
+    (tags||[]).forEach(t=>{
+      if(delSet.has(t))return;
+      const nt=renameMap[t]||t;
+      if(!out.includes(nt))out.push(nt);
+    });
+    return out;
+  };
+  const list=tagMgrScope==='note'?notes:data;
+  list.forEach(d=>{if(d.tags&&d.tags.length)d.tags=transform(d.tags);});
+  if(tagMgrScope==='note'){
+    curNoteTags=transform(curNoteTags); renderNoteChips2(); persistNotes();
+  }else{
+    curTags=transform(curTags); renderChips(); persist();
+  }
+  // 同步当前正在使用的标签筛选
+  if(curTag!=='all'){
+    if(delSet.has(curTag))curTag='all';
+    else if(renameMap[curTag])curTag=renameMap[curTag];
+  }
+  closeTagMgr();
+  render();
+  const changed=Object.keys(renameMap).length+delSet.size;
+  toast(changed?'标签已更新':'未做修改');
+}
 
 // ── Delete ────────────────────────────────────────────────────────
 function askDel(id){
