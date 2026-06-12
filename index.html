@@ -729,11 +729,13 @@ tr:hover .acts{opacity:1;}
 .note-card.collect .note-date{font-size:13px;}
 .note-card.collect .note-head .note-edit,.note-card.collect .note-head .note-act{padding-left:6px;padding-right:6px;}
 .note-card.collect .note-head .note-edit{margin-left:2px;}
-/* 日期与编辑/删除统一等高居中，确保三者落在同一水平线 */
+/* 日期与编辑/删除统一等高居中、同字体，确保三者落在同一水平线
+   （日期原用 --en 字体，与按钮 --zh 字体基线不同会错位，故统一为 --zh） */
 .note-card.collect .note-head .note-date,
 .note-card.collect .note-head .note-edit,
 .note-card.collect .note-head .note-act{
   display:inline-flex;align-items:center;height:24px;line-height:1;
+  font-family:var(--zh);
 }
 /* 收集卡片专属字号：标题 17 / 正文 16 / 标签 11 */
 .note-card.collect .note-title{font-size:16px;}
@@ -1066,8 +1068,9 @@ tr:hover .acts{opacity:1;}
 .memo-title{flex:1;font-size:15px;font-weight:600;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .memo-title.empty{color:var(--text-muted);font-weight:400;font-style:italic;}
 .memo-date{font-size:13px;color:var(--text-muted);flex-shrink:0;font-variant-numeric:tabular-nums;font-family:var(--en);}
-/* 日期与删除统一等高居中，确保两者落在同一水平线 */
-.memo-head .memo-date,.memo-head .note-act{display:inline-flex;align-items:center;height:24px;line-height:1;}
+/* 日期与删除统一等高居中、同字体，确保两者落在同一水平线
+   （日期原用 --en 字体，与按钮 --zh 字体基线不同会错位，故统一为 --zh） */
+.memo-head .memo-date,.memo-head .note-act{display:inline-flex;align-items:center;height:24px;line-height:1;font-family:var(--zh);}
 .memo-lock{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:0;cursor:pointer;background:none;border:none;padding:0;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:background .15s,transform .1s,opacity .15s;}
 .memo-lock.locked{color:var(--accent);background:var(--accent-light);}
 .memo-lock.unlocked{color:var(--text-muted);opacity:0.55;}
