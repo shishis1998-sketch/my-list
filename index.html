@@ -684,38 +684,6 @@ tr:hover .acts{opacity:1;}
 .nfrow .nfchip-dashed{border-style:dashed;color:var(--accent-mid);}
 .nfrow .nfchip-dashed:hover{border-style:solid;background:var(--accent-light);}
 
-/* ===== 搜索紧凑模式：只显标题，点标题就地展开 ===== */
-/* 笔记：隐藏正文预览/底部标签，只留标题行；展开(.kw-open)后恢复 */
-/* 注意：收集卡(.collect)有自己的展开/收起系统，完全排除在紧凑模式外，避免规则打架 */
-.content.search-compact .note-card:not(.collect){cursor:pointer;}
-.content.search-compact .note-card:not(.collect) .note-preview,
-.content.search-compact .note-card:not(.collect) .note-foot,
-.content.search-compact .note-card:not(.collect) .memo-fields,
-.content.search-compact .note-card:not(.collect) .memo-extra{display:none;}
-/* 展开后恢复 */
-.content.search-compact .note-card:not(.collect).kw-open .note-preview{display:-webkit-box;}
-.content.search-compact .note-card:not(.collect).kw-open .note-foot{display:flex;}
-.content.search-compact .note-card:not(.collect).kw-open .memo-fields{display:block;}
-.content.search-compact .note-card:not(.collect).kw-open .memo-extra{display:revert;}
-/* 标题行加一个小箭头提示可展开 */
-.content.search-compact .note-card:not(.collect) .note-head::after{
-  content:"▸";margin-left:auto;color:var(--text-muted);font-size:13px;
-  transition:transform .12s;flex-shrink:0;font-variant-emoji:text;
-}
-.content.search-compact .note-card:not(.collect).kw-open .note-head::after{transform:rotate(90deg);}
-.content.search-compact .note-card:not(.collect) .note-head{align-items:center;}
-
-/* 媒体：紧凑时只显封面+名称+状态，隐藏备注/分类/标签/评分/操作 */
-.content.search-compact tbody tr td:nth-child(3),   /* 备注 */
-.content.search-compact tbody tr td:nth-child(4),   /* 分类 */
-.content.search-compact tbody tr td:nth-child(5),   /* 标签 */
-.content.search-compact tbody tr td:nth-child(6),   /* 评分 */
-.content.search-compact tbody tr td:nth-child(10){display:none;}  /* 操作 */
-.content.search-compact tbody tr.kw-open td:nth-child(3),
-.content.search-compact tbody tr.kw-open td:nth-child(4),
-.content.search-compact tbody tr.kw-open td:nth-child(5),
-.content.search-compact tbody tr.kw-open td:nth-child(6),
-.content.search-compact tbody tr.kw-open td:nth-child(10){display:revert;}
 
 /* 笔记卡片列表 */
 .note-list{display:flex;flex-direction:column;gap:10px;}
