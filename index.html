@@ -729,6 +729,12 @@ tr:hover .acts{opacity:1;}
 .note-card.collect .note-date{font-size:13px;}
 .note-card.collect .note-head .note-edit,.note-card.collect .note-head .note-act{padding-left:6px;padding-right:6px;}
 .note-card.collect .note-head .note-edit{margin-left:2px;}
+/* 日期与编辑/删除统一等高居中，确保三者落在同一水平线 */
+.note-card.collect .note-head .note-date,
+.note-card.collect .note-head .note-edit,
+.note-card.collect .note-head .note-act{
+  display:inline-flex;align-items:center;height:24px;line-height:1;
+}
 /* 收集卡片专属字号：标题 17 / 正文 16 / 标签 11 */
 .note-card.collect .note-title{font-size:16px;}
 .note-card.collect .note-preview{font-size:16px;}
