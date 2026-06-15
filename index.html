@@ -3871,10 +3871,11 @@ function saveNote(){
       newNote.body=body;
     }
     notes.unshift(newNote);
+    // 新增后把 editNoteId 切换到刚创建的笔记，以便继续编辑
+    editNoteId=newNote.id;
     toast('已添加笔记');
   }
   persistNotes();
-  closeNoteModal();
   render();
 }
 
