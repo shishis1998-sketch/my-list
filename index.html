@@ -67,6 +67,8 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 }
 .nitem:hover{background:var(--bg);color:var(--text-primary);}
 .nitem.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
+.nitem.parent-on{color:var(--accent);font-weight:700;}
+.nitem.parent-on .chev{color:var(--accent);}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .ncnt{
   margin-left:auto;font-size:11px;font-family:var(--en);
@@ -660,7 +662,7 @@ tr:hover .acts{opacity:1;}
 
 /* ===== NOTES (笔记功能) ===== */
 /* 侧边栏「笔记」入口的展开/收起 chevron */
-.nitem .chev{margin-left:6px;font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block;line-height:1;}
+.nitem .chev{margin-left:auto;font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block;line-height:1;}
 .nitem.expanded .chev{transform:rotate(90deg);}
 .nitem.on .chev{color:var(--accent);}
 /* 笔记子分类容器（侧边栏） */
@@ -1182,6 +1184,7 @@ body.modal-open{
 /* —— 侧边栏导航项：选中态（极简：淡墨绿点缀，直角）—— */
 .nitem{border-radius:0;font-family:var(--round);}
 .nitem.on{background:var(--accent-light);color:var(--accent);}
+.nitem.parent-on{color:var(--accent);background:none;}
 .nitem.on .ncnt{background:#fff;color:var(--accent);}
 .ncnt{font-family:var(--round);}
 .sidebar{background:var(--surface);border-right:var(--bd) solid var(--ink);}
@@ -1327,13 +1330,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     </div>
     <button class="nitem" onclick="filterCat('all')" id="nav-all">
       <span class="dot" style="background:#888"></span>全部
-      <span class="ncnt" id="cnt-all">0</span>
     </button>
     <div id="cat-nav"></div>
     <!-- 笔记入口（一直显示） -->
     <button class="nitem" id="nav-notes" onclick="filterCat('notes:all')">
       <span class="dot" style="background:var(--accent)"></span>笔记
-      <span class="ncnt" id="cnt-notes">0</span>
       <span class="chev">›</span>
     </button>
     <div class="nsub" id="nsub"></div>
@@ -2235,34 +2236,26 @@ function fmtWatch(wd){
 }
 
 function renderSidebar(){
-  const cnt={all:data.length};
-  cats.forEach(c=>cnt[c.id]=0);
-  data.forEach(d=>{cnt[d.type]=(cnt[d.type]||0)+1;});
-  document.getElementById('cnt-all').textContent=data.length;
   // 媒体「全部」高亮：仅 curCat==='all' 时亮（修复笔记模式下仍残留 on 的双高亮）
   document.getElementById('nav-all').classList.toggle('on', curCat==='all');
   document.getElementById('cat-nav').innerHTML=cats.map(c=>`
     <button class="nitem ${curCat===c.id?'on':''}" onclick="filterCat('${c.id}')">
       <span class="dot" style="background:${c.color}"></span>${esc(c.name)}
-      <span class="ncnt">${cnt[c.id]||0}</span>
     </button>`).join('');
   // 笔记侧边栏
   renderNotesSidebar();
 }
 
 function renderNotesSidebar(){
-  document.getElementById('cnt-notes').textContent=notes.length;
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
   notes.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
   const items=[`<button class="nitem ${curCat==='notes:all'?'on':''}" onclick="filterCat('notes:all')">
       <span class="dot" style="background:var(--accent-mid)"></span>全部
-      <span class="ncnt">${notes.length}</span>
     </button>`];
   noteSubs.forEach(s=>{
     items.push(`<button class="nitem ${curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
       <span class="dot" style="background:var(--border)"></span>${esc(s)}
-      <span class="ncnt">${subCnt[s]||0}</span>
     </button>`);
   });
   document.getElementById('nsub').innerHTML=items.join('');
@@ -2429,8 +2422,8 @@ function applyModeUI(){
   // 侧边栏笔记入口展开/收起
   const navN=document.getElementById('nav-notes');
   const nsub=document.getElementById('nsub');
-  if(notes){navN.classList.add('expanded','on');nsub.classList.add('open');}
-  else{navN.classList.remove('expanded','on');nsub.classList.remove('open');}
+  if(notes){navN.classList.add('expanded','parent-on');navN.classList.remove('on');nsub.classList.add('open');}
+  else{navN.classList.remove('expanded','parent-on');nsub.classList.remove('open');}
 }
 function onSearch(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
 function syncSearchClear(){
