@@ -554,6 +554,9 @@ tr:hover .acts{opacity:1;}
     border-radius:var(--r);padding:0 34px 0 34px;font-size:16px;font-family:var(--zh);
     color:var(--text-primary);outline:none;box-sizing:border-box;}
   .bb-sbox input:focus{border-color:var(--accent-mid);background:var(--surface);}
+  /* 搜索无结果：边框变红 */
+  .bb-sbox input.no-result,
+  .bb-sbox input.no-result:focus{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-bg);}
   .bb-sbox>svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;}
   .bb-sclear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;
     border:none;background:none;cursor:pointer;color:var(--text-muted);border-radius:50%;padding:0;
@@ -1167,6 +1170,9 @@ body.modal-open{
   background:var(--surface);box-shadow:var(--pop-sm);padding-left:38px;
 }
 .sbox input:focus{background:var(--surface);border-color:var(--ink);}
+/* 搜索无结果：边框变红 */
+.sbox input.no-result,
+.sbox input.no-result:focus{border-color:var(--danger);box-shadow:0 0 0 3px var(--danger-bg);}
 
 /* —— 排序下拉圆胶囊 —— */
 .ssort{border:var(--bd) solid var(--ink);border-radius:0;background:var(--surface);font-family:var(--round);font-weight:600;}
@@ -2282,6 +2288,7 @@ function render(){
   const tbl=document.getElementById('tbl');
   if(!L.length){tbl.style.display='none';empty.style.display='block';const cat=getCat(curCat);document.getElementById('empty-ic').textContent=curCat==='all'?'📋':(cat.emoji||'📌');}
   else{tbl.style.display='';empty.style.display='none';}
+  syncSearchNoResult(L.length);
 
   tbody.innerHTML=L.map(item=>{
     const cat=getCat(item.type);
@@ -2424,6 +2431,14 @@ function applyModeUI(){
   const nsub=document.getElementById('nsub');
   if(notes){navN.classList.add('expanded','parent-on');navN.classList.remove('on');nsub.classList.add('open');}
   else{navN.classList.remove('expanded','parent-on');nsub.classList.remove('open');}
+}
+// 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
+function syncSearchNoResult(count){
+  const no=!!(curSearch&&curSearch.trim())&&count===0;
+  const top=document.querySelector('.sbox input');
+  const bb=document.getElementById('bbSearch');
+  if(top) top.classList.toggle('no-result',no);
+  if(bb) bb.classList.toggle('no-result',no);
 }
 function onSearch(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
 function syncSearchClear(){
@@ -3178,6 +3193,7 @@ function renderNotes(){
   document.getElementById('vtitle').textContent=subName;
   const L=filteredNotes();
   document.getElementById('vcnt').textContent=L.length+' 条笔记';
+  syncSearchNoResult(L.length);
   // 笔记不显示统计卡片
   document.getElementById('sbar').innerHTML='';
   // 渲染列表
