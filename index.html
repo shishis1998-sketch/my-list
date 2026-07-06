@@ -2,7 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- interactive-widget=resizes-content：让支持的浏览器（Chrome 108+）键盘弹起时直接压缩页面布局，
+     底栏 bottom:0 天然贴键盘顶，不需要任何 JS 计算 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#F7F7F5">
@@ -4056,12 +4058,14 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 });
 
 
-// ── 键盘适配（手机端）：visualViewport 直接钉住底栏 ──
-// 键盘弹起时：底栏贴键盘顶 + body 留出空间 + 收起 tab，结果可滑动看全
-// 不用 window.innerHeight 推算键盘高度——部分安卓浏览器/WebView 里该值
-// 更新时机和口径都不可靠，推算出来的高度偏大会把底栏顶到半空。
-// 改为：输入状态下用可视区底部（vv.offsetTop+vv.height）减去底栏自身
-// 高度，直接算出底栏该待的位置（--bbty），浏览器爱怎么改视口都不影响。
+// ── 键盘适配（手机端）：先判断浏览器行为，再决定底栏怎么贴键盘 ──
+// 两类浏览器行为：
+// A. 键盘压缩布局视口（多数安卓 WebView/国产内核、Chrome 108+ 配合
+//    resizes-content）：innerHeight 变小，fixed bottom:0 天然贴键盘顶，
+//    此时绝不能再做任何位移——visualViewport 在这类内核里经常少算
+//    输入法工具条/自动填充条的高度，按它算反而把底栏顶到半空。
+// B. 键盘悬浮、布局不变（iOS Safari 等）：innerHeight 不变，用
+//    visualViewport 的可视区底部钉住底栏（--bbty / vv-track 模式）。
 // 不支持 visualViewport 的老浏览器自动跳过，维持原行为
 (function(){
   const vv=window.visualViewport;
@@ -4070,6 +4074,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   const root=document.documentElement;
   let scheduled=false;
   let restBottom=vv.offsetTop+vv.height; // 无键盘时可视区底部基准
+  let restInnerH=window.innerHeight;     // 无键盘时布局视口高度基准
   let resetBase=false;                   // 转屏/分屏等真实布局变化时重校基准
   function isTyping(){
     const ae=document.activeElement;
@@ -4085,25 +4090,35 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
       return;
     }
     const vvBottom=vv.offsetTop+vv.height;
+    const inH=window.innerHeight;
     const typing=isTyping();
     if(!typing){
       // 无键盘时校准基准；输入中冻结，避免把键盘弹起当成基准
-      if(resetBase || vvBottom>restBottom) restBottom=vvBottom;
+      if(resetBase){ restBottom=vvBottom; restInnerH=inH; }
+      else{
+        if(vvBottom>restBottom) restBottom=vvBottom;
+        if(inH>restInnerH) restInnerH=inH;
+      }
       resetBase=false;
     }
-    // 键盘占掉的高度（相对无键盘基准），只用于 body 底部腾滚动空间
+    // 行为 A：布局视口已被键盘压缩（阈值 100 过滤地址栏伸缩）
+    const layoutShrunk=typing && (restInnerH-inH>100);
+    // 可视区被键盘占掉的高度（相对无键盘基准）
     let kb=Math.max(0, restBottom-vvBottom);
-    // 阈值 100：小于这个值当作地址栏伸缩，不算键盘
     if(kb<100) kb=0;
-    const kbShown=typing && kb>0;
-    root.style.setProperty('--kb', kbShown ? kb+'px' : '0px');
+    const kbShown=typing && (kb>0 || layoutShrunk);
+    // 先应用 kb-open（收 tab、去安全区 padding）再量底栏高度
     document.body.classList.toggle('kb-open', kbShown);
-    if(typing){
-      // 先应用 kb-open（收 tab、去安全区 padding）再量底栏高度
+    if(typing && !layoutShrunk && kb>0){
+      // 行为 B：布局没缩，用可视区底部钉住底栏
       document.body.classList.add('vv-track');
       root.style.setProperty('--bbty', Math.max(0, vvBottom-bar.offsetHeight)+'px');
+      // 键盘悬浮在页面上，body 底部要额外腾出键盘高度的滚动空间
+      root.style.setProperty('--kb', kb+'px');
     }else{
+      // 行为 A（或无键盘）：交回给 CSS 的 bottom:0，页面高度浏览器已处理
       document.body.classList.remove('vv-track');
+      root.style.setProperty('--kb','0px');
     }
   }
   function onChange(){
