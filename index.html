@@ -549,6 +549,11 @@ tr:hover .acts{opacity:1;}
     transform:translateY(calc(-1 * var(--kb,0px)));
     transition:transform .12s ease;
   }
+  /* 输入状态改由 JS 直接钉住底栏：位移 = 可视区底部 - 底栏高度（--bbty）。
+     不依赖浏览器怎么处理键盘视口（压缩布局 or 只缩可视区），避免底栏悬空 */
+  body.vv-track .bottombar{top:0;bottom:auto;transform:translateY(var(--bbty,100vh));}
+  /* 贴着键盘时不需要底部安全区留白，留了会像悬空 */
+  body.kb-open .bottombar{padding-bottom:0;}
   /* 键盘弹起时收起 4 个 tab，只留搜索行，腾出空间看结果 */
   body.kb-open .bb-tabs{display:none;}
   /* 下滑隐藏 4 个 tab（平滑折叠），上滑恢复 */
@@ -4051,15 +4056,21 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 });
 
 
-// ── 键盘适配（手机端）：用 visualViewport 算键盘高度，更新 --kb ──
-// 键盘弹起时：底部栏上移贴键盘 + body 留出空间 + 收起 tab，结果可滑动看全
-// 不支持 visualViewport 的老浏览器自动跳过，维持原行为（最坏情况=没变化）
+// ── 键盘适配（手机端）：visualViewport 直接钉住底栏 ──
+// 键盘弹起时：底栏贴键盘顶 + body 留出空间 + 收起 tab，结果可滑动看全
+// 不用 window.innerHeight 推算键盘高度——部分安卓浏览器/WebView 里该值
+// 更新时机和口径都不可靠，推算出来的高度偏大会把底栏顶到半空。
+// 改为：输入状态下用可视区底部（vv.offsetTop+vv.height）减去底栏自身
+// 高度，直接算出底栏该待的位置（--bbty），浏览器爱怎么改视口都不影响。
+// 不支持 visualViewport 的老浏览器自动跳过，维持原行为
 (function(){
   const vv=window.visualViewport;
-  if(!vv) return;
+  const bar=document.querySelector('.bottombar');
+  if(!vv||!bar) return;
   const root=document.documentElement;
   let scheduled=false;
-  let maxH=window.innerHeight; // 无键盘时的布局视口高度基准
+  let restBottom=vv.offsetTop+vv.height; // 无键盘时可视区底部基准
+  let resetBase=false;                   // 转屏/分屏等真实布局变化时重校基准
   function isTyping(){
     const ae=document.activeElement;
     return !!ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable);
@@ -4070,40 +4081,50 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
     if(!window.matchMedia('(max-width: 768px)').matches){
       root.style.setProperty('--kb','0px');
       document.body.classList.remove('kb-open');
+      document.body.classList.remove('vv-track');
       return;
     }
-    const inH=window.innerHeight;
+    const vvBottom=vv.offsetTop+vv.height;
     const typing=isTyping();
-    // 非输入状态下跟随 innerHeight（转屏/分屏等正常变化），输入中冻结基准
-    if(!typing || inH>maxH) maxH=inH;
-    // 键盘高度 = 布局视口 - 可视视口 - 顶部偏移
-    // 部分安卓浏览器/WebView 键盘会直接压缩布局视口（innerHeight 变小），
-    // 此时 fixed bottom:0 已贴键盘，这里算出的 kb 自然≈0，不再额外上移
-    let kb=Math.max(0, inH - vv.height - vv.offsetTop);
+    if(!typing){
+      // 无键盘时校准基准；输入中冻结，避免把键盘弹起当成基准
+      if(resetBase || vvBottom>restBottom) restBottom=vvBottom;
+      resetBase=false;
+    }
+    // 键盘占掉的高度（相对无键盘基准），只用于 body 底部腾滚动空间
+    let kb=Math.max(0, restBottom-vvBottom);
     // 阈值 100：小于这个值当作地址栏伸缩，不算键盘
     if(kb<100) kb=0;
-    root.style.setProperty('--kb', kb+'px');
-    // 布局视口被键盘压缩的浏览器 kb=0，用 innerHeight 缩水量判断键盘是否弹起
-    const layoutShrunk=typing && (maxH-inH>100);
-    document.body.classList.toggle('kb-open', kb>0 || layoutShrunk);
+    const kbShown=typing && kb>0;
+    root.style.setProperty('--kb', kbShown ? kb+'px' : '0px');
+    document.body.classList.toggle('kb-open', kbShown);
+    if(typing){
+      // 先应用 kb-open（收 tab、去安全区 padding）再量底栏高度
+      document.body.classList.add('vv-track');
+      root.style.setProperty('--bbty', Math.max(0, vvBottom-bar.offsetHeight)+'px');
+    }else{
+      document.body.classList.remove('vv-track');
+    }
   }
   function onChange(){
     if(scheduled) return;
     scheduled=true;
     requestAnimationFrame(update);
   }
-  // 焦点变化后延时补算：兜底 WebView 里键盘弹起/收起事件时序不稳的情况
+  // 焦点变化后延时补算：兜底 WebView 里键盘弹起/收起、输入法附加工具条
+  // 出现等场景下事件时序不稳的情况
   function settle(){
     onChange();
     setTimeout(onChange,150);
     setTimeout(onChange,400);
+    setTimeout(onChange,800);
   }
   vv.addEventListener('resize', onChange);
   vv.addEventListener('scroll', onChange);
-  // 关键：布局视口被键盘压缩的浏览器里，visualViewport resize 触发时
-  // innerHeight 可能还是旧值，算出的 --kb 偏大导致底栏悬空；
-  // 等 window resize 到来后重算即可自我修正
-  window.addEventListener('resize', onChange);
+  window.addEventListener('resize', function(){
+    if(!isTyping()) resetBase=true;
+    onChange();
+  });
   document.addEventListener('focusin', settle);
   document.addEventListener('focusout', settle);
   update();
