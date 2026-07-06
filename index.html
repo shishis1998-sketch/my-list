@@ -4059,6 +4059,11 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   if(!vv) return;
   const root=document.documentElement;
   let scheduled=false;
+  let maxH=window.innerHeight; // 无键盘时的布局视口高度基准
+  function isTyping(){
+    const ae=document.activeElement;
+    return !!ae && (ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.isContentEditable);
+  }
   function update(){
     scheduled=false;
     // 仅手机端生效
@@ -4067,20 +4072,40 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
       document.body.classList.remove('kb-open');
       return;
     }
+    const inH=window.innerHeight;
+    const typing=isTyping();
+    // 非输入状态下跟随 innerHeight（转屏/分屏等正常变化），输入中冻结基准
+    if(!typing || inH>maxH) maxH=inH;
     // 键盘高度 = 布局视口 - 可视视口 - 顶部偏移
-    let kb=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    // 部分安卓浏览器/WebView 键盘会直接压缩布局视口（innerHeight 变小），
+    // 此时 fixed bottom:0 已贴键盘，这里算出的 kb 自然≈0，不再额外上移
+    let kb=Math.max(0, inH - vv.height - vv.offsetTop);
     // 阈值 100：小于这个值当作地址栏伸缩，不算键盘
     if(kb<100) kb=0;
     root.style.setProperty('--kb', kb+'px');
-    document.body.classList.toggle('kb-open', kb>0);
+    // 布局视口被键盘压缩的浏览器 kb=0，用 innerHeight 缩水量判断键盘是否弹起
+    const layoutShrunk=typing && (maxH-inH>100);
+    document.body.classList.toggle('kb-open', kb>0 || layoutShrunk);
   }
   function onChange(){
     if(scheduled) return;
     scheduled=true;
     requestAnimationFrame(update);
   }
+  // 焦点变化后延时补算：兜底 WebView 里键盘弹起/收起事件时序不稳的情况
+  function settle(){
+    onChange();
+    setTimeout(onChange,150);
+    setTimeout(onChange,400);
+  }
   vv.addEventListener('resize', onChange);
   vv.addEventListener('scroll', onChange);
+  // 关键：布局视口被键盘压缩的浏览器里，visualViewport resize 触发时
+  // innerHeight 可能还是旧值，算出的 --kb 偏大导致底栏悬空；
+  // 等 window resize 到来后重算即可自我修正
+  window.addEventListener('resize', onChange);
+  document.addEventListener('focusin', settle);
+  document.addEventListener('focusout', settle);
   update();
 })();
 
