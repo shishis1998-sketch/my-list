@@ -1692,6 +1692,13 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         换设备时填上同一个 Gist ID 即可读取已有数据。可在 <a href="https://gist.github.com" target="_blank" style="color:var(--accent);text-decoration:underline">gist.github.com</a> 找到。
       </div>
     </div>
+    <div class="fg">
+      <label>主密码 <span style="color:var(--text-muted);font-weight:400">(保护备忘中的账号密码)</span></label>
+      <input type="password" id="f-gh-pw" placeholder="设置后备忘会加密上云" autocomplete="new-password" spellcheck="false">
+      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
+        设置后，备忘的账号密码等内容会先在本机加密再同步，云端只有密文。主密码只存在本设备，<b>不会上传</b>——每台设备填一次同样的主密码即可解密查看。忘记主密码将无法恢复云端备忘。
+      </div>
+    </div>
     </div><!-- /mbody -->
 
     <div class="mftr" style="justify-content:space-between;flex-wrap:wrap;gap:var(--sp-8)">
@@ -1925,7 +1932,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 // ── Data ─────────────────────────────────────────────────────────
 const SK='my_list_v4', CK='my_list_cats_v3';
 const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
-const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist';
+const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist', MPW_KEY='my_list_master_pw';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
@@ -2068,6 +2075,49 @@ function persistNoteSubs(){
 // ── GitHub Gist Sync ─────────────────────────────────────────────
 function getToken(){return localStorage.getItem(TK_KEY)||'';}
 function getGistId(){return localStorage.getItem(GIST_KEY)||'';}
+function getMasterPw(){return localStorage.getItem(MPW_KEY)||'';}
+function cryptoOk(){return !!(window.crypto&&crypto.subtle);}
+
+// ── 备忘端到端加密（AES-GCM + PBKDF2）─────────────────────────────
+// 主密码只存本机 localStorage，永不进入 Gist；云端只有密文
+function bufB64(buf){let s='';const b=new Uint8Array(buf);for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
+function b64Buf(s){const bin=atob(s);const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;}
+async function deriveKey(pass,salt){
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function encryptJSON(obj,pass){
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await deriveKey(pass,salt);
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));
+  return {v:1,salt:bufB64(salt),iv:bufB64(iv),ct:bufB64(ct)};
+}
+async function decryptJSON(blob,pass){
+  const key=await deriveKey(pass,b64Buf(blob.salt));
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64Buf(blob.iv)},key,b64Buf(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+// 备忘是否处于「有密文但尚未解密」状态（主密码缺失或不对）
+function isEncLocked(n){return !!(n&&n.encData&&!n.fields);}
+// 用当前主密码尝试解开本机所有未解密的备忘，返回成功条数
+async function decryptPendingMemos(){
+  const pw=getMasterPw();
+  if(!pw||!cryptoOk())return 0;
+  let ok=0;
+  for(const n of notes){
+    if(!isEncLocked(n))continue;
+    try{
+      const dec=await decryptJSON(n.encData,pw);
+      n.fields=dec.fields||{};
+      n.customFields=dec.customFields||[];
+      delete n.encData;
+      ok++;
+    }catch(e){/* 主密码不对，保持密文 */}
+  }
+  if(ok){localStorage.setItem(NSK,JSON.stringify(notes));render();}
+  return ok;
+}
 
 function updateSyncBadge(){
   const b=document.getElementById('sync-badge');if(!b)return;
@@ -2089,7 +2139,16 @@ async function syncPush(){
   isSyncing=true;lastSyncErr=null;updateSyncBadge();
   try{
     // 🔒 仅本机的笔记不上传 Gist
-    const notesToSync=notes.filter(n=>!n.localOnly);
+    // 设置了主密码时，备忘的字段先加密（云端只见密文）；密文态的备忘原样透传
+    const pw=getMasterPw();
+    const notesToSync=await Promise.all(notes.filter(n=>!n.localOnly).map(async n=>{
+      if(n.subCat!=='备忘')return n;
+      if(isEncLocked(n))return n;               // 本机没解开过 → 透传密文
+      if(!pw||!cryptoOk())return n;             // 未设主密码 → 维持原有明文行为
+      const {fields,customFields,...rest}=n;
+      rest.encData=await encryptJSON({fields:fields||{},customFields:customFields||[]},pw);
+      return rest;
+    }));
     const payload={
       version:1,
       updatedAt:new Date().toISOString(),
@@ -2154,7 +2213,25 @@ async function syncPull(silent){
       // 去重：如果云端笔记的 id 和本机 localOnly 笔记的 id 冲突，云端优先（极少出现，但避免重复）
       const localOnlyIds=new Set(localOnlyNotes.map(n=>n.id));
       const filteredRemote=remoteNotes.filter(n=>!localOnlyIds.has(n.id));
+      // 解密加密备忘；主密码缺失/不对时保留密文（显示 🔒，不会丢数据）
+      const pw=getMasterPw();
+      let encLeft=0;
+      for(const n of filteredRemote){
+        if(!n.encData)continue;
+        if(pw&&cryptoOk()){
+          try{
+            const dec=await decryptJSON(n.encData,pw);
+            n.fields=dec.fields||{};
+            n.customFields=dec.customFields||[];
+            delete n.encData;
+            continue;
+          }catch(e){/* 密码不对 */}
+        }
+        delete n.fields;delete n.customFields;
+        encLeft++;
+      }
       notes=[...filteredRemote,...localOnlyNotes];
+      if(encLeft&&!silent)toast('🔒 有 '+encLeft+' 条加密备忘需要主密码，请在云同步设置中填写');
     }
     if(Array.isArray(remote.noteSubs)&&remote.noteSubs.length) noteSubs=remote.noteSubs;
     // 拉取后也检查一次迁移(去掉标记重跑)
@@ -2180,6 +2257,7 @@ async function syncPull(silent){
 function openSyncCfg(){
   document.getElementById('f-gh-token').value=getToken();
   document.getElementById('f-gh-gist').value=getGistId();
+  document.getElementById('f-gh-pw').value=getMasterPw();
   const sb=document.getElementById('sync-status-box');
   if(!getToken()){
     sb.innerHTML='<b style="color:var(--text-primary)">尚未启用云同步</b><br>填入 token 后,所有修改会自动同步到你的 GitHub 私密 Gist,在任何设备打开同一份 HTML 都能看到最新数据。';
@@ -2192,25 +2270,58 @@ function openSyncCfg(){
 }
 function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
 
-function saveSyncCfg(){
+async function saveSyncCfg(){
   const t=document.getElementById('f-gh-token').value.trim();
   const g=document.getElementById('f-gh-gist').value.trim();
+  const p=document.getElementById('f-gh-pw').value;
   if(!t){toast('请填入 token');return;}
+  if(p&&!cryptoOk()){toast('当前浏览器环境不支持加密（需要 https 或本地打开）');return;}
+  const hadPw=!!getMasterPw();
   localStorage.setItem(TK_KEY,t);
   if(g)localStorage.setItem(GIST_KEY,g);
+  if(p)localStorage.setItem(MPW_KEY,p);
+  else localStorage.removeItem(MPW_KEY);
+  const setPw=!!p&&!hadPw, clearedPw=!p&&hadPw;
+  // 清除主密码 → 全部备忘立即重新上锁（随后的推送会把它们从云端撤下，避免以后明文上云）
+  if(clearedPw){
+    notes.forEach(n=>{if(n.subCat==='备忘'&&!n.localOnly){n.localOnly=true;}});
+    localStorage.setItem(NSK,JSON.stringify(notes));render();
+    toast('已清除主密码，备忘改回仅本机存储');
+  }
+  // 首次设置主密码 → 解锁全部备忘（此后默认加密上云）
+  // ⚠️ 必须放在拉取之后执行：拉取是「云端覆盖本地」，只有 localOnly 的笔记受保护，
+  //    先解锁再拉取会让尚未上云的本机备忘被覆盖丢失
+  const unlockMemos=()=>{
+    if(!setPw)return;
+    let flipped=0;
+    notes.forEach(n=>{if(n.subCat==='备忘'&&n.localOnly){n.localOnly=false;flipped++;}});
+    if(flipped){localStorage.setItem(NSK,JSON.stringify(notes));render();toast('已将 '+flipped+' 条备忘改为加密上云');}
+  };
   toast('设置已保存,开始同步...');
   closeSyncCfg();
   // 有 gist id → 先拉取;无 → 直接推送(会自动创建 gist)
-  if(g) syncPull(false).then(ok=>{if(ok===false&&!lastSyncErr)syncPush();});
-  else syncPush();
+  if(g){
+    syncPull(false).then(async ok=>{
+      const dec=await decryptPendingMemos();
+      if(dec)toast('✓ 已解密 '+dec+' 条备忘');
+      unlockMemos();
+      // 主密码变更需要强制推送：把新加密的备忘送上云 / 把撤回的备忘从云端删掉
+      if(setPw||clearedPw||(ok===false&&!lastSyncErr))syncPush();
+    });
+  }else{
+    unlockMemos();
+    syncPush();
+  }
   updateSyncBadge();
 }
 
 function syncPullNow(){
   const t=document.getElementById('f-gh-token').value.trim();
   const g=document.getElementById('f-gh-gist').value.trim();
+  const p=document.getElementById('f-gh-pw').value;
   if(!t||!g){toast('请先填入 token 和 Gist ID 再拉取');return;}
   localStorage.setItem(TK_KEY,t);localStorage.setItem(GIST_KEY,g);
+  if(p)localStorage.setItem(MPW_KEY,p);
   closeSyncCfg();
   syncPull(false);
 }
@@ -2219,6 +2330,10 @@ function clearSyncCfg(){
   if(!confirm('断开同步后,本地数据保留,但不再上传到云端。确定?'))return;
   localStorage.removeItem(TK_KEY);
   localStorage.removeItem(GIST_KEY);
+  localStorage.removeItem(MPW_KEY);
+  // 断开后备忘回到「仅本机」的安全默认，避免以后重新配置 token 时明文上云
+  notes.forEach(n=>{if(n.subCat==='备忘'&&!n.localOnly){n.localOnly=true;}});
+  localStorage.setItem(NSK,JSON.stringify(notes));
   lastSyncErr=null;
   toast('已断开同步');
   closeSyncCfg();
@@ -3586,7 +3701,9 @@ function renderMemoCard(n){
   const lockTitle=n.localOnly?'仅本机存储':'同步到云';
   const all=memoCollectFields(n);
   let fieldsHtml='';
-  if(!all.length){
+  if(isEncLocked(n)){
+    fieldsHtml='<div class="memo-empty-hint">🔒 已加密——在「云同步」设置中填入主密码后可见</div>';
+  }else if(!all.length){
     fieldsHtml='<div class="memo-empty-hint">（点击编辑添加内容）</div>';
   }else{
     fieldsHtml=all.map(f=>renderMemoFieldRow(n.id,f)).join('');
@@ -3803,6 +3920,8 @@ function renderNoteChips(){
 function openNoteEdit(id){
   const n=notes.find(x=>x.id===id);
   if(!n)return;
+  // 密文态备忘禁止编辑（避免保存空字段覆盖掉云端内容）
+  if(isEncLocked(n)){toast('🔒 这条备忘已加密，请先在云同步设置中填入正确的主密码');openSyncCfg();return;}
   editNoteId=id;
   curNoteTags=(n.tags||[]).slice();
   document.getElementById('nm-title').textContent='编辑笔记';
@@ -3843,8 +3962,9 @@ function openNoteNew(){
   document.getElementById('mf-note').value='';
   curMemoCustom=[];
   renderMemoCustomList();
-  curMemoLocal=true; // 备忘默认 🔒
-  document.getElementById('memoLocalToggle').classList.add('on');
+  // 设置了主密码 → 新备忘默认加密上云；否则维持默认 🔒 仅本机
+  curMemoLocal=!getMasterPw();
+  document.getElementById('memoLocalToggle').classList.toggle('on',curMemoLocal);
   applyMemoEditorMode();
   renderNoteChips2();
   document.getElementById('noteModal').classList.add('open');
