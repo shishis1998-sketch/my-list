@@ -2312,9 +2312,6 @@ function renderTypeSelect(){
 function render(){
   syncAddBtn();
   syncBottomTabs();
-  // 搜索时列表变紧凑（只显标题），无搜索时恢复完整卡片
-  const contentEl=document.querySelector('.content');
-  if(contentEl) contentEl.classList.toggle('search-compact', !!(curSearch&&curSearch.trim()));
   // 笔记模式分流
   if(isNoteMode()){ renderNotes(); renderSidebar(); renderTagFilterRow(); return; }
   const L=filtered();
@@ -3574,9 +3571,9 @@ function renderMemoFieldRow(noteId,f){
   const eyeBtn=f.isPassword
     ? `<button class="memo-btn" onclick="event.stopPropagation();toggleMemoReveal('${sk}')" title="${revealed?'遮住':'显示'}" type="button">${revealed?MEMO_ICON.eyeOff:MEMO_ICON.eye}</button>`
     : '';
-  const valSafe=JSON.stringify(f.value).replace(/"/g,'&quot;');
+  // 复制时按 id+字段现查值，不把明文预埋进 DOM（避免密码在开发者工具里可见）
   const copyBtn=!f.isNote
-    ? `<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,${valSafe})" title="复制" type="button">${MEMO_ICON.copy}</button>`
+    ? `<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','${f.key}')" title="复制" type="button">${MEMO_ICON.copy}</button>`
     : '';
   return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value ${valueCls}">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
 }
@@ -3614,8 +3611,12 @@ function toggleMemoReveal(stateKey){
   render();
 }
 
-function memoCopy(e,value){
+function memoCopy(e,noteId,key){
   if(!navigator.clipboard){toast('当前环境不支持复制，请手动选中');return;}
+  const n=notes.find(x=>x.id===noteId);
+  const f=n?memoCollectFields(n).find(x=>x.key===key):null;
+  if(!f){toast('复制失败');return;}
+  const value=f.value;
   navigator.clipboard.writeText(value).then(()=>{
     const btn=e.currentTarget;
     const orig=btn.innerHTML;
