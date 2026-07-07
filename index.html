@@ -1188,6 +1188,12 @@ body.modal-open{
 .sbox input.no-result,
 .sbox input.no-result:focus{border-color:var(--danger);}
 
+/* —— 搜索命中高亮：珊瑚橙红荧光笔（只垫住文字下半行）—— */
+mark.shl{
+  font:inherit;color:inherit;padding:0 1px;
+  background:linear-gradient(transparent 55%, rgba(255,106,74,.45) 55%);
+}
+
 /* —— 排序下拉圆胶囊 —— */
 .ssort{border:var(--bd) solid var(--ink);border-radius:0;background:var(--surface);font-family:var(--zh);font-weight:600;}
 
@@ -1948,6 +1954,21 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function h2r(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// 搜索命中高亮：把 curSearch 命中的片段包 <mark class="shl">（不区分大小写）
+// 先在原文上定位命中，再分段转义，保证转义后的实体不会被误匹配
+function hl(s){
+  s=(s==null)?'':String(s);
+  const q=(curSearch||'').trim();
+  if(!q||!s) return esc(s);
+  const ls=s.toLowerCase(),lq=q.toLowerCase();
+  let out='',i=0,idx;
+  while((idx=ls.indexOf(lq,i))!==-1){
+    out+=esc(s.slice(i,idx))+'<mark class="shl">'+esc(s.slice(idx,idx+q.length))+'</mark>';
+    i=idx+q.length;
+  }
+  return out+esc(s.slice(i));
+}
+
 // ── 富文本渲染:支持 #/##/### 标题 + **加粗** + -/* 列表 ──
 function inlineBold(s){return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');}
 function renderRich(text){
@@ -1961,10 +1982,10 @@ function renderRich(text){
     const line=raw.replace(/\s+$/,'');
     if(!line.trim()){flushList();flushPara();continue;}
     let m=/^(#{1,3})\s+(.+)$/.exec(line);
-    if(m){flushList();flushPara();const lvl=m[1].length;out.push(`<h${lvl} class="rt-h${lvl}">`+inlineBold(esc(m[2]))+`</h${lvl}>`);continue;}
+    if(m){flushList();flushPara();const lvl=m[1].length;out.push(`<h${lvl} class="rt-h${lvl}">`+inlineBold(hl(m[2]))+`</h${lvl}>`);continue;}
     m=/^[-*]\s+(.+)$/.exec(line);
-    if(m){flushPara();if(!listBuf)listBuf=[];listBuf.push('<li>'+inlineBold(esc(m[1]))+'</li>');continue;}
-    flushList();if(!paraBuf)paraBuf=[];paraBuf.push(inlineBold(esc(line)));
+    if(m){flushPara();if(!listBuf)listBuf=[];listBuf.push('<li>'+inlineBold(hl(m[1]))+'</li>');continue;}
+    flushList();if(!paraBuf)paraBuf=[];paraBuf.push(inlineBold(hl(line)));
   }
   flushList();flushPara();
   return out.join('');
@@ -1975,10 +1996,10 @@ function renderRichInline(text){
   const lines=String(text).split('\n').map(s=>s.trim()).filter(Boolean);
   return lines.map(line=>{
     let m=/^(#{1,3})\s+(.+)$/.exec(line);
-    if(m) return `<span class="pv-h pv-h${m[1].length}">`+inlineBold(esc(m[2]))+`</span>`;
+    if(m) return `<span class="pv-h pv-h${m[1].length}">`+inlineBold(hl(m[2]))+`</span>`;
     m=/^[-*]\s+(.+)$/.exec(line);
-    if(m) return `<span class="pv-li">`+inlineBold(esc(m[1]))+`</span>`;
-    return inlineBold(esc(line));
+    if(m) return `<span class="pv-li">`+inlineBold(hl(m[1]))+`</span>`;
+    return inlineBold(hl(line));
   }).join(' · ');
 }
 function getCat(id){return cats.find(c=>c.id===id)||{name:id,color:'#888',emoji:'📌'};}
@@ -1990,7 +2011,7 @@ function needsBrackets(catName){
 // 给名称包装书名号（按分类判断）+ 拼年份
 function fmtTitle(item){
   const cat=getCat(item.type);
-  const nm=esc(item.name||'');
+  const nm=hl(item.name||'');
   const wrapped=needsBrackets(cat.name)?`《${nm}》`:nm;
   const yr=item.year?esc(item.year):'—';
   return `${wrapped}<span class="cyear">（${yr}）</span>`;
@@ -2308,7 +2329,7 @@ function render(){
     const cat=getCat(item.type);
     const st=SMAP[item.status]||SMAP.completed;
     const bbg=h2r(cat.color,.12);
-    const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
+    const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
     const coverH=item.cover
       ?`<div class="cover"><img src="${esc(item.cover)}" onerror="this.parentNode.textContent='${cat.emoji||'📌'}'"></div>`
       :`<div class="cover">${cat.emoji||'📌'}</div>`;
@@ -2321,14 +2342,14 @@ function render(){
       ? `<span class="cnote-toggle" onclick="event.stopPropagation();toggleCnoteCard('${item.id}', event)"><span class="arr">▾</span>收起</span>`
       : '';
     const noteCell=noteRaw
-      ? `<div class="cnote-wrap"><div class="cnote">💬 ${esc(noteRaw)}</div></div>`
+      ? `<div class="cnote-wrap"><div class="cnote">💬 ${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
     return `<tr data-id="${item.id}" class="note-expanded">
       <td class="c-cover-td">${coverH}</td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
-        ${item.creator?`<div class="csub">${esc(item.creator)}</div>`:''}
+        ${item.creator?`<div class="csub">${hl(item.creator)}</div>`:''}
       </td>
       <td>${noteCell}</td>
       <td><span class="cbadge" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span></td>
@@ -3182,7 +3203,7 @@ function bookNotePreview(body){
   if(!numBlocks.length) return notePreviewInline(body);
   return numBlocks.slice(0,2).map(p=>{
     const t=p.text.length>60?p.text.slice(0,60)+'…':p.text;
-    return `<div class="pv-pg"><span class="pv-pnum">${p.num}.</span> ${inlineBold(esc(t))}</div>`;
+    return `<div class="pv-pg"><span class="pv-pnum">${p.num}.</span> ${inlineBold(hl(t))}</div>`;
   }).join('');
 }
 
@@ -3230,7 +3251,7 @@ function renderNotes(){
       const fullBody=renderRich(n.body||'');
       return `<div class="note-card collect expanded" onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
-          <div class="note-title${titleCls}">${esc(title)}</div>
+          <div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
           <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
           <button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
           <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>
@@ -3238,7 +3259,7 @@ function renderNotes(){
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
         <div class="note-foot">
           <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
-          ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
+          ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('')}
         </div>
       </div>`;
     }
@@ -3251,13 +3272,13 @@ function renderNotes(){
       : '';
     return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
       <div class="note-head">
-        <div class="note-title${titleCls}">${esc(title)}</div>
+        <div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
         <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
       </div>
       <div class="note-preview${prevCls}">${preview||'（无内容）'}</div>
       <div class="note-foot">
         <span class="note-subcat">${esc(n.subCat||'灵感')}</span>
-        ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}
+        ${(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('')}
         ${tlBtn}
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>
       </div>
@@ -3545,7 +3566,8 @@ function renderMemoFieldRow(noteId,f){
   const sk=noteId+'_'+f.key;
   const revealed=memoRevealState[sk];
   const shouldMask=f.isPassword&&!revealed;
-  const displayValue=shouldMask?memoMask(f.value):esc(f.value);
+  // 密码即使显示也不高亮（密码本就不参与搜索）
+  const displayValue=shouldMask?memoMask(f.value):(f.isPassword?esc(f.value):hl(f.value));
   let valueCls='';
   if(shouldMask) valueCls='masked';
   else if(f.isNote) valueCls='note';
@@ -3556,7 +3578,7 @@ function renderMemoFieldRow(noteId,f){
   const copyBtn=!f.isNote
     ? `<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,${valSafe})" title="复制" type="button">${MEMO_ICON.copy}</button>`
     : '';
-  return `<div class="memo-field"><span class="memo-field-label">${esc(f.label)}</span><div class="memo-field-value ${valueCls}">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
+  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value ${valueCls}">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
 }
 
 function renderMemoCard(n){
@@ -3578,7 +3600,7 @@ function renderMemoCard(n){
   return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
       <button class="memo-lock ${lockCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${lockTitle}" type="button">${lockIcon}</button>
-      <div class="memo-title${titleCls}">${esc(title)}</div>
+      <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
       <div class="memo-date">${fmtNoteDate(n.updatedAt)}</div>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
