@@ -1127,9 +1127,15 @@ tr:hover .acts{opacity:1;}
 .memo-field-value.editable{cursor:text;}
 @media (hover:hover){.memo-field-value.editable:hover{background:var(--accent-light);}}
 .memo-field.editing{height:auto;min-height:34px;align-items:flex-start;padding-top:5px;padding-bottom:5px;}
-.memo-field.editing .memo-field-label{line-height:26px;}
-.memo-field-input{width:100%;box-sizing:border-box;font-size:var(--fs-caption);font-family:var(--zh);font-weight:500;color:var(--text-primary);background:var(--surface);border:1px solid var(--accent);border-radius:0;padding:0 var(--sp-6);height:26px;line-height:24px;outline:none;letter-spacing:0;-webkit-appearance:none;}
-textarea.memo-field-input{height:auto;min-height:52px;line-height:1.5;padding:var(--sp-4) var(--sp-6);resize:vertical;white-space:pre-wrap;}
+.memo-field.editing .memo-field-label{line-height:30px;}
+.memo-field-input{width:100%;box-sizing:border-box;font-size:var(--fs-caption);font-family:var(--zh);font-weight:500;color:var(--text-primary);background:var(--surface);border:1px solid var(--accent);border-radius:0;padding:0 var(--sp-6);height:30px;line-height:28px;outline:none;letter-spacing:0;-webkit-appearance:none;}
+textarea.memo-field-input{height:auto;min-height:56px;line-height:1.5;padding:var(--sp-4) var(--sp-6);resize:vertical;white-space:pre-wrap;}
+/* 编辑时的 保存 / 取消 —— 手机端主要靠点它，不依赖回车键 */
+.memo-edit-btn{flex-shrink:0;width:30px;height:30px;border:1px solid var(--border);background:var(--surface);border-radius:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .1s;}
+.memo-edit-btn:active{transform:scale(0.9);}
+.memo-edit-btn svg{width:16px;height:16px;display:block;}
+.memo-edit-btn.ok{background:var(--accent);border-color:var(--accent);color:#fff;}
+.memo-edit-btn.cancel{color:var(--text-muted);}
 
 /* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
 .cf-row{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-10);}
@@ -3727,14 +3733,23 @@ function startMemoFieldEdit(e,noteId,key,isNote){
   const raw=memoFieldRaw(n,key);
   valEl.dataset.editing='1';
   const row=valEl.closest('.memo-field');
+  row.classList.add('editing');
+  // 隐藏本行原有的 复制 / 显示 按钮，编辑时只留 保存 / 取消
+  const oldBtns=[].slice.call(row.querySelectorAll('.memo-btn'));
+  oldBtns.forEach(b=>{b.style.display='none';});
   const inp=document.createElement(isNote?'textarea':'input');
   inp.className='memo-field-input';
   inp.value=raw;
-  if(!isNote)inp.type='text';
+  if(!isNote){inp.type='text';inp.enterKeyHint='done';}
   valEl.classList.remove('masked');
   valEl.innerHTML='';
   valEl.appendChild(inp);
-  if(isNote&&row)row.classList.add('editing');
+  // 追加「取消 ✕ / 保存 ✓」按钮 —— 手机没有回车键，点这两个即可
+  const cancelBtn=document.createElement('button');
+  cancelBtn.type='button';cancelBtn.className='memo-edit-btn cancel';cancelBtn.title='取消';cancelBtn.innerHTML=MEMO_ICON.delX;
+  const okBtn=document.createElement('button');
+  okBtn.type='button';okBtn.className='memo-edit-btn ok';okBtn.title='保存';okBtn.innerHTML=MEMO_ICON.check;
+  row.appendChild(cancelBtn);row.appendChild(okBtn);
   inp.focus();
   const L=raw.length;
   try{inp.setSelectionRange(L,L);}catch(_){}
@@ -3747,12 +3762,15 @@ function startMemoFieldEdit(e,noteId,key,isNote){
     }
     render();
   };
-  inp.addEventListener('blur',()=>finish(true));
+  // 用 pointerdown 抢在输入框 blur 之前触发，避免按钮被 blur→render 先销毁
+  okBtn.addEventListener('pointerdown',(ev)=>{ev.preventDefault();finish(true);});
+  cancelBtn.addEventListener('pointerdown',(ev)=>{ev.preventDefault();done=true;render();});
+  // 点到别处（如键盘收起、点其它字段）也算保存，作为兜底
+  inp.addEventListener('blur',()=>{setTimeout(()=>finish(true),0);});
+  // 电脑端仍可用回车/Esc；手机端忽略即可
   inp.addEventListener('keydown',(ev)=>{
-    if(ev.key==='Enter'){
-      if(isNote){if(ev.metaKey||ev.ctrlKey){ev.preventDefault();inp.blur();}}
-      else{ev.preventDefault();inp.blur();}
-    }else if(ev.key==='Escape'){ev.preventDefault();done=true;render();}
+    if(ev.key==='Enter'&&!isNote){ev.preventDefault();finish(true);}
+    else if(ev.key==='Escape'){ev.preventDefault();done=true;render();}
   });
 }
 
