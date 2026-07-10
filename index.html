@@ -1123,6 +1123,29 @@ tr:hover .acts{opacity:1;}
 .memo-btn svg{width:15px;height:15px;display:block;}
 .memo-btn.copied{color:var(--accent);background:var(--accent-light);}
 
+/* 备忘字段值可点：点一下从底部弹出单字段编辑面板 */
+.memo-field-value.editable{cursor:pointer;}
+@media (hover:hover){.memo-field-value.editable:hover{background:var(--accent-light);}}
+
+/* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
+.mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity .22s;z-index:1400;}
+.mfsheet-mask.show{opacity:1;pointer-events:auto;}
+.mfsheet{position:fixed;left:0;right:0;bottom:0;z-index:1401;background:var(--surface);border-top:1px solid var(--border);
+  padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
+  transform:translateY(110%);transition:transform .26s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 30px rgba(0,0,0,.12);}
+.mfsheet.show{transform:translateY(0);}
+.mfsheet-grip{width:38px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 14px;}
+.mfsheet-label{font-size:var(--fs-foot);font-weight:600;color:var(--accent-mid);margin-bottom:8px;letter-spacing:.02em;}
+.mfsheet-input{width:100%;box-sizing:border-box;font-size:16px;font-family:var(--zh);font-weight:500;color:var(--text-primary);
+  background:var(--bg);border:1px solid var(--border);border-radius:0;padding:12px;outline:none;-webkit-appearance:none;line-height:1.5;}
+.mfsheet-input:focus{border-color:var(--accent);}
+textarea.mfsheet-input{min-height:110px;resize:none;white-space:pre-wrap;}
+.mfsheet-bar{display:flex;gap:10px;margin-top:16px;}
+.mfsheet-btn{flex:1;font-family:var(--zh);font-size:15px;font-weight:600;padding:13px;border:1px solid var(--border);border-radius:0;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .1s;}
+.mfsheet-btn:active{transform:scale(0.98);}
+.mfsheet-btn.ok{background:var(--accent);border-color:var(--accent);color:#fff;}
+.mfsheet-btn.cancel{background:var(--bg);color:var(--text-secondary);}
+
 /* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
 .cf-row{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-10);}
 .cf-key{width:100%;height:34px;padding:0 var(--sp-12);background:transparent;border:1px solid transparent;border-radius:var(--r);font-size:var(--fs-body);color:var(--accent);font-weight:600;-webkit-appearance:none;box-sizing:border-box;font-family:var(--zh);}
@@ -1920,6 +1943,18 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <button class="mclose" onclick="closeCalNotePreview()">×</button>
     </div>
     <div class="mbody" id="cnp-body"></div>
+  </div>
+</div>
+
+<!-- ===== 备忘·单字段编辑弹层 ===== -->
+<div class="mfsheet-mask" id="mfSheetMask" onclick="closeMemoSheet(false)"></div>
+<div class="mfsheet" id="mfSheet" role="dialog" aria-modal="true">
+  <div class="mfsheet-grip"></div>
+  <div class="mfsheet-label" id="mfSheetLabel"></div>
+  <div id="mfSheetHolder"></div>
+  <div class="mfsheet-bar">
+    <button type="button" class="mfsheet-btn cancel" onpointerdown="event.preventDefault();closeMemoSheet(false)">取消</button>
+    <button type="button" class="mfsheet-btn ok" onpointerdown="event.preventDefault();closeMemoSheet(true)">保存</button>
   </div>
 </div>
 
@@ -3691,7 +3726,66 @@ function renderMemoFieldRow(noteId,f){
   const copyBtn=!f.isNote
     ? `<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','${f.key}')" title="复制" type="button">${MEMO_ICON.copy}</button>`
     : '';
-  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value ${valueCls}">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
+  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
+}
+
+// ── 备忘字段行内编辑 ──────────────────────────────────────────
+// 读/写某条备忘指定字段的原始值（不经掩码/高亮）
+function memoFieldRaw(n,key){
+  const f=n.fields||{};
+  if(key==='username')return f.username||'';
+  if(key==='password')return f.password||'';
+  if(key==='note')return f.note||'';
+  if(key.indexOf('cf_')===0){const i=+key.slice(3);return (n.customFields&&n.customFields[i]&&n.customFields[i].value)||'';}
+  return '';
+}
+function memoFieldSet(n,key,val){
+  if(!n.fields)n.fields={};
+  if(key==='username')n.fields.username=val;
+  else if(key==='password')n.fields.password=val;
+  else if(key==='note')n.fields.note=val;
+  else if(key.indexOf('cf_')===0){const i=+key.slice(3);if(n.customFields&&n.customFields[i])n.customFields[i].value=val;}
+}
+// 点字段值 → 从底部升起「只编辑这一项」的面板；宽敞、手机友好、不弹完整编辑页
+let memoSheet={noteId:null,key:null,raw:'',isNote:false};
+function openMemoSheet(noteId,key,isNote){
+  const n=notes.find(x=>x.id===noteId);
+  if(!n||isEncLocked(n))return;
+  const raw=memoFieldRaw(n,key);
+  const f=memoCollectFields(n).find(x=>x.key===key);
+  memoSheet={noteId,key,raw,isNote:!!isNote};
+  document.getElementById('mfSheetLabel').textContent=f?f.label:'';
+  const holder=document.getElementById('mfSheetHolder');
+  holder.innerHTML='';
+  const inp=document.createElement(isNote?'textarea':'input');
+  inp.className='mfsheet-input';inp.id='mfSheetInput';inp.value=raw;
+  if(!isNote){inp.type='text';inp.enterKeyHint='done';}
+  holder.appendChild(inp);
+  inp.addEventListener('keydown',(ev)=>{
+    if(ev.key==='Enter'&&!isNote){ev.preventDefault();closeMemoSheet(true);}
+    else if(ev.key==='Escape'){ev.preventDefault();closeMemoSheet(false);}
+  });
+  document.getElementById('mfSheetMask').classList.add('show');
+  document.getElementById('mfSheet').classList.add('show');
+  // 等升起动画后再聚焦，避免部分机型键盘顶飞动画
+  setTimeout(()=>{inp.focus();const L=raw.length;try{inp.setSelectionRange(L,L);}catch(_){}},270);
+}
+function closeMemoSheet(save){
+  const sheet=document.getElementById('mfSheet');
+  if(!sheet.classList.contains('show'))return;
+  const s=memoSheet;
+  if(save&&s.noteId){
+    const n=notes.find(x=>x.id===s.noteId);
+    if(n&&!isEncLocked(n)){
+      const inp=document.getElementById('mfSheetInput');
+      const nv=s.isNote?inp.value:inp.value.trim();
+      if(nv!==s.raw){memoFieldSet(n,s.key,nv);n.updatedAt=Date.now();persistNotes();toast('已保存');}
+    }
+  }
+  document.getElementById('mfSheetMask').classList.remove('show');
+  sheet.classList.remove('show');
+  memoSheet={noteId:null,key:null,raw:'',isNote:false};
+  render();
 }
 
 function renderMemoCard(n){
