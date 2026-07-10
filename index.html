@@ -1123,6 +1123,14 @@ tr:hover .acts{opacity:1;}
 .memo-btn svg{width:15px;height:15px;display:block;}
 .memo-btn.copied{color:var(--accent);background:var(--accent-light);}
 
+/* 备忘字段行内编辑（点值即改，不弹完整编辑页）*/
+.memo-field-value.editable{cursor:text;}
+@media (hover:hover){.memo-field-value.editable:hover{background:var(--accent-light);}}
+.memo-field.editing{height:auto;min-height:34px;align-items:flex-start;padding-top:5px;padding-bottom:5px;}
+.memo-field.editing .memo-field-label{line-height:26px;}
+.memo-field-input{width:100%;box-sizing:border-box;font-size:var(--fs-caption);font-family:var(--zh);font-weight:500;color:var(--text-primary);background:var(--surface);border:1px solid var(--accent);border-radius:0;padding:0 var(--sp-6);height:26px;line-height:24px;outline:none;letter-spacing:0;-webkit-appearance:none;}
+textarea.memo-field-input{height:auto;min-height:52px;line-height:1.5;padding:var(--sp-4) var(--sp-6);resize:vertical;white-space:pre-wrap;}
+
 /* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
 .cf-row{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-10);}
 .cf-key{width:100%;height:34px;padding:0 var(--sp-12);background:transparent;border:1px solid transparent;border-radius:var(--r);font-size:var(--fs-body);color:var(--accent);font-weight:600;-webkit-appearance:none;box-sizing:border-box;font-family:var(--zh);}
@@ -3691,7 +3699,61 @@ function renderMemoFieldRow(noteId,f){
   const copyBtn=!f.isNote
     ? `<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','${f.key}')" title="复制" type="button">${MEMO_ICON.copy}</button>`
     : '';
-  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value ${valueCls}">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
+  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();startMemoFieldEdit(event,'${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
+}
+
+// ── 备忘字段行内编辑 ──────────────────────────────────────────
+// 读/写某条备忘指定字段的原始值（不经掩码/高亮）
+function memoFieldRaw(n,key){
+  const f=n.fields||{};
+  if(key==='username')return f.username||'';
+  if(key==='password')return f.password||'';
+  if(key==='note')return f.note||'';
+  if(key.indexOf('cf_')===0){const i=+key.slice(3);return (n.customFields&&n.customFields[i]&&n.customFields[i].value)||'';}
+  return '';
+}
+function memoFieldSet(n,key,val){
+  if(!n.fields)n.fields={};
+  if(key==='username')n.fields.username=val;
+  else if(key==='password')n.fields.password=val;
+  else if(key==='note')n.fields.note=val;
+  else if(key.indexOf('cf_')===0){const i=+key.slice(3);if(n.customFields&&n.customFields[i])n.customFields[i].value=val;}
+}
+function startMemoFieldEdit(e,noteId,key,isNote){
+  const valEl=e.currentTarget;
+  if(valEl.dataset.editing)return;            // 已在编辑
+  const n=notes.find(x=>x.id===noteId);
+  if(!n||isEncLocked(n))return;
+  const raw=memoFieldRaw(n,key);
+  valEl.dataset.editing='1';
+  const row=valEl.closest('.memo-field');
+  const inp=document.createElement(isNote?'textarea':'input');
+  inp.className='memo-field-input';
+  inp.value=raw;
+  if(!isNote)inp.type='text';
+  valEl.classList.remove('masked');
+  valEl.innerHTML='';
+  valEl.appendChild(inp);
+  if(isNote&&row)row.classList.add('editing');
+  inp.focus();
+  const L=raw.length;
+  try{inp.setSelectionRange(L,L);}catch(_){}
+  let done=false;
+  const finish=(save)=>{
+    if(done)return;done=true;
+    if(save){
+      const nv=isNote?inp.value:inp.value.trim();
+      if(nv!==raw){memoFieldSet(n,key,nv);n.updatedAt=Date.now();persistNotes();}
+    }
+    render();
+  };
+  inp.addEventListener('blur',()=>finish(true));
+  inp.addEventListener('keydown',(ev)=>{
+    if(ev.key==='Enter'){
+      if(isNote){if(ev.metaKey||ev.ctrlKey){ev.preventDefault();inp.blur();}}
+      else{ev.preventDefault();inp.blur();}
+    }else if(ev.key==='Escape'){ev.preventDefault();done=true;render();}
+  });
 }
 
 function renderMemoCard(n){
