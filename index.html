@@ -2650,10 +2650,13 @@ function onSearchBB(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render(
 // 搜索后让结果可见：滚动到内容区起点（用 scrollIntoView 尊重 sticky 筛选条，
 // 不用 scrollTo(0)——后者在键盘弹起时会把内容顶到状态栏下被裁切）
 function scrollResultsTop(){
-  // 仅桌面端主动滚动；手机端键盘弹起时浏览器会自行调整，强行滚动反而把结果顶出可视区
-  if(!window.matchMedia('(max-width: 768px)').matches){
-    const c=document.querySelector('.content');
-    if(c) c.scrollTop=0;
+  // 手机端整页滚动（.content 不滚），桌面端是 .content 滚动，两边都要归零，
+  // 否则搜索后结果保留旧滚动位置，第一条和「全部笔记 N 条」标题被顶到屏幕外
+  const c=document.querySelector('.content');
+  if(c) c.scrollTop=0;
+  if(window.matchMedia('(max-width: 768px)').matches){
+    // 用 rAF 等本次 render 后的新高度落定，再把整页拉回顶部
+    requestAnimationFrame(()=>window.scrollTo(0,0));
   }
 }
 function clearSearchBB(){
