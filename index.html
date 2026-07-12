@@ -746,6 +746,23 @@ tr:hover .acts{opacity:1;}
 .note-edit,.note-act{padding-left:var(--sp-6);padding-right:var(--sp-6);}
 .note-edit + .note-act,.note-act + .note-act{margin-left:var(--sp-2);}
 
+/* ── 手机端：卡片左滑露出「删除」；桌面端保留常驻删除按钮 ── */
+@media (hover:none){
+  /* 触摸设备没有 hover，常驻的灰色删除既不好看又易误触，改用左滑。
+     用 !important 压过收集卡/备忘卡里更高优先级的 .note-act 规则。 */
+  .note-card .note-act{display:none !important;}
+}
+.swipe-wrap{position:relative;overflow:hidden;}
+.swipe-wrap>.note-card{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
+.swipe-del{
+  position:absolute;top:0;right:0;bottom:0;width:84px;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  border:0;margin:0;padding:0;cursor:pointer;
+  background:var(--danger);color:#fff;
+  font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
+}
+.swipe-del:active{background:#7f1a1a;}
+
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
 /* 收集卡标题行：加淡分隔线区分标题与正文，按钮垂直居中 */
@@ -3400,7 +3417,7 @@ function renderNotes(){
     // ── 「收集」子分类：卡片可展开/收起显示全文（默认展开）──
     if(n.subCat==='收集'){
       const fullBody=renderRich(n.body||'');
-      return `<div class="note-card collect expanded" onclick="toggleCollectCard('${n.id}', event)">
+      return `<div class="note-card collect expanded" data-nid="${n.id}" onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
           <div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
           <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
@@ -3421,7 +3438,7 @@ function renderNotes(){
     const tlBtn=isBook
       ? `<button class="tl-btn" onclick="event.stopPropagation();openTimeline('${n.id}')" title="查看时间线" type="button">📖 时间线</button>`
       : '';
-    return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
+    return `<div class="note-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
       <div class="note-head">
         <div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
         <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
@@ -3435,6 +3452,89 @@ function renderNotes(){
       </div>
     </div>`;
   }).join('');
+  enhanceNoteSwipe(list);
+}
+
+// ── 手机端：笔记卡片左滑露出「删除」──────────────────
+// 桌面端（有 hover）不启用，保留卡片上的常驻删除按钮。
+const SWIPE_OPEN_W = 84;   // 露出的删除面板宽度，与 .swipe-del 的 width 一致
+let swipeOpenCard = null;  // 当前处于「已滑开」状态的 .note-card
+
+function closeSwipe(card){
+  if(!card) return;
+  card.style.transition='transform .2s';
+  card.style.transform='translateX(0)';
+  if(swipeOpenCard===card) swipeOpenCard=null;
+}
+function openSwipe(card){
+  if(swipeOpenCard && swipeOpenCard!==card) closeSwipe(swipeOpenCard);
+  card.style.transition='transform .2s';
+  card.style.transform='translateX(-'+SWIPE_OPEN_W+'px)';
+  swipeOpenCard=card;
+}
+
+function enhanceNoteSwipe(list){
+  // 只在无 hover 的触摸设备启用；桌面端直接用常驻删除按钮
+  if(window.matchMedia('(hover:hover)').matches) return;
+  swipeOpenCard=null; // innerHTML 重建后旧节点已失效
+  list.querySelectorAll('.note-card').forEach(card=>{
+    const nid=card.getAttribute('data-nid');
+    if(!nid) return;
+    // 包一层滑动容器：删除面板在下层（右侧），卡片在上层可左右平移
+    const wrap=document.createElement('div');
+    wrap.className='swipe-wrap';
+    card.parentNode.insertBefore(wrap, card);
+    const del=document.createElement('button');
+    del.type='button';
+    del.className='swipe-del';
+    del.textContent='删除';
+    del.addEventListener('click',(e)=>{ e.stopPropagation(); closeSwipe(card); askDelNoteById(nid); });
+    wrap.appendChild(del);
+    wrap.appendChild(card);
+    attachSwipe(card);
+  });
+}
+
+function attachSwipe(card){
+  let startX=0,startY=0,base=0,dir=null,moved=false,active=false,lastT=0;
+  card.addEventListener('touchstart',(e)=>{
+    if(e.touches.length!==1){ active=false; return; }
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    base=(swipeOpenCard===card)?-SWIPE_OPEN_W:0;
+    lastT=base; dir=null; moved=false; active=true;
+    card.style.transition='none';
+  },{passive:true});
+  card.addEventListener('touchmove',(e)=>{
+    if(!active) return;
+    const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
+    if(dir===null){
+      if(Math.abs(dx)<6 && Math.abs(dy)<6) return;
+      dir=Math.abs(dx)>Math.abs(dy)?'h':'v';
+    }
+    if(dir==='v'){ active=false; return; }   // 纵向：交给页面正常滚动
+    e.preventDefault();
+    let t=base+dx;
+    if(t>0) t*=0.3;                                              // 右滑到底后加阻尼
+    else if(t<-SWIPE_OPEN_W) t=-SWIPE_OPEN_W-(-t-SWIPE_OPEN_W)*0.3; // 左滑超出后加阻尼
+    if(Math.abs(dx)>8) moved=true;
+    lastT=t;
+    card.style.transform='translateX('+t+'px)';
+  },{passive:false});
+  card.addEventListener('touchend',()=>{
+    if(!active) return;
+    active=false;
+    if(dir==='h'){
+      if(lastT<-SWIPE_OPEN_W/2) openSwipe(card); else closeSwipe(card);
+      if(moved) card._suppressClick=true;   // 拦掉这次滑动尾随的点击
+    }else{
+      // 纯点按：若卡片已滑开，先收起而不是进入编辑
+      if(swipeOpenCard===card){ closeSwipe(card); card._suppressClick=true; }
+    }
+  },{passive:true});
+  // 捕获阶段拦截被标记的点击，避免滑动后误触发卡片自身的 onclick
+  card.addEventListener('click',(e)=>{
+    if(card._suppressClick){ e.stopImmediatePropagation(); e.preventDefault(); card._suppressClick=false; }
+  }, true);
 }
 
 // ── 「收集」卡片点击展开/收起 ─────────────────────────
@@ -3809,7 +3909,7 @@ function renderMemoCard(n){
   const tagsHtml=(n.tags&&n.tags.length)
     ? `<div class="note-foot" style="margin-top:var(--sp-8)">${n.tags.slice(0,4).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}</div>`
     : '';
-  return `<div class="note-card" onclick="openNoteEdit('${n.id}')">
+  return `<div class="note-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
       <button class="memo-lock ${lockCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${lockTitle}" type="button">${lockIcon}</button>
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
