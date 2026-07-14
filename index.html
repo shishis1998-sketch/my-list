@@ -2633,12 +2633,16 @@ function applyModeUI(){
   else{navN.classList.remove('expanded','parent-on');nsub.classList.remove('open');}
 }
 // 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
+let _wasNoResult=false;
 function syncSearchNoResult(count){
   const no=!!(curSearch&&curSearch.trim())&&count===0;
   const top=document.querySelector('.sbox input');
   const bb=document.getElementById('bbSearch');
   if(top) top.classList.toggle('no-result',no);
   if(bb) bb.classList.toggle('no-result',no);
+  // 只在「刚变成 0 结果」的那一刻震一下，避免逐字输入时反复震动
+  if(no&&!_wasNoResult) haptic('warn');
+  _wasNoResult=no;
 }
 function onSearch(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
 function syncSearchClear(){
@@ -2845,7 +2849,7 @@ function closeModal(){document.getElementById('modal').classList.remove('open');
 
 function saveRec(){
   const name=document.getElementById('f-name').value.trim();
-  if(!name){toast('请输入名称');return;}
+  if(!name){toast('请输入名称','warn');return;}
   const scoreRaw=document.getElementById('f-score').value;
   const rec={
     name, type:document.getElementById('f-type').value,
@@ -2858,8 +2862,8 @@ function saveRec(){
     note:document.getElementById('f-note').value.trim(),
     tags:[...curTags], date:new Date().toISOString().slice(0,10)
   };
-  if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新');}
-  else{data.unshift({id:uid(),...rec});toast('已添加记录');}
+  if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新','success');}
+  else{data.unshift({id:uid(),...rec});toast('已添加记录','success');}
   persist(); closeModal(); render();
 }
 
@@ -2995,7 +2999,7 @@ function askDel(id){
   document.getElementById('cfdlg').classList.add('open');
 }
 function closeCf(){document.getElementById('cfdlg').classList.remove('open');delId=null;}
-function doDel(){if(!delId)return;data=data.filter(d=>d.id!==delId);persist();render();closeCf();toast('已删除');}
+function doDel(){if(!delId)return;data=data.filter(d=>d.id!==delId);persist();render();closeCf();toast('已删除','delete');}
 
 // ── Cat manager ───────────────────────────────────────────────────
 function openCatMgr(){
@@ -3112,11 +3116,31 @@ function today(){return new Date().toISOString().slice(0,10);}
 
 // ── Toast ─────────────────────────────────────────────────────────
 let tt;
-function toast(msg){
+// ── 震动反馈 ─────────────────────────────────────────────────────
+// 统一封装：自动特性检测，桌面/不支持震动的设备上静默降级为无操作。
+// 注：iOS Safari 的 <button> 点击目前不支持 navigator.vibrate（系统限制），
+// 安卓 Chrome / 多数安卓浏览器均支持。因此这里只做“能震则震”，绝不报错。
+let hapticOn=localStorage.getItem('hapticOff')!=='1';
+function haptic(type){
+  if(!hapticOn)return;
+  if(typeof navigator==='undefined'||typeof navigator.vibrate!=='function')return;
+  const P={
+    tap:12,          // 通用轻点：普通提示
+    success:[14],    // 保存/添加成功：干脆一下
+    warn:[24],       // 输入校验失败：略重提醒
+    delete:[22,50,22]// 删除：两下顿挫，与其它操作区分
+  };
+  try{navigator.vibrate(P[type]||P.tap);}catch(e){}
+}
+// 开关：setHaptic(false) 关闭全部震动并记住；setHaptic(true) 重新开启
+function setHaptic(on){hapticOn=!!on;localStorage.setItem('hapticOff',on?'0':'1');if(on)haptic('tap');}
+
+function toast(msg,hap='tap'){
   const el=document.getElementById('toast');
   document.getElementById('tmsg').textContent=msg;
   el.classList.add('show'); clearTimeout(tt);
   tt=setTimeout(()=>el.classList.remove('show'),2600);
+  haptic(hap);
 }
 
 // ── Calendar ─────────────────────────────────────────────────────
@@ -4250,7 +4274,7 @@ function askDelNote(){
   persistNotes();
   closeNoteModal();
   render();
-  toast('已删除');
+  toast('已删除','delete');
 }
 
 function askDelNoteById(id){
@@ -4258,7 +4282,7 @@ function askDelNoteById(id){
   notes=notes.filter(x=>x.id!==id);
   persistNotes();
   render();
-  toast('已删除');
+  toast('已删除','delete');
 }
 
 // 格式按钮
