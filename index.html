@@ -1445,7 +1445,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     </button>
     <div class="sbox">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" placeholder="搜索名称、作者、标签、备注..." oninput="onSearch(this.value)" autocomplete="off">
+      <input type="text" placeholder="搜索笔记标题、正文、标签..." oninput="onSearch(this.value)" autocomplete="off">
       <button class="sclear" type="button" onclick="clearSearch()" title="清空" aria-label="清空搜索" style="display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -1460,7 +1460,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     </select>
     <button class="addbtn" onclick="openAdd()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      <span class="lbl-text">添加记录</span>
+      <span class="lbl-text">添加</span>
     </button>
   </div>
 
@@ -1517,7 +1517,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <div id="empty" class="empty" style="display:none">
         <div class="empty-ic" id="empty-ic">📋</div>
         <h3>暂无记录</h3>
-        <p>点击右上角「添加记录」开始收录</p>
+        <p>点击右上角「添加」开始收录</p>
       </div>
     </div>
     <!-- 笔记列表容器（仅笔记模式显示） -->
@@ -1525,7 +1525,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <div id="nempty" class="empty" style="display:none">
       <div class="empty-ic">📓</div>
       <h3>暂无笔记</h3>
-      <p>点击右上角「添加记录」开始记录想法</p>
+      <p>点击右上角「添加」开始记录想法</p>
     </div>
   </div>
 </div><!-- /main -->
@@ -1537,7 +1537,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   <div class="bb-actions">
     <div class="bb-sbox">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="bbSearch" placeholder="搜索..." oninput="onSearchBB(this.value)" autocomplete="off">
+      <input type="text" id="bbSearch" placeholder="搜索笔记..." oninput="onSearchBB(this.value)" autocomplete="off">
       <button class="bb-sclear" type="button" onclick="clearSearchBB()" aria-label="清空" style="display:none">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -2575,16 +2575,9 @@ function filterCat(cat){
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
 }
 
-// 添加按钮文案：跟随当前分类
+// 添加按钮文案：统一为「添加」
 function syncAddBtn(){
-  let txt;
-  if(isNoteMode()){
-    txt='添加笔记';
-  }else if(curCat==='all'){
-    txt='添加';
-  }else{
-    txt='添加'+getCat(curCat).name;
-  }
+  const txt='添加';
   const lbl=document.querySelector('.addbtn .lbl-text');
   if(lbl) lbl.textContent=txt;
   // 底部栏添加按钮文案同步
@@ -2621,11 +2614,11 @@ function applyModeUI(){
       delete ssort.dataset.noteMode;
     }
   }
-  // 搜索 placeholder
+  // 搜索 placeholder：统一为笔记那套，不随模式变化
   const sinp=document.querySelector('.sbox input');
-  if(sinp) sinp.placeholder=notes?'搜索笔记标题、正文、标签...':'搜索名称、作者、标签、备注...';
+  if(sinp) sinp.placeholder='搜索笔记标题、正文、标签...';
   const bbinp=document.getElementById('bbSearch');
-  if(bbinp) bbinp.placeholder=notes?'搜索笔记...':'搜索...';
+  if(bbinp) bbinp.placeholder='搜索笔记...';
   // 侧边栏笔记入口展开/收起
   const navN=document.getElementById('nav-notes');
   const nsub=document.getElementById('nsub');
