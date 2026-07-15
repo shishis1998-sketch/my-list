@@ -1374,6 +1374,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 /* —— 封面缩略图：圆角 + 描边 —— */
 .cover{border:1.5px solid var(--ink);border-radius:0;background:var(--gold-soft);}
 
+/* ── 切换分类：卡片/行「上滑错落」入场 ── */
+@keyframes catStaggerIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.stagger-in{animation:catStaggerIn .36s cubic-bezier(.22,.61,.36,1) both;}
+@media (prefers-reduced-motion: reduce){.stagger-in{animation:none !important;}}
+
 </style>
 </head>
 <body>
@@ -2571,8 +2576,22 @@ function filterCat(cat){
   }
   applyModeUI();
   render();
+  playCatStagger();
   // 手机端点完分类自动关闭抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
+}
+
+// 切换分类时给可见列表的卡片/行做「上滑错落」入场
+// 仅在切分类时触发；延迟封顶到第 10 个（约 0.45s 内全部到位），件数再多也不拖沓
+function playCatStagger(){
+  const c=isNoteMode()?document.getElementById('nlist'):document.getElementById('tbody');
+  if(!c) return;
+  const items=c.children;
+  for(let i=0;i<items.length;i++){
+    const el=items[i];
+    el.style.animationDelay=(Math.min(i,10)*45)+'ms';
+    el.classList.add('stagger-in');
+  }
 }
 
 // 添加按钮文案：统一为「添加」
