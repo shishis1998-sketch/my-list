@@ -2793,6 +2793,7 @@ function renderTagFilterRow(){
 function setTag(v){
   curTag=v;
   render();
+  playCatStagger();
 }
 function openTagSheet(){
   const sheet=document.getElementById('bbTagSheet');
@@ -2815,6 +2816,7 @@ function closeTagSheet(){
 function pickTag(v){
   curTag=v;
   render();
+  playCatStagger();
   closeTagSheet();
 }
 
@@ -4549,7 +4551,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 })();
 
 // ── Init ─────────────────────────────────────────────────────────
-boot(); renderTypeSelect(); applyModeUI(); render();
+boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger();
 
 // ── 弹窗背景滚动锁（iOS/Android 通用）──────────────────────────
 // 思路：监听所有弹窗 overlay 的 open class 变化，自动锁/解锁 body
