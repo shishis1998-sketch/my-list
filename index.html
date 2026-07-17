@@ -745,7 +745,9 @@ tr:hover .acts{opacity:1;}
 .swipe-wrap{position:relative;overflow:hidden;border-radius:var(--rlg);}
 .swipe-wrap>.note-card{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
 .swipe-del{
-  position:absolute;top:0;right:0;bottom:0;width:84px;z-index:1;
+  /* 整体向内缩 1px（上/右/下）：卡片圆角与外层裁切最外圈抗锯齿像素后面
+     始终是背景/卡片而非红色，消除真机上圆角处渗出的红丝。1px 滑开时不可见。 */
+  position:absolute;top:1px;right:1px;bottom:1px;width:84px;z-index:1;
   display:flex;align-items:center;justify-content:center;
   border:0;margin:0;padding:0;cursor:pointer;
   border-radius:0 var(--rlg) var(--rlg) 0;
