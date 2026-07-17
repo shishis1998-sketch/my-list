@@ -530,13 +530,15 @@ tr:hover .acts{opacity:1;}
   /* ===== 手机端：隐藏顶部 topbar，启用底部栏 ===== */
   .topbar{display:none;}
   /* 内容不被底部栏遮挡：操作行(~54)+tab行(~62)+安全区；键盘弹起时再加 --kb */
-  body{padding-bottom:calc(124px + env(safe-area-inset-bottom) + var(--kb,0px));}
+  body{padding-bottom:calc(110px + env(safe-area-inset-bottom) + var(--kb,0px));}
   /* 筛选条贴顶（媒体模式 .frow / 笔记模式 .nfrow）*/
   .frow,.nfrow{position:sticky;top:0;z-index:30;}
 
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
     background:var(--surface);border-top:1px solid var(--border);
+    /* 底栏整体做成带圆角的浮起卡片：顶部两角圆角 */
+    border-radius:var(--rxl) var(--rxl) 0 0;overflow:hidden;
     box-shadow:0 -2px 16px rgba(0,0,0,.05);
     padding-bottom:env(safe-area-inset-bottom);
     /* 键盘弹起时整条上移到键盘上方（--kb 由 JS 用 visualViewport 计算）*/
@@ -582,9 +584,9 @@ tr:hover .acts{opacity:1;}
   .bb-tabs{display:flex;align-items:stretch;}
   .bb-tab{flex:1;background:none;border:none;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:var(--sp-4);padding:var(--sp-8) var(--sp-4) var(--sp-10);color:var(--text-muted);
+    gap:var(--sp-2);padding:5px var(--sp-4) var(--sp-6);color:var(--text-muted);
     font-size:var(--fs-foot);font-family:var(--zh);font-weight:600;position:relative;}
-  .bb-tab svg{width:22px;height:22px;stroke-width:2;transition:transform .12s;}
+  .bb-tab svg{width:20px;height:20px;stroke-width:2;transition:transform .12s;}
   .bb-tab.on{color:var(--accent);}
   .bb-tab.on svg{stroke-width:2.4;}
   .bb-tab:active svg{transform:scale(.9);}
