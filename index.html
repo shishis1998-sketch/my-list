@@ -764,6 +764,10 @@ tr:hover .acts{opacity:1;}
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
 .swipe-del:active{background:#7f1a1a;}
+/* 滑动进行中/已滑开时，卡片右侧改为直角：卡片(左圆角)+删除面板(右圆角)拼成
+   一个完整的圆角矩形，二者无缝融合，消除中间的白色圆角缺口。
+   静止态不加此类，卡片仍自带四角圆角(不依赖父级 overflow 裁切，真机稳)。 */
+.swipe-wrap>.note-card.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
 
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
@@ -3480,9 +3484,12 @@ function closeSwipe(card){
   card.style.transition='transform .2s';
   card.style.transform='translateX(0)';
   if(swipeOpenCard===card) swipeOpenCard=null;
+  // 收回到位后再取消「右侧直角」，让卡片恢复四角圆角；期间卡片已完全遮住面板，无跳变
+  setTimeout(()=>{ if(swipeOpenCard!==card) card.classList.remove('swipe-cut'); },210);
 }
 function openSwipe(card){
   if(swipeOpenCard && swipeOpenCard!==card) closeSwipe(swipeOpenCard);
+  card.classList.add('swipe-cut');
   card.style.transition='transform .2s';
   card.style.transform='translateX(-'+SWIPE_OPEN_W+'px)';
   swipeOpenCard=card;
@@ -3527,6 +3534,7 @@ function attachSwipe(card){
       dir=Math.abs(dx)>Math.abs(dy)?'h':'v';
     }
     if(dir==='v'){ active=false; return; }   // 纵向：交给页面正常滚动
+    card.classList.add('swipe-cut');          // 横向滑动即把卡片右侧改直角，和删除面板无缝拼接
     e.preventDefault();
     let t=base+dx;
     if(t>0) t*=0.3;                                              // 右滑到底后加阻尼
