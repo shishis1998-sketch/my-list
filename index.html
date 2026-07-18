@@ -59,7 +59,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* 手机端整屏「设置」页专用元素，桌面端隐藏 */
 .sb-mhdr{display:none;}
 .nlbl.nlbl-mobile{display:none;}
-.nsec-hint{display:none;}
 .ncard-cats-mobile{display:none;}
 /* 桌面端 .ncard 只是透明包裹，不改变原有布局 */
 .logo{padding:0 var(--sp-20) var(--sp-20);border-bottom:1px solid var(--border-soft);margin-bottom:var(--sp-12);}
@@ -450,11 +449,6 @@ tr:hover .acts{opacity:1;}
   .sidebar .cat-edit-ic{margin-left:auto;color:var(--text-muted);display:flex;flex-shrink:0;}
   .sidebar .nitem-add{color:var(--accent-mid);font-weight:600;}
   .sidebar .nitem-add .plus{font-size:var(--fs-title);line-height:1;width:8px;display:inline-flex;justify-content:center;}
-  /* 分组说明小字 */
-  .sidebar .nsec-hint{
-    display:block;font-size:var(--fs-caption);color:var(--text-muted);
-    padding:var(--sp-8) var(--sp-8) 0;line-height:var(--lh-normal);
-  }
 
   /* 主区域占满 (手机端去掉 overflow + 不限高,让 body 自然滚动,topbar 才能粘到视口顶部) */
   .main{width:100%;overflow:visible;height:auto;min-height:100vh;}
@@ -1492,7 +1486,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     </div>
     <!-- 手机端:分类管理列表(点=编辑,由 JS 渲染) -->
     <div class="ncard ncard-cats-mobile" id="mcatmgr"></div>
-    <div class="nsec-hint">分类筛选已移到媒体主页顶部,这里用于新增 / 改名 / 删除。</div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
