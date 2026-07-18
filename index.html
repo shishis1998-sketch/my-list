@@ -846,10 +846,7 @@ tr:hover .acts{opacity:1;}
 .tl{display:flex;flex-direction:column;gap:var(--sp-10);margin-top:var(--sp-6);}
 
 /* 左滑露出绿色「编辑」（与笔记卡左滑删除同款交互） */
-/* 阴影放在外层 swipe-wrap 上：既不被 overflow:hidden 裁掉，滑开时卡片+绿面板也共用一层阴影 */
-.tl-swipe{position:relative;overflow:hidden;border-radius:var(--rlg);
-  box-shadow:0 2px 10px rgba(26,26,26,.08);transition:box-shadow .18s;}
-.tl-swipe:has(.tl-item.open){box-shadow:0 3px 14px rgba(43,77,63,.12);}
+.tl-swipe{position:relative;overflow:hidden;border-radius:var(--rlg);}
 .tl-swipe>.tl-item{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
 /* 滑动时卡片右侧改直角，与绿色面板拼成一个整圆角矩形（无缝融合） */
 .tl-swipe>.tl-item.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
@@ -863,10 +860,10 @@ tr:hover .acts{opacity:1;}
 }
 .tl-swipe-edit:active{background:#22392f;}
 
-/* 章节卡片本体：描边隐去，用外层 swipe-wrap 的阴影与背景分离 */
-.tl-item{background:var(--surface);border:1px solid transparent;border-radius:var(--rlg);
+/* 章节卡片本体：与时间线外面的笔记卡片同款描边（1px var(--ink)），无阴影 */
+.tl-item{background:var(--surface);border:var(--bd) solid var(--ink);border-radius:var(--rlg);
   transition:border-color .18s;}
-.tl-item.open{border-color:var(--accent-light);}
+.tl-item.open{border-color:var(--accent-mid);}
 
 /* 章节标题区(可点击折叠)：紧凑高度 */
 .tl-head{
@@ -886,10 +883,9 @@ tr:hover .acts{opacity:1;}
   line-height:var(--lh-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-item.open .tl-peek{display:none;}
 
-/* 章节内容折叠容器：高度滑动展开（grid-template-rows 0fr↔1fr） */
-.tl-inner{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease;}
-.tl-item.open .tl-inner{grid-template-rows:1fr;}
-.tl-clip{overflow:hidden;min-height:0;}
+/* 章节内容折叠容器：JS 测量真实高度做平滑高度过渡（比 grid fr 更顺，不掉帧） */
+.tl-inner{overflow:hidden;height:0;transition:height .32s cubic-bezier(.25,.8,.3,1);}
+.tl-clip{min-height:0;}
 .tl-pad{padding:var(--sp-14) var(--sp-16) var(--sp-16);border-top:1px solid var(--border-soft);}
 @media (prefers-reduced-motion:reduce){.tl-inner{transition:none;}}
 
@@ -3714,6 +3710,25 @@ function closeTimeline(){
   document.getElementById('tlModal').classList.remove('open');
 }
 
+// 章节展开/收起：JS 测量真实高度做平滑过渡（比 CSS grid fr 更顺）
+function setChapterOpen(item, open){
+  const inner=item.querySelector('.tl-inner');
+  if(!inner){ item.classList.toggle('open', open); return; }
+  if(item._tlEnd){ inner.removeEventListener('transitionend', item._tlEnd); item._tlEnd=null; }
+  if(open){
+    item.classList.add('open');
+    inner.style.height=inner.scrollHeight+'px';           // 0/当前 → 内容高
+    const done=(ev)=>{ if(ev&&ev.propertyName!=='height')return;
+      if(item.classList.contains('open')) inner.style.height='auto'; // 展开完成后放开，内容变动也能自适应
+      inner.removeEventListener('transitionend',done); item._tlEnd=null; };
+    item._tlEnd=done; inner.addEventListener('transitionend',done);
+  }else{
+    inner.style.height=inner.scrollHeight+'px';           // auto → 固定高
+    void inner.offsetHeight;                              // 强制重排，才能从固定高过渡到 0
+    item.classList.remove('open');
+    requestAnimationFrame(()=>{ inner.style.height='0px'; });
+  }
+}
 // 自由模式：点章节切换自身展开/收起，不影响其他章节
 function toggleChapter(idx,e){
   const items=document.querySelectorAll('#tl-body .tl-item');
@@ -3721,7 +3736,7 @@ function toggleChapter(idx,e){
   if(!target) return;
   if(target._suppress){target._suppress=false;return;}      // 刚滑动过，忽略这次点按
   if(target.classList.contains('swipe-open')){tlCloseSwipe(target);return;} // 已滑开：先收回
-  target.classList.toggle('open');
+  setChapterOpen(target, !target.classList.contains('open'));
   syncTlAllBtn();
 }
 
@@ -3790,10 +3805,10 @@ function toggleAllChapters(){
   if(!items.length) return;
   const allOpen=[...items].every(it=>it.classList.contains('open'));
   if(allOpen){
-    items.forEach(it=>it.classList.remove('open'));
+    items.forEach(it=>setChapterOpen(it,false));
     btn.textContent='⇅ 展开全部';
   }else{
-    items.forEach(it=>it.classList.add('open'));
+    items.forEach(it=>setChapterOpen(it,true));
     btn.textContent='⇆ 收起全部';
   }
 }
