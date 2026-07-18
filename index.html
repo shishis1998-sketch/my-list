@@ -984,6 +984,8 @@ tr:hover .acts{opacity:1;}
 .tl-phead{
   flex:1;min-width:0;font-size:var(--fs-headline);font-weight:700;color:var(--accent);
   line-height:var(--lh-normal);
+  /* 左内边距对齐灰框内正文（框 border 1px + padding 12px），小标题与正文起始位置一致 */
+  padding-left:calc(var(--sp-12) + 1px);
 }
 
 /* ── 富文本渲染样式（rt-* / pv-h1/h2/h3）─────────────────── */
