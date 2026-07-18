@@ -846,7 +846,10 @@ tr:hover .acts{opacity:1;}
 .tl{display:flex;flex-direction:column;gap:var(--sp-10);margin-top:var(--sp-6);}
 
 /* 左滑露出绿色「编辑」（与笔记卡左滑删除同款交互） */
-.tl-swipe{position:relative;overflow:hidden;border-radius:var(--rlg);}
+/* 阴影放在外层 swipe-wrap 上：既不被 overflow:hidden 裁掉，滑开时卡片+绿面板也共用一层阴影 */
+.tl-swipe{position:relative;overflow:hidden;border-radius:var(--rlg);
+  box-shadow:0 2px 10px rgba(26,26,26,.08);transition:box-shadow .18s;}
+.tl-swipe:has(.tl-item.open){box-shadow:0 3px 14px rgba(43,77,63,.12);}
 .tl-swipe>.tl-item{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
 /* 滑动时卡片右侧改直角，与绿色面板拼成一个整圆角矩形（无缝融合） */
 .tl-swipe>.tl-item.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
@@ -860,8 +863,9 @@ tr:hover .acts{opacity:1;}
 }
 .tl-swipe-edit:active{background:#22392f;}
 
-/* 章节卡片本体 */
-.tl-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);}
+/* 章节卡片本体：描边隐去，用外层 swipe-wrap 的阴影与背景分离 */
+.tl-item{background:var(--surface);border:1px solid transparent;border-radius:var(--rlg);
+  transition:border-color .18s;}
 .tl-item.open{border-color:var(--accent-light);}
 
 /* 章节标题区(可点击折叠)：紧凑高度 */
@@ -873,23 +877,21 @@ tr:hover .acts{opacity:1;}
 /* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时变实心墨绿 */
 .tl-bar{flex-shrink:0;width:3px;border-radius:2px;background:var(--accent-light);transition:background .18s;}
 .tl-item.open .tl-bar{background:var(--accent);}
-/* 标题两行：第一行 标题+箭头，第二行 预览铺满整行 */
+/* 标题 + 折叠时的预览行（首段正文，一行截断，展开后隐藏） */
 .tl-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
-.tl-row{display:flex;align-items:center;gap:var(--sp-8);}
-.tl-caret{
-  font-size:var(--fs-foot);color:var(--text-muted);flex-shrink:0;font-family:var(--en);
-  transition:transform .2s;
-}
-.tl-item.open .tl-caret{transform:rotate(90deg);color:var(--accent);}
-/* 折叠时显示的预览行（首段正文，一行截断）；展开后隐藏 */
+.tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--text-primary);line-height:var(--lh-normal);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tl-item.open .tl-ch{color:var(--accent);}
 .tl-peek{margin-top:var(--sp-2);font-size:var(--fs-caption);color:var(--text-muted);
   line-height:var(--lh-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-item.open .tl-peek{display:none;}
 
-/* 章节内容折叠容器（瞬间展开/收起，无动画） */
-.tl-inner{display:none;}
-.tl-item.open .tl-inner{display:block;
-  padding:var(--sp-14) var(--sp-16) var(--sp-16);border-top:1px solid var(--border-soft);}
+/* 章节内容折叠容器：高度滑动展开（grid-template-rows 0fr↔1fr） */
+.tl-inner{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease;}
+.tl-item.open .tl-inner{grid-template-rows:1fr;}
+.tl-clip{overflow:hidden;min-height:0;}
+.tl-pad{padding:var(--sp-14) var(--sp-16) var(--sp-16);border-top:1px solid var(--border-soft);}
+@media (prefers-reduced-motion:reduce){.tl-inner{transition:none;}}
 
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
@@ -931,9 +933,6 @@ tr:hover .acts{opacity:1;}
 }
 /* .tl-allbtn:active 颜色已去除 */
 
-.tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--text-primary);line-height:var(--lh-normal);flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tl-item.open .tl-ch{color:var(--accent);}
 .tl-nochap{
   font-size:var(--fs-caption);color:var(--text-muted);background:var(--bg);
   border-radius:var(--r);padding:var(--sp-14);line-height:var(--lh-loose);text-align:center;
@@ -957,7 +956,7 @@ tr:hover .acts{opacity:1;}
 }
 @media(max-width:768px){
   #tlModal .mhdr{padding:var(--sp-14) var(--sp-16) var(--sp-12);}
-  #tlModal #tl-body{padding:var(--sp-8) var(--sp-16) var(--sp-20) var(--sp-20);}
+  #tlModal #tl-body{padding:var(--sp-8) var(--sp-16) var(--sp-20) var(--sp-16);}
 }
 
 /* 章节细节区：flex+gap 排布，一条竖线贯穿所有圆点（起止落在首/末圆心） */
@@ -3699,14 +3698,11 @@ function renderTimelineBody(id){
           <div class="tl-head" onclick="toggleChapter(${idx},event)">
             <span class="tl-bar"></span>
             <div class="tl-main">
-              <div class="tl-row">
-                <div class="tl-ch">${esc(c.title)}</div>
-                <span class="tl-caret">&#9656;</span>
-              </div>
+              <div class="tl-ch">${esc(c.title)}</div>
               ${peekTxt?`<div class="tl-peek">${peekTxt}</div>`:''}
             </div>
           </div>
-          <div class="tl-inner">${inner?`<div class="tl-pts">${inner}</div>`:''}</div>
+          <div class="tl-inner">${inner?`<div class="tl-clip"><div class="tl-pad"><div class="tl-pts">${inner}</div></div></div>`:''}</div>
         </div>
       </div>`;
     }).join('')+'</div>';
