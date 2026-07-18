@@ -648,6 +648,10 @@ tr:hover .acts{opacity:1;}
   /* 搜索无结果：边框变红 */
   .bb-sbox input.no-result,
   .bb-sbox input.no-result:focus{border-color:var(--danger);}
+  /* 搜索有命中：淡绿底 + 绿边，表明正在筛选且搜到了内容 */
+  .bb-sbox input.has-result,
+  .bb-sbox input.has-result:focus{border-color:var(--accent-mid);background:var(--accent-light);}
+  .bb-sbox:has(input.has-result)>svg{color:var(--accent-mid);}
   .bb-sbox>svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;}
   .bb-sclear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;
     border:none;background:none;cursor:pointer;color:var(--text-muted);border-radius:50%;padding:0;
@@ -1301,6 +1305,10 @@ body.modal-open{
 /* 搜索无结果：边框变红 */
 .sbox input.no-result,
 .sbox input.no-result:focus{border-color:var(--danger);}
+/* 搜索有命中：淡绿底 + 绿边，表明正在筛选且搜到了内容 */
+.sbox input.has-result,
+.sbox input.has-result:focus{border-color:var(--accent-mid);background:var(--accent-light);}
+.sbox:has(input.has-result)>svg{color:var(--accent-mid);}
 
 /* —— 搜索命中高亮：珊瑚橙红荧光笔（只垫住文字下半行）—— */
 mark.shl{
@@ -5263,11 +5271,16 @@ function applyModeUI(){
 // 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
 let _wasNoResult=false;
 function syncSearchNoResult(count){
-  const no=!!(curSearch&&curSearch.trim())&&count===0;
+  const term=!!(curSearch&&curSearch.trim());
+  const no=term&&count===0;
+  const has=term&&count>0;
   const top=document.querySelector('.sbox input');
   const bb=document.getElementById('bbSearch');
-  if(top) top.classList.toggle('no-result',no);
-  if(bb) bb.classList.toggle('no-result',no);
+  [top,bb].forEach(el=>{
+    if(!el) return;
+    el.classList.toggle('no-result',no);
+    el.classList.toggle('has-result',has);
+  });
   // 只在「刚变成 0 结果」的那一刻震一下，避免逐字输入时反复震动
   if(no&&!_wasNoResult) haptic('warn');
   _wasNoResult=no;
