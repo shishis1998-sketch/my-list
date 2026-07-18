@@ -387,12 +387,15 @@ tr:hover .acts{opacity:1;}
     width:100%;max-width:none;min-width:0;
     height:100vh;height:100dvh;
     overflow-y:auto;-webkit-overflow-scrolling:touch;
+    /* 隐藏原生滚动条：部分安卓浏览器会画一条灰色经典滚动条，露在页面右侧（与全站无滚动条风格一致）*/
+    scrollbar-width:none;-ms-overflow-style:none;
     padding:0 0 calc(var(--sp-24) + env(safe-area-inset-bottom));
     border-right:none;
     transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
     /* 覆盖底栏(z-index:90)与顶栏,成为独立整屏页面 */
     z-index:100;box-shadow:none;
   }
+  .sidebar::-webkit-scrollbar{display:none;}
   /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
   .sidebar .nsec{flex-shrink:0;}
   .sidebar.open{transform:translateX(0);}
