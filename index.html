@@ -56,6 +56,8 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   padding:var(--sp-24) 0;display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;overflow-y:auto;
 }
+/* 手机端整屏「设置」页的页头，桌面端隐藏 */
+.sb-mhdr{display:none;}
 .logo{padding:0 var(--sp-20) var(--sp-20);border-bottom:1px solid var(--border-soft);margin-bottom:var(--sp-12);}
 .logo h1{font-size:var(--fs-headline);font-weight:700;color:var(--accent);}
 .logo p{font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-2);font-family:var(--en);}
@@ -372,20 +374,43 @@ tr:hover .acts{opacity:1;}
   :root{--fs-body:15px;}  /* 手机端正文基准升半档;--fs-headline 16px 防缩放不动 */
   body{font-size:var(--fs-body);-webkit-text-size-adjust:100%;}
 
-  /* 侧边栏改成抽屉:默认隐藏在屏幕外,加 .open 滑入 */
+  /* 「设置」从左侧抽屉改为整屏页面:默认滑出屏幕右侧,加 .open 从右滑入 */
   .sidebar{
-    position:fixed;top:0;left:0;
-    width:80%;max-width:280px;
+    position:fixed;top:0;left:0;right:0;
+    width:100%;max-width:none;min-width:0;
     height:100vh;height:100dvh;
     overflow-y:auto;-webkit-overflow-scrolling:touch;
-    padding-bottom:calc(40px + env(safe-area-inset-bottom));
-    transform:translateX(-100%);transition:transform .25s ease;
-    /* 高于底栏(z-index:90)，否则抽屉最底部的「同步」区块会被底栏永久盖住 */
-    z-index:95;box-shadow:var(--shadowlg);
+    padding:0 0 calc(var(--sp-24) + env(safe-area-inset-bottom));
+    border-right:none;
+    transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+    /* 覆盖底栏(z-index:90)与顶栏,成为独立整屏页面 */
+    z-index:100;box-shadow:none;
   }
   /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
   .sidebar .nsec{flex-shrink:0;}
   .sidebar.open{transform:translateX(0);}
+  /* 整屏「设置」页:用页头替代 logo，去掉分类区上多余留白 */
+  .sidebar .logo{display:none;}
+  .sidebar .nsec:first-of-type{margin-top:var(--sp-16);}
+  .sb-mhdr{
+    display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:2;
+    background:var(--surface);border-bottom:1px solid var(--border);
+    padding:var(--sp-14) var(--sp-16);
+    padding-top:calc(var(--sp-14) + env(safe-area-inset-top));
+  }
+  .sb-mhdr-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);letter-spacing:.01em;}
+  .sb-mclose{
+    display:flex;align-items:center;justify-content:center;
+    width:34px;height:34px;flex-shrink:0;
+    border:none;background:var(--bg);border-radius:var(--r);
+    color:var(--text-secondary);cursor:pointer;transition:background .15s,color .15s;
+  }
+  .sb-mclose:active{background:var(--accent-light);color:var(--accent);}
+  /* 整屏页各分区间距略放大，触控项加高，贴合 44px 触控标准 */
+  .sidebar .nsec{padding:0 var(--sp-14);margin-bottom:var(--sp-20);}
+  .sidebar .nitem{padding:var(--sp-12) var(--sp-12);font-size:var(--fs-body);}
+  .sidebar .nlbl{padding:0 var(--sp-12);margin-bottom:var(--sp-6);}
 
   /* 主区域占满 (手机端去掉 overflow + 不限高,让 body 自然滚动,topbar 才能粘到视口顶部) */
   .main{width:100%;overflow:visible;height:auto;min-height:100vh;}
@@ -1362,6 +1387,13 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar">
+  <!-- 手机端:整屏「设置」页头(桌面端隐藏) -->
+  <div class="sb-mhdr">
+    <span class="sb-mhdr-title">设置</span>
+    <button class="sb-mclose" onclick="toggleSidebar(false)" aria-label="关闭">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
   <div class="logo">
     <h1>我的清单</h1>
     <p>Personal Collection</p>
