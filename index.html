@@ -1099,12 +1099,15 @@ tr:hover .acts{opacity:1;}
 /* 日期与删除统一等高居中、同字体，确保两者落在同一水平线
    （日期原用 --en 字体，与按钮 --zh 字体基线不同会错位，故统一为 --zh） */
 .memo-head .memo-date,.memo-head .note-act{display:inline-flex;align-items:center;height:24px;line-height:1;font-family:var(--zh);}
-.memo-lock{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:var(--r);cursor:pointer;background:none;border:none;padding:0;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:background .15s,transform .1s,opacity .15s;}
-.memo-lock.locked{color:var(--accent);background:var(--accent-light);}
-.memo-lock.unlocked{color:var(--text-muted);opacity:0.55;}
-.memo-lock:active{transform:scale(0.92);opacity:1;}
-@media (hover:hover){.memo-lock:hover{opacity:1;background:var(--accent-light);}}
-.memo-lock svg{width:13px;height:13px;display:block;pointer-events:none;}
+/* 备忘存储状态徽章：已加密（加密上云）/ 仅本机 / 明文上云（警示）。点击切换 仅本机⇄上云 */
+.memo-lock{flex-shrink:0;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 var(--sp-8);border-radius:var(--r);cursor:pointer;border:none;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .15s;font-family:var(--zh);}
+.memo-lock.enc{color:var(--accent);background:var(--accent-light);}
+.memo-lock.local{color:var(--text-secondary);background:var(--bg);box-shadow:inset 0 0 0 1px var(--border);}
+.memo-lock.plain{color:#92400E;background:#FEF3C7;}
+.memo-lock:active{transform:scale(0.95);}
+@media (hover:hover){.memo-lock:hover{opacity:.8;}}
+.memo-lock svg{width:11px;height:11px;display:block;pointer-events:none;}
+.memo-lock-lbl{font-size:var(--fs-foot);font-weight:600;line-height:1;pointer-events:none;}
 
 .memo-fields{background:var(--bg);border-radius:var(--r);padding:var(--sp-4) 0;margin-bottom:var(--sp-10);}
 .memo-fields:empty{display:none;}
@@ -1839,7 +1842,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         </div>
         <div class="local-toggle-text">
           <div class="local-toggle-title">🔒 仅本机存储</div>
-          <div class="local-toggle-desc">不上传 Gist，只在当前设备能看到。重要密码建议保持勾选。</div>
+          <div class="local-toggle-desc" id="memoLocalDesc">不上传 Gist，只在当前设备能看到。重要密码建议保持勾选。</div>
         </div>
       </div>
     </div>
@@ -3821,6 +3824,7 @@ const MEMO_ICON={
   copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
   lockClosed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>',
   lockOpen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>',
   delX:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>'
 };
@@ -3906,9 +3910,18 @@ function closeMemoSheet(save){
 function renderMemoCard(n){
   const title=n.title||'（无标题）';
   const titleCls=n.title?'':' empty';
-  const lockCls=n.localOnly?'locked':'unlocked';
-  const lockIcon=n.localOnly?MEMO_ICON.lockClosed:MEMO_ICON.lockOpen;
-  const lockTitle=n.localOnly?'仅本机存储':'同步到云';
+  // 存储状态徽章：三种真实状态，不撒谎
+  let stCls,stIcon,stLbl,stTitle;
+  if(n.localOnly){
+    stCls='local';stIcon=MEMO_ICON.lockClosed;stLbl='仅本机';
+    stTitle='仅本机存储，不上云。点击改为加密上云';
+  }else if(getMasterPw()){
+    stCls='enc';stIcon=MEMO_ICON.shield;stLbl='已加密';
+    stTitle='已用主密码加密后同步到云。点击改为仅本机';
+  }else{
+    stCls='plain';stIcon=MEMO_ICON.lockOpen;stLbl='明文上云';
+    stTitle='⚠️ 未设置主密码，内容以明文同步！点击改为仅本机，或在云同步设置中设置主密码';
+  }
   const all=memoCollectFields(n);
   let fieldsHtml='';
   if(isEncLocked(n)){
@@ -3923,7 +3936,7 @@ function renderMemoCard(n){
     : '';
   return `<div class="note-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
-      <button class="memo-lock ${lockCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${lockTitle}" type="button">${lockIcon}</button>
+      <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
       <div class="memo-date">${fmtNoteDate(n.updatedAt)}</div>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
@@ -3962,6 +3975,11 @@ function applyMemoEditorMode(){
   document.getElementById('nf-body-group').style.display=isMemo?'none':'';
   document.getElementById('memo-fields-group').style.display=isMemo?'':'none';
   document.getElementById('memo-local-group').style.display=isMemo?'':'none';
+  // 说明文字按是否设了主密码调整（设了主密码时，不勾选=加密上云）
+  const ld=document.getElementById('memoLocalDesc');
+  if(ld) ld.textContent=getMasterPw()
+    ?'勾选后不上传云端、仅本设备可见。不勾选则用主密码加密后同步到云（🛡 已加密）。'
+    :'不上传 Gist，只在当前设备能看到。重要密码建议保持勾选。';
   const ta=document.getElementById('nf-body');
   ta.classList.toggle('is-book',isBook);
   setupNfThumb(isBook);
