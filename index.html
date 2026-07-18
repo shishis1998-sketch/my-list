@@ -3472,11 +3472,11 @@ let swipeOpenCard = null;  // 当前处于「已滑开」状态的 .note-card
 
 function closeSwipe(card){
   if(!card) return;
-  card.style.transition='transform .2s';
+  card.style.transition='transform .3s cubic-bezier(.22,.61,.36,1)';
   card.style.transform='translateX(0)';
   if(swipeOpenCard===card) swipeOpenCard=null;
   // 收回到位后再取消「右侧直角」，让卡片恢复四角圆角；期间卡片已完全遮住面板，无跳变
-  setTimeout(()=>{ if(swipeOpenCard!==card) card.classList.remove('swipe-cut'); },210);
+  setTimeout(()=>{ if(swipeOpenCard!==card) card.classList.remove('swipe-cut'); },320);
 }
 function openSwipe(card){
   if(swipeOpenCard && swipeOpenCard!==card) closeSwipe(swipeOpenCard);
@@ -3746,10 +3746,10 @@ function toggleChapter(idx,e){
 const TL_SW=84; let tlOpenCard=null;
 function tlCloseSwipe(card){
   if(!card) return;
-  card.style.transition='transform .2s';card.style.transform='translateX(0)';
+  card.style.transition='transform .3s cubic-bezier(.22,.61,.36,1)';card.style.transform='translateX(0)';
   card.classList.remove('swipe-open');
   if(tlOpenCard===card) tlOpenCard=null;
-  setTimeout(()=>{if(!card.classList.contains('swipe-open'))card.classList.remove('swipe-cut');},210);
+  setTimeout(()=>{if(!card.classList.contains('swipe-open'))card.classList.remove('swipe-cut');},320);
 }
 function tlOpenSwipe(card){
   if(tlOpenCard&&tlOpenCard!==card) tlCloseSwipe(tlOpenCard);
