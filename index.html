@@ -1702,7 +1702,13 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <button class="btn btn-g" style="flex:1" onclick="showSyncQR()" id="sync-qr-btn">⧉ 生成二维码</button>
     </div>
     <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-bottom:var(--sp-14);line-height:var(--lh-normal)">
-      新设备点「扫码导入」扫另一台已配置设备的二维码，即可一键接入云同步，全程不显示、不用手填 token。
+      在「想接收数据」的这台设备上点<b>扫码导入</b>，去扫「数据最全」那台的<b>生成二维码</b>——被扫设备的数据会同步到本机（本机原有数据会被替换，已自动备份、可下方一键还原）。
+    </div>
+
+    <!-- 覆盖前的本机备份：任何一次云端覆盖前都会自动存一份,可一键还原 -->
+    <div id="sync-restore-row" style="display:none;margin-bottom:var(--sp-14)">
+      <button class="btn btn-d" style="width:100%" onclick="restoreBackup()">↩ 还原到覆盖前的备份</button>
+      <div id="sync-restore-time" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center"></div>
     </div>
 
     <div class="fg">
@@ -4314,6 +4320,7 @@ var qrcode = function() {
 const SK='my_list_v4', CK='my_list_cats_v3';
 const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
 const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist', MPW_KEY='my_list_master_pw';
+const BK_KEY='my_list_overwrite_backup_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
@@ -4567,6 +4574,35 @@ async function syncPush(){
   }
 }
 
+// ── 覆盖前自动备份 + 一键还原（防止扫错方向 / 误覆盖导致丢数据）──
+function backupLocal(reason){
+  try{
+    localStorage.setItem(BK_KEY,JSON.stringify({ts:Date.now(),reason:reason||'',data,categories:cats,notes,noteSubs}));
+  }catch(e){/* 备份失败不阻断主流程 */}
+}
+function getBackupMeta(){
+  try{const b=JSON.parse(localStorage.getItem(BK_KEY));return b&&b.ts?b:null;}catch(e){return null;}
+}
+function restoreBackup(){
+  const b=getBackupMeta();
+  if(!b){toast('没有可还原的备份');return;}
+  if(!confirm('将把数据还原到覆盖前的备份（'+new Date(b.ts).toLocaleString()+'）。\n当前本机数据会被这份备份替换，确定？'))return;
+  if(Array.isArray(b.data))data=b.data;
+  if(Array.isArray(b.categories)&&b.categories.length)cats=b.categories;
+  if(Array.isArray(b.notes))notes=b.notes;
+  if(Array.isArray(b.noteSubs)&&b.noteSubs.length)noteSubs=b.noteSubs;
+  localStorage.setItem(SK,JSON.stringify(data));
+  localStorage.setItem(CK,JSON.stringify(cats));
+  localStorage.setItem(NSK,JSON.stringify(notes));
+  localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
+  if(typeof renderTypeSelect==='function')renderTypeSelect();
+  if(typeof render==='function')render();
+  updateSyncBadge();
+  closeSyncCfg();
+  toast('✓ 已还原到覆盖前的备份，共 '+data.length+' 条记录、'+notes.length+' 条笔记');
+  scheduleSyncPush(); // 把还原后的数据推回云端，保持一致
+}
+
 async function syncPull(silent){
   const token=getToken(),gistId=getGistId();
   if(!token||!gistId){if(!silent)toast('请先配置 token 和 Gist ID');return false;}
@@ -4581,6 +4617,10 @@ async function syncPull(silent){
     if(!f){isSyncing=false;updateSyncBadge();if(!silent)toast('云端无数据,首次保存后会自动创建');return false;}
     const remote=JSON.parse(f.content);
     if(!remote||!Array.isArray(remote.data)){throw new Error('云端数据格式异常');}
+    // 覆盖前的安全网：若云端数据明显比本机少（可能扫错方向 / 云端被顶掉），先自动备份本机，可一键还原
+    const rTotal=(Array.isArray(remote.data)?remote.data.length:0)+(Array.isArray(remote.notes)?remote.notes.length:0);
+    const lTotal=(Array.isArray(data)?data.length:0)+(Array.isArray(notes)?notes.length:0);
+    if(rTotal<lTotal)backupLocal('pull-shrink');
     // 简单的「云端覆盖本地」策略:适用于单用户多设备场景
     // 比较 updatedAt,如果云端较新就采用;首次拉取(本地无修改记录)直接采用
     data=remote.data;
@@ -4646,6 +4686,15 @@ function openSyncCfg(){
     sb.innerHTML='<b style="color:var(--danger)">最近一次同步失败</b><br><span style="font-size:var(--fs-foot)">'+esc(lastSyncErr)+'</span>';
   }else{
     sb.innerHTML='<b style="color:#14532D">✓ 同步已启用</b><br>Gist ID: <code style="font-size:var(--fs-foot)">'+esc(getGistId()||'(待创建)')+'</code>';
+  }
+  // 有覆盖前备份时,显示「一键还原」入口
+  const rr=document.getElementById('sync-restore-row');
+  const bk=getBackupMeta();
+  if(bk){
+    rr.style.display='block';
+    document.getElementById('sync-restore-time').textContent='备份于 '+new Date(bk.ts).toLocaleString()+'（共 '+((bk.data||[]).length)+' 条记录、'+((bk.notes||[]).length)+' 条笔记）';
+  }else{
+    rr.style.display='none';
   }
   document.getElementById('syncModal').classList.add('open');
 }
@@ -4802,14 +4851,15 @@ function handleScannedConfig(raw){
   try{const obj=JSON.parse(b64urlDec(payload));importSyncConfig(obj.t,obj.g);}
   catch(e){toast('二维码内容无法识别');}
 }
-// 导入配置：只弹确认框（不显示 token/ID 明文），确认后写入本机并拉取
+// 导入配置：本机接收「被扫设备」的数据（覆盖本机），覆盖前先自动备份、可一键还原
 function importSyncConfig(t,g){
   if(!t){toast('二维码无效');return;}
-  if(!confirm('检测到同步配置。是否接入该云端账号并拉取其数据？\n（本机现有数据会被云端覆盖）'))return;
+  if(!confirm('这会让【本机】接收被扫设备的数据，本机现有数据将被替换（已自动备份，可在云同步设置里一键还原）。\n\n请确认：是在「想接收数据」的这台设备上，扫「数据最全」那台设备的码。\n\n继续？'))return;
+  backupLocal('before-qr-import');
   localStorage.setItem(TK_KEY,t);
   if(g)localStorage.setItem(GIST_KEY,g);
   updateSyncBadge();
-  toast('已导入配置,开始同步…');
+  toast('已接入，正在拉取被扫设备的数据…');
   syncPull(false);
 }
 // 启动时检测「扫系统相机打开的」#sync 链接：立刻清掉 hash 再走导入确认
