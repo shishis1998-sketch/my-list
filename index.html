@@ -696,6 +696,7 @@ tr:hover .acts{opacity:1;}
     text-transform:uppercase;color:var(--text-muted);font-family:var(--en);
     padding:var(--sp-12) var(--sp-24) var(--sp-4);border-top:1px solid var(--border-soft);margin-top:var(--sp-4);}
   .bb-sortpanel .bb-filter-glbl:first-of-type{border-top:none;margin-top:0;}
+  .bb-filter-hint{margin-left:var(--sp-8);font-weight:400;letter-spacing:0;text-transform:none;color:var(--text-muted);opacity:.8;}
   .bb-sortopt{display:flex;align-items:center;gap:var(--sp-10);width:100%;background:none;border:none;
     text-align:left;padding:var(--sp-14) var(--sp-24);font-size:var(--fs-body);font-family:var(--zh);color:var(--text-primary);cursor:pointer;}
   .bb-sortopt.on{color:var(--accent);font-weight:700;background:var(--accent-light);}
@@ -4444,7 +4445,9 @@ const BK_KEY='my_list_overwrite_backup_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:all', curSearch='', curSort='date-desc', curStatus='all', curScore='all', curTag='all';
+let curCat='notes:all', curSearch='', curSort='date-desc', curStatus='all', curScore='all';
+// 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
+let curFilterTags=[];
 let curNoteSub='all'; // 笔记子分类筛选
 let editId=null, curTags=[], delId=null, editCats=[];
 let editNoteId=null, curNoteTags=[], editNoteSubs=[];
@@ -5012,7 +5015,7 @@ function filtered(){
     if(curScore==='12') L=L.filter(d=>!d.score||d.score<=2);
     else{const m=parseInt(curScore)-.5; L=L.filter(d=>d.score&&d.score>m);}
   }
-  if(curTag!=='all') L=L.filter(d=>(d.tags||[]).includes(curTag));
+  if(curFilterTags.length) L=L.filter(d=>{const tg=d.tags||[];return curFilterTags.every(t=>tg.includes(t));});
   if(curSearch){const q=curSearch.toLowerCase();L=L.filter(d=>
     d.name.toLowerCase().includes(q)||(d.creator||'').toLowerCase().includes(q)||
     (d.note||'').toLowerCase().includes(q)||(d.tags||[]).some(t=>t.toLowerCase().includes(q)));
@@ -5190,7 +5193,7 @@ function isNoteMode(){return typeof curCat==='string'&&curCat.indexOf('notes')==
 // ── Filters ───────────────────────────────────────────────────────
 function filterCat(cat){
   curCat=cat;
-  curTag='all';
+  curFilterTags=[];
   // 解析笔记模式的子分类
   if(isNoteMode()){
     const parts=cat.split(':');
@@ -5403,8 +5406,8 @@ function getAllCurrentTags(){
 function syncFilterBtn(){
   const btn=document.getElementById('bbTagBtn');
   if(!btn) return;
-  const active=isNoteMode() ? (curTag!=='all')
-    : (curStatus!=='all'||curScore!=='all'||curTag!=='all');
+  const active=isNoteMode() ? (curFilterTags.length>0)
+    : (curStatus!=='all'||curScore!=='all'||curFilterTags.length>0);
   btn.classList.toggle('active', active);
 }
 function renderTagFilterRow(){
@@ -5416,17 +5419,23 @@ function renderTagFilterRow(){
   if(!sep||!lbl||!chips) return;
   if(!tags.length){
     sep.style.display='none'; lbl.style.display='none'; chips.innerHTML='';
-    if(curTag!=='all'){ curTag='all'; }
+    if(curFilterTags.length){ curFilterTags=[]; }
     return;
   }
   sep.style.display=''; lbl.style.display='';
   chips.innerHTML=['all',...tags].map(t=>{
     const lbl2=t==='all'?'全部':t;
-    return `<span class="fchip${curTag===t?' on':''}" onclick="setTag('${esc(t).replace(/'/g,"\\'")}')">${esc(lbl2)}</span>`;
+    const on = t==='all' ? curFilterTags.length===0 : curFilterTags.includes(t);
+    return `<span class="fchip${on?' on':''}" onclick="toggleFilterTag('${esc(t).replace(/'/g,"\\'")}')">${esc(lbl2)}</span>`;
   }).join('');
 }
-function setTag(v){
-  curTag=v;
+// 标签筛选:多选切换。'all'=清空;其余在选中集合里增删(AND 逻辑)
+function toggleFilterTag(t){
+  if(t==='all'){ curFilterTags=[]; }
+  else{
+    const i=curFilterTags.indexOf(t);
+    if(i>=0) curFilterTags.splice(i,1); else curFilterTags.push(t);
+  }
   render();
   playCatStagger();
 }
@@ -5444,13 +5453,14 @@ function buildFilterSheetHTML(){
     [['all','全部'],['5','5/5'],['4','≥4/5'],['3','≥3/5'],['12','≤2/5']]
       .forEach(([v,lbl])=>{html+=opt(curScore===v,lbl,`pickScore('${v}')`);});
   }
-  html+='<div class="bb-filter-glbl">标签</div>';
+  html+='<div class="bb-filter-glbl">标签<span class="bb-filter-hint">可多选</span></div>';
   const tags=getAllCurrentTags();
   if(!tags.length){
     html+='<div style="padding:var(--sp-12) var(--sp-24);color:var(--text-muted);font-size:var(--fs-body)">当前分类暂无标签</div>';
   }else{
-    [['all','全部'],...tags.map(t=>[t,t])].forEach(([v,lbl])=>{
-      html+=opt(curTag===v,lbl,`pickTag('${esc(v).replace(/'/g,"\\'")}')`);
+    html+=opt(curFilterTags.length===0,'全部',`pickTag('all')`);
+    tags.forEach(t=>{
+      html+=opt(curFilterTags.includes(t),t,`pickTag('${esc(t).replace(/'/g,"\\'")}')`);
     });
   }
   return html;
@@ -5476,9 +5486,7 @@ function closeTagSheet(){
 function pickStatus(v){ curStatus=v; render(); refreshFilterSheet(); }
 function pickScore(v){ curScore=v; render(); refreshFilterSheet(); }
 function pickTag(v){
-  curTag=v;
-  render();
-  playCatStagger();
+  toggleFilterTag(v);
   refreshFilterSheet();
 }
 
@@ -5656,11 +5664,8 @@ function saveTagMgr(){
   }else{
     curTags=transform(curTags); renderChips(); persist();
   }
-  // 同步当前正在使用的标签筛选
-  if(curTag!=='all'){
-    if(delSet.has(curTag))curTag='all';
-    else if(renameMap[curTag])curTag=renameMap[curTag];
-  }
+  // 同步当前正在使用的标签筛选(多选):删除的去掉、改名的替换、去重
+  if(curFilterTags.length) curFilterTags=transform(curFilterTags);
   closeTagMgr();
   render();
   const changed=Object.keys(renameMap).length+delSet.size;
@@ -6028,7 +6033,7 @@ function nuid(){return 'n_'+Date.now().toString(36)+Math.random().toString(36).s
 function filteredNotes(){
   let L=notes.slice();
   if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
-  if(curTag!=='all') L=L.filter(n=>(n.tags||[]).includes(curTag));
+  if(curFilterTags.length) L=L.filter(n=>{const tg=n.tags||[];return curFilterTags.every(t=>tg.includes(t));});
   if(curSearch){
     const q=curSearch.toLowerCase();
     L=L.filter(n=>{
