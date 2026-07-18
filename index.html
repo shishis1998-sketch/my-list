@@ -3763,6 +3763,13 @@ function tlSwipeEdit(id,idx,e){
   if(items[idx]) tlCloseSwipe(items[idx]);
   openTlEdit(id,idx);
 }
+
+// 滑开卡片后，一旦滚动列表就自动收回原位（笔记左滑删除 + 时间线左滑编辑通用）。
+// capture 阶段监听可捕获任意内层滚动容器（页面、#tl-body 等）的 scroll。
+window.addEventListener('scroll', ()=>{
+  if(swipeOpenCard) closeSwipe(swipeOpenCard);
+  if(tlOpenCard) tlCloseSwipe(tlOpenCard);
+}, {capture:true, passive:true});
 function enhanceTlSwipe(root){
   tlOpenCard=null; // 重建后旧节点失效
   root.querySelectorAll('.tl-item').forEach(attachTlSwipe);
