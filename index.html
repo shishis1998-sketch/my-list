@@ -842,51 +842,54 @@ tr:hover .acts{opacity:1;}
 
 /* 读书笔记时间线弹窗 */
 .tl-sub{font-size:var(--fs-caption);color:var(--text-muted);margin-top:var(--sp-2);font-family:var(--en);}
-.tl{position:relative;margin-top:var(--sp-6);}
-.tl::before{
-  content:"";position:absolute;left:11.5px;top:4px;bottom:4px;
-  width:1px;background:var(--border);
-}
-.tl-item{position:relative;padding-bottom:var(--sp-6);}
-.tl-item.open{padding-bottom:var(--sp-20);}
-.tl-item:last-child{padding-bottom:0;}
-.tl-dot{
-  position:absolute;left:5px;top:8px;
-  width:14px;height:14px;border-radius:50%;
-  background:var(--surface);border:2px solid var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  z-index:1;
-}
-.tl-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
+/* ── 时间线改为「每章一张卡片」：竖排卡片，点标题展开细节，左滑露出「编辑」 ── */
+.tl{display:flex;flex-direction:column;gap:var(--sp-10);margin-top:var(--sp-6);}
 
-/* 章节标题区(可点击折叠) */
-.tl-head{
-  display:flex;align-items:center;gap:var(--sp-6);
-  cursor:pointer;padding:var(--sp-6) 0;
-  margin-left:var(--sp-24);
-  user-select:none;-webkit-user-select:none;
-  border-radius:var(--r);
-  transition:background .12s;
+/* 左滑露出绿色「编辑」（与笔记卡左滑删除同款交互） */
+.tl-swipe{position:relative;overflow:hidden;border-radius:var(--rlg);}
+.tl-swipe>.tl-item{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
+/* 滑动时卡片右侧改直角，与绿色面板拼成一个整圆角矩形（无缝融合） */
+.tl-swipe>.tl-item.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
+.tl-swipe-edit{
+  position:absolute;top:1px;right:1px;bottom:1px;width:84px;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  border:0;margin:0;padding:0;cursor:pointer;
+  border-radius:0 var(--rlg) var(--rlg) 0;
+  background:var(--accent);color:#fff;
+  font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
-/* .tl-head:active 颜色已去除 */
+.tl-swipe-edit:active{background:#22392f;}
+
+/* 章节卡片本体 */
+.tl-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);}
+.tl-item.open{border-color:var(--accent-light);}
+
+/* 章节标题区(可点击折叠)：紧凑高度 */
+.tl-head{
+  display:flex;align-items:stretch;gap:var(--sp-12);cursor:pointer;
+  padding:var(--sp-12) var(--sp-14);
+  user-select:none;-webkit-user-select:none;
+}
+/* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时变实心墨绿 */
+.tl-bar{flex-shrink:0;width:3px;border-radius:2px;background:var(--accent-light);transition:background .18s;}
+.tl-item.open .tl-bar{background:var(--accent);}
+/* 标题两行：第一行 标题+箭头，第二行 预览铺满整行 */
+.tl-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
+.tl-row{display:flex;align-items:center;gap:var(--sp-8);}
 .tl-caret{
-  font-size:var(--fs-foot);color:var(--text-muted);
-  flex-shrink:0;font-family:var(--en);
+  font-size:var(--fs-foot);color:var(--text-muted);flex-shrink:0;font-family:var(--en);
+  transition:transform .2s;
 }
 .tl-item.open .tl-caret{transform:rotate(90deg);color:var(--accent);}
-
-/* 章节标题旁编辑铅笔 */
-.tl-edit{
-  flex-shrink:0;background:none;border:none;cursor:pointer;font-size:var(--fs-caption);
-  padding:var(--sp-4) var(--sp-10);height:28px;border-radius:var(--r);display:inline-flex;
-  align-items:center;justify-content:center;color:var(--accent-mid);
-  opacity:.7;transition:transform .12s;font-family:var(--zh);
-}
-.tl-edit:active{transform:scale(.9);}
+/* 折叠时显示的预览行（首段正文，一行截断）；展开后隐藏 */
+.tl-peek{margin-top:var(--sp-2);font-size:var(--fs-caption);color:var(--text-muted);
+  line-height:var(--lh-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tl-item.open .tl-peek{display:none;}
 
 /* 章节内容折叠容器（瞬间展开/收起，无动画） */
 .tl-inner{display:none;}
-.tl-item.open .tl-inner{display:block;}
+.tl-item.open .tl-inner{display:block;
+  padding:var(--sp-14) var(--sp-16) var(--sp-16);border-top:1px solid var(--border-soft);}
 
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
@@ -928,7 +931,9 @@ tr:hover .acts{opacity:1;}
 }
 /* .tl-allbtn:active 颜色已去除 */
 
-.tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--accent);line-height:var(--lh-normal);flex:1;min-width:0;}
+.tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--text-primary);line-height:var(--lh-normal);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tl-item.open .tl-ch{color:var(--accent);}
 .tl-nochap{
   font-size:var(--fs-caption);color:var(--text-muted);background:var(--bg);
   border-radius:var(--r);padding:var(--sp-14);line-height:var(--lh-loose);text-align:center;
@@ -955,44 +960,36 @@ tr:hover .acts{opacity:1;}
   #tlModal #tl-body{padding:var(--sp-8) var(--sp-16) var(--sp-20) var(--sp-20);}
 }
 
-/* 章节内段落小节点（数字+点 拆出来的段落）只在展开时显示支线 */
-.tl-item.has-paras.open::before{
-  content:"";position:absolute;left:43.5px;top:34px;bottom:4px;
-  width:1px;background:var(--border);
-}
-.tl-para{
-  position:relative;
-  margin-top:var(--sp-10);
-}
-.tl-pdot{
-  position:absolute;left:39px;top:5px;
-  width:10px;height:10px;border-radius:50%;
-  background:var(--surface);border:1.5px solid var(--accent);
-  opacity:.55;box-sizing:border-box;
-  z-index:1;
-}
+/* 章节细节区：flex+gap 排布，一条竖线贯穿所有圆点（起止落在首/末圆心） */
+.tl-pts{position:relative;display:flex;flex-direction:column;gap:var(--sp-12);}
+.tl-pts::before{content:"";position:absolute;left:9px;top:11px;bottom:11px;
+  width:1.5px;background:var(--border);z-index:0;}
+.tl-para{position:relative;z-index:1;display:flex;gap:var(--sp-10);}
+.tl-pdot{flex-shrink:0;width:20px;height:20px;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;background:none;border:0;}
+/* 空心圆点：中心透明，让竖线从中穿过 */
+.tl-pdot::after{content:"";width:9px;height:9px;border-radius:50%;box-sizing:border-box;
+  background:var(--surface);border:1.5px solid var(--accent-mid);opacity:.9;}
+.tl-pcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-4);}
 .tl-pnum{
-  font-size:var(--fs-headline);color:var(--accent);
-  font-weight:600;margin-bottom:var(--sp-4);opacity:.7;
-  font-family:var(--en);
-  margin-left:60px;
+  font-size:var(--fs-caption);color:var(--accent-mid);font-weight:700;opacity:.85;
+  font-family:var(--en);line-height:1;
 }
 .tl-pbody{
   font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-secondary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:var(--sp-8) var(--sp-12);
-  margin-left:60px;
 }
 
-/* 章内小标题节点（≤12 字非编号行） */
+/* 章内小标题节点（≤12 字非编号行）：实心圆点 + 墨绿加粗 */
+.tl-para.tl-hd{align-items:center;}
+.tl-para.tl-hd .tl-pdot::after{width:9px;height:9px;background:var(--accent);
+  border:2px solid var(--surface);box-sizing:content-box;opacity:1;}
 .tl-phead{
-  font-size:var(--fs-headline);font-weight:700;color:var(--accent);
-  line-height:var(--lh-normal);padding:var(--sp-2) 0 var(--sp-2) var(--sp-12);
-  margin-left:60px;
+  flex:1;min-width:0;font-size:var(--fs-headline);font-weight:700;color:var(--accent);
+  line-height:var(--lh-normal);
 }
-.tl-para.tl-hd{margin-top:var(--sp-12);}
-.tl-para.tl-hd:first-child{margin-top:var(--sp-6);}
 
 /* ── 富文本渲染样式（rt-* / pv-h1/h2/h3）─────────────────── */
 /* 富文本块（用在收集卡片、时间线、读书笔记预览） */
@@ -1346,10 +1343,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   font-family:var(--zh);font-weight:700;
   border:1.5px solid var(--ink);border-radius:var(--rchip);background:var(--accent-light);color:var(--text-primary);
 }
-.tl-dot{border-color:var(--ink);background:var(--surface);}
-.tl-pdot{border-color:var(--accent-mid);background:var(--surface);}
-.tl-ch{color:var(--text-primary);}
-.tl-caret{color:var(--accent-mid);}
+.tl-pdot::after{border-color:var(--accent-mid);}
 
 /* 备忘卡片 / 锁按钮 / 自定义字段框（若有）—— 圆角描边统一 */
 .cf-row input,.cf-key,.cf-val{border-radius:var(--r);}
@@ -3682,29 +3676,41 @@ function renderTimelineBody(id){
           if(b.type==='pre'){
             return `<div class="tl-para">
               <div class="tl-pdot"></div>
-              <div class="tl-pbody has-rt">${renderRich(b.text)}</div>
+              <div class="tl-pcol"><div class="tl-pbody has-rt">${renderRich(b.text)}</div></div>
             </div>`;
           }
-          // num
+          // num：保留编号（有序要点）
           return `<div class="tl-para">
             <div class="tl-pdot"></div>
-            <div class="tl-pnum">${b.num}</div>
-            <div class="tl-pbody has-rt">${renderRich(b.text)}</div>
+            <div class="tl-pcol">
+              <div class="tl-pnum">${b.num}.</div>
+              <div class="tl-pbody has-rt">${renderRich(b.text)}</div>
+            </div>
           </div>`;
         }).join('');
       }
       const hasParas=inner.includes('tl-para');
-      // 默认全部折叠，加 tl-head 容器（可点击）+ tl-inner 包装内容
-      return `<div class="tl-item${hasParas?' has-paras':''}" data-idx="${idx}">
-        <div class="tl-dot"></div>
-        <div class="tl-head">
-          <div class="tl-ch" onclick="toggleChapter(${idx})">${esc(c.title)}</div>
-          <button class="tl-edit" onclick="event.stopPropagation();openTlEdit('${id}',${idx})" title="编辑本章" type="button">编辑</button>
-          <span class="tl-caret" onclick="toggleChapter(${idx})">&#9656;</span>
+      // 折叠时的预览行：取首段纯文本，一行截断
+      const peekTxt=blocks.length?esc((blocks[0].text||'').replace(/\s+/g,' ').trim()):'';
+      // 默认全部折叠；卡片外包 .tl-swipe 支持左滑露出「编辑」
+      return `<div class="tl-swipe">
+        <button class="tl-swipe-edit" onclick="tlSwipeEdit('${id}',${idx},event)" type="button">编辑</button>
+        <div class="tl-item${hasParas?' has-paras':''}" data-idx="${idx}">
+          <div class="tl-head" onclick="toggleChapter(${idx},event)">
+            <span class="tl-bar"></span>
+            <div class="tl-main">
+              <div class="tl-row">
+                <div class="tl-ch">${esc(c.title)}</div>
+                <span class="tl-caret">&#9656;</span>
+              </div>
+              ${peekTxt?`<div class="tl-peek">${peekTxt}</div>`:''}
+            </div>
+          </div>
+          <div class="tl-inner">${inner?`<div class="tl-pts">${inner}</div>`:''}</div>
         </div>
-        <div class="tl-inner">${inner}</div>
       </div>`;
     }).join('')+'</div>';
+    enhanceTlSwipe(body);
   }
 }
 
@@ -3713,12 +3719,72 @@ function closeTimeline(){
 }
 
 // 自由模式：点章节切换自身展开/收起，不影响其他章节
-function toggleChapter(idx){
+function toggleChapter(idx,e){
   const items=document.querySelectorAll('#tl-body .tl-item');
   const target=items[idx];
   if(!target) return;
+  if(target._suppress){target._suppress=false;return;}      // 刚滑动过，忽略这次点按
+  if(target.classList.contains('swipe-open')){tlCloseSwipe(target);return;} // 已滑开：先收回
   target.classList.toggle('open');
   syncTlAllBtn();
+}
+
+// ── 时间线章节卡片左滑露出「编辑」（与笔记卡左滑删除同款）──
+const TL_SW=84; let tlOpenCard=null;
+function tlCloseSwipe(card){
+  if(!card) return;
+  card.style.transition='transform .2s';card.style.transform='translateX(0)';
+  card.classList.remove('swipe-open');
+  if(tlOpenCard===card) tlOpenCard=null;
+  setTimeout(()=>{if(!card.classList.contains('swipe-open'))card.classList.remove('swipe-cut');},210);
+}
+function tlOpenSwipe(card){
+  if(tlOpenCard&&tlOpenCard!==card) tlCloseSwipe(tlOpenCard);
+  card.classList.add('swipe-cut');
+  card.style.transition='transform .2s';card.style.transform='translateX(-'+TL_SW+'px)';
+  card.classList.add('swipe-open');tlOpenCard=card;
+}
+function tlSwipeEdit(id,idx,e){
+  if(e) e.stopPropagation();
+  const items=document.querySelectorAll('#tl-body .tl-item');
+  if(items[idx]) tlCloseSwipe(items[idx]);
+  openTlEdit(id,idx);
+}
+function enhanceTlSwipe(root){
+  tlOpenCard=null; // 重建后旧节点失效
+  root.querySelectorAll('.tl-item').forEach(attachTlSwipe);
+}
+function attachTlSwipe(card){
+  let sx,sy,base=0,dir=null,moved=false,active=false,pid=null;
+  card.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0) return;
+    active=true;pid=e.pointerId;sx=e.clientX;sy=e.clientY;
+    base=card.classList.contains('swipe-open')?-TL_SW:0;dir=null;moved=false;card._t=base;
+    card.style.transition='none';
+  });
+  card.addEventListener('pointermove',e=>{
+    if(!active||e.pointerId!==pid) return;
+    const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(dir===null){
+      if(Math.abs(dx)<6&&Math.abs(dy)<6) return;
+      dir=Math.abs(dx)>Math.abs(dy)?'h':'v';
+      if(dir==='h'){try{card.setPointerCapture(pid);}catch(_){}card.classList.add('swipe-cut');}
+    }
+    if(dir==='v'){active=false;return;}   // 纵向：交给弹窗正常滚动
+    let t=base+dx;
+    if(t>0) t*=0.3; else if(t<-TL_SW) t=-TL_SW-(-t-TL_SW)*0.3;
+    if(Math.abs(dx)>8) moved=true;card._t=t;
+    card.style.transform='translateX('+t+'px)';
+  });
+  const end=()=>{
+    if(!active) return;active=false;card.style.transition='transform .2s';
+    if(dir==='h'){
+      if((card._t||0)<-TL_SW/2) tlOpenSwipe(card); else tlCloseSwipe(card);
+      if(moved) card._suppress=true;
+    }
+  };
+  card.addEventListener('pointerup',end);
+  card.addEventListener('pointercancel',end);
 }
 
 // 标题栏「全部展开/全部收起」切换
