@@ -4030,9 +4030,8 @@ function renderMemoCard(n){
     : '';
   return `<div class="note-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
-      <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
-      <div class="memo-date">${fmtNoteDate(n.updatedAt)}</div>
+      <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
     <div class="memo-fields">${fieldsHtml}</div>
