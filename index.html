@@ -957,22 +957,26 @@ tr:hover .acts{opacity:1;}
 /* 章节卡片本体：与时间线外面的笔记卡片同款描边（1px var(--ink)），无阴影 */
 .tl-item{background:var(--surface);border:var(--bd) solid var(--ink);border-radius:var(--rlg);
   transition:border-color .18s;}
-.tl-item.open{border-color:var(--accent-mid);}
+.tl-item.open{border-color:var(--accent);}
 
 /* 章节标题区(可点击折叠)：紧凑高度 */
 .tl-head{
   display:flex;align-items:stretch;gap:var(--sp-12);cursor:pointer;
   padding:var(--sp-12) var(--sp-14);
   user-select:none;-webkit-user-select:none;
+  transition:background .18s;
 }
-/* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时变实心墨绿 */
+/* 方案 D：展开时标题行铺满墨绿底带、内容反白，像给这一章加了个「表头」 */
+.tl-item.open .tl-head{background:var(--accent);
+  border-radius:calc(var(--rlg) - var(--bd)) calc(var(--rlg) - var(--bd)) 0 0;}
+/* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时在墨绿底带上转为半透明白 */
 .tl-bar{flex-shrink:0;width:3px;border-radius:2px;background:var(--accent-light);transition:background .18s;}
-.tl-item.open .tl-bar{background:var(--accent);}
+.tl-item.open .tl-bar{background:rgba(255,255,255,.7);}
 /* 标题 + 折叠时的预览行（首段正文，一行截断，展开后隐藏） */
 .tl-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--text-primary);line-height:var(--lh-normal);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tl-item.open .tl-ch{color:var(--accent);}
+.tl-item.open .tl-ch{color:#fff;}
 .tl-peek{margin-top:var(--sp-2);font-size:var(--fs-caption);color:var(--text-muted);
   line-height:var(--lh-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-item.open .tl-peek{display:none;}
