@@ -1007,7 +1007,8 @@ tr:hover .acts{opacity:1;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.45);margin:0 auto 10px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:#fff;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;}
+.tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
+.tlsheet-body::-webkit-scrollbar{display:none;}
 /* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
 .tlseg-tap{cursor:text;border-radius:var(--r);transition:background .15s,opacity .15s;}
 .tl-pbody.tlseg-tap:active{background:var(--tint);}
