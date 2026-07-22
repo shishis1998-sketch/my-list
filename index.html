@@ -1006,11 +1006,23 @@ tr:hover .acts{opacity:1;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.45);margin:0 auto 10px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:#fff;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tlsheet-body{flex:1;min-height:0;overflow-y:auto;padding:14px 18px 22px;display:flex;
-  -webkit-overflow-scrolling:touch;}
-.tlsheet-ta{flex:1;width:100%;min-height:38vh;border:none;outline:none;resize:none;background:transparent;
-  font-family:var(--zh);font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-primary);}
-.tlsheet-ta::placeholder{color:var(--text-muted);}
+.tlsheet-body{flex:1;min-height:0;overflow-y:auto;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;}
+/* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
+.tlseg-tap{cursor:text;border-radius:var(--r);transition:background .15s,opacity .15s;}
+.tl-pbody.tlseg-tap:active{background:var(--tint);}
+.tl-phead.tlseg-tap:active{opacity:.65;}
+.tlseg-edit{width:100%;font-family:var(--zh);font-size:var(--fs-headline);line-height:var(--lh-loose);
+  color:var(--text-primary);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
+  padding:var(--sp-8) var(--sp-12);outline:none;resize:none;overflow:hidden;
+  transition:border-color .15s,box-shadow .15s;}
+.tlseg-edit:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+/* 加一段 */
+.tl-addrow{align-items:center;}
+.tl-addrow .tl-pdot::after{border-style:dashed;background:transparent;opacity:.7;}
+.tlseg-add{flex:1;min-width:0;text-align:left;font-family:var(--zh);font-size:14px;font-weight:600;
+  color:var(--accent-mid);background:none;border:1.5px dashed var(--border);border-radius:var(--r);
+  padding:var(--sp-8) var(--sp-12);cursor:pointer;transition:background .15s,border-color .15s;}
+.tlseg-add:active{background:var(--tint);border-color:var(--accent-mid);}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
 /* 时间线章节编辑弹窗 */
@@ -2095,9 +2107,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <div class="tlsheet-grip"></div>
     <div class="tlsheet-title" id="tlSheetTitle"></div>
   </div>
-  <div class="tlsheet-body">
-    <textarea class="tlsheet-ta" id="tlSheetTa" placeholder="这一章还没有内容，写点什么…"></textarea>
-  </div>
+  <div class="tlsheet-body" id="tlSheetBody"></div>
 </div>
 
 <!-- ===== NOTE SUBCATS MANAGER ===== -->
@@ -6417,45 +6427,109 @@ function closeTimeline(){
 }
 
 // ── 章节底部弹窗：点章节打开，内容直接可编辑，关闭即保存 ──────────
-let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetOrig='', tlSheetDragInit=false;
+let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetSegs=[], tlSheetOrigJoined='', tlSheetEdit=-1, tlSheetDragInit=false;
+// block → 原始行文本（编号段还原「N. 」前缀，供编辑/保存）
+function tlBlockRaw(b){ return b.type==='num' ? (b.num+'. '+b.text) : b.text; }
+// 单行推断类型：编号 / 小标题（≤上限的短行）/ 正文
+function tlSegType(line){
+  const t=(line||'').trim();
+  if(!t) return 'pre';
+  if(TL_PARA_RE.test(t)) return 'num';
+  return t.length<=TL_HEADING_MAX ? 'heading' : 'pre';
+}
+function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
 function openChapterSheet(idx){
   const n=(notes||[]).find(x=>x.id===tlCurId);
   if(!n) return;
   const c=parseChapters(n.body)[idx];
   if(!c) return;
-  tlSheetIdx=idx;
+  tlSheetIdx=idx; tlSheetEdit=-1;
   // c.raw 可能含章前空行（正则 \s* 吃进换行），拆分时先剥掉、保存时原样补回
   tlSheetLead=(c.raw.match(/^\s*/)||[''])[0];
   const afterLead=c.raw.slice(tlSheetLead.length);
   const nl=afterLead.indexOf('\n');
-  tlSheetHeading=(nl<0?afterLead:afterLead.slice(0,nl)).replace(/\s+$/,'');  // 「第X章…」标题行，保存时原样保留
-  tlSheetOrig=c.body||'';
+  tlSheetHeading=(nl<0?afterLead:afterLead.slice(0,nl)).replace(/\s+$/,'');  // 「第X章…」标题行原样保留
+  tlSheetSegs=parseParagraphs(c.body||'').map(tlBlockRaw);   // 分段（原始行）
+  tlSheetOrigJoined=tlSheetSegs.join('\n');                  // 归一化原文，用于判断是否有改动
   document.getElementById('tlSheetTitle').textContent=c.title||'本章';
-  document.getElementById('tlSheetTa').value=tlSheetOrig;
+  renderChapterSheet();
   const sheet=document.getElementById('tlSheet');
   sheet.classList.remove('dragging'); sheet.style.transform='';
   document.getElementById('tlSheetMask').classList.add('show');
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initTlSheetDrag();
 }
+
+// 渲染分段卡片；tlSheetEdit 段渲染为输入框
+function renderChapterSheet(){
+  const body=document.getElementById('tlSheetBody');
+  let num=0;
+  const rows=tlSheetSegs.map((line,i)=>{
+    const type=tlSegType(line);
+    if(type==='num') num++;
+    if(i===tlSheetEdit){
+      return `<div class="tl-para"><div class="tl-pdot"></div>`+
+        `<div class="tl-pcol"><textarea class="tlseg-edit" data-edit="${i}" placeholder="这一段…">${esc(line)}</textarea></div></div>`;
+    }
+    if(type==='heading'){
+      return `<div class="tl-para tl-hd"><div class="tl-pdot"></div>`+
+        `<div class="tl-phead tlseg-tap" data-tap="${i}">${inlineBold(esc(line))}</div></div>`;
+    }
+    if(type==='num'){
+      return `<div class="tl-para"><div class="tl-pdot"></div>`+
+        `<div class="tl-pcol"><div class="tl-pnum">${num}.</div>`+
+        `<div class="tl-pbody has-rt tlseg-tap" data-tap="${i}">${renderRich(line.replace(TL_PARA_RE,''))}</div></div></div>`;
+    }
+    return `<div class="tl-para"><div class="tl-pdot"></div>`+
+      `<div class="tl-pcol"><div class="tl-pbody has-rt tlseg-tap" data-tap="${i}">${renderRich(line)}</div></div></div>`;
+  });
+  const add=`<div class="tl-para tl-addrow"><div class="tl-pdot"></div>`+
+    `<button type="button" class="tlseg-add" id="tlSegAdd">＋ 加一段</button></div>`;
+  body.innerHTML=`<div class="tl-pts">${rows.join('')}${add}</div>`;
+  // 绑定：编辑框自适应高度 + 失焦提交；读态卡点按进编辑；加一段
+  const ta=body.querySelector('.tlseg-edit');
+  if(ta){
+    autosizeTl(ta);
+    ta.addEventListener('input',()=>autosizeTl(ta));
+    ta.addEventListener('blur',()=>commitTlSeg(ta));
+    ta.focus(); try{ta.selectionStart=ta.selectionEnd=ta.value.length;}catch(_){}
+  }
+  body.querySelectorAll('.tlseg-tap').forEach(el=>{
+    el.addEventListener('click',()=>{ tlSheetEdit=+el.dataset.tap; renderChapterSheet(); });
+  });
+  const addBtn=document.getElementById('tlSegAdd');
+  if(addBtn) addBtn.addEventListener('click',()=>{ tlSheetSegs.push(''); tlSheetEdit=tlSheetSegs.length-1; renderChapterSheet(); });
+}
+function commitTlSeg(ta){
+  const i=+ta.dataset.edit;
+  if(tlSheetSegs[i]!=null) tlSheetSegs[i]=ta.value.trim();
+  tlSheetEdit=-1;
+  tlSheetSegs=tlSheetSegs.filter(s=>s!=='');   // 空段落自动删除
+  renderChapterSheet();
+}
+
 function closeChapterSheet(){
-  const ta=document.getElementById('tlSheetTa');
-  if(ta) ta.blur();
-  // 关闭即保存（仅当有改动）
-  if(tlSheetIdx!=null && ta && ta.value!==tlSheetOrig){
-    const n=(notes||[]).find(x=>x.id===tlCurId);
-    if(n){
-      const newRaw=tlSheetLead+tlSheetHeading+'\n'+ta.value.replace(/\s+$/,'');
-      n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
-      n.updatedAt=Date.now();
-      persistNotes();
-      renderTimelineBody(tlCurId);
-      toast('已保存');
+  // 先提交正在编辑的段
+  const ta=document.querySelector('#tlSheetBody .tlseg-edit');
+  if(ta){ const i=+ta.dataset.edit; if(tlSheetSegs[i]!=null) tlSheetSegs[i]=ta.value.trim(); ta.blur(); }
+  if(tlSheetIdx!=null){
+    const newBody=tlSheetSegs.map(s=>s.trim()).filter(Boolean).join('\n');
+    if(newBody!==tlSheetOrigJoined){
+      const n=(notes||[]).find(x=>x.id===tlCurId);
+      if(n){
+        const newRaw=tlSheetLead+tlSheetHeading+'\n'+newBody;
+        n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
+        n.updatedAt=Date.now();
+        persistNotes();
+        renderTimelineBody(tlCurId);
+        toast('已保存');
+      }
     }
   }
   document.getElementById('tlSheetMask').classList.remove('show');
   document.getElementById('tlSheet').classList.remove('show');
-  tlSheetIdx=null;
+  tlSheetIdx=null; tlSheetEdit=-1;
 }
 // 下拉弹窗头关闭（松手超过阈值即关，含自动保存）
 function initTlSheetDrag(){
