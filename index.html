@@ -956,7 +956,9 @@ tr:hover .acts{opacity:1;}
 
 /* 章节卡片本体：与时间线外面的笔记卡片同款描边（1px var(--ink)），无阴影 */
 .tl-item{background:var(--surface);border:var(--bd) solid var(--ink);border-radius:var(--rlg);
-  transition:border-color .18s;}
+  transition:border-color .18s,transform .1s;cursor:pointer;}
+.tl-item:active{transform:scale(.99);}
+.tl-chev{flex-shrink:0;align-self:center;color:var(--text-muted);margin-left:2px;}
 .tl-item.open{border-color:var(--accent);}
 
 /* 章节标题区(可点击折叠)：紧凑高度 */
@@ -986,6 +988,30 @@ tr:hover .acts{opacity:1;}
 .tl-clip{min-height:0;}
 .tl-pad{padding:var(--sp-14) var(--sp-16) var(--sp-16);border-top:1px solid var(--border-soft);}
 @media (prefers-reduced-motion:reduce){.tl-inner{transition:none;}}
+
+/* ===== 章节底部弹窗：点章节从底部滑起，直接可编辑，关闭即保存 ===== */
+.tlsheet-mask{position:fixed;inset:0;background:rgba(10,8,6,.42);opacity:0;pointer-events:none;
+  transition:opacity .3s cubic-bezier(.32,.72,0,1);z-index:1500;}
+.tlsheet-mask.show{opacity:1;pointer-events:auto;}
+.tlsheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:540px;z-index:1501;max-height:88vh;
+  background:var(--surface);border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;
+  transform:translateY(101%);transition:transform .4s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -8px 30px -10px rgba(0,0,0,.32);}
+.tlsheet.show{transform:translateY(0);}
+.tlsheet.dragging{transition:none;}
+/* 方案 D 墨绿标题带：紧凑、只显章节名 */
+.tlsheet-head{flex-shrink:0;background:var(--accent);padding:7px 16px 12px;cursor:grab;
+  touch-action:none;user-select:none;-webkit-user-select:none;}
+.tlsheet-head:active{cursor:grabbing;}
+.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.45);margin:0 auto 10px;}
+.tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:#fff;line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tlsheet-body{flex:1;min-height:0;overflow-y:auto;padding:14px 18px 22px;display:flex;
+  -webkit-overflow-scrolling:touch;}
+.tlsheet-ta{flex:1;width:100%;min-height:38vh;border:none;outline:none;resize:none;background:transparent;
+  font-family:var(--zh);font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-primary);}
+.tlsheet-ta::placeholder{color:var(--text-muted);}
+@media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
@@ -2034,7 +2060,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         <div class="tl-sub" id="tl-sub">共 0 章</div>
       </div>
       <div class="tl-toolbar">
-        <button class="tl-allbtn" id="tl-allbtn" onclick="toggleAllChapters()">⇅ 展开全部</button>
         <button class="mclose" onclick="closeTimeline()">✕</button>
       </div>
     </div>
@@ -2060,6 +2085,18 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <button class="tle-btn tle-cancel" onclick="closeTlEdit()">取消</button>
       <button class="tle-btn tle-save" onclick="saveTlEdit()">保存</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== 章节底部弹窗（点章节打开，直接可编辑，关闭即保存） ===== -->
+<div class="tlsheet-mask" id="tlSheetMask" onclick="closeChapterSheet()"></div>
+<div class="tlsheet" id="tlSheet" role="dialog" aria-modal="true">
+  <div class="tlsheet-head" id="tlSheetHead">
+    <div class="tlsheet-grip"></div>
+    <div class="tlsheet-title" id="tlSheetTitle"></div>
+  </div>
+  <div class="tlsheet-body">
+    <textarea class="tlsheet-ta" id="tlSheetTa" placeholder="这一章还没有内容，写点什么…"></textarea>
   </div>
 </div>
 
@@ -6357,58 +6394,85 @@ function renderTimelineBody(id){
     if(allbtn){allbtn.style.display='';allbtn.textContent='⇅ 展开全部';}
     body.innerHTML='<div class="tl">'+chs.map((c,idx)=>{
       const blocks=parseParagraphs(c.body);
-      let inner='';
-      if(!c.body){
-        inner='';
-      }else{
-        // 统一按 block 类型分别渲染（单段正文也加 .tl-para 空心圆，保持视觉一致）
-        inner=blocks.map(b=>{
-          if(b.type==='heading'){
-            return `<div class="tl-para tl-hd">
-              <div class="tl-pdot"></div>
-              <div class="tl-phead">${inlineBold(esc(b.text))}</div>
-            </div>`;
-          }
-          if(b.type==='pre'){
-            return `<div class="tl-para">
-              <div class="tl-pdot"></div>
-              <div class="tl-pcol"><div class="tl-pbody has-rt">${renderRich(b.text)}</div></div>
-            </div>`;
-          }
-          // num：保留编号（有序要点）
-          return `<div class="tl-para">
-            <div class="tl-pdot"></div>
-            <div class="tl-pcol">
-              <div class="tl-pnum">${b.num}.</div>
-              <div class="tl-pbody has-rt">${renderRich(b.text)}</div>
-            </div>
-          </div>`;
-        }).join('');
-      }
-      const hasParas=inner.includes('tl-para');
-      // 折叠时的预览行：取首段纯文本，一行截断
+      // 折叠预览：取首段纯文本，一行截断
       const peekTxt=blocks.length?esc((blocks[0].text||'').replace(/\s+/g,' ').trim()):'';
-      // 默认全部折叠；卡片外包 .tl-swipe 支持左滑露出「编辑」
-      return `<div class="tl-swipe">
-        <button class="tl-swipe-edit" onclick="tlSwipeEdit('${id}',${idx},event)" type="button">编辑</button>
-        <div class="tl-item${hasParas?' has-paras':''}" data-idx="${idx}">
-          <div class="tl-head" onclick="toggleChapter(${idx},event)">
-            <span class="tl-bar"></span>
-            <div class="tl-main">
-              <div class="tl-ch">${esc(c.title)}</div>
-              ${peekTxt?`<div class="tl-peek">${peekTxt}</div>`:''}
-            </div>
+      // 点整卡 → 从底部滑起可编辑弹窗（openChapterSheet）
+      return `<div class="tl-item has-paras" data-idx="${idx}" onclick="openChapterSheet(${idx})">
+        <div class="tl-head">
+          <span class="tl-bar"></span>
+          <div class="tl-main">
+            <div class="tl-ch">${esc(c.title)}</div>
+            ${peekTxt?`<div class="tl-peek">${peekTxt}</div>`:''}
           </div>
-          <div class="tl-inner">${inner?`<div class="tl-clip"><div class="tl-pad"><div class="tl-pts">${inner}</div></div></div>`:''}</div>
+          <svg class="tl-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>`;
     }).join('')+'</div>';
-    enhanceTlSwipe(body);
   }
 }
 
 function closeTimeline(){
+  if(tlSheetIdx!=null) closeChapterSheet();
   document.getElementById('tlModal').classList.remove('open');
+}
+
+// ── 章节底部弹窗：点章节打开，内容直接可编辑，关闭即保存 ──────────
+let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetOrig='', tlSheetDragInit=false;
+function openChapterSheet(idx){
+  const n=(notes||[]).find(x=>x.id===tlCurId);
+  if(!n) return;
+  const c=parseChapters(n.body)[idx];
+  if(!c) return;
+  tlSheetIdx=idx;
+  // c.raw 可能含章前空行（正则 \s* 吃进换行），拆分时先剥掉、保存时原样补回
+  tlSheetLead=(c.raw.match(/^\s*/)||[''])[0];
+  const afterLead=c.raw.slice(tlSheetLead.length);
+  const nl=afterLead.indexOf('\n');
+  tlSheetHeading=(nl<0?afterLead:afterLead.slice(0,nl)).replace(/\s+$/,'');  // 「第X章…」标题行，保存时原样保留
+  tlSheetOrig=c.body||'';
+  document.getElementById('tlSheetTitle').textContent=c.title||'本章';
+  document.getElementById('tlSheetTa').value=tlSheetOrig;
+  const sheet=document.getElementById('tlSheet');
+  sheet.classList.remove('dragging'); sheet.style.transform='';
+  document.getElementById('tlSheetMask').classList.add('show');
+  requestAnimationFrame(()=>sheet.classList.add('show'));
+  initTlSheetDrag();
+}
+function closeChapterSheet(){
+  const ta=document.getElementById('tlSheetTa');
+  if(ta) ta.blur();
+  // 关闭即保存（仅当有改动）
+  if(tlSheetIdx!=null && ta && ta.value!==tlSheetOrig){
+    const n=(notes||[]).find(x=>x.id===tlCurId);
+    if(n){
+      const newRaw=tlSheetLead+tlSheetHeading+'\n'+ta.value.replace(/\s+$/,'');
+      n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
+      n.updatedAt=Date.now();
+      persistNotes();
+      renderTimelineBody(tlCurId);
+      toast('已保存');
+    }
+  }
+  document.getElementById('tlSheetMask').classList.remove('show');
+  document.getElementById('tlSheet').classList.remove('show');
+  tlSheetIdx=null;
+}
+// 下拉弹窗头关闭（松手超过阈值即关，含自动保存）
+function initTlSheetDrag(){
+  if(tlSheetDragInit) return; tlSheetDragInit=true;
+  const head=document.getElementById('tlSheetHead'),
+        sheet=document.getElementById('tlSheet'),
+        mask=document.getElementById('tlSheetMask');
+  let sy=null,dy=0,drag=false;
+  head.addEventListener('pointerdown',e=>{sy=e.clientY;dy=0;drag=true;
+    sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
+  head.addEventListener('pointermove',e=>{if(!drag)return;dy=Math.max(0,e.clientY-sy);
+    sheet.style.transform='translateY('+dy+'px)';mask.style.opacity=String(Math.max(0,1-dy/300));});
+  const end=()=>{if(!drag)return;drag=false;sheet.classList.remove('dragging');
+    sheet.style.transform='';mask.style.opacity='';
+    if(dy>100) closeChapterSheet();};
+  head.addEventListener('pointerup',end);
+  head.addEventListener('pointercancel',end);
 }
 
 // 章节展开/收起：JS 测量真实高度做平滑过渡（比 CSS grid fr 更顺）
