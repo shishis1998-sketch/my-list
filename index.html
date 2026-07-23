@@ -774,6 +774,16 @@ tr:hover .acts{opacity:1;}
 .cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
 @media (prefers-reduced-motion:reduce){.cal-sheet{transition:none;}.cal-sheet-scrim{transition:none;}}
 
+/* 往年今日 */
+.cal-otd-hd{display:flex;align-items:center;gap:var(--sp-8);margin:var(--sp-14) 0 var(--sp-8);
+  padding-top:var(--sp-14);border-top:1px solid var(--border);
+  font-size:var(--fs-caption);font-weight:700;color:var(--accent);letter-spacing:.02em;}
+.cal-otd-star{color:var(--accent-mid);}
+.cal-otd-count{margin-left:auto;font-size:var(--fs-foot);font-weight:400;color:var(--text-muted);font-family:var(--en);}
+.cal-year-label{font-size:var(--fs-foot);font-weight:700;color:var(--text-secondary);
+  margin:var(--sp-10) 0 var(--sp-6);font-family:var(--en);}
+.cal-year-ago{color:var(--text-muted);font-weight:400;}
+
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
 @media (max-width:768px){
   body.cal-open .bottombar{z-index:115;}          /* 高于日历页(110)，始终可点 */
@@ -6127,47 +6137,93 @@ function makeCalCell(day,isOther,dateStr,recs,isToday,isSel){
   return cell;
 }
 
+// 把一条笔记转成日历记录对象
+function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||''};}
+
+// 构建一条记录条目 DOM（当天记录、往年今日共用）
+function makeCalRecEl(r){
+  const div=document.createElement('div');
+  div.className='cal-rec';
+  if(r._isNote){
+    // 渲染 **粗体**（先 esc 防 XSS，再替换 **），保留换行
+    const previewHtml=esc(r.body||'').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    div.innerHTML=`
+      <div class="cal-rec-cover" style="background:var(--accent-light);color:var(--accent);font-size:16px;display:flex;align-items:center;justify-content:center">📝</div>
+      <div class="cal-rec-info">
+        <div class="cal-rec-name">${esc(r.subCat||'笔记')}</div>
+        <div class="cal-rec-meta" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap">${previewHtml}</div>
+      </div>`;
+    div.onclick=()=>showCalNotePreview(r.id);
+  }else{
+    const c=getCat(r.type);
+    const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
+    div.innerHTML=`
+      <div class="cal-rec-cover">${coverH}</div>
+      <div class="cal-rec-info">
+        <div class="cal-rec-name">${esc(r.name)}</div>
+        <div class="cal-rec-meta">${esc(c.name)}${r.year?' · '+r.year:''}${r.creator?' · '+esc(r.creator):''}${r.score?' · <span class="cal-rec-score">'+r.score+'/5</span>':''}</div>
+      </div>`;
+    div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
+  }
+  return div;
+}
+
 function renderCalDetail(){
   if(!calSelDate)return;
-  const [_,m,d]=calSelDate.split('-');
-  const mediaRecs=data.filter(r=>r.watchDate===calSelDate);
-  const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
   const [cy,cm,cd]=calSelDate.split('-');
   const titleDate=`${cy}/${cm}/${cd}`;
-  const noteRecs=notes.filter(n=>n.title===titleDate).map(n=>({_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||''}));
+  const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
+
+  // ① 当天记录（同年同月同日）
+  const mediaRecs=data.filter(r=>r.watchDate===calSelDate);
+  const noteRecs=notes.filter(n=>n.title===titleDate).map(toCalNoteRec);
   const recs=[...mediaRecs,...noteRecs];
-  document.getElementById('calDetailTitle').textContent=`${parseInt(m)} 月 ${parseInt(d)} 日`;
+
+  // ② 往年今日：同月同日、不同年，按年份分组
+  const pastByYear={};
+  data.forEach(r=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))return;
+    const [ry,rm,rd]=r.watchDate.split('-');
+    if(rm===cm&&rd===cd&&ry!==cy)(pastByYear[ry]=pastByYear[ry]||[]).push(r);
+  });
+  notes.forEach(n=>{
+    const mm=(n.title||'').match(_nre);if(!mm)return;
+    const[,ry,rm,rd]=mm;
+    if(rm===cm&&rd===cd&&ry!==cy)(pastByYear[ry]=pastByYear[ry]||[]).push(toCalNoteRec(n));
+  });
+  const pastYears=Object.keys(pastByYear).sort((a,b)=>b-a);
+  const pastTotal=pastYears.reduce((a,y)=>a+pastByYear[y].length,0);
+
+  document.getElementById('calDetailTitle').textContent=`${parseInt(cm)} 月 ${parseInt(cd)} 日`;
   document.getElementById('calDetailCount').textContent=recs.length?`· ${recs.length} 条记录`:'';
 
   const listEl=document.getElementById('calDetailList');
   listEl.innerHTML='';
-  if(!recs.length){listEl.innerHTML='<div class="cal-empty">这一天没有记录</div>';return;}
-  recs.forEach(r=>{
-    const div=document.createElement('div');
-    div.className='cal-rec';
-    if(r._isNote){
-      // 渲染 **粗体**（先 esc 防 XSS，再替换 **），保留换行
-      const previewHtml=esc(r.body||'').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-      div.innerHTML=`
-        <div class="cal-rec-cover" style="background:var(--accent-light);color:var(--accent);font-size:16px;display:flex;align-items:center;justify-content:center">📝</div>
-        <div class="cal-rec-info">
-          <div class="cal-rec-name">${esc(r.subCat||'笔记')}</div>
-          <div class="cal-rec-meta" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap">${previewHtml}</div>
-        </div>`;
-      div.onclick=()=>showCalNotePreview(r.id);
-    }else{
-      const c=getCat(r.type);
-      const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
-      div.innerHTML=`
-        <div class="cal-rec-cover">${coverH}</div>
-        <div class="cal-rec-info">
-          <div class="cal-rec-name">${esc(r.name)}</div>
-          <div class="cal-rec-meta">${esc(c.name)}${r.year?' · '+r.year:''}${r.creator?' · '+esc(r.creator):''}${r.score?' · <span class="cal-rec-score">'+r.score+'/5</span>':''}</div>
-        </div>`;
-      div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
-    }
-    listEl.appendChild(div);
-  });
+
+  // 当天记录
+  if(recs.length){
+    recs.forEach(r=>listEl.appendChild(makeCalRecEl(r)));
+  }else{
+    const e=document.createElement('div');e.className='cal-empty';
+    e.textContent=pastTotal?'今天还没有新记录':'这一天没有记录';
+    listEl.appendChild(e);
+  }
+
+  // 往年今日
+  if(pastTotal){
+    const hd=document.createElement('div');
+    hd.className='cal-otd-hd';
+    hd.innerHTML=`<span class="cal-otd-star">✦</span>往年今日<span class="cal-otd-count">${pastTotal} 条</span>`;
+    listEl.appendChild(hd);
+    pastYears.forEach(y=>{
+      const ago=parseInt(cy)-parseInt(y);
+      const agoTxt=ago>0?`${ago} 年前`:(ago<0?`${-ago} 年后`:'');
+      const yl=document.createElement('div');yl.className='cal-year-label';
+      yl.innerHTML=`${y} 年${agoTxt?` <span class="cal-year-ago">· ${agoTxt}</span>`:''}`;
+      listEl.appendChild(yl);
+      pastByYear[y].forEach(r=>listEl.appendChild(makeCalRecEl(r)));
+    });
+  }
 }
 
 // ── Notes (笔记功能) ─────────────────────────────────────────────
