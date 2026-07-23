@@ -583,8 +583,10 @@ tr:hover .acts{opacity:1;}
   .cal-overlay.open .cal-modal{animation:mboxSlideIn .18s cubic-bezier(0.34, 1.4, 0.56, 1);}
   .cal-hdr{padding:var(--sp-14) var(--sp-16) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
   .cal-title{font-size:var(--fs-body);}
-  .cal-scroll{padding:0 var(--sp-14) var(--sp-4);}
-  .cal-day{min-height:60px;padding:var(--sp-6);}
+  .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
+  /* 网格铺满剩余高度，格子等高撑开，独立页更沉浸 */
+  .cal-grid{flex:1;grid-auto-rows:1fr;}
+  .cal-day{min-height:56px;padding:var(--sp-6);}
   .cal-daynum{font-size:var(--fs-caption);}
   .cal-dot{width:5px;height:5px;}
   .cal-count{font-size:var(--fs-foot);padding:var(--sp-2) var(--sp-6);}
@@ -754,6 +756,23 @@ tr:hover .acts{opacity:1;}
 .cal-rec-score{color:var(--gold);font-weight:600;font-family:var(--en);}
 .cal-empty{text-align:center;color:var(--text-muted);padding:var(--sp-20) var(--sp-12);font-size:var(--fs-caption);}
 .cal-hint{text-align:center;color:var(--text-muted);padding:var(--sp-16) var(--sp-12);font-size:var(--fs-caption);}
+
+/* —— 点击某天从底部滑出的详情抽屉 —— */
+.cal-sheet-scrim{position:absolute;inset:0;background:rgba(10,8,6,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:5;}
+.cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
+.cal-sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--surface);
+  border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);
+  transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;max-height:70%;
+  padding:var(--sp-4) var(--sp-20) calc(var(--sp-16) + env(safe-area-inset-bottom));
+  will-change:transform;touch-action:none;}
+.cal-sheet.open{transform:translateY(0);}
+.cal-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);margin:var(--sp-8) auto var(--sp-12);flex-shrink:0;cursor:grab;}
+.cal-sheet .cal-detail-hdr{margin-bottom:var(--sp-12);flex-shrink:0;}
+.cal-sheet-close{margin-left:auto;width:28px;height:28px;border:none;background:transparent;cursor:pointer;font-size:16px;color:var(--text-muted);line-height:1;flex-shrink:0;transition:color .15s;}
+.cal-sheet-close:hover{color:var(--accent);}
+.cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
+@media (prefers-reduced-motion:reduce){.cal-sheet{transition:none;}.cal-sheet-scrim{transition:none;}}
 
 /* 日历按钮加到 sidebar 导航 */
 .nitem-cal{color:var(--accent-mid);}
@@ -1969,16 +1988,17 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         <div class="cal-weekcell">日</div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
-      <div class="cal-detail" id="calDetail">
-        <div class="cal-hint" id="calHint">点击上方某一天查看当天记录</div>
-        <div id="calDetailContent" style="display:none">
-          <div class="cal-detail-hdr">
-            <span id="calDetailTitle">5 月 17 日</span>
-            <span class="cal-detail-count" id="calDetailCount"></span>
-          </div>
-          <div id="calDetailList"></div>
-        </div>
+    </div>
+    <!-- 点击某天从底部滑出的详情抽屉 -->
+    <div class="cal-sheet-scrim" id="calSheetScrim" onclick="closeCalSheet()"></div>
+    <div class="cal-sheet" id="calSheet" role="dialog" aria-label="当天记录">
+      <div class="cal-sheet-grab" id="calSheetGrab"></div>
+      <div class="cal-detail-hdr">
+        <span id="calDetailTitle">5 月 17 日</span>
+        <span class="cal-detail-count" id="calDetailCount"></span>
+        <button class="cal-sheet-close" onclick="closeCalSheet()" aria-label="关闭">✕</button>
       </div>
+      <div id="calDetailList"></div>
     </div>
   </div>
 </div>
@@ -5884,23 +5904,72 @@ let calYear, calMonth, calSelDate=null;
 function openCalendar(){
   document.getElementById('calOverlay').classList.add('open');
   const today=new Date();
-  const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  calSelDate=todayStr;
+  calSelDate=null;                 // 独立页默认干净网格，不自动弹出抽屉
   calYear=today.getFullYear();calMonth=today.getMonth();
   renderCalLegend();
   renderCal();
-  renderCalDetail();
+  hideCalSheet();                  // 确保抽屉收起
   // 手机端打开日历时关闭侧边栏抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
 }
-function closeCalendar(){document.getElementById('calOverlay').classList.remove('open');}
-function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();}
-function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();}
+function closeCalendar(){
+  document.getElementById('calOverlay').classList.remove('open');
+  hideCalSheet();
+}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}closeCalSheet();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}closeCalSheet();}
 function calToday(){
   const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();
-  calSelDate=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-  renderCal();renderCalDetail();
+  const todayStr=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+  openCalDay(todayStr);            //「今天」跳到本月并弹出今天的记录
 }
+
+// —— 底部抽屉：点某天弹出 / 收起 ——
+function openCalDay(dateStr){
+  calSelDate=dateStr;
+  renderCal();                     // 刷新选中高亮
+  renderCalDetail();               // 填充抽屉内容
+  document.getElementById('calSheet').classList.add('open');
+  document.getElementById('calSheetScrim').classList.add('open');
+}
+function hideCalSheet(){
+  const s=document.getElementById('calSheet'),sc=document.getElementById('calSheetScrim');
+  if(s){s.classList.remove('open');s.style.transform='';s.style.transition='';}
+  if(sc)sc.classList.remove('open');
+}
+function closeCalSheet(){
+  hideCalSheet();
+  calSelDate=null;
+  renderCal();                     // 清除选中高亮 + 刷新当前月
+}
+
+// 抓手下拉收起抽屉
+(function calSheetDrag(){
+  const sheet=document.getElementById('calSheet');
+  const grab=document.getElementById('calSheetGrab');
+  if(!sheet||!grab)return;
+  let startY=null;
+  const getY=e=>e.touches?e.touches[0].clientY:(e.changedTouches?e.changedTouches[0].clientY:e.clientY);
+  function onStart(e){startY=getY(e);sheet.style.transition='none';}
+  function onMove(e){
+    if(startY==null)return;
+    const dy=Math.max(0,getY(e)-startY);
+    sheet.style.transform=`translateY(${dy}px)`;
+  }
+  function onEnd(e){
+    if(startY==null)return;
+    const dy=Math.max(0,getY(e)-startY);
+    startY=null;
+    sheet.style.transition='';sheet.style.transform='';
+    if(dy>60)closeCalSheet();
+  }
+  grab.addEventListener('touchstart',onStart,{passive:true});
+  grab.addEventListener('touchmove',onMove,{passive:true});
+  grab.addEventListener('touchend',onEnd);
+  grab.addEventListener('mousedown',onStart);
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onEnd);
+})();
 
 function renderCalLegend(){
   const el=document.getElementById('calLegend');
@@ -5935,7 +6004,7 @@ function triggerCalMonthPick(){
     if(!e.target.value)return;
     const[y,m]=e.target.value.split('-');
     calYear=parseInt(y);calMonth=parseInt(m)-1;
-    renderCal();
+    closeCalSheet();
   };
   inp.click();
 }
@@ -6024,21 +6093,13 @@ function makeCalCell(day,isOther,dateStr,recs,isToday,isSel){
   }
 
   if(!isOther&&dateStr){
-    cell.onclick=()=>{
-      calSelDate=dateStr;
-      renderCal();renderCalDetail();
-      setTimeout(()=>document.getElementById('calDetail').scrollIntoView({behavior:'smooth',block:'nearest'}),50);
-    };
+    cell.onclick=()=>openCalDay(dateStr);
   }
   return cell;
 }
 
 function renderCalDetail(){
-  const hint=document.getElementById('calHint');
-  const content=document.getElementById('calDetailContent');
-  if(!calSelDate){hint.style.display='block';content.style.display='none';return;}
-  hint.style.display='none';content.style.display='block';
-
+  if(!calSelDate)return;
   const [_,m,d]=calSelDate.split('-');
   const mediaRecs=data.filter(r=>r.watchDate===calSelDate);
   const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
@@ -6074,7 +6135,7 @@ function renderCalDetail(){
           <div class="cal-rec-name">${esc(r.name)}</div>
           <div class="cal-rec-meta">${esc(c.name)}${r.year?' · '+r.year:''}${r.creator?' · '+esc(r.creator):''}${r.score?' · <span class="cal-rec-score">'+r.score+'/5</span>':''}</div>
         </div>`;
-      div.onclick=()=>{closeCalendar();openEdit(r.id);};
+      div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
     }
     listEl.appendChild(div);
   });
