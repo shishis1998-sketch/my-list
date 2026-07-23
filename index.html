@@ -754,6 +754,12 @@ tr:hover .acts{opacity:1;}
 .cal-rec-name{font-size:var(--fs-body);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cal-rec-meta{font-size:var(--fs-caption);color:var(--text-muted);}
 .cal-rec-score{color:var(--gold);font-weight:600;font-family:var(--en);}
+/* 笔记/收集记录：色点 + 单行内容（无图标）*/
+.cal-rec-note{align-items:center;gap:var(--sp-8);}
+.cal-rec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.cal-rec-line{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-rec-line strong{font-weight:700;}
 .cal-empty{text-align:center;color:var(--text-muted);padding:var(--sp-20) var(--sp-12);font-size:var(--fs-caption);}
 .cal-hint{text-align:center;color:var(--text-muted);padding:var(--sp-16) var(--sp-12);font-size:var(--fs-caption);}
 
@@ -6145,19 +6151,25 @@ function makeCalCell(day,isOther,dateStr,recs,isToday,isSel){
 // 把一条笔记转成日历记录对象
 function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||''};}
 
+// 笔记分类 → 图例色（与顶部图例一致）
+function noteDotColor(subCat){
+  if(subCat==='收集')return '#2B4D3F';
+  if(subCat==='读书笔记')return '#8B4513';
+  return '#1A5F7A';                       // 其它笔记（灵感/备忘/…）
+}
+
 // 构建一条记录条目 DOM（当天记录、往年今日共用）
 function makeCalRecEl(r){
   const div=document.createElement('div');
   div.className='cal-rec';
   if(r._isNote){
-    // 渲染 **粗体**（先 esc 防 XSS，再替换 **），保留换行
-    const previewHtml=esc(r.body||'').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    // 纯文字：分类色点 + 单行内容（省略号在行尾），无图标
+    const line=esc((r.body||'').replace(/\s*\n\s*/g,' ').trim())
+                 .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>') || esc(r.subCat||'笔记');
+    div.classList.add('cal-rec-note');
     div.innerHTML=`
-      <div class="cal-rec-cover" style="background:var(--accent-light);color:var(--accent);font-size:16px;display:flex;align-items:center;justify-content:center">📝</div>
-      <div class="cal-rec-info">
-        <div class="cal-rec-name">${esc(r.subCat||'笔记')}</div>
-        <div class="cal-rec-meta" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap">${previewHtml}</div>
-      </div>`;
+      <span class="cal-rec-dot" style="background:${noteDotColor(r.subCat)}"></span>
+      <div class="cal-rec-line">${line}</div>`;
     div.onclick=()=>showCalNotePreview(r.id);
   }else{
     const c=getCat(r.type);
