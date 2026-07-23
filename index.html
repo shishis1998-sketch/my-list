@@ -761,12 +761,13 @@ tr:hover .acts{opacity:1;}
 .cal-sheet-scrim{position:absolute;inset:0;background:rgba(10,8,6,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:5;}
 .cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
 .cal-sheet{position:absolute;left:0;right:0;bottom:var(--calbbh,0px);z-index:6;background:var(--surface);
-  border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);
+  border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:none;
   transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
   display:flex;flex-direction:column;max-height:70%;
   padding:var(--sp-4) var(--sp-20) var(--sp-16);
   will-change:transform;touch-action:none;}
-.cal-sheet.open{transform:translateY(0);}
+/* 阴影只在展开时出现，收起时不透到导航栏上方 */
+.cal-sheet.open{transform:translateY(0);box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);}
 .cal-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);margin:var(--sp-8) auto var(--sp-12);flex-shrink:0;cursor:grab;}
 .cal-sheet .cal-detail-hdr{margin-bottom:var(--sp-12);flex-shrink:0;}
 .cal-sheet-close{margin-left:auto;width:28px;height:28px;border:none;background:transparent;cursor:pointer;font-size:16px;color:var(--text-muted);line-height:1;flex-shrink:0;transition:color .15s;}
