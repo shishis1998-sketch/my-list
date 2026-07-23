@@ -764,7 +764,7 @@ tr:hover .acts{opacity:1;}
   border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);
   transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
   display:flex;flex-direction:column;max-height:70%;
-  padding:var(--sp-4) var(--sp-20) calc(var(--sp-16) + env(safe-area-inset-bottom));
+  padding:var(--sp-4) var(--sp-20) var(--sp-16);
   will-change:transform;touch-action:none;}
 .cal-sheet.open{transform:translateY(0);}
 .cal-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);margin:var(--sp-8) auto var(--sp-12);flex-shrink:0;cursor:grab;}
@@ -789,7 +789,9 @@ tr:hover .acts{opacity:1;}
   body.cal-open .bottombar{z-index:115;}          /* 高于日历页(110)，始终可点 */
   body.cal-open .bb-actions{display:none;}         /* 日历页不需要搜索/排序/添加行 */
   body.cal-open .bb-tabs{max-height:64px;opacity:1;}
-  body.cal-open .cal-scroll{padding-bottom:var(--calbbh,0px);}  /* 网格不被底栏遮住 */
+  body.cal-open .cal-modal{padding-bottom:var(--calbbh,0px);}  /* 网格给底栏留位，避免多余滚动条 */
+  /* 抽屉弹出时：底栏去圆角去阴影，与抽屉底边贴合成一整块，只留一条细线 */
+  body.cal-open.cal-sheet-open .bottombar{border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
 }
 
 /* 日历按钮加到 sidebar 导航 */
@@ -5968,6 +5970,7 @@ function openCalDay(dateStr){
   calSelDate=dateStr;
   renderCal();                     // 刷新选中高亮
   renderCalDetail();               // 填充抽屉内容
+  document.body.classList.add('cal-sheet-open');   // 底栏切到「无缝拼接」态
   document.getElementById('calSheet').classList.add('open');
   document.getElementById('calSheetScrim').classList.add('open');
 }
@@ -5975,6 +5978,7 @@ function hideCalSheet(){
   const s=document.getElementById('calSheet'),sc=document.getElementById('calSheetScrim');
   if(s){s.classList.remove('open');s.style.transform='';s.style.transition='';}
   if(sc)sc.classList.remove('open');
+  document.body.classList.remove('cal-sheet-open');
 }
 function closeCalSheet(){
   hideCalSheet();
