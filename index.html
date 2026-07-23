@@ -707,11 +707,11 @@ tr:hover .acts{opacity:1;}
   .bb-sortopt.on .ck{opacity:1;}
 }
 
-/* ===== CALENDAR ===== */
-.cal-overlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:110;align-items:center;justify-content:center;padding:var(--sp-20);}
-.cal-overlay.open{display:flex;animation:movFadeIn .16s ease-out;}
-.cal-overlay.open .cal-modal{animation:mboxPopIn .18s cubic-bezier(0.34, 1.4, 0.56, 1);}
-.cal-modal{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:720px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadowlg);}
+/* ===== CALENDAR（独立整页，非弹窗）===== */
+.cal-overlay{display:none;position:fixed;inset:0;background:var(--surface);z-index:110;padding:0;}
+.cal-overlay.open{display:block;animation:calPageIn .18s ease-out;}
+@keyframes calPageIn{from{opacity:0;}to{opacity:1;}}
+.cal-modal{background:var(--surface);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-20) var(--sp-24) var(--sp-12);flex-shrink:0;}
 .cal-title{font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.03em;}
 .cal-nav{display:flex;gap:var(--sp-6);align-items:center;}
@@ -760,7 +760,7 @@ tr:hover .acts{opacity:1;}
 /* —— 点击某天从底部滑出的详情抽屉 —— */
 .cal-sheet-scrim{position:absolute;inset:0;background:rgba(10,8,6,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:5;}
 .cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
-.cal-sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:var(--surface);
+.cal-sheet{position:absolute;left:0;right:0;bottom:var(--calbbh,0px);z-index:6;background:var(--surface);
   border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);
   transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
   display:flex;flex-direction:column;max-height:70%;
@@ -773,6 +773,14 @@ tr:hover .acts{opacity:1;}
 .cal-sheet-close:hover{color:var(--accent);}
 .cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
 @media (prefers-reduced-motion:reduce){.cal-sheet{transition:none;}.cal-sheet-scrim{transition:none;}}
+
+/* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
+@media (max-width:768px){
+  body.cal-open .bottombar{z-index:115;}          /* 高于日历页(110)，始终可点 */
+  body.cal-open .bb-actions{display:none;}         /* 日历页不需要搜索/排序/添加行 */
+  body.cal-open .bb-tabs{max-height:64px;opacity:1;}
+  body.cal-open .cal-scroll{padding-bottom:var(--calbbh,0px);}  /* 网格不被底栏遮住 */
+}
 
 /* 日历按钮加到 sidebar 导航 */
 .nitem-cal{color:var(--accent-mid);}
@@ -1460,11 +1468,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .cfbox{border:var(--bd) solid var(--ink);border-radius:var(--rxl);box-shadow:var(--pop);}
 .cfbox h3{font-family:var(--zh);color:var(--text-primary);}
 
-/* —— 日历弹窗 —— */
-/* —— 日历弹窗（桌面端圆角描边；手机端全屏不加）—— */
-@media(min-width:769px){
-  .cal-modal{border:var(--bd) solid var(--ink);border-radius:var(--rxl);box-shadow:var(--pop);}
-}
+/* —— 日历：独立整页，桌面端也铺满内容区，不再是居中卡片 —— */
 .cal-title{color:var(--text-primary);}
 .cal-todaybtn{border:var(--bd) solid var(--ink);font-family:var(--zh);font-weight:700;}
 
@@ -5255,6 +5259,7 @@ function toggleSidebar(open){
   const sb=document.querySelector('.sidebar');
   const ov=document.getElementById('sbOverlay');
   if(open===undefined) open=!sb.classList.contains('open');
+  if(open && document.body.classList.contains('cal-open')) closeCalendar();  // 「设置」从日历页切走
   sb.classList.toggle('open',open);
   ov.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
@@ -5265,6 +5270,7 @@ function isNoteMode(){return typeof curCat==='string'&&curCat.indexOf('notes')==
 
 // ── Filters ───────────────────────────────────────────────────────
 function filterCat(cat){
+  if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
   curCat=cat;
   curFilterTags=[];
   // 解析笔记模式的子分类
@@ -5902,6 +5908,7 @@ let calYear, calMonth, calSelDate=null;
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
 function openCalendar(){
+  document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
   document.getElementById('calOverlay').classList.add('open');
   const today=new Date();
   calSelDate=null;                 // 独立页默认干净网格，不自动弹出抽屉
@@ -5909,12 +5916,34 @@ function openCalendar(){
   renderCalLegend();
   renderCal();
   hideCalSheet();                  // 确保抽屉收起
+  setCalTabActive(true);           // 高亮底部「日历」tab
   // 手机端打开日历时关闭侧边栏抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
+  measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
 }
 function closeCalendar(){
   document.getElementById('calOverlay').classList.remove('open');
+  document.body.classList.remove('cal-open');
   hideCalSheet();
+  setCalTabActive(false);          // 恢复原本的 tab 高亮
+}
+// 底部 tab 高亮：日历页时点亮「日历」，退出时交还给 syncBottomTabs
+function setCalTabActive(on){
+  const cal=document.getElementById('bbtab-cal');
+  const all=document.getElementById('bbtab-all');
+  const notes=document.getElementById('bbtab-notes');
+  if(cal)cal.classList.toggle('on',on);
+  if(on){all&&all.classList.remove('on');notes&&notes.classList.remove('on');}
+  else{syncBottomTabs();}
+}
+// 量底部导航栏高度写入 --calbbh，日历页据此给内容/抽屉留白（桌面端底栏隐藏 → 0）
+function measureCalBottomBar(){
+  requestAnimationFrame(()=>{
+    const bb=document.querySelector('.bottombar');
+    let h=0;
+    if(bb&&getComputedStyle(bb).display!=='none')h=bb.offsetHeight;
+    document.documentElement.style.setProperty('--calbbh',h+'px');
+  });
 }
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}closeCalSheet();}
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}closeCalSheet();}
