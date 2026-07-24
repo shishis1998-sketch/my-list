@@ -801,12 +801,13 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
 .cal-sheet{position:absolute;left:0;right:0;bottom:var(--calbbh,0px);z-index:6;background:var(--surface);
   border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:none;
-  transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  transform:translateY(101%);visibility:hidden;
+  transition:transform .26s cubic-bezier(.32,.72,0,1),visibility 0s linear .26s;
   display:flex;flex-direction:column;max-height:70%;
   padding:var(--sp-4) var(--sp-20) var(--sp-16);
   will-change:transform;touch-action:none;}
-/* 阴影只在展开时出现，收起时不透到导航栏上方 */
-.cal-sheet.open{transform:translateY(0);box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);}
+/* 阴影只在展开时出现，收起时彻底隐藏（不因滚动/回弹露头）*/
+.cal-sheet.open{transform:translateY(0);visibility:visible;box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);transition:transform .26s cubic-bezier(.32,.72,0,1),visibility 0s;}
 .cal-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);margin:var(--sp-8) auto var(--sp-12);flex-shrink:0;cursor:grab;}
 .cal-sheet .cal-detail-hdr{margin-bottom:var(--sp-12);flex-shrink:0;}
 .cal-sheet-close{margin-left:auto;width:28px;height:28px;border:none;background:transparent;cursor:pointer;font-size:16px;color:var(--text-muted);line-height:1;flex-shrink:0;transition:color .15s;}
@@ -832,7 +833,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   body.cal-open .bb-tabs{max-height:64px;opacity:1;}
   body.cal-open .cal-modal{padding-bottom:var(--calbbh,0px);}  /* 网格给底栏留位 */
   body.cal-open .cal-grid{border-bottom:none;}     /* 去掉网格自身底线 → 全屏只剩底栏一条分界 */
-  body.cal-open .cal-scroll{scrollbar-width:none;} /* 日历页网格无需滚动条，隐藏那条竖线 */
+  body.cal-open .cal-scroll{scrollbar-width:none;overflow:hidden;overscroll-behavior:none;} /* 日历页固定不滚动 */
   body.cal-open .cal-scroll::-webkit-scrollbar{display:none;}
 }
 
