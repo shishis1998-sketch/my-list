@@ -4682,6 +4682,8 @@ function boot(){
   try{notes=JSON.parse(localStorage.getItem(NSK))||[];}catch{notes=[];}
   try{const s=JSON.parse(localStorage.getItem(NSUBK));noteSubs=s||null;}catch{noteSubs=null;}
   if(!noteSubs||!noteSubs.length) noteSubs=DEFAULT_NOTE_SUBS.slice();
+  // 「日历」不再作为笔记子分类：导入事件只进日历页、不进笔记列表
+  if(noteSubs.includes('日历')){noteSubs=noteSubs.filter(s=>s!=='日历');localStorage.setItem(NSUBK,JSON.stringify(noteSubs));}
   if(!data.length) seed();
   migrateWatchDate();
   // 启动后尝试从云端拉取最新数据(若已配置)
@@ -5225,10 +5227,13 @@ function renderMobileCatMgr(){
     +`<button class="nitem nitem-add" onclick="openCatMgr()"><span class="plus">＋</span>添加分类</button>`;
 }
 
+// 从 .ics 导入的日历事件：只在日历页显示，不算作「笔记」
+function isCalEvent(n){return ('_ics' in n)||(n.tags||[]).includes('日历导入');}
+function userNotes(){return notes.filter(n=>!isCalEvent(n));}
 function renderNotesSidebar(){
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
-  notes.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
+  userNotes().forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
   const items=[`<button class="nitem ${curCat==='notes:all'?'on':''}" onclick="filterCat('notes:all')">
       <span class="dot" style="background:var(--accent-mid)"></span>全部
     </button>`];
@@ -5540,7 +5545,7 @@ function setScore(v,el){
 function getAllCurrentTags(){
   let L;
   if(isNoteMode()){
-    L=notes.slice();
+    L=userNotes();
     if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
   } else {
     L=[...data];
@@ -6028,7 +6033,6 @@ async function importICS(e){
       seq++;added++;
     });
   }
-  if(added&&!noteSubs.includes('日历')){noteSubs.push('日历');persistNoteSubs();}
   if(added)persistNotes();
   render();
   if(added){
@@ -6536,7 +6540,7 @@ function renderCalDetail(){
 function nuid(){return 'n_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 
 function filteredNotes(){
-  let L=notes.slice();
+  let L=userNotes();
   if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
   if(curFilterTags.length) L=L.filter(n=>{const tg=n.tags||[];return curFilterTags.every(t=>tg.includes(t));});
   if(curSearch){
@@ -7511,10 +7515,11 @@ async function toggleNoteLocal(id){
 }
 
 function renderNoteChips(){
+  const un=userNotes();
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
-  notes.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
-  const chips=[`<span class="nfchip ${curNoteSub==='all'?'on':''}" onclick="filterCat('notes:all')">全部<span class="nfchip-cnt">${notes.length}</span></span>`];
+  un.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
+  const chips=[`<span class="nfchip ${curNoteSub==='all'?'on':''}" onclick="filterCat('notes:all')">全部<span class="nfchip-cnt">${un.length}</span></span>`];
   noteSubs.forEach(s=>{
     const safe=esc(s).replace(/'/g,"\\'");
     chips.push(`<span class="nfchip ${curNoteSub===s?'on':''}" onclick="filterCat('notes:${safe}')">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></span>`);
@@ -7725,7 +7730,7 @@ function pickNoteSuggTag(t){
 }
 function getNoteSuggTags(){
   const cnt={};
-  notes.forEach(n=>{
+  userNotes().forEach(n=>{
     if(editNoteId&&n.id===editNoteId)return;
     (n.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;});
   });
@@ -7786,7 +7791,7 @@ function saveNoteSubs(){
   persistNoteSubs();
   // 把已不存在子分类的笔记归入第一个
   const valid=new Set(noteSubs);
-  notes.forEach(n=>{if(!valid.has(n.subCat))n.subCat=noteSubs[0];});
+  notes.forEach(n=>{if(!isCalEvent(n)&&!valid.has(n.subCat))n.subCat=noteSubs[0];});
   persistNotes();
   // 若当前筛选的子分类被删,回到全部
   if(curNoteSub!=='all'&&!valid.has(curNoteSub)){curNoteSub='all';curCat='notes:all';}
