@@ -776,8 +776,8 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
 .cal-day.cal-other:hover{background:var(--bg);}
 .cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}                    /* 今天：墨绿加粗数字，不加圆圈 */
-.cal-day.cal-selected{background:transparent;box-shadow:inset 0 0 0 1.5px var(--accent-mid);}   /* 选中：描边方框，不填背景 */
-.cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;}
+.cal-day.cal-selected{background:transparent;}
+.cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;border-radius:50%;box-shadow:0 0 0 1px var(--surface),0 0 0 2px var(--accent-mid);}   /* 选中：只在数字外圈 28px、1px 墨绿圆环（外发光画法，不挤动圆点） */
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent);}
 .cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
 .cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:5px;max-width:100%;}
