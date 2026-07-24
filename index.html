@@ -759,6 +759,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-day:hover{background:var(--accent-light);}
 .cal-day.cal-other{color:var(--text-muted);}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
+.cal-day.cal-other .cal-evs{opacity:.5;}   /* 上/下月的事件条淡化 */
 .cal-day.cal-other:hover{background:var(--bg);}
 .cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}
 .cal-day.cal-selected{background:var(--accent-light);}
@@ -6224,7 +6225,7 @@ const CAL_CATS=[
   {key:'collect',  name:'收集',    color:'#2B4D3F'},
   {key:'readnote', name:'读书笔记',color:'#8B4513'},
   {key:'note',     name:'笔记',    color:'#1A5F7A'},
-  {key:'calendar', name:'日历',    color:'#C2703D'},   // 导入的日历事件
+  {key:'calendar', name:'日历',    color:'#6FA48D'},   // 导入的日历事件（淡绿）
 ];
 let calHiddenCats=(()=>{try{return new Set(JSON.parse(localStorage.getItem('my_list_cal_hidden_v1'))||[]);}catch{return new Set();}})();
 function persistCalHidden(){localStorage.setItem('my_list_cal_hidden_v1',JSON.stringify([...calHiddenCats]));}
@@ -6417,15 +6418,17 @@ function renderCal(){
   const grid=document.getElementById('calGrid');
   grid.innerHTML='';
 
-  const prevLastDay=new Date(calYear,calMonth,0).getDate();
-  for(let i=startWeekday-1;i>=0;i--){grid.appendChild(makeCalCell(prevLastDay-i,true,null,false,false,null,0));}
-  for(let day=1;day<=daysInMonth;day++){
-    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    grid.appendChild(makeCalCell(day,false,dateStr,dateStr===todayStr,dateStr===calSelDate,laneMap[dateStr]||null,moreMap[dateStr]||0));
-  }
+  // 整个网格（含上月/下月的灰格）都按真实日期渲染，跨月事件才能连起来
   const total=startWeekday+daysInMonth;
-  const remain=(7-total%7)%7;
-  for(let day=1;day<=remain;day++){grid.appendChild(makeCalCell(day,true,null,false,false,null,0));}
+  const cellCount=total+((7-total%7)%7);
+  const gridStart=new Date(calYear,calMonth,1);gridStart.setDate(1-startWeekday);
+  const fmtd=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  for(let c=0;c<cellCount;c++){
+    const cd=new Date(gridStart);cd.setDate(gridStart.getDate()+c);
+    const ds=fmtd(cd);
+    const isOther=cd.getMonth()!==calMonth;
+    grid.appendChild(makeCalCell(cd.getDate(),isOther,ds,ds===todayStr,ds===calSelDate,laneMap[ds]||null,moreMap[ds]||0));
+  }
 }
 // 下一天 'YYYY-MM-DD'
 function calNextDay(d){const dt=new Date(d+'T00:00:00');dt.setDate(dt.getDate()+1);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
@@ -6488,7 +6491,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes,moreCount){
     cell.appendChild(evs);
     if(moreCount>0){const mm=document.createElement('div');mm.className='cal-more';mm.textContent='+'+moreCount;cell.appendChild(mm);}
   }
-  if(!isOther&&dateStr) cell.onclick=()=>openCalDay(dateStr);
+  if(dateStr) cell.onclick=()=>{const p=dateStr.split('-');calYear=+p[0];calMonth=+p[1]-1;openCalDay(dateStr);};
   return cell;
 }
 
