@@ -773,11 +773,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
 .cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
 .cal-day.cal-other:hover{background:var(--bg);}
-.cal-day.cal-today .cal-daynum{font-weight:700;color:#fff;background:var(--accent);}   /* 今天：实心圆圈 */
-.cal-day.cal-selected{background:var(--accent-light);}                                  /* 选中：淡绿底片 */
+.cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}                    /* 今天：墨绿加粗数字，不加圆圈 */
+.cal-day.cal-selected{background:var(--accent-light);}                                  /* 选中：淡绿方形圆角高亮 */
 .cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;}
-.cal-day.cal-selected.cal-today .cal-daynum{color:#fff;background:var(--accent);}       /* 既是今天又选中：实心圆圈优先 */
-.cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-primary);line-height:1;font-family:var(--en);}
+.cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent);}
+.cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
 .cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:5px;max-width:100%;}
 .cal-dot{width:5px;height:5px;border-radius:50%;flex:none;}
 .cal-count{font-size:var(--fs-foot);background:var(--accent);color:#fff;padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
