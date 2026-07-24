@@ -722,11 +722,25 @@ tr:hover .acts{opacity:1;}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
 .cal-scroll{overflow-y:auto;flex:1;padding:0 var(--sp-20) var(--sp-4);}
-.cal-legend{display:flex;flex-wrap:wrap;gap:var(--sp-6);padding:var(--sp-4) var(--sp-4) var(--sp-14);font-size:var(--fs-foot);color:var(--text-muted);}
-.cal-legitem{display:inline-flex;align-items:center;gap:var(--sp-6);border:none;background:transparent;cursor:pointer;font-family:var(--zh);font-size:var(--fs-foot);color:var(--text-secondary);padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);transition:opacity .15s,background .15s;line-height:1;}
-.cal-legitem:hover{background:var(--accent-light);}
-.cal-legitem.off{opacity:.3;}
-.cal-legdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.cal-legdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* —— 分类筛选：收进头部按钮 → 弹出小面板 —— */
+.cal-filterbtn{color:var(--accent);position:relative;}
+.cal-filterbtn.on{background:var(--accent-light);}
+.cal-filter-ind{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#6FA48D;border:1.5px solid var(--surface);}
+.cal-filter-scrim{display:none;position:absolute;inset:0;z-index:8;}
+.cal-filter-scrim.open{display:block;}
+.cal-filterpop{display:none;position:absolute;top:calc(var(--sp-12) + 46px + env(safe-area-inset-top));right:var(--sp-16);z-index:9;
+  width:170px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
+  box-shadow:0 12px 30px -10px rgba(10,8,6,.3);padding:var(--sp-6);}
+.cal-filterpop.open{display:block;}
+.cal-filterpop-hd{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;padding:var(--sp-6) var(--sp-8) var(--sp-8);}
+.cal-filter-row{display:flex;align-items:center;gap:var(--sp-10);width:100%;border:none;background:transparent;cursor:pointer;
+  font-family:var(--zh);font-size:var(--fs-sub);color:var(--text-primary);padding:var(--sp-8);border-radius:var(--r);transition:opacity .15s,background .15s;}
+.cal-filter-row:hover{background:var(--accent-light);}
+.cal-filter-row.off{opacity:.42;}
+.cal-filter-name{flex:1;text-align:left;}
+.cal-filter-chk{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2.4;flex-shrink:0;}
+.cal-filter-row.off .cal-filter-chk{visibility:hidden;}
 /* —— 日历搜索 —— */
 .cal-searchbtn{color:var(--accent);}
 .cal-searchwrap{display:none;align-items:center;gap:var(--sp-10);padding:calc(var(--sp-14) + env(safe-area-inset-top)) var(--sp-24) var(--sp-12);flex-shrink:0;}
@@ -2039,6 +2053,10 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         <button class="cal-navbtn" onclick="calPrev()">‹</button>
         <button class="cal-todaybtn" onclick="calToday()">今天</button>
         <button class="cal-navbtn" onclick="calNext()">›</button>
+        <button class="cal-navbtn cal-filterbtn" id="calFilterBtn" onclick="toggleCalFilter()" aria-label="筛选分类">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
+          <span class="cal-filter-ind" id="calFilterInd"></span>
+        </button>
         <button class="cal-navbtn cal-searchbtn" id="calSearchBtn" onclick="toggleCalSearch()" aria-label="搜索">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
         </button>
@@ -2052,8 +2070,12 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       </div>
       <button class="cal-scancel" onclick="closeCalSearch()">取消</button>
     </div>
+    <div class="cal-filter-scrim" id="calFilterScrim" onclick="closeCalFilter()"></div>
+    <div class="cal-filterpop" id="calFilterPop">
+      <div class="cal-filterpop-hd">显示分类</div>
+      <div id="calLegend"></div>
+    </div>
     <div class="cal-scroll">
-      <div class="cal-legend" id="calLegend"></div>
       <div class="cal-weekrow">
         <div class="cal-weekcell">一</div>
         <div class="cal-weekcell">二</div>
@@ -6134,6 +6156,7 @@ function openCalendar(){
   renderCal();
   hideCalSheet();                  // 确保抽屉收起
   closeCalSearch();                // 确保搜索收起
+  closeCalFilter();                // 确保筛选面板收起
   setCalTabActive(true);           // 高亮底部「日历」tab
   window.scrollTo(0,0);            // 回到顶部，保证下拉刷新可从顶部触发
   // 手机端打开日历时关闭侧边栏抽屉
@@ -6144,6 +6167,7 @@ function closeCalendar(){
   document.getElementById('calOverlay').classList.remove('open');
   document.body.classList.remove('cal-open');
   closeCalSearch();                // 退出日历时收起搜索
+  closeCalFilter();                // 退出日历时收起筛选
   hideCalSheet();
   setCalTabActive(false);          // 恢复原本的 tab 高亮
 }
@@ -6254,12 +6278,33 @@ function renderCalLegend(){
   const counts={};CAL_CATS.forEach(c=>counts[c.key]=0);
   data.forEach(r=>{if(/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))counts.media++;});
   notes.forEach(n=>{if(/^\d{4}\/\d{2}\/\d{2}$/.test(n.title||''))counts[calRecCat({_isNote:true,subCat:n.subCat})]++;});
-  // 只显示有内容的分类；点击切换显示/隐藏
+  // 面板里每类一行；点击切换显示/隐藏（只列有内容的分类）
   el.innerHTML=CAL_CATS.filter(c=>counts[c.key]>0).map(c=>{
     const off=calHiddenCats.has(c.key)?' off':'';
-    return `<button type="button" class="cal-legitem${off}" onclick="toggleCalCat('${c.key}')">`+
-           `<span class="cal-legdot" style="background:${c.color}"></span>${esc(c.name)}</button>`;
+    return `<button type="button" class="cal-filter-row${off}" data-key="${esc(c.key)}">`+
+      `<span class="cal-legdot" style="background:${c.color}"></span><span class="cal-filter-name">${esc(c.name)}</span>`+
+      `<svg class="cal-filter-chk" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>`;
   }).join('');
+  el.querySelectorAll('.cal-filter-row').forEach(b=>b.onclick=()=>toggleCalCat(b.dataset.key));
+  const ind=document.getElementById('calFilterInd');
+  if(ind)ind.style.display=calHiddenCats.size?'block':'none';
+}
+// 分类筛选面板 开/关
+function toggleCalFilter(){
+  const btn=document.getElementById('calFilterBtn');if(btn)btn.blur();
+  const pop=document.getElementById('calFilterPop');
+  document.getElementById('calFilterPop').classList.contains('open')?closeCalFilter():openCalFilter();
+}
+function openCalFilter(){
+  renderCalLegend();
+  document.getElementById('calFilterPop').classList.add('open');
+  document.getElementById('calFilterScrim').classList.add('open');
+  document.getElementById('calFilterBtn').classList.add('on');
+}
+function closeCalFilter(){
+  document.getElementById('calFilterPop').classList.remove('open');
+  document.getElementById('calFilterScrim').classList.remove('open');
+  document.getElementById('calFilterBtn').classList.remove('on');
 }
 
 // —— 日历搜索：右上角放大镜 → 顶部搜索栏 → 结果列表 → 点一条跳到那天 ——
@@ -6268,6 +6313,7 @@ function toggleCalSearch(){
   document.body.classList.contains('cal-searching')?closeCalSearch():openCalSearch();
 }
 function openCalSearch(){
+  closeCalFilter();                     // 打开搜索前收起筛选面板
   document.body.classList.add('cal-searching');
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.add('on');
   hideCalSheet();                       // 收起当天抽屉
