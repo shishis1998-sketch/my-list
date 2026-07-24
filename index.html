@@ -6391,7 +6391,7 @@ function renderCal(){
   const mediaOn=calCatVisible('media');
   if(mediaOn)data.forEach(item=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(item.watchDate||''))return;
-    items.push({date:item.watchDate,uid:'',title:item.name||'(未命名)',color:getCat(item.type).color});
+    items.push({date:item.watchDate,uid:'',title:item.name||'(未命名)',color:getCat(item.type).color,isCal:false});
   });
   const _noteCalRe=/^(\d{4})\/(\d{2})\/(\d{2})$/;
   notes.forEach(note=>{
@@ -6399,7 +6399,8 @@ function renderCal(){
     if(!m)return;
     if(!calRecVisible({_isNote:true,subCat:note.subCat}))return;   // 按图例筛选
     items.push({date:`${m[1]}-${m[2]}-${m[3]}`,uid:note._ics||'',
-      title:calNoteTitle({body:note.body||'',subCat:note.subCat}),color:noteDotColor(note.subCat)});
+      title:calNoteTitle({body:note.body||'',subCat:note.subCat}),color:noteDotColor(note.subCat),
+      isCal:note.subCat==='日历'});
   });
   // 归并成 span（同 uid 连续日期 = 一条跨天条）+ 分配泳道
   const spans=buildCalSpans(items);
@@ -6407,7 +6408,7 @@ function renderCal(){
   const MAXLANE=3;
   const laneMap={},moreMap={};
   spans.forEach(sp=>sp.dates.forEach(d=>{
-    if(sp.lane<MAXLANE)(laneMap[d]=laneMap[d]||[])[sp.lane]={title:sp.title,color:sp.color,start:sp.start,end:sp.end,date:d};
+    if(sp.lane<MAXLANE)(laneMap[d]=laneMap[d]||[])[sp.lane]={title:sp.title,color:sp.color,start:sp.start,end:sp.end,date:d,isCal:sp.isCal};
     else moreMap[d]=(moreMap[d]||0)+1;
   }));
 
@@ -6431,7 +6432,7 @@ function calNextDay(d){const dt=new Date(d+'T00:00:00');dt.setDate(dt.getDate()+
 // 把散点项归并成 span：同 uid 且日期连续的合成一条跨天条
 function buildCalSpans(items){
   const spans=[],byUid={};
-  const mk=run=>({start:run[0].date,end:run[run.length-1].date,dates:run.map(r=>r.date),title:run[0].title,color:run[0].color});
+  const mk=run=>({start:run[0].date,end:run[run.length-1].date,dates:run.map(r=>r.date),title:run[0].title,color:run[0].color,isCal:run[0].isCal});
   items.forEach(it=>{ if(it.uid)(byUid[it.uid]=byUid[it.uid]||[]).push(it); else spans.push(mk([it])); });
   Object.keys(byUid).forEach(u=>{
     const arr=byUid[u].sort((a,b)=>a.date.localeCompare(b.date));
@@ -6476,7 +6477,8 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes,moreCount){
         const rl=(seg.date===seg.start)||weekStart;    // 段左端（真开始 / 周一）圆角+显示名
         const rr=(seg.date===seg.end)||weekEnd;         // 段右端（真结束 / 周日）圆角
         el.className='cal-ev'+(rl?' rl':'')+(rr?' rr':'');
-        el.style.background=seg.color;
+        if(seg.isCal){el.style.background='#DDEBE4';el.style.color='#2B4D3F';}  // 导入日历：淡底深绿字
+        else el.style.background=seg.color;                                     // 其它：纯色白字
         el.textContent=rl?seg.title:'';
       }else{
         el.className='cal-ev spacer';
@@ -6497,7 +6499,7 @@ function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body|
 function noteDotColor(subCat){
   if(subCat==='收集')return '#2B4D3F';
   if(subCat==='读书笔记')return '#8B4513';
-  if(subCat==='日历')return '#4A7B68';    // 导入的日历事件：墨绿的淡绿（accent-mid）
+  if(subCat==='日历')return '#6FA48D';    // 导入的日历事件：淡绿（圆点/下划线用；网格条另用淡底深字）
   return '#1A5F7A';                       // 其它笔记（灵感/备忘/…）
 }
 
