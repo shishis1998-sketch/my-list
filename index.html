@@ -1633,7 +1633,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       </button>
     </div>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
-    <input type="file" id="icsimp" accept=".ics,text/calendar" style="display:none" onchange="importICS(event)">
+    <input type="file" id="icsimp" accept=".ics,text/calendar" multiple style="display:none" onchange="importICS(event)">
   </div>
   <div class="nsec">
     <div class="nlbl">同步</div>
@@ -5953,68 +5953,89 @@ function parseICSDate(rawVal){
   }
   return {ymd:`${y}/${mo}/${d}`,timeLabel:`${hh}:${mi}`};         // 带 TZID / 浮动本地时间，按墙上时间取
 }
-function importICS(e){
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    try{
-      const raw=String(ev.target.result||'');
-      // 1) 行展开：折叠行（以空格/Tab 开头）并回上一行
-      const lines=[];
-      raw.split(/\r?\n/).forEach(l=>{
-        if(/^[ \t]/.test(l)&&lines.length) lines[lines.length-1]+=l.replace(/^[ \t]/,'');
-        else lines.push(l);
-      });
-      // 2) 拆出每个 VEVENT
-      const events=[];let cur=null,calName='';
-      lines.forEach(l=>{
-        if(l==='BEGIN:VEVENT'){cur={};return;}
-        if(l==='END:VEVENT'){if(cur)events.push(cur);cur=null;return;}
-        const ci=l.indexOf(':');if(ci<0)return;
-        const name=l.slice(0,ci).split(';')[0].toUpperCase(), val=l.slice(ci+1);
-        if(!cur){                                       // VCALENDAR 头部：取这本日历的名字
-          if(name==='X-WR-CALNAME')calName=unescapeICS(val).trim();
-          return;
-        }
-        if(name==='SUMMARY')cur.summary=unescapeICS(val);
-        else if(name==='DESCRIPTION')cur.desc=unescapeICS(val);
-        else if(name==='LOCATION')cur.loc=unescapeICS(val);
-        else if(name==='UID')cur.uid=val.trim();
-        else if(name==='DTSTART')cur.dtstart=val.trim();
-        else if(name==='CATEGORIES')cur.cats=unescapeICS(val);   // 事件自带分类
-      });
-      if(!events.length){toast('没找到日历事件（.ics 里没有 VEVENT）');e.target.value='';return;}
-      // 3) 映射成日历笔记：title=YYYY/MM/DD，按 UID 去重（可反复导入不重复）
-      const existUid=new Set(notes.map(n=>n._ics).filter(Boolean));
-      const needSub=!noteSubs.includes('日历');
-      const base=Date.now();let added=0,skipped=0;
-      events.forEach((evt,i)=>{
-        const d=parseICSDate(evt.dtstart);
-        if(!d){skipped++;return;}
-        const uid=evt.uid||'';
-        if(uid&&existUid.has(uid)){skipped++;return;}
-        if(uid)existUid.add(uid);
-        const summary=evt.summary||'(无标题事件)';
-        const meta=[];
-        if(d.timeLabel)meta.push(d.timeLabel);
-        if(evt.loc)meta.push(evt.loc);
-        let body='**'+summary+'**';
-        if(meta.length)body+='\n'+meta.join(' · ');
-        if(evt.desc)body+='\n'+evt.desc;
-        const tags=['日历导入'];
-        // 日历名当作分类标签（区分不同 Google 日历），排除主日历的邮箱名
-        if(calName&&!/@/.test(calName)&&!tags.includes(calName))tags.push(calName);
-        // 事件自带的 CATEGORIES，逗号分隔
-        if(evt.cats)evt.cats.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{if(!tags.includes(c))tags.push(c);});
-        notes.push({id:nuid(),title:d.ymd,subCat:'日历',tags,body,createdAt:base+i,updatedAt:base+i,_ics:uid});
-        added++;
-      });
-      if(added&&needSub){noteSubs.push('日历');persistNoteSubs();}
-      persistNotes();render();
-      toast(`日历导入完成：+${added} 条${skipped?('，跳过 '+skipped+' 条重复/无日期'):''}`);
-    }catch(err){toast('导入失败：.ics 解析出错');}
-  };
-  r.readAsText(file); e.target.value='';
+// 解析一份 .ics 文本 → {events:[...], calName}
+function parseICS(raw){
+  // 1) 行展开：折叠行（以空格/Tab 开头）并回上一行
+  const lines=[];
+  String(raw||'').split(/\r?\n/).forEach(l=>{
+    if(/^[ \t]/.test(l)&&lines.length) lines[lines.length-1]+=l.replace(/^[ \t]/,'');
+    else lines.push(l);
+  });
+  // 2) 拆出每个 VEVENT，并取 VCALENDAR 的日历名
+  const events=[];let cur=null,calName='';
+  lines.forEach(l=>{
+    if(l==='BEGIN:VEVENT'){cur={};return;}
+    if(l==='END:VEVENT'){if(cur)events.push(cur);cur=null;return;}
+    const ci=l.indexOf(':');if(ci<0)return;
+    const name=l.slice(0,ci).split(';')[0].toUpperCase(), val=l.slice(ci+1);
+    if(!cur){                                       // VCALENDAR 头部：取这本日历的名字
+      if(name==='X-WR-CALNAME')calName=unescapeICS(val).trim();
+      return;
+    }
+    if(name==='SUMMARY')cur.summary=unescapeICS(val);
+    else if(name==='DESCRIPTION')cur.desc=unescapeICS(val);
+    else if(name==='LOCATION')cur.loc=unescapeICS(val);
+    else if(name==='UID')cur.uid=val.trim();
+    else if(name==='DTSTART')cur.dtstart=val.trim();
+    else if(name==='CATEGORIES')cur.cats=unescapeICS(val);   // 事件自带分类
+  });
+  return {events,calName};
+}
+function readFileText(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(String(e.target.result||''));
+    r.onerror=()=>rej(new Error('read'));
+    r.readAsText(file);
+  });
+}
+// 支持一次选多个 .ics（多个 Google 日历），逐份合并；按 UID 全局去重
+async function importICS(e){
+  const files=Array.from(e.target.files||[]);
+  e.target.value='';
+  if(!files.length)return;
+  const existUid=new Set(notes.map(n=>n._ics).filter(Boolean));
+  const base=Date.now();
+  let seq=0,added=0,skipped=0,noEvt=0;
+  for(const file of files){
+    let raw;
+    try{raw=await readFileText(file);}catch{noEvt++;continue;}
+    let events,calName;
+    try{({events,calName}=parseICS(raw));}catch{noEvt++;continue;}
+    if(!events.length){noEvt++;continue;}
+    events.forEach(evt=>{
+      const d=parseICSDate(evt.dtstart);
+      if(!d){skipped++;return;}
+      const uid=evt.uid||'';
+      if(uid&&existUid.has(uid)){skipped++;return;}
+      if(uid)existUid.add(uid);
+      const summary=evt.summary||'(无标题事件)';
+      const meta=[];
+      if(d.timeLabel)meta.push(d.timeLabel);
+      if(evt.loc)meta.push(evt.loc);
+      let body='**'+summary+'**';
+      if(meta.length)body+='\n'+meta.join(' · ');
+      if(evt.desc)body+='\n'+evt.desc;
+      const tags=['日历导入'];
+      // 日历名当作分类标签（区分不同 Google 日历），排除主日历的邮箱名
+      if(calName&&!/@/.test(calName)&&!tags.includes(calName))tags.push(calName);
+      // 事件自带的 CATEGORIES，逗号分隔
+      if(evt.cats)evt.cats.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{if(!tags.includes(c))tags.push(c);});
+      notes.push({id:nuid(),title:d.ymd,subCat:'日历',tags,body,createdAt:base+seq,updatedAt:base+seq,_ics:uid});
+      seq++;added++;
+    });
+  }
+  if(added&&!noteSubs.includes('日历')){noteSubs.push('日历');persistNoteSubs();}
+  if(added)persistNotes();
+  render();
+  if(added){
+    const parts=[`+${added} 条`];
+    if(skipped)parts.push(`跳过 ${skipped} 条重复/无日期`);
+    if(files.length>1)parts.push(`${files.length} 份日历`);
+    toast('日历导入完成：'+parts.join('，'));
+  }else{
+    toast(noEvt?'没找到日历事件（.ics 里没有 VEVENT）':'没有新增（都已存在或无日期）');
+  }
 }
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 function today(){return new Date().toISOString().slice(0,10);}
