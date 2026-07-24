@@ -1604,8 +1604,12 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <button class="nitem" onclick="exportCSV()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>导出 CSV
       </button>
+      <button class="nitem" onclick="document.getElementById('icsimp').click()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>导入日历 (.ics)
+      </button>
     </div>
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+    <input type="file" id="icsimp" accept=".ics,text/calendar" style="display:none" onchange="importICS(event)">
   </div>
   <div class="nsec">
     <div class="nlbl">同步</div>
@@ -5889,6 +5893,76 @@ function importJSON(e){
       persist();render();
       toast(`导入完成,记录 +${added} 条,笔记 +${addedN} 条`);
     }catch{toast('导入失败:格式不正确');}
+  };
+  r.readAsText(file); e.target.value='';
+}
+// —— 从 .ics（Google 日历 / Apple 日历导出）导入为日历笔记 ——
+function unescapeICS(s){return (s||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');}
+// 把 DTSTART 值解析成 {ymd:'YYYY/MM/DD', timeLabel:'HH:MM'|''}
+function parseICSDate(rawVal){
+  const m=(rawVal||'').match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
+  if(!m)return null;
+  const y=m[1],mo=m[2],d=m[3],hh=m[4],mi=m[5],ss=m[6],z=m[7];
+  if(hh==null) return {ymd:`${y}/${mo}/${d}`,timeLabel:''};      // 全天事件
+  if(z){                                                          // UTC → 本地
+    const dt=new Date(Date.UTC(+y,+mo-1,+d,+hh,+mi,+(ss||0)));
+    const p=n=>String(n).padStart(2,'0');
+    return {ymd:`${dt.getFullYear()}/${p(dt.getMonth()+1)}/${p(dt.getDate())}`,
+            timeLabel:`${p(dt.getHours())}:${p(dt.getMinutes())}`};
+  }
+  return {ymd:`${y}/${mo}/${d}`,timeLabel:`${hh}:${mi}`};         // 带 TZID / 浮动本地时间，按墙上时间取
+}
+function importICS(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const raw=String(ev.target.result||'');
+      // 1) 行展开：折叠行（以空格/Tab 开头）并回上一行
+      const lines=[];
+      raw.split(/\r?\n/).forEach(l=>{
+        if(/^[ \t]/.test(l)&&lines.length) lines[lines.length-1]+=l.replace(/^[ \t]/,'');
+        else lines.push(l);
+      });
+      // 2) 拆出每个 VEVENT
+      const events=[];let cur=null;
+      lines.forEach(l=>{
+        if(l==='BEGIN:VEVENT'){cur={};return;}
+        if(l==='END:VEVENT'){if(cur)events.push(cur);cur=null;return;}
+        if(!cur)return;
+        const ci=l.indexOf(':');if(ci<0)return;
+        const name=l.slice(0,ci).split(';')[0].toUpperCase(), val=l.slice(ci+1);
+        if(name==='SUMMARY')cur.summary=unescapeICS(val);
+        else if(name==='DESCRIPTION')cur.desc=unescapeICS(val);
+        else if(name==='LOCATION')cur.loc=unescapeICS(val);
+        else if(name==='UID')cur.uid=val.trim();
+        else if(name==='DTSTART')cur.dtstart=val.trim();
+      });
+      if(!events.length){toast('没找到日历事件（.ics 里没有 VEVENT）');e.target.value='';return;}
+      // 3) 映射成日历笔记：title=YYYY/MM/DD，按 UID 去重（可反复导入不重复）
+      const existUid=new Set(notes.map(n=>n._ics).filter(Boolean));
+      const needSub=!noteSubs.includes('日历');
+      const base=Date.now();let added=0,skipped=0;
+      events.forEach((evt,i)=>{
+        const d=parseICSDate(evt.dtstart);
+        if(!d){skipped++;return;}
+        const uid=evt.uid||'';
+        if(uid&&existUid.has(uid)){skipped++;return;}
+        if(uid)existUid.add(uid);
+        const summary=evt.summary||'(无标题事件)';
+        const meta=[];
+        if(d.timeLabel)meta.push(d.timeLabel);
+        if(evt.loc)meta.push(evt.loc);
+        let body='**'+summary+'**';
+        if(meta.length)body+='\n'+meta.join(' · ');
+        if(evt.desc)body+='\n'+evt.desc;
+        notes.push({id:nuid(),title:d.ymd,subCat:'日历',tags:['日历导入'],body,createdAt:base+i,updatedAt:base+i,_ics:uid});
+        added++;
+      });
+      if(added&&needSub){noteSubs.push('日历');persistNoteSubs();}
+      persistNotes();render();
+      toast(`日历导入完成：+${added} 条${skipped?('，跳过 '+skipped+' 条重复/无日期'):''}`);
+    }catch(err){toast('导入失败：.ics 解析出错');}
   };
   r.readAsText(file); e.target.value='';
 }
