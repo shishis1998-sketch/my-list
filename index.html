@@ -726,7 +726,7 @@ tr:hover .acts{opacity:1;}
 /* —— 分类筛选：收进头部按钮 → 弹出小面板 —— */
 .cal-filterbtn{color:var(--accent);position:relative;}
 .cal-filterbtn.on{background:var(--accent-light);}
-.cal-filter-ind{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#6FA48D;border:1.5px solid var(--surface);}
+.cal-filter-ind{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--surface);}
 .cal-filter-scrim{display:none;position:absolute;inset:0;z-index:8;}
 .cal-filter-scrim.open{display:block;}
 .cal-filterpop{display:none;position:absolute;top:calc(var(--sp-12) + 46px + env(safe-area-inset-top));right:var(--sp-16);z-index:9;
@@ -6251,7 +6251,7 @@ const CAL_CATS=[
   {key:'collect',  name:'收集',    color:'#2B4D3F'},
   {key:'readnote', name:'读书笔记',color:'#8B4513'},
   {key:'note',     name:'笔记',    color:'#1A5F7A'},
-  {key:'calendar', name:'日历',    color:'#6FA48D'},   // 导入的日历事件（淡绿）
+  {key:'calendar', name:'日历',    color:'#A09A8E'},   // 导入的日历事件（暖灰）
 ];
 let calHiddenCats=(()=>{try{return new Set(JSON.parse(localStorage.getItem('my_list_cal_hidden_v1'))||[]);}catch{return new Set();}})();
 function persistCalHidden(){localStorage.setItem('my_list_cal_hidden_v1',JSON.stringify([...calHiddenCats]));}
@@ -6528,7 +6528,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes,moreCount){
         const rl=(seg.date===seg.start)||weekStart;    // 段左端（真开始 / 周一）圆角+显示名
         const rr=(seg.date===seg.end)||weekEnd;         // 段右端（真结束 / 周日）圆角
         el.className='cal-ev'+(rl?' rl':'')+(rr?' rr':'');
-        if(seg.isCal){el.style.background='#DDEBE4';el.style.color='#2B4D3F';}  // 导入日历：淡底深绿字
+        if(seg.isCal){el.style.background='#EDEBE6';el.style.color='#5E574C';}  // 导入日历：淡暖灰底 + 深暖灰字
         else el.style.background=seg.color;                                     // 其它：纯色白字
         el.textContent=rl?seg.title:'';
       }else{
@@ -6550,7 +6550,7 @@ function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body|
 function noteDotColor(subCat){
   if(subCat==='收集')return '#2B4D3F';
   if(subCat==='读书笔记')return '#8B4513';
-  if(subCat==='日历')return '#6FA48D';    // 导入的日历事件：淡绿（圆点/下划线用；网格条另用淡底深字）
+  if(subCat==='日历')return '#A09A8E';    // 导入的日历事件：暖灰（圆点/下划线用；网格条另用淡灰底深字）
   return '#1A5F7A';                       // 其它笔记（灵感/备忘/…）
 }
 
