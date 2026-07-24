@@ -831,10 +831,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 @media (prefers-reduced-motion:reduce){.cal-sheet{transition:none;}.cal-sheet-scrim{transition:none;}}
 
 /* 往年今日 */
-.cal-otd-hd{display:flex;align-items:center;gap:var(--sp-8);margin:var(--sp-14) 0 var(--sp-8);
+.cal-otd-hd{display:flex;align-items:center;gap:0;margin:var(--sp-14) 0 var(--sp-8);
   padding-top:var(--sp-14);padding-left:var(--sp-12);border-top:1px solid var(--border);
   font-size:var(--fs-sub);font-weight:700;color:var(--accent);letter-spacing:.02em;}
-.cal-otd-star{color:var(--accent-mid);flex-shrink:0;}
+/* ✦ 放进左边 12px 空档（贴列表左缘、完整显示），「往年今日」文字落在 12px 对齐 */
+.cal-otd-star{color:var(--accent-mid);width:var(--sp-12);margin-left:calc(-1 * var(--sp-12));text-align:left;flex-shrink:0;}
 .cal-otd-count{margin-left:auto;margin-right:var(--sp-12);font-size:var(--fs-foot);font-weight:400;color:var(--text-muted);font-family:var(--en);}   /* 右缩 12px，与条目「第X天」对齐 */
 .cal-year-label{font-size:var(--fs-caption);font-weight:700;color:var(--text-secondary);
   margin:var(--sp-10) 0 var(--sp-6);padding-left:var(--sp-12);font-family:var(--en);}
