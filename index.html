@@ -807,6 +807,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-rec-line{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cal-rec-line strong{font-weight:700;}
+.cal-rec-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;margin-left:12px;}
 .cal-empty{text-align:center;color:var(--text-muted);padding:var(--sp-20) var(--sp-12);font-size:var(--fs-caption);}
 .cal-hint{text-align:center;color:var(--text-muted);padding:var(--sp-16) var(--sp-12);font-size:var(--fs-caption);}
 
@@ -6567,12 +6568,14 @@ function makeCalRecEl(r){
   const div=document.createElement('div');
   div.className='cal-rec';
   if(r._isNote){
-    // 纯文字：分类色点 + 仅标题（正文首段加粗），单行截断、无图标
+    // 纯文字：分类色点 + 标题（+跨天事件的「第X天」），单行截断、无图标
     const line=esc(calNoteTitle(r));
+    const dm=(r.body||'').match(/第(\d+)\/(\d+)天/);
+    const dayTag=dm?`<span class="cal-rec-day">第${dm[1]}天</span>`:'';
     div.classList.add('cal-rec-note');
     div.innerHTML=`
       <span class="cal-rec-dot" style="background:${noteDotColor(r.subCat)}"></span>
-      <div class="cal-rec-line">${line}</div>`;
+      <div class="cal-rec-line">${line}${dayTag}</div>`;
     div.onclick=()=>showCalNotePreview(r.id);
   }else{
     const c=getCat(r.type);
