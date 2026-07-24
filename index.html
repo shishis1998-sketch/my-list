@@ -722,9 +722,12 @@ tr:hover .acts{opacity:1;}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
 .cal-scroll{overflow-y:auto;flex:1;padding:0 var(--sp-20) var(--sp-4);}
-.cal-legend{display:flex;flex-wrap:wrap;gap:var(--sp-14);padding:var(--sp-4) var(--sp-4) var(--sp-14);font-size:var(--fs-foot);color:var(--text-muted);}
-.cal-legitem{display:flex;align-items:center;gap:var(--sp-6);}
-.cal-legdot{width:6px;height:6px;border-radius:50%;}
+.cal-legend{display:flex;flex-wrap:wrap;gap:var(--sp-6);padding:var(--sp-4) var(--sp-4) var(--sp-14);font-size:var(--fs-foot);color:var(--text-muted);}
+.cal-legitem{display:inline-flex;align-items:center;gap:var(--sp-6);border:none;background:transparent;cursor:pointer;font-family:var(--zh);font-size:var(--fs-foot);color:var(--text-secondary);padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);transition:opacity .15s,background .15s;line-height:1;}
+.cal-legitem:hover{background:var(--accent-light);}
+.cal-legitem.off{opacity:.3;}
+.cal-legcnt{font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--en);}
+.cal-legdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);}
@@ -6096,15 +6099,47 @@ function closeCalSheet(){
   window.addEventListener('mouseup',onEnd);
 })();
 
+// 日历分类：图例即筛选器。key 用来把每条记录归类
+const CAL_CATS=[
+  {key:'media',    name:'媒体',    color:'#6B6B6B'},
+  {key:'collect',  name:'收集',    color:'#2B4D3F'},
+  {key:'readnote', name:'读书笔记',color:'#8B4513'},
+  {key:'note',     name:'笔记',    color:'#1A5F7A'},
+  {key:'calendar', name:'日历',    color:'#C2703D'},   // 导入的日历事件
+];
+let calHiddenCats=(()=>{try{return new Set(JSON.parse(localStorage.getItem('my_list_cal_hidden_v1'))||[]);}catch{return new Set();}})();
+function persistCalHidden(){localStorage.setItem('my_list_cal_hidden_v1',JSON.stringify([...calHiddenCats]));}
+// 一条日历记录属于哪个分类
+function calRecCat(r){
+  if(!r._isNote)return 'media';
+  const s=r.subCat||'';
+  if(s==='收集')return 'collect';
+  if(s==='读书笔记')return 'readnote';
+  if(s==='日历')return 'calendar';
+  return 'note';
+}
+function calCatVisible(cat){return !calHiddenCats.has(cat);}
+function calRecVisible(r){return calCatVisible(calRecCat(r));}
+function toggleCalCat(key){
+  if(calHiddenCats.has(key))calHiddenCats.delete(key);else calHiddenCats.add(key);
+  persistCalHidden();
+  renderCalLegend();
+  renderCal();
+  if(calSelDate)renderCalDetail();
+}
 function renderCalLegend(){
   const el=document.getElementById('calLegend');
-  const items=[
-    {name:'媒体',color:'#6B6B6B'},
-    {name:'收集',color:'#2B4D3F'},
-    {name:'读书笔记',color:'#8B4513'},
-    {name:'笔记',color:'#1A5F7A'},
-  ];
-  el.innerHTML=items.map(i=>`<span class="cal-legitem"><span class="cal-legdot" style="background:${i.color}"></span>${esc(i.name)}</span>`).join('');
+  // 统计每类在日历里的条目数（仅计入会进日历的记录）
+  const counts={};CAL_CATS.forEach(c=>counts[c.key]=0);
+  data.forEach(r=>{if(/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))counts.media++;});
+  notes.forEach(n=>{if(/^\d{4}\/\d{2}\/\d{2}$/.test(n.title||''))counts[calRecCat({_isNote:true,subCat:n.subCat})]++;});
+  // 只显示有内容的分类；点击切换显示/隐藏
+  el.innerHTML=CAL_CATS.filter(c=>counts[c.key]>0).map(c=>{
+    const off=calHiddenCats.has(c.key)?' off':'';
+    return `<button type="button" class="cal-legitem${off}" onclick="toggleCalCat('${c.key}')">`+
+           `<span class="cal-legdot" style="background:${c.color}"></span>${esc(c.name)}`+
+           `<span class="cal-legcnt">${counts[c.key]}</span></button>`;
+  }).join('');
 }
 
 function showCalNotePreview(id){
@@ -6145,7 +6180,9 @@ function renderCal(){
   // 按 watchDate 分组(支持 YYYY-MM-DD 和 YYYY-MM)
   // 注意:你现有数据 watchDate 多为 YYYY-MM 月级,只有日级 (YYYY-MM-DD) 的会进日历
   const byDate={};
+  const mediaOn=calCatVisible('media');
   data.forEach(item=>{
+    if(!mediaOn)return;                    // 图例里「媒体」被关掉时不进网格
     if(!item.watchDate)return;
     // 只匹配完整 YYYY-MM-DD 格式
     if(!/^\d{4}-\d{2}-\d{2}$/.test(item.watchDate))return;
@@ -6157,6 +6194,7 @@ function renderCal(){
   notes.forEach(note=>{
     const m=note.title&&note.title.match(_noteCalRe);
     if(!m)return;
+    if(!calRecVisible({_isNote:true,subCat:note.subCat}))return;   // 按图例筛选
     const dk=`${m[1]}-${m[2]}-${m[3]}`;
     if(!byDate[dk])byDate[dk]=[];
     byDate[dk].push({_isNote:true,id:note.id,title:note.title,body:note.body||'',subCat:note.subCat||''});
@@ -6205,7 +6243,7 @@ function makeCalCell(day,isOther,dateStr,recs,isToday,isSel){
       recs.forEach(r=>{
         const dot=document.createElement('span');
         dot.className='cal-dot';
-        dot.style.background=r._isNote?'var(--accent)':getCat(r.type).color;
+        dot.style.background=r._isNote?noteDotColor(r.subCat):getCat(r.type).color;
         badges.appendChild(dot);
       });
     }else{
@@ -6230,6 +6268,7 @@ function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body|
 function noteDotColor(subCat){
   if(subCat==='收集')return '#2B4D3F';
   if(subCat==='读书笔记')return '#8B4513';
+  if(subCat==='日历')return '#C2703D';    // 导入的日历事件
   return '#1A5F7A';                       // 其它笔记（灵感/备忘/…）
 }
 
@@ -6274,20 +6313,21 @@ function renderCalDetail(){
   const titleDate=`${cy}/${cm}/${cd}`;
   const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
 
-  // ① 当天记录（同年同月同日）
-  const mediaRecs=data.filter(r=>r.watchDate===calSelDate);
-  const noteRecs=notes.filter(n=>n.title===titleDate).map(toCalNoteRec);
+  // ① 当天记录（同年同月同日）——按图例筛选
+  const mediaRecs=calCatVisible('media')?data.filter(r=>r.watchDate===calSelDate):[];
+  const noteRecs=notes.filter(n=>n.title===titleDate).map(toCalNoteRec).filter(calRecVisible);
   const recs=[...mediaRecs,...noteRecs];
 
-  // ② 往年今日：同月同日、不同年，按年份分组
+  // ② 往年今日：同月同日、不同年，按年份分组——同样按图例筛选
   const pastByYear={};
-  data.forEach(r=>{
+  if(calCatVisible('media'))data.forEach(r=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))return;
     const [ry,rm,rd]=r.watchDate.split('-');
     if(rm===cm&&rd===cd&&ry!==cy)(pastByYear[ry]=pastByYear[ry]||[]).push(r);
   });
   notes.forEach(n=>{
     const mm=(n.title||'').match(_nre);if(!mm)return;
+    if(!calRecVisible({_isNote:true,subCat:n.subCat}))return;
     const[,ry,rm,rd]=mm;
     if(rm===cm&&rd===cd&&ry!==cy)(pastByYear[ry]=pastByYear[ry]||[]).push(toCalNoteRec(n));
   });
