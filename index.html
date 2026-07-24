@@ -6573,9 +6573,7 @@ function makeCalRecEl(r){
     const dm=(r.body||'').match(/第(\d+)\/(\d+)天/);
     const dayTag=dm?`<span class="cal-rec-day">第${dm[1]}天</span>`:'';
     div.classList.add('cal-rec-note');
-    div.innerHTML=`
-      <span class="cal-rec-dot" style="background:${noteDotColor(r.subCat)}"></span>
-      <div class="cal-rec-line">${line}${dayTag}</div>`;
+    div.innerHTML=`<div class="cal-rec-line">${line}${dayTag}</div>`;
     div.onclick=()=>showCalNotePreview(r.id);
   }else{
     const c=getCat(r.type);
