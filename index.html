@@ -584,9 +584,7 @@ tr:hover .acts{opacity:1;}
   .cal-hdr{padding:var(--sp-14) var(--sp-16) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
   /* 月份标题＝独立页的页面标题，用 Title 18px 做锚点（手机端同 18，不再降到正文）*/
   .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
-  /* 上半区日历缩短为自然高度，剩余空间留给下半区常驻明细 */
-  .cal-grid{grid-auto-rows:auto;}
-  .cal-day{min-height:46px;padding:var(--sp-6) var(--sp-2);}
+  /* 上半区日历行高/格子样式统一由 base .cal-grid / .cal-day 控制（含固定 44px 行高）*/
   .cal-daynum{font-size:var(--fs-caption);}
   .cal-dot{width:5px;height:5px;}
   .cal-count{font-size:var(--fs-foot);padding:var(--sp-2) var(--sp-6);}
@@ -768,8 +766,8 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);}
-.cal-day{background:transparent;min-height:70px;padding:var(--sp-8) var(--sp-2) var(--sp-6);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);grid-auto-rows:44px;}
+.cal-day{background:transparent;min-height:44px;padding:var(--sp-6) var(--sp-2) var(--sp-4);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s;}
 .cal-day:hover{background:var(--accent-light);}
 .cal-day.cal-other{color:var(--text-muted);}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
@@ -6276,7 +6274,7 @@ function renderCalLegend(){
   el.innerHTML=CAL_CATS.filter(c=>counts[c.key]>0).map(c=>{
     const off=calHiddenCats.has(c.key)?' off':'';
     return `<button type="button" class="cal-filter-row${off}" data-key="${esc(c.key)}">`+
-      `<span class="cal-legdot" style="background:${c.color}"></span><span class="cal-filter-name">${esc(c.name)}</span>`+
+      `<span class="cal-filter-name">${esc(c.name)}</span>`+
       `<svg class="cal-filter-chk" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>`;
   }).join('');
   el.querySelectorAll('.cal-filter-row').forEach(b=>b.onclick=()=>toggleCalCat(b.dataset.key));
