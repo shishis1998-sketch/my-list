@@ -733,6 +733,7 @@ tr:hover .acts{opacity:1;}
 body.cal-searching .cal-searchwrap{display:flex;}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid{display:none;}
+body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
 .cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-8) var(--sp-12);}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;}
 .cal-sfield input{flex:1;border:none;background:transparent;outline:none;font-family:var(--zh);font-size:var(--fs-body);color:var(--text-primary);padding:0;}
@@ -5965,18 +5966,22 @@ function importICS(e){
         else lines.push(l);
       });
       // 2) 拆出每个 VEVENT
-      const events=[];let cur=null;
+      const events=[];let cur=null,calName='';
       lines.forEach(l=>{
         if(l==='BEGIN:VEVENT'){cur={};return;}
         if(l==='END:VEVENT'){if(cur)events.push(cur);cur=null;return;}
-        if(!cur)return;
         const ci=l.indexOf(':');if(ci<0)return;
         const name=l.slice(0,ci).split(';')[0].toUpperCase(), val=l.slice(ci+1);
+        if(!cur){                                       // VCALENDAR 头部：取这本日历的名字
+          if(name==='X-WR-CALNAME')calName=unescapeICS(val).trim();
+          return;
+        }
         if(name==='SUMMARY')cur.summary=unescapeICS(val);
         else if(name==='DESCRIPTION')cur.desc=unescapeICS(val);
         else if(name==='LOCATION')cur.loc=unescapeICS(val);
         else if(name==='UID')cur.uid=val.trim();
         else if(name==='DTSTART')cur.dtstart=val.trim();
+        else if(name==='CATEGORIES')cur.cats=unescapeICS(val);   // 事件自带分类
       });
       if(!events.length){toast('没找到日历事件（.ics 里没有 VEVENT）');e.target.value='';return;}
       // 3) 映射成日历笔记：title=YYYY/MM/DD，按 UID 去重（可反复导入不重复）
@@ -5996,7 +6001,12 @@ function importICS(e){
         let body='**'+summary+'**';
         if(meta.length)body+='\n'+meta.join(' · ');
         if(evt.desc)body+='\n'+evt.desc;
-        notes.push({id:nuid(),title:d.ymd,subCat:'日历',tags:['日历导入'],body,createdAt:base+i,updatedAt:base+i,_ics:uid});
+        const tags=['日历导入'];
+        // 日历名当作分类标签（区分不同 Google 日历），排除主日历的邮箱名
+        if(calName&&!/@/.test(calName)&&!tags.includes(calName))tags.push(calName);
+        // 事件自带的 CATEGORIES，逗号分隔
+        if(evt.cats)evt.cats.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{if(!tags.includes(c))tags.push(c);});
+        notes.push({id:nuid(),title:d.ymd,subCat:'日历',tags,body,createdAt:base+i,updatedAt:base+i,_ics:uid});
         added++;
       });
       if(added&&needSub){noteSubs.push('日历');persistNoteSubs();}
@@ -6366,19 +6376,12 @@ function makeCalCell(day,isOther,dateStr,recs,isToday,isSel){
   if(recs&&recs.length){
     const badges=document.createElement('div');
     badges.className='cal-badges';
-    if(recs.length<=4){
-      recs.forEach(r=>{
-        const dot=document.createElement('span');
-        dot.className='cal-dot';
-        dot.style.background=r._isNote?noteDotColor(r.subCat):getCat(r.type).color;
-        badges.appendChild(dot);
-      });
-    }else{
-      const tag=document.createElement('span');
-      tag.className='cal-count';
-      tag.textContent=recs.length+' 条';
-      badges.appendChild(tag);
-    }
+    recs.forEach(r=>{                        // 一律圆点，多了自动换行
+      const dot=document.createElement('span');
+      dot.className='cal-dot';
+      dot.style.background=r._isNote?noteDotColor(r.subCat):getCat(r.type).color;
+      badges.appendChild(dot);
+    });
     cell.appendChild(badges);
   }
 
