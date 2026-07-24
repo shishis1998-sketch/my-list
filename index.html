@@ -747,6 +747,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .cal-sr-body{flex:1;min-width:0;}
 .cal-sr-t{font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-sr-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;margin-left:5px;}
 .cal-sr-t mark.shl{background:linear-gradient(transparent 55%, var(--hl, rgba(255,106,74,.45)) 55%);}
 .cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
@@ -6284,7 +6285,7 @@ function calSearchItems(){
   if(calCatVisible('media'))data.forEach(r=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))return;
     const c=getCat(r.type);
-    items.push({date:r.watchDate,uid:'',title:r.name||'(未命名)',
+    items.push({date:r.watchDate,uid:'',title:r.name||'(未命名)',dayLabel:'',
       meta:c.name+(r.creator?(' · '+r.creator):''),color:c.color,
       hay:[r.name,r.creator,r.note,(r.tags||[]).join(' ')].join(' ').toLowerCase()});
   });
@@ -6292,8 +6293,9 @@ function calSearchItems(){
   notes.forEach(n=>{
     const m=(n.title||'').match(re);if(!m)return;
     if(!calRecVisible({_isNote:true,subCat:n.subCat}))return;
+    const dm=(n.body||'').match(/第(\d+)\/(\d+)天/);   // 跨天事件正文里的「第X/Y天」
     items.push({date:`${m[1]}-${m[2]}-${m[3]}`,uid:n._ics||'',
-      title:calNoteTitle({body:n.body||'',subCat:n.subCat}),
+      title:calNoteTitle({body:n.body||'',subCat:n.subCat}),dayLabel:dm?`第${dm[1]}天`:'',
       meta:n.subCat||'笔记',color:noteDotColor(n.subCat),
       hay:[n.body,(n.tags||[]).join(' ')].join(' ').toLowerCase()});
   });
@@ -6327,40 +6329,20 @@ function runCalSearch(){
   const box=document.getElementById('calSearchResults');
   box.innerHTML='';
   if(!q){box.innerHTML='<div class="cal-sr-hint">输入关键词，搜索媒体 / 收集 / 日历里的记录</div>';return;}
-  const hits=calSearchItems().filter(it=>it.hay.includes(q));
+  const hits=calSearchItems().filter(it=>it.hay.includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
   if(!hits.length){box.innerHTML=`<div class="cal-sr-hint">没有匹配「${esc(raw)}」的记录</div>`;return;}
-  // 跨天事件归并成一条（同 uid 连续日期）
-  const groups=groupCalHits(hits).sort((a,b)=>b.start.localeCompare(a.start));
   const head=document.createElement('div');head.className='cal-sr-count';
-  head.textContent=`找到 ${groups.length} 项 · 点一条跳到那天`;
+  head.textContent=`找到 ${hits.length} 条 · 点一条跳到那天`;
   box.appendChild(head);
-  groups.forEach(g=>{
+  hits.forEach(it=>{
     const row=document.createElement('div');row.className='cal-sr';
-    const dateLabel=g.days>1?`${g.start} · ${g.days}天`:g.start;
-    row.innerHTML=`<span class="cal-sr-dot" style="background:${g.color}"></span>`+
-      `<div class="cal-sr-body"><div class="cal-sr-t" style="--hl:${calHexA(g.color,.45)}">${calHl(g.title,raw)}</div></div>`+
-      `<div class="cal-sr-date">${esc(dateLabel)}</div>`;
-    row.onclick=()=>jumpCalSearch(g.start);
+    const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
+    row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
+      `<div class="cal-sr-body"><div class="cal-sr-t" style="--hl:${calHexA(it.color,.45)}">${calHl(it.title,raw)}${dayTag}</div></div>`+
+      `<div class="cal-sr-date">${esc(it.date)}</div>`;
+    row.onclick=()=>jumpCalSearch(it.date);
     box.appendChild(row);
   });
-}
-// 搜索结果归并：同 uid 连续日期 → 一条（带天数）；其余各自一条
-function groupCalHits(hits){
-  const groups=[],byUid={};
-  const mk=run=>({start:run[0].date,end:run[run.length-1].date,days:run.length,title:run[0].title,color:run[0].color});
-  hits.forEach(it=>{ if(it.uid)(byUid[it.uid]=byUid[it.uid]||[]).push(it); else groups.push(mk([it])); });
-  Object.keys(byUid).forEach(u=>{
-    const arr=byUid[u].sort((a,b)=>a.date.localeCompare(b.date));
-    const uniq=[],seen=new Set();
-    arr.forEach(it=>{if(!seen.has(it.date)){seen.add(it.date);uniq.push(it);}});
-    let run=[uniq[0]];
-    for(let i=1;i<uniq.length;i++){
-      if(calNextDay(run[run.length-1].date)===uniq[i].date)run.push(uniq[i]);
-      else{groups.push(mk(run));run=[uniq[i]];}
-    }
-    groups.push(mk(run));
-  });
-  return groups;
 }
 function jumpCalSearch(dateStr){
   const [y,mo]=dateStr.split('-');
@@ -6515,7 +6497,7 @@ function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body|
 function noteDotColor(subCat){
   if(subCat==='收集')return '#2B4D3F';
   if(subCat==='读书笔记')return '#8B4513';
-  if(subCat==='日历')return '#C2703D';    // 导入的日历事件
+  if(subCat==='日历')return '#4A7B68';    // 导入的日历事件：墨绿的淡绿（accent-mid）
   return '#1A5F7A';                       // 其它笔记（灵感/备忘/…）
 }
 
