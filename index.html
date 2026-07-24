@@ -584,9 +584,9 @@ tr:hover .acts{opacity:1;}
   .cal-hdr{padding:var(--sp-14) var(--sp-16) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
   /* 月份标题＝独立页的页面标题，用 Title 18px 做锚点（手机端同 18，不再降到正文）*/
   .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
-  /* 网格铺满剩余高度，格子等高撑开，独立页更沉浸 */
-  .cal-grid{flex:1;grid-auto-rows:1fr;}
-  .cal-day{min-height:56px;padding:var(--sp-6);}
+  /* 上半区日历缩短为自然高度，剩余空间留给下半区常驻明细 */
+  .cal-grid{grid-auto-rows:auto;}
+  .cal-day{min-height:46px;padding:var(--sp-6) var(--sp-2);}
   .cal-daynum{font-size:var(--fs-caption);}
   .cal-dot{width:5px;height:5px;}
   .cal-count{font-size:var(--fs-foot);padding:var(--sp-2) var(--sp-6);}
@@ -721,7 +721,9 @@ tr:hover .acts{opacity:1;}
 .cal-todaybtn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
-.cal-scroll{overflow-y:auto;flex:1;padding:0 var(--sp-20) var(--sp-4);}
+.cal-scroll{overflow-y:auto;flex:0 0 auto;padding:0 var(--sp-20) var(--sp-4);}
+/* 搜索时上半区改为填满 + 可滚，容纳结果列表 */
+body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;}
 .cal-legdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 /* —— 分类筛选：收进头部按钮 → 弹出小面板 —— */
 .cal-filterbtn{color:var(--accent);position:relative;}
@@ -806,21 +808,13 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* —— 点击某天从底部滑出的详情抽屉 —— */
 .cal-sheet-scrim{position:absolute;inset:0;background:rgba(10,8,6,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:5;}
 .cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
-.cal-sheet{position:absolute;left:0;right:0;bottom:var(--calbbh,0px);z-index:6;background:var(--surface);
-  border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:none;
-  transform:translateY(101%);visibility:hidden;
-  transition:transform .26s cubic-bezier(.32,.72,0,1),visibility 0s linear .26s;
-  display:flex;flex-direction:column;max-height:70%;
-  padding:var(--sp-4) var(--sp-20) var(--sp-16);
-  will-change:transform;touch-action:none;}
-/* 阴影只在展开时出现，收起时彻底隐藏（不因滚动/回弹露头）*/
-.cal-sheet.open{transform:translateY(0);visibility:visible;box-shadow:0 -8px 28px -12px rgba(10,8,6,.28);transition:transform .26s cubic-bezier(.32,.72,0,1),visibility 0s;}
-.cal-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);margin:var(--sp-8) auto var(--sp-12);flex-shrink:0;cursor:grab;}
+/* 下半区：常驻内嵌面板（非弹窗），日历下方直接显示选中当天的记录 */
+.cal-sheet{position:relative;background:var(--surface);border-top:1px solid var(--border);
+  display:flex;flex-direction:column;flex:1 1 auto;min-height:0;
+  padding:var(--sp-14) var(--sp-20) var(--sp-16);}
+.cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{margin-bottom:var(--sp-12);flex-shrink:0;}
-.cal-sheet-close{margin-left:auto;width:28px;height:28px;border:none;background:transparent;cursor:pointer;font-size:16px;color:var(--text-muted);line-height:1;flex-shrink:0;transition:color .15s;}
-.cal-sheet-close:hover{color:var(--accent);}
 .cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
-@media (prefers-reduced-motion:reduce){.cal-sheet{transition:none;}.cal-sheet-scrim{transition:none;}}
 
 /* 往年今日 */
 .cal-otd-hd{display:flex;align-items:center;gap:0;margin:var(--sp-14) 0 var(--sp-8);
@@ -6144,11 +6138,11 @@ function openCalendar(){
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
   document.getElementById('calOverlay').classList.add('open');
   const today=new Date();
-  calSelDate=null;                 // 独立页默认干净网格，不自动弹出抽屉
   calYear=today.getFullYear();calMonth=today.getMonth();
+  calSelDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;  // 默认选中今天，下半区常驻显示
   renderCalLegend();
   renderCal();
-  hideCalSheet();                  // 确保抽屉收起
+  renderCalDetail();               // 内嵌下半区：直接填入今天的记录
   closeCalSearch();                // 确保搜索收起
   closeCalFilter();                // 确保筛选面板收起
   setCalTabActive(true);           // 高亮底部「日历」tab
@@ -6183,8 +6177,16 @@ function measureCalBottomBar(){
     document.documentElement.style.setProperty('--calbbh',h+'px');
   });
 }
-function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}closeCalSheet();}
-function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}closeCalSheet();}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calReselect();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}calReselect();}
+// 切月后把选中日限制到本月范围（超出则取月末），保证下半区始终有当天内容
+function calReselect(){
+  let day=calSelDate?parseInt(calSelDate.split('-')[2],10):new Date().getDate();
+  const last=new Date(calYear,calMonth+1,0).getDate();
+  if(day>last)day=last;
+  calSelDate=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  renderCal();renderCalDetail();
+}
 function calToday(){
   const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();
   const todayStr=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
@@ -6195,9 +6197,7 @@ function calToday(){
 function openCalDay(dateStr){
   calSelDate=dateStr;
   renderCal();                     // 刷新选中高亮
-  renderCalDetail();               // 填充抽屉内容
-  document.getElementById('calSheet').classList.add('open');
-  document.getElementById('calSheetScrim').classList.add('open');
+  renderCalDetail();               // 内嵌下半区：填入当天记录
 }
 function hideCalSheet(){
   const s=document.getElementById('calSheet'),sc=document.getElementById('calSheetScrim');
@@ -6415,7 +6415,7 @@ function triggerCalMonthPick(){
     if(!e.target.value)return;
     const[y,m]=e.target.value.split('-');
     calYear=parseInt(y);calMonth=parseInt(m)-1;
-    closeCalSheet();
+    calReselect();
   };
   inp.click();
 }
