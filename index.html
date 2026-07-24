@@ -717,8 +717,6 @@ tr:hover .acts{opacity:1;}
 .cal-nav{display:flex;gap:var(--sp-6);align-items:center;}
 .cal-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--accent);transition:background .15s;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
-.cal-todaybtn{width:32px;height:32px;padding:0;border:1px solid var(--accent-mid);background:transparent;color:var(--accent);border-radius:50%;cursor:pointer;font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);transition:all .15s;display:inline-flex;align-items:center;justify-content:center;line-height:1;}   /* 「今」单字圆钮 32×32 */
-.cal-todaybtn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
 .cal-scroll{overflow-y:auto;flex:0 0 auto;padding:0 var(--sp-14) var(--sp-4);}
@@ -1526,7 +1524,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 
 /* —— 日历：独立整页，桌面端也铺满内容区，不再是居中卡片 —— */
 .cal-title{color:var(--text-primary);}
-.cal-todaybtn{border:var(--bd) solid var(--ink);font-family:var(--zh);font-weight:700;}
 
 /* ═══ 笔记模块 ═══ */
 /* 子分类胶囊条 */
@@ -2041,7 +2038,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       </div>
       <input type="month" id="calMonthPicker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
       <div class="cal-nav">
-        <button class="cal-todaybtn" onclick="calToday()" aria-label="回到今天">今</button>
         <button class="cal-navbtn cal-filterbtn" id="calFilterBtn" onclick="toggleCalFilter()" aria-label="筛选分类">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
           <span class="cal-filter-ind" id="calFilterInd"></span>
@@ -6187,11 +6183,6 @@ function calReselect(){
   if(day>last)day=last;
   calSelDate=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   renderCal();renderCalDetail();
-}
-function calToday(){
-  const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();
-  const todayStr=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-  openCalDay(todayStr);            //「今天」跳到本月并弹出今天的记录
 }
 
 // —— 底部抽屉：点某天弹出 / 收起 ——
