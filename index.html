@@ -783,7 +783,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-count{font-size:var(--fs-foot);background:var(--accent);color:#fff;padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
 /* —— 类目圆点：当天出现过的每种类目色画一个点（去重），一眼看当天收集了哪些类型 —— */
 .cal-detail{padding:var(--sp-20) var(--sp-4) var(--sp-8);}
-.cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-2);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
+.cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-12);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
 .cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
 .cal-rec{padding:var(--sp-10) var(--sp-12);border-radius:var(--rlg);margin:0 0 var(--sp-6);background:var(--bg);display:flex;align-items:center;gap:var(--sp-10);cursor:pointer;transition:background .15s;}
 .cal-rec:hover{background:var(--accent-light);}
@@ -815,11 +815,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
 
 /* 往年今日 —— B 样式：纯文字 + 右侧细线（去图标、去整条上边框，用内联细线分节）*/
-.cal-otd-hd{display:flex;align-items:center;gap:0;margin:var(--sp-16) 0 var(--sp-10);padding-left:var(--sp-2);
+.cal-otd-hd{display:flex;align-items:center;gap:0;margin:var(--sp-16) 0 var(--sp-10);padding-left:var(--sp-12);
   font-size:var(--fs-sub);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 .cal-otd-rule{flex:1;height:1px;background:var(--border);margin-left:var(--sp-10);}
 .cal-year-label{font-size:var(--fs-caption);font-weight:700;color:var(--text-secondary);
-  margin:var(--sp-10) 0 var(--sp-6);padding-left:var(--sp-2);font-family:var(--en);}
+  margin:var(--sp-10) 0 var(--sp-6);padding-left:var(--sp-12);font-family:var(--en);}
 .cal-year-ago{color:var(--text-muted);font-weight:400;}
 
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
