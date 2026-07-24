@@ -814,7 +814,8 @@ body.cal-searching .cal-searchresults{display:flex;}
   padding:var(--sp-14) var(--sp-14) var(--sp-16);}
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{margin-bottom:var(--sp-12);flex-shrink:0;}
-.cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
+.cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 隐藏滚动条，仍可滚动 */
+.cal-sheet #calDetailList::-webkit-scrollbar{display:none;}
 
 /* 往年今日 —— B 样式：纯文字 + 右侧细线（去图标、去整条上边框，用内联细线分节）*/
 .cal-otd-hd{display:flex;align-items:center;gap:0;margin:var(--sp-16) 0 var(--sp-10);padding-left:var(--sp-12);
