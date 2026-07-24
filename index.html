@@ -835,7 +835,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   padding-top:var(--sp-14);border-top:1px solid var(--border);
   font-size:var(--fs-caption);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 .cal-otd-star{color:var(--accent-mid);}
-.cal-otd-count{margin-left:auto;font-size:var(--fs-foot);font-weight:400;color:var(--text-muted);font-family:var(--en);}
+.cal-otd-count{margin-left:auto;margin-right:var(--sp-12);font-size:var(--fs-foot);font-weight:400;color:var(--text-muted);font-family:var(--en);}   /* 右缩 12px，与条目「第X天」对齐 */
 .cal-year-label{font-size:var(--fs-foot);font-weight:700;color:var(--text-secondary);
   margin:var(--sp-10) 0 var(--sp-6);font-family:var(--en);}
 .cal-year-ago{color:var(--text-muted);font-weight:400;}
@@ -6617,7 +6617,7 @@ function renderCalDetail(){
   const pastTotal=pastYears.reduce((a,y)=>a+pastByYear[y].length,0);
 
   document.getElementById('calDetailTitle').textContent=`${parseInt(cm)} 月 ${parseInt(cd)} 日`;
-  document.getElementById('calDetailCount').textContent=recs.length?`· ${recs.length} 条记录`:'';
+  document.getElementById('calDetailCount').textContent='';   // 本年计数去掉，只保留「往年今日」的计数
 
   const listEl=document.getElementById('calDetailList');
   listEl.innerHTML='';
