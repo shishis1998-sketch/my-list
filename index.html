@@ -5947,19 +5947,35 @@ function importJSON(e){
 }
 // —— 从 .ics（Google 日历 / Apple 日历导出）导入为日历笔记 ——
 function unescapeICS(s){return (s||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');}
-// 把 DTSTART 值解析成 {ymd:'YYYY/MM/DD', timeLabel:'HH:MM'|''}
-function parseICSDate(rawVal){
+// 解析 DTSTART/DTEND 值 → {y,mo,d,hh,mi,ss,z,allDay} 或 null
+function icsDateParts(rawVal){
   const m=(rawVal||'').match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
   if(!m)return null;
-  const y=m[1],mo=m[2],d=m[3],hh=m[4],mi=m[5],ss=m[6],z=m[7];
-  if(hh==null) return {ymd:`${y}/${mo}/${d}`,timeLabel:''};      // 全天事件
-  if(z){                                                          // UTC → 本地
-    const dt=new Date(Date.UTC(+y,+mo-1,+d,+hh,+mi,+(ss||0)));
-    const p=n=>String(n).padStart(2,'0');
-    return {ymd:`${dt.getFullYear()}/${p(dt.getMonth()+1)}/${p(dt.getDate())}`,
-            timeLabel:`${p(dt.getHours())}:${p(dt.getMinutes())}`};
+  return {y:+m[1],mo:+m[2],d:+m[3],hh:m[4]==null?null:+m[4],mi:m[5]==null?0:+m[5],ss:m[6]==null?0:+m[6],z:!!m[7],allDay:m[4]==null};
+}
+// 转本地年月日 + 时间标签（UTC 的 Z 时间转本地；其余按墙上时间）
+function icsLocal(p){
+  const q=n=>String(n).padStart(2,'0');
+  if(p.allDay)return {y:p.y,mo:p.mo,d:p.d,time:''};
+  if(p.z){const dt=new Date(Date.UTC(p.y,p.mo-1,p.d,p.hh,p.mi,p.ss));return {y:dt.getFullYear(),mo:dt.getMonth()+1,d:dt.getDate(),time:q(dt.getHours())+':'+q(dt.getMinutes())};}
+  return {y:p.y,mo:p.mo,d:p.d,time:q(p.hh)+':'+q(p.mi)};
+}
+// 事件覆盖的所有日期（跨天铺满）→ {days:['YYYY/MM/DD',...], time}
+function icsSpanDays(startVal,endVal){
+  const sp=icsDateParts(startVal);if(!sp)return {days:[],time:''};
+  const s=icsLocal(sp);
+  const fmt=(y,mo,d)=>`${y}/${String(mo).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+  const days=[fmt(s.y,s.mo,s.d)];
+  const ep=endVal?icsDateParts(endVal):null;
+  if(ep){
+    const e=icsLocal(ep);
+    let end=new Date(e.y,e.mo-1,e.d);
+    if(sp.allDay)end.setDate(end.getDate()-1);     // 全天事件 DTEND 为排他（结束日 00:00）
+    let cur=new Date(s.y,s.mo-1,s.d);cur.setDate(cur.getDate()+1);
+    let guard=0;
+    while(cur<=end&&guard++<3660){days.push(fmt(cur.getFullYear(),cur.getMonth()+1,cur.getDate()));cur.setDate(cur.getDate()+1);}
   }
-  return {ymd:`${y}/${mo}/${d}`,timeLabel:`${hh}:${mi}`};         // 带 TZID / 浮动本地时间，按墙上时间取
+  return {days,time:s.time};
 }
 // 解析一份 .ics 文本 → {events:[...], calName}
 function parseICS(raw){
@@ -5985,6 +6001,7 @@ function parseICS(raw){
     else if(name==='LOCATION')cur.loc=unescapeICS(val);
     else if(name==='UID')cur.uid=val.trim();
     else if(name==='DTSTART')cur.dtstart=val.trim();
+    else if(name==='DTEND')cur.dtend=val.trim();             // 结束日：跨天事件用
     else if(name==='CATEGORIES')cur.cats=unescapeICS(val);   // 事件自带分类
   });
   return {events,calName};
@@ -6002,7 +6019,8 @@ async function importICS(e){
   const files=Array.from(e.target.files||[]);
   e.target.value='';
   if(!files.length)return;
-  const existUid=new Set(notes.map(n=>n._ics).filter(Boolean));
+  // 去重按「事件+日期」：跨天事件的每天一条；重复导入只补缺失的天
+  const existKeys=new Set(notes.filter(n=>'_ics' in n).map(n=>n._ics+'@'+(n.title||'')));
   const base=Date.now();
   let seq=0,added=0,skipped=0,noEvt=0;
   for(const file of files){
@@ -6012,25 +6030,29 @@ async function importICS(e){
     try{({events,calName}=parseICS(raw));}catch{noEvt++;continue;}
     if(!events.length){noEvt++;continue;}
     events.forEach(evt=>{
-      const d=parseICSDate(evt.dtstart);
-      if(!d){skipped++;return;}
+      const span=icsSpanDays(evt.dtstart,evt.dtend);
+      if(!span.days.length){skipped++;return;}
       const uid=evt.uid||'';
-      if(uid&&existUid.has(uid)){skipped++;return;}
-      if(uid)existUid.add(uid);
       const summary=evt.summary||'(无标题事件)';
-      const meta=[];
-      if(d.timeLabel)meta.push(d.timeLabel);
-      if(evt.loc)meta.push(evt.loc);
-      let body='**'+summary+'**';
-      if(meta.length)body+='\n'+meta.join(' · ');
-      if(evt.desc)body+='\n'+evt.desc;
-      const tags=['日历导入'];
-      // 日历名当作分类标签（区分不同 Google 日历），排除主日历的邮箱名
-      if(calName&&!/@/.test(calName)&&!tags.includes(calName))tags.push(calName);
-      // 事件自带的 CATEGORIES，逗号分隔
-      if(evt.cats)evt.cats.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{if(!tags.includes(c))tags.push(c);});
-      notes.push({id:nuid(),title:d.ymd,subCat:'日历',tags,body,createdAt:base+seq,updatedAt:base+seq,_ics:uid});
-      seq++;added++;
+      const multi=span.days.length>1;
+      // 分类标签（每条相同）
+      const tags0=['日历导入'];
+      if(calName&&!/@/.test(calName)&&!tags0.includes(calName))tags0.push(calName);
+      if(evt.cats)evt.cats.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{if(!tags0.includes(c))tags0.push(c);});
+      span.days.forEach((ymd,di)=>{
+        const key=uid+'@'+ymd;
+        if(uid&&existKeys.has(key)){skipped++;return;}
+        if(uid)existKeys.add(key);
+        const meta=[];
+        if(di===0&&span.time)meta.push(span.time);        // 时间只标在第一天
+        if(multi)meta.push(`第${di+1}/${span.days.length}天`);  // 跨天进度
+        if(evt.loc)meta.push(evt.loc);
+        let body='**'+summary+'**';
+        if(meta.length)body+='\n'+meta.join(' · ');
+        if(evt.desc)body+='\n'+evt.desc;
+        notes.push({id:nuid(),title:ymd,subCat:'日历',tags:tags0.slice(),body,createdAt:base+seq,updatedAt:base+seq,_ics:uid});
+        seq++;added++;
+      });
     });
   }
   if(added)persistNotes();
