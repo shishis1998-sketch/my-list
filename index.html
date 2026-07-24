@@ -5938,6 +5938,7 @@ function openCalendar(){
   renderCal();
   hideCalSheet();                  // 确保抽屉收起
   setCalTabActive(true);           // 高亮底部「日历」tab
+  window.scrollTo(0,0);            // 回到顶部，保证下拉刷新可从顶部触发
   // 手机端打开日历时关闭侧边栏抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
@@ -6158,14 +6159,22 @@ function noteDotColor(subCat){
   return '#1A5F7A';                       // 其它笔记（灵感/备忘/…）
 }
 
+// 笔记标题：取正文里第一段 **加粗** 作标题；没有则取首行；再没有回退到分类名
+function calNoteTitle(r){
+  const body=r.body||'';
+  const m=body.match(/\*\*([^*]+)\*\*/);
+  if(m&&m[1].trim())return m[1].trim();
+  const first=(body.split('\n').map(s=>s.trim()).find(Boolean)||'').replace(/\*\*/g,'');
+  return first||r.subCat||'笔记';
+}
+
 // 构建一条记录条目 DOM（当天记录、往年今日共用）
 function makeCalRecEl(r){
   const div=document.createElement('div');
   div.className='cal-rec';
   if(r._isNote){
-    // 纯文字：分类色点 + 单行内容（省略号在行尾），无图标
-    const line=esc((r.body||'').replace(/\s*\n\s*/g,' ').trim())
-                 .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>') || esc(r.subCat||'笔记');
+    // 纯文字：分类色点 + 仅标题（正文首段加粗），单行截断、无图标
+    const line=esc(calNoteTitle(r));
     div.classList.add('cal-rec-note');
     div.innerHTML=`
       <span class="cal-rec-dot" style="background:${noteDotColor(r.subCat)}"></span>
@@ -7672,8 +7681,8 @@ checkIncomingSyncLink();
     }).observe(el, {attributes:true, attributeFilter:['class']});
   }
 
-  // 注册所有现有弹窗
-  document.querySelectorAll('.moverlay, .cal-overlay, .bb-sortsheet').forEach(watchOverlay);
+  // 注册所有现有弹窗（日历是不透明整页、非浮层，不锁背景，以保留原生下拉刷新）
+  document.querySelectorAll('.moverlay, .bb-sortsheet').forEach(watchOverlay);
 
   // 触摸穿透兜底:只有触摸点在弹窗"内容盒子"(.mbox/.cal-modal)内才放行
   // 触摸点在暗色遮罩上 → 拦截,避免穿透到背景
