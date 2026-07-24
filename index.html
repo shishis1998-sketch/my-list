@@ -5446,6 +5446,12 @@ function syncBottomTabs(){
   const all=document.getElementById('bbtab-all');
   const notes=document.getElementById('bbtab-notes');
   if(!all||!notes) return;
+  // 日历页打开时，高亮独占「日历」tab；即便底层是笔记模式也不要再点亮「笔记」
+  if(document.body.classList.contains('cal-open')){
+    all.classList.remove('on');
+    notes.classList.remove('on');
+    return;
+  }
   const isNotes=isNoteMode();
   all.classList.toggle('on', !isNotes);
   notes.classList.toggle('on', isNotes);
