@@ -582,7 +582,7 @@ tr:hover .acts{opacity:1;}
   .cal-overlay{align-items:stretch;justify-content:stretch;padding:0;}
   .cal-overlay.open .cal-modal{animation:mboxSlideIn .18s cubic-bezier(0.34, 1.4, 0.56, 1);}
   .cal-hdr{padding:var(--sp-14) var(--sp-16) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
-  .cal-title{font-size:var(--fs-body);}
+  /* 月份标题＝独立页的页面标题，用 Title 18px 做锚点（手机端同 18，不再降到正文）*/
   .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
   /* 网格铺满剩余高度，格子等高撑开，独立页更沉浸 */
   .cal-grid{flex:1;grid-auto-rows:1fr;}
@@ -713,7 +713,7 @@ tr:hover .acts{opacity:1;}
 @keyframes calPageIn{from{opacity:0;}to{opacity:1;}}
 .cal-modal{background:var(--surface);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-20) var(--sp-24) var(--sp-12);flex-shrink:0;}
-.cal-title{font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.03em;}
+.cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;}
 .cal-nav{display:flex;gap:var(--sp-6);align-items:center;}
 .cal-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--accent);transition:background .15s;}
 .cal-navbtn:hover{background:var(--accent-light);}
