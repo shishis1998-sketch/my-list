@@ -729,8 +729,9 @@ tr:hover .acts{opacity:1;}
 .cal-legdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 /* —— 日历搜索 —— */
 .cal-searchbtn{color:var(--accent);}
-.cal-searchwrap{display:none;align-items:center;gap:var(--sp-10);padding:0 var(--sp-24) var(--sp-12);flex-shrink:0;}
+.cal-searchwrap{display:none;align-items:center;gap:var(--sp-10);padding:calc(var(--sp-14) + env(safe-area-inset-top)) var(--sp-24) var(--sp-12);flex-shrink:0;}
 body.cal-searching .cal-searchwrap{display:flex;}
+body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid{display:none;}
 .cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-8) var(--sp-12);}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;}
@@ -745,6 +746,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .cal-sr-body{flex:1;min-width:0;}
 .cal-sr-t{font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-sr-t mark.shl{background:linear-gradient(transparent 55%, var(--hl, rgba(255,106,74,.45)) 55%);}
 .cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
@@ -6233,6 +6235,13 @@ function calHl(s,q){
 }
 // 结果里的日期：统一 YYYY-MM-DD，等宽对齐、长短一致
 function calSearchDate(dateStr){return dateStr;}
+// 十六进制色 → rgba（给下划线用，带透明度）
+function calHexA(hex,a){
+  const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');
+  if(!m)return `rgba(255,106,74,${a})`;
+  const n=parseInt(m[1],16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
 function runCalSearch(){
   const raw=(document.getElementById('calSearchInput').value||'').trim();
   const q=raw.toLowerCase();
@@ -6247,7 +6256,7 @@ function runCalSearch(){
   hits.forEach(it=>{
     const row=document.createElement('div');row.className='cal-sr';
     row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
-      `<div class="cal-sr-body"><div class="cal-sr-t">${calHl(it.title,raw)}</div></div>`+
+      `<div class="cal-sr-body"><div class="cal-sr-t" style="--hl:${calHexA(it.color,.45)}">${calHl(it.title,raw)}</div></div>`+
       `<div class="cal-sr-date">${esc(calSearchDate(it.date))}</div>`;
     row.onclick=()=>jumpCalSearch(it.date);
     box.appendChild(row);
