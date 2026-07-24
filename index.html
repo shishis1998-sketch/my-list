@@ -729,7 +729,6 @@ tr:hover .acts{opacity:1;}
 .cal-legdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 /* —— 日历搜索 —— */
 .cal-searchbtn{color:var(--accent);}
-.cal-navbtn.on{background:var(--accent-light);}
 .cal-searchwrap{display:none;align-items:center;gap:var(--sp-10);padding:0 var(--sp-24) var(--sp-12);flex-shrink:0;}
 body.cal-searching .cal-searchwrap{display:flex;}
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid{display:none;}
@@ -745,11 +744,9 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr:hover{background:var(--accent-light);}
 .cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .cal-sr-body{flex:1;min-width:0;}
-.cal-sr-t{font-size:var(--fs-caption);color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-sr-k{font-size:var(--fs-foot);color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;}
-.cal-sr-date .cal-sr-y{color:var(--text-muted);margin-left:5px;font-size:var(--fs-foot);}
-.cal-hl{background:#F3E7DB;color:#8A4B22;border-radius:3px;padding:0 1px;}
+.cal-sr-t{font-size:var(--fs-caption);color:var(--text-primary);line-height:1.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--zh);font-variant-numeric:tabular-nums;flex-shrink:0;}
+.cal-hl{background:#F3E7DB;color:#8A4B22;border-radius:4px;padding:1px 4px;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);}
@@ -6227,6 +6224,12 @@ function calHl(text,rawq){
   const eq=esc(rawq).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   try{return t.replace(new RegExp(eq,'gi'),m=>`<span class="cal-hl">${m}</span>`);}catch(e){return t;}
 }
+// 结果里的日期：中文「7月4日」，本年不带年份，往年才加「2025年」
+function calSearchDate(dateStr){
+  const [y,mo,d]=dateStr.split('-');
+  const yPart=(parseInt(y)===new Date().getFullYear())?'':`${y}年`;
+  return `${yPart}${parseInt(mo)}月${parseInt(d)}日`;
+}
 function runCalSearch(){
   const raw=(document.getElementById('calSearchInput').value||'').trim();
   const q=raw.toLowerCase();
@@ -6238,13 +6241,11 @@ function runCalSearch(){
   const head=document.createElement('div');head.className='cal-sr-count';
   head.textContent=`找到 ${hits.length} 条 · 点一条跳到那天`;
   box.appendChild(head);
-  hits.slice(0,300).forEach(it=>{
-    const [y,mo,d]=it.date.split('-');
+  hits.forEach(it=>{
     const row=document.createElement('div');row.className='cal-sr';
     row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
-      `<div class="cal-sr-body"><div class="cal-sr-t">${calHl(it.title,raw)}</div>`+
-      `<div class="cal-sr-k">${esc(it.meta)}</div></div>`+
-      `<div class="cal-sr-date">${parseInt(mo)}/${d}<span class="cal-sr-y">${y}</span></div>`;
+      `<div class="cal-sr-body"><div class="cal-sr-t">${calHl(it.title,raw)}</div></div>`+
+      `<div class="cal-sr-date">${esc(calSearchDate(it.date))}</div>`;
     row.onclick=()=>jumpCalSearch(it.date);
     box.appendChild(row);
   });
