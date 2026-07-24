@@ -766,30 +766,22 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border);}
-.cal-day{background:transparent;min-height:70px;padding:var(--sp-6);cursor:pointer;display:flex;flex-direction:column;position:relative;overflow:hidden;border-right:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);transition:background .15s;}
-.cal-day:nth-child(7n){border-right:none;}
-.cal-grid .cal-day:nth-last-child(-n+7){border-bottom:none;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);}
+.cal-day{background:transparent;min-height:70px;padding:var(--sp-8) var(--sp-2) var(--sp-6);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s;}
 .cal-day:hover{background:var(--accent-light);}
 .cal-day.cal-other{color:var(--text-muted);}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
-.cal-day.cal-other .cal-evs{opacity:.5;}   /* 上/下月的事件条淡化 */
+.cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
 .cal-day.cal-other:hover{background:var(--bg);}
-.cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}
-.cal-day.cal-selected{background:var(--accent-light);}
+.cal-day.cal-today .cal-daynum{font-weight:700;color:#fff;background:var(--accent);}   /* 今天：实心圆圈 */
+.cal-day.cal-selected{background:var(--accent-light);}                                  /* 选中：淡绿底片 */
 .cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;}
-.cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent);}
-.cal-daynum{font-size:var(--fs-caption);margin-bottom:var(--sp-4);color:var(--text-primary);line-height:1;font-family:var(--en);}
-.cal-badges{display:flex;flex-wrap:wrap;gap:var(--sp-4);overflow:hidden;}
-.cal-dot{width:5px;height:5px;border-radius:50%;}
+.cal-day.cal-selected.cal-today .cal-daynum{color:#fff;background:var(--accent);}       /* 既是今天又选中：实心圆圈优先 */
+.cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-primary);line-height:1;font-family:var(--en);}
+.cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:5px;max-width:100%;}
+.cal-dot{width:5px;height:5px;border-radius:50%;flex:none;}
 .cal-count{font-size:var(--fs-foot);background:var(--accent);color:#fff;padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
-/* —— 事件条（带名字，跨天连续）—— */
-.cal-evs{display:flex;flex-direction:column;gap:2px;margin:2px calc(-1 * var(--sp-6)) 0;min-width:0;}
-.cal-ev{height:14px;line-height:14px;font-size:9px;color:#fff;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
-.cal-ev.rl{border-top-left-radius:4px;border-bottom-left-radius:4px;margin-left:4px;}
-.cal-ev.rr{border-top-right-radius:4px;border-bottom-right-radius:4px;margin-right:4px;}
-.cal-ev.spacer{visibility:hidden;}
-.cal-more{font-size:8.5px;color:var(--text-muted);line-height:12px;padding-left:4px;font-family:var(--en);}
+/* —— 类目圆点：当天出现过的每种类目色画一个点（去重），一眼看当天收集了哪些类型 —— */
 .cal-detail{padding:var(--sp-20) var(--sp-4) var(--sp-8);}
 .cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:22px;padding-right:10px;display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
 .cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
@@ -6517,25 +6509,19 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
   num.className='cal-daynum';num.textContent=day;cell.appendChild(num);
 
   if(lanes&&lanes.length){
-    const wd=new Date(dateStr+'T00:00:00').getDay();   // 0=周日..6=周六
-    const weekStart=(wd===1), weekEnd=(wd===0);
-    const evs=document.createElement('div');evs.className='cal-evs';
-    for(let L=0;L<lanes.length;L++){                    // 铺出当天所有泳道，不再截断
-      const seg=lanes[L];
-      const el=document.createElement('div');
-      if(seg){
-        const rl=(seg.date===seg.start)||weekStart;    // 段左端（真开始 / 周一）圆角+显示名
-        const rr=(seg.date===seg.end)||weekEnd;         // 段右端（真结束 / 周日）圆角
-        el.className='cal-ev'+(rl?' rl':'')+(rr?' rr':'');
-        if(seg.isCal){el.style.background='#EDEBE6';el.style.color='#5E574C';}  // 导入日历：淡暖灰底 + 深暖灰字
-        else el.style.background=seg.color;                                     // 其它：纯色白字
-        el.textContent=rl?seg.title:'';
-      }else{
-        el.className='cal-ev spacer';
-      }
-      evs.appendChild(el);
+    // 当天出现过的每种类目色只画一个圆点（去重），表达「今天收集了哪些类型」而非数量
+    const seen=new Set(), colors=[];
+    for(const seg of lanes){
+      if(seg&&!seen.has(seg.color)){seen.add(seg.color);colors.push(seg.color);}
     }
-    cell.appendChild(evs);
+    if(colors.length){
+      const badges=document.createElement('div');badges.className='cal-badges';
+      colors.slice(0,5).forEach(col=>{                  // 最多 5 个点，避免格子拥挤
+        const d=document.createElement('span');d.className='cal-dot';d.style.background=col;
+        badges.appendChild(d);
+      });
+      cell.appendChild(badges);
+    }
   }
   if(dateStr) cell.onclick=()=>{const p=dateStr.split('-');calYear=+p[0];calMonth=+p[1]-1;openCalDay(dateStr);};
   return cell;
