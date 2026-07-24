@@ -623,7 +623,7 @@ tr:hover .acts{opacity:1;}
     background:var(--surface);border-top:1px solid var(--border);
     /* 底栏整体做成带圆角的浮起卡片：顶部两角圆角 */
     border-radius:var(--rxl) var(--rxl) 0 0;overflow:hidden;
-    box-shadow:0 -2px 16px rgba(0,0,0,.05);
+    box-shadow:none;
     padding-bottom:env(safe-area-inset-bottom);
     /* 键盘弹起时整条上移到键盘上方（--kb 由 JS 用 visualViewport 计算）*/
     transform:translateY(calc(-1 * var(--kb,0px)));
