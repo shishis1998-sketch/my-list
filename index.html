@@ -2399,13 +2399,14 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   border-top:none;border-radius:0 0 16px 16px;margin:0 14px 12px;padding:2px 10px 10px;}
 /* 年视图：不套卡，迷你月直接铺在背景上 */
 #calViewPeriod.pv-year .pv-cardwrap{margin:0 14px 12px;background:transparent;border:none;padding:0;}
-#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-4px;}
-/* 标题字号对齐普通日历（18px，而非经期作用域的 20px） */
+/* 翻页导航整体：与普通日历 .cal-titlenav 一致（margin-left:-10px 让箭头贴左缘、标题缩进对齐） */
+#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-10px;}
+/* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
-  padding:0 4px;cursor:pointer;user-select:none;white-space:nowrap;}
-/* 翻页按钮：无描边、透明、墨绿，与普通日历 .cal-navbtn 一致 */
-#calViewPeriod .pv-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:8px;
-  cursor:pointer;font-size:18px;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;
+  letter-spacing:.03em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
+/* 翻页按钮：宽 26px、无描边透明、墨绿、字号 16px，与普通日历 .cal-titlenav .cal-navbtn 一致 */
+#calViewPeriod .pv-navbtn{width:26px;height:32px;border:none;background:transparent;border-radius:8px;
+  cursor:pointer;font-size:16px;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;
   padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
 /* 筛选按钮：去掉圆形描边和白底，跟普通日历一样朴素 */
 #calViewPeriod .home-filter-btn{width:32px;height:32px;border:none !important;background:transparent !important;
@@ -2420,7 +2421,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 /* 星期行：加分隔线 + 字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），横向内边距归零 */
 #calViewPeriod .calendar-container.month-view .weekdays{border-bottom:1px solid var(--border);
   padding:6px 0 14px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
-  letter-spacing:.18em;color:var(--text-secondary);column-gap:2px !important;}
+  letter-spacing:.18em;color:var(--text-secondary);column-gap:0 !important;}
 /* 网格：行高 42px、行距 2px、顶部留白 4px、横向内边距归零，对齐普通日历 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
   padding:4px 0 0 !important;align-content:start !important;column-gap:2px !important;}
@@ -2432,9 +2433,12 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 /* 圆点槽对齐 .cal-badges；症状红点对齐 .cal-dot(5px) */
 #calViewPeriod .calendar-container.month-view .dot-slot{height:auto !important;margin-top:3px !important;}
 #calViewPeriod .calendar-container.month-view .rec-dot{width:5px !important;height:5px !important;}
-/* 今天：与普通日历一致——墨绿加粗数字、无红框 */
-#calViewPeriod .calendar-container.month-view .day.today{box-shadow:none !important;background:transparent !important;
-  color:var(--accent) !important;font-weight:700;}
+/* 上/下月补位日期：灰色淡化，与普通日历 .cal-other 一致 */
+#calViewPeriod .calendar-container.month-view .day.cal-otherday{color:var(--text-muted) !important;opacity:.5;
+  background:transparent !important;box-shadow:none !important;font-weight:400 !important;}
+/* 今天：墨绿加粗数字 + 墨绿细圈，与普通日历今天/选中一致 */
+#calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--accent-mid) !important;
+  background:transparent !important;color:var(--accent) !important;font-weight:700;}
 /* 选中：与普通日历一致——数字外一圈墨绿 */
 #calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
   box-shadow:0 0 0 1px var(--accent-mid) !important;}
@@ -5667,8 +5671,15 @@ window.PV = (function(){
       let html = `<div class="month" data-month="${month}">${head}
         <div class="weekdays"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
         <div class="days">`;
-      for (let i = 0; i < startOffset; i++)
-        html += `<div class="daywrap empty"><div class="day"></div><div class="dot-slot"></div></div>`;
+      // 灰色的上/下月补位日期（仅月视图，与普通日历一致：填满整周）
+      const otherCell = d => `<div class="daywrap"><div class="day cal-otherday">${d}</div><div class="dot-slot"></div></div>`;
+      if (withNav) {
+        const prevDays = new Date(year, month-1, 0).getDate();   // 上月天数
+        for (let i = startOffset; i > 0; i--) html += otherCell(prevDays - i + 1);
+      } else {
+        for (let i = 0; i < startOffset; i++)
+          html += `<div class="daywrap empty"><div class="day"></div><div class="dot-slot"></div></div>`;
+      }
 
       for (let day = 1; day <= daysInMonth; day++) {
         const lv = getLevel(year, month, day);
@@ -5682,6 +5693,12 @@ window.PV = (function(){
                   ` style="user-select:none;-webkit-user-select:none;">${day}</div>` +
                   `<div class="dot-slot"><span class="rec-dot"></span></div>` +
                 `</div>`;
+      }
+      // 下月补位：填满最后一整周（仅月视图）
+      if (withNav) {
+        const rem = (startOffset + daysInMonth) % 7;
+        const trailing = rem === 0 ? 0 : 7 - rem;
+        for (let d = 1; d <= trailing; d++) html += otherCell(d);
       }
       return html + `</div></div>`;
     }
