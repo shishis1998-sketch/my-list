@@ -2417,9 +2417,21 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   letter-spacing:.18em;color:var(--text-secondary);}
 /* 网格：行高 42px、行距 2px、顶部留白 4px，对齐普通日历 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
-  padding-top:4px !important;align-content:start !important;}
-#calViewPeriod .calendar-container.month-view .day{height:32px !important;font-size:13px !important;}
-#calViewPeriod .calendar-container.month-view .dot-slot{height:8px !important;margin-top:0 !important;}
+  padding-top:4px !important;align-content:start !important;column-gap:2px !important;}
+/* 格子结构/尺寸与普通日历 .cal-day 完全一致：仅把经量颜色贴成数字底下的 24px 圆 */
+#calViewPeriod .calendar-container.month-view .daywrap{padding:6px 2px 4px;min-height:42px;border-radius:8px;
+  flex-direction:column;align-items:center;justify-content:flex-start;}
+#calViewPeriod .calendar-container.month-view .day{width:24px !important;height:24px !important;
+  border-radius:50% !important;font-size:13px !important;font-family:var(--en);margin:0 !important;line-height:1;}
+/* 圆点槽对齐 .cal-badges；症状红点对齐 .cal-dot(5px) */
+#calViewPeriod .calendar-container.month-view .dot-slot{height:auto !important;margin-top:3px !important;}
+#calViewPeriod .calendar-container.month-view .rec-dot{width:5px !important;height:5px !important;}
+/* 今天：与普通日历一致——墨绿加粗数字、无红框 */
+#calViewPeriod .calendar-container.month-view .day.today{box-shadow:none !important;background:transparent !important;
+  color:var(--accent) !important;font-weight:700;}
+/* 选中：与普通日历一致——数字外一圈墨绿 */
+#calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
+  box-shadow:0 0 0 1px var(--accent-mid) !important;}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
@@ -5661,7 +5673,7 @@ window.PV = (function(){
         html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
                   `<div data-month="${month}" data-day="${day}"` +
                   ` class="day ${getLevelClass(lv)} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
-                  ` style="user-select:none;-webkit-user-select:none;">${isToday ? '今' : day}</div>` +
+                  ` style="user-select:none;-webkit-user-select:none;">${day}</div>` +
                   `<div class="dot-slot"><span class="rec-dot"></span></div>` +
                 `</div>`;
       }
