@@ -710,7 +710,7 @@ tr:hover .acts{opacity:1;}
 .cal-overlay.open{display:block;animation:calPageIn .18s ease-out;}
 @keyframes calPageIn{from{opacity:0;}to{opacity:1;}}
 .cal-modal{background:var(--bg);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
-.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-20) var(--sp-14) var(--sp-12);flex-shrink:0;}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-20) var(--sp-14) 0;flex-shrink:0;}
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
 .cal-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}       /* 年月标题两侧夹翻页箭头，负边距让箭头贴近左缘、标题缩进与下方明细大致对齐 */
 .cal-titlenav .cal-navbtn{width:26px;}
@@ -719,7 +719,7 @@ tr:hover .acts{opacity:1;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
-.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-6) var(--sp-10) var(--sp-10);}
+.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);margin:var(--sp-12) var(--sp-14);padding:var(--sp-6) var(--sp-10) var(--sp-10);}
 /* 搜索时上半区改为填满 + 可滚，容纳结果列表 */
 body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;}
 .cal-legdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -791,7 +791,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-card-hd{font-size:var(--fs-body);font-weight:700;color:var(--accent);letter-spacing:.02em;padding:var(--sp-12) var(--sp-14) var(--sp-6);}   /* 卡标题 14px */
 /* 记录行 —— 两端对齐：名称靠左、时间靠右；无圆点；影音显示封面、笔记纯文字；当天用墨绿轻强调 */
 .cal-row{position:relative;display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-10) var(--sp-14);cursor:pointer;transition:background .15s;}
-.cal-row+.cal-row::before{content:"";position:absolute;top:0;left:var(--sp-14);right:0;height:1px;background:var(--border-soft);}   /* 缩进分隔线：从文字处起、到右边缘 */
+.cal-row+.cal-row::before{content:"";position:absolute;top:0;left:var(--sp-14);right:var(--sp-14);height:1px;background:var(--border-soft);}   /* 缩进分隔线：左右两端都留白 */
 @media (hover:hover){.cal-row:hover{background:var(--bg);}}
 .cal-row-cover{width:26px;height:26px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
