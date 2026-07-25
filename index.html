@@ -2411,13 +2411,16 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 /* 去掉内层月卡重复卡片样式（外层 pv-cardwrap 已是卡片） */
 #calViewPeriod .calendar-container.month-view .month{background:transparent !important;border:none !important;
   box-shadow:none !important;padding:0 !important;margin:0 !important;}
-/* 星期行：加分隔线 + 字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em） */
+/* 去掉 month-view 容器多余的 16px 横向边距（--page-gutter 在经期作用域=16px），
+   让星期/日期网格铺满整卡宽度，横向位置与普通日历完全一致（靠卡片 10px 内边距） */
+#calViewPeriod .calendar-container.month-view{margin:0 !important;}
+/* 星期行：加分隔线 + 字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），横向内边距归零 */
 #calViewPeriod .calendar-container.month-view .weekdays{border-bottom:1px solid var(--border);
-  padding:12px 2px 8px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
-  letter-spacing:.18em;color:var(--text-secondary);}
-/* 网格：行高 42px、行距 2px、顶部留白 4px，对齐普通日历 */
+  padding:12px 0 8px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
+  letter-spacing:.18em;color:var(--text-secondary);column-gap:2px !important;}
+/* 网格：行高 42px、行距 2px、顶部留白 4px、横向内边距归零，对齐普通日历 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
-  padding-top:4px !important;align-content:start !important;column-gap:2px !important;}
+  padding:4px 0 0 !important;align-content:start !important;column-gap:2px !important;}
 /* 格子结构/尺寸与普通日历 .cal-day 完全一致：仅把经量颜色贴成数字底下的 24px 圆 */
 #calViewPeriod .calendar-container.month-view .daywrap{padding:6px 2px 4px;min-height:42px;border-radius:8px;
   flex-direction:column;align-items:center;justify-content:flex-start;}
