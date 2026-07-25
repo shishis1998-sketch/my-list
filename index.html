@@ -706,10 +706,10 @@ tr:hover .acts{opacity:1;}
 }
 
 /* ===== CALENDAR（独立整页，非弹窗）===== */
-.cal-overlay{display:none;position:fixed;inset:0;background:var(--surface);z-index:110;padding:0;}
+.cal-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:110;padding:0;}
 .cal-overlay.open{display:block;animation:calPageIn .18s ease-out;}
 @keyframes calPageIn{from{opacity:0;}to{opacity:1;}}
-.cal-modal{background:var(--surface);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+.cal-modal{background:var(--bg);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-20) var(--sp-14) var(--sp-12);flex-shrink:0;}
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
 .cal-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}       /* 年月标题两侧夹翻页箭头，负边距让箭头贴近左缘、标题缩进与下方明细大致对齐 */
@@ -719,7 +719,7 @@ tr:hover .acts{opacity:1;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
-.cal-scroll{overflow-y:auto;flex:0 0 auto;padding:0 var(--sp-14) var(--sp-4);}
+.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-6) var(--sp-10) var(--sp-10);}
 /* 搜索时上半区改为填满 + 可滚，容纳结果列表 */
 body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;}
 .cal-legdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -785,16 +785,19 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-detail{padding:var(--sp-20) var(--sp-4) var(--sp-8);}
 .cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-12);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
 .cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
-/* 详情记录行 —— 当天与往年统一：无圆点；影音显示封面、笔记纯文字；名称 + 右侧信息；当天用墨绿轻强调 */
-.cal-row{display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-10) var(--sp-4);cursor:pointer;
-  border-radius:var(--rsm);transition:background .15s;}
-.cal-row+.cal-row{border-top:1px solid var(--border-soft);}
+/* 事件白卡：当天一张、往年一张，浮在底色上 */
+.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);}
+.cal-card:last-child{margin-bottom:0;}
+.cal-card-hd{font-size:var(--fs-body);font-weight:700;color:var(--accent);letter-spacing:.02em;padding:var(--sp-12) var(--sp-14) var(--sp-6);}   /* 卡标题 14px */
+/* 记录行 —— 两端对齐：名称靠左、时间靠右；无圆点；影音显示封面、笔记纯文字；当天用墨绿轻强调 */
+.cal-row{position:relative;display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-10) var(--sp-14);cursor:pointer;transition:background .15s;}
+.cal-row+.cal-row::before{content:"";position:absolute;top:0;left:var(--sp-14);right:0;height:1px;background:var(--border-soft);}   /* 缩进分隔线：从文字处起、到右边缘 */
 @media (hover:hover){.cal-row:hover{background:var(--bg);}}
 .cal-row-cover{width:26px;height:26px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
 .cal-row-cover img{width:100%;height:100%;object-fit:cover;}
 .cal-row-nm{flex:1;min-width:0;font-size:var(--fs-body);font-weight:600;color:var(--text-primary);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}   /* 名称 14px */
 .cal-row-tail{flex-shrink:0;font-size:var(--fs-caption);color:var(--text-muted);font-variant-numeric:tabular-nums;}
 .cal-row-tail .rg{color:var(--text-secondary);font-weight:600;}   /* 跨天事件的起止日区间 */
 .cal-row-cur .cal-row-nm{color:var(--accent);}                    /* 当天记录：墨绿轻强调 */
@@ -806,11 +809,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sheet-scrim{position:absolute;inset:0;background:rgba(10,8,6,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:5;}
 .cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
 /* 下半区：常驻内嵌面板（非弹窗），日历下方直接显示选中当天的记录 */
-.cal-sheet{position:relative;background:var(--surface);border-top:1px solid var(--border);
+.cal-sheet{position:relative;background:transparent;
   display:flex;flex-direction:column;flex:1 1 auto;min-height:0;
-  padding:var(--sp-14) var(--sp-14) var(--sp-16);}
+  padding:0 var(--sp-14) var(--sp-16);}
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
-.cal-sheet .cal-detail-hdr{margin-bottom:var(--sp-12);flex-shrink:0;}
+.cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
 .cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 隐藏滚动条，仍可滚动 */
 .cal-sheet #calDetailList::-webkit-scrollbar{display:none;}
 
@@ -6604,22 +6607,32 @@ function renderCalDetail(){
   const listEl=document.getElementById('calDetailList');
   listEl.innerHTML='';
 
-  // 当天记录（扁平行，墨绿轻强调）
+  // 「当天」白卡：标题为选中日期 + 当天记录（墨绿轻强调）
+  const curCard=document.createElement('div');curCard.className='cal-card';
+  const curHd=document.createElement('div');curHd.className='cal-card-hd';
+  curHd.textContent=`${parseInt(cm)} 月 ${parseInt(cd)} 日`;
+  curCard.appendChild(curHd);
   if(recs.length){
-    recs.forEach(r=>listEl.appendChild(makeCalRowEl(r,calCurTail(r),true)));
+    recs.forEach(r=>curCard.appendChild(makeCalRowEl(r,calCurTail(r),true)));
   }else{
     const e=document.createElement('div');e.className='cal-empty';
     e.textContent=pastTotal?'今天还没有新记录':'这一天没有记录';
-    listEl.appendChild(e);
+    curCard.appendChild(e);
   }
+  listEl.appendChild(curCard);
 
-  // 往年 —— 同款扁平行，不分组，每条右侧显示「N 年前」
+  // 「往年」白卡：同月同日的往年记录，每条右侧显示「N 年前」
   if(pastTotal){
+    const pastCard=document.createElement('div');pastCard.className='cal-card';
+    const pastHd=document.createElement('div');pastHd.className='cal-card-hd';
+    pastHd.textContent='往年';
+    pastCard.appendChild(pastHd);
     pastYears.forEach(y=>{
       const ago=parseInt(cy)-parseInt(y);
       const agoTxt=ago>0?`${ago} 年前`:(ago<0?`${-ago} 年后`:'今天');
-      pastByYear[y].forEach(r=>listEl.appendChild(makeCalRowEl(r,agoTxt,false)));
+      pastByYear[y].forEach(r=>pastCard.appendChild(makeCalRowEl(r,agoTxt,false)));
     });
+    listEl.appendChild(pastCard);
   }
 }
 
