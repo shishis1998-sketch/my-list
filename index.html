@@ -1577,16 +1577,35 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 6px;flex-shrink:0;background:var(--bg);}
 .cal-viewtitle{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);letter-spacing:.02em;}
 .cal-vtoggle{position:relative;display:inline-flex;background:var(--accent-light);border-radius:999px;padding:3px;}
-.cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);
+.cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;
   background:var(--surface);border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.14);
   transition:transform .22s cubic-bezier(.4,0,.2,1);}
-.cal-vtoggle .cvt-thumb.period{transform:translateX(100%);}
+/* 两段（历史保留）/ 三段 缩略块宽度 */
+.cal-vtoggle .cvt-thumb{width:calc(50% - 3px);}
+.cal-vtoggle.cvt3 .cvt-thumb{width:calc((100% - 6px)/3);}
+.cal-vtoggle .cvt-thumb.period,
+.cal-vtoggle .cvt-thumb.m{transform:translateX(100%);}
+.cal-vtoggle .cvt-thumb.y{transform:translateX(200%);}
 .cal-vtoggle .cvt{position:relative;z-index:1;border:none;background:transparent;font-family:inherit;
-  font-size:var(--fs-caption);font-weight:600;color:var(--accent-mid);padding:6px 18px;cursor:pointer;
-  border-radius:999px;transition:color .2s;-webkit-tap-highlight-color:transparent;}
+  font-size:var(--fs-caption);font-weight:600;color:var(--accent-mid);padding:6px 16px;cursor:pointer;
+  border-radius:999px;transition:color .2s;-webkit-tap-highlight-color:transparent;white-space:nowrap;}
+.cal-vtoggle.cvt3 .cvt{padding:6px 0;min-width:48px;text-align:center;}
 .cal-vtoggle .cvt.on{color:var(--accent);}
 #calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 #calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+/* 经期视图：去掉粉色背景，与日历页统一纯色；月份导航沿用日历页「‹ 年 月 ›」样式 */
+#calViewPeriod,
+#calViewPeriod .home-sticky{background:var(--bg) !important;background-image:none !important;}
+#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-6px;}
+#calViewPeriod .pv-navlabel{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
+  padding:0 4px;cursor:pointer;user-select:none;letter-spacing:.01em;white-space:nowrap;}
+/* 年视图：嵌进 my-list 的 flex 容器后，grid 的 1fr 会被内容最小宽度撑爆，
+   用 minmax(0,1fr) 让 2 列 / 7 列都能收缩，避免迷你月溢出 */
+#calViewPeriod .calendar-container.year-view{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+#calViewPeriod .calendar-container.year-view .weekdays,
+#calViewPeriod .calendar-container.year-view .days{grid-template-columns:repeat(7,minmax(0,1fr)) !important;}
+#calViewPeriod .calendar-container.month-view .weekdays,
+#calViewPeriod .calendar-container.month-view .days{grid-template-columns:repeat(7,minmax(0,1fr)) !important;}
 
 #calViewPeriod {--sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
       --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;
@@ -1629,10 +1648,8 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       --muted:  #64748B;  
       --faint:  #94A3B8;  
       --disabled: #CBD5E1;
-      --bg:        #F9FAFB;  
-      
-      --bg-grad:   #FEFAFB;
-      
+      /* --bg / --bg-grad 不再在经期作用域内覆盖：继承 my-list 的 --bg，使背景与日历页纯色一致（去粉色） */
+
       --grain:     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
       --frost:     #FFFFFF;  
       --surface:   #FFFFFF;  
@@ -2832,11 +2849,12 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 <div class="cal-overlay" id="calOverlay" onclick="if(event.target===this)closeCalendar()">
   <div class="cal-modal">
     <div class="cal-viewbar">
-      <div class="cal-viewtitle">日历</div>
-      <div class="cal-vtoggle" role="tablist" aria-label="视图切换">
+      <div class="cal-viewtitle" id="calViewTitle">日历</div>
+      <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
         <span class="cvt-thumb" id="cvtThumb"></span>
         <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
-        <button class="cvt" data-cv="period" onclick="setCalView('period')">经期</button>
+        <button class="cvt" data-cv="month" onclick="setCalView('month')">月</button>
+        <button class="cvt" data-cv="year" onclick="setCalView('year')">年</button>
       </div>
     </div>
     <div id="calViewCalendar" class="cal-view">
@@ -2898,10 +2916,10 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     <div id="calViewPeriod" style="display:none">
       <div class="home-sticky">
         <div class="home-header">
-          <div class="hm-yearbar">
-            <button class="hm-nav prev" onclick="PV.changeYear(-1)" aria-label="上一年"></button>
-            <div class="hm-year home-year" id="yearLabel" onclick="PV.openYearPicker()">2026</div>
-            <button class="hm-nav next" onclick="PV.changeYear(1)" aria-label="下一年"></button>
+          <div class="pv-nav">
+            <button class="hm-nav prev" onclick="PV.navPrev()" aria-label="上一页"></button>
+            <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
+            <button class="hm-nav next" onclick="PV.navNext()" aria-label="下一页"></button>
           </div>
           <div class="home-header-right">
             <div class="home-filter" id="homeFilter">
@@ -2909,11 +2927,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
               </button>
               <div class="home-filter-menu" id="homeFilterMenu"></div>
-            </div>
-            <div class="home-viewtoggle" id="homeViewToggle">
-              <div class="hvt-thumb" id="hvtThumb"></div>
-              <button class="hvt on" data-view="month" onclick="PV.setHomeView('month')">月</button>
-              <button class="hvt" data-view="year" onclick="PV.setHomeView('year')">年</button>
             </div>
           </div>
         </div>
@@ -5482,7 +5495,7 @@ window.PV = (function(){
     // ── 年份切换 ──
     function changeYear(delta) {
       year += delta;
-      document.getElementById('yearLabel').textContent = year;
+      const yl = document.getElementById('yearLabel'); if (yl) yl.textContent = year;
       render();
     }
 
@@ -5511,9 +5524,16 @@ window.PV = (function(){
 
     function selectYear(y) {
       year = y;
-      document.getElementById('yearLabel').textContent = year;
+      const yl = document.getElementById('yearLabel'); if (yl) yl.textContent = year;
       document.getElementById('yearPickerOverlay').classList.remove('show');
       render();
+    }
+    // 顶部「‹ 年 月 ›」导航（沿用日历页样式）：月视图翻月、年视图翻年
+    function navPrev(){ homeView === 'year' ? changeYear(-1) : changeViewMonth(-1); }
+    function navNext(){ homeView === 'year' ? changeYear(1)  : changeViewMonth(1); }
+    function updateNavLabel(){
+      const el = document.getElementById('pvNavLabel');
+      if (el) el.textContent = homeView === 'year' ? `${year}` : `${year} 年 ${viewMonth} 月`;
     }
 
     // ── 渲染 ──
@@ -5579,10 +5599,9 @@ window.PV = (function(){
       const daysInMonth = new Date(year, month, 0).getDate();
       const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
+      // 月视图不再在卡片内画月头（顶部「‹ 年 月 ›」导航已承担）；年视图每张迷你月保留月份标题
       const head = withNav
-        ? `<div class="mv-head"><button class="mv-nav prev" onclick="PV.changeViewMonth(-1)" aria-label="上一月"></button>` +
-          `<div class="mv-title">${month} 月</div>` +
-          `<button class="mv-nav next" onclick="PV.changeViewMonth(1)" aria-label="下一月"></button></div>`
+        ? ''
         : `<div class="month-title">${month} 月</div>`;
 
       let html = `<div class="month" data-month="${month}">${head}
@@ -5611,6 +5630,7 @@ window.PV = (function(){
       const cal = document.getElementById('calendar');
       const yl = document.getElementById('yearLabel');
       if (yl) yl.textContent = year;
+      updateNavLabel();   // 同步顶部「‹ 年 月 ›」导航文字
       // 底部 VOLUMEN 图例只在年视图显示(月视图下方色板已是图例,避免重复)
       const bl = document.getElementById('bottomLegend');
       if (bl) bl.style.display = homeView === 'year' ? '' : 'none';
@@ -6316,12 +6336,12 @@ window.PV = (function(){
       setupEvents();
     }
   }
-  // 打开经期视图时调用：回到当前年月的月视图并渲染
-  function open(){
+  // 从日历进入经期视图：回到当前年月 + 指定视图（'month'|'year'）
+  function open(view){
     const now = new Date();
     year = now.getFullYear();
     viewMonth = now.getMonth() + 1;
-    homeView = 'month';
+    homeView = (view === 'year') ? 'year' : 'month';
     selectedView = null;
     render();
   }
@@ -6330,7 +6350,8 @@ window.PV = (function(){
     init, open, render,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
-    toggleHomeFilter, setHomeView, changeViewMonth
+    toggleHomeFilter, setHomeView, changeViewMonth,
+    navPrev, navNext
   };
 })();
 
@@ -6361,18 +6382,23 @@ function savePeriod(){
 }
 window.pvPersist=savePeriod;
 function setCalView(v){
-  calView=(v==='period')?'period':'cal';
-  const isP=calView==='period';
+  // v: 'cal'（日历） | 'month'（经期·月） | 'year'（经期·年）——合并成一个三段控件
+  if(v!=='cal'&&v!=='month'&&v!=='year')v='cal';
+  const prev=calView; calView=v;
+  const isP=(v!=='cal');
   const cv=document.getElementById('calViewCalendar');
   const pv=document.getElementById('calViewPeriod');
   if(cv)cv.style.display=isP?'none':'';
   if(pv)pv.style.display=isP?'':'none';
-  document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===calView));
-  const thumb=document.getElementById('cvtThumb');if(thumb)thumb.classList.toggle('period',isP);
-  try{localStorage.setItem('my_list_cal_view',calView);}catch(e){}
+  document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
+  const thumb=document.getElementById('cvtThumb');
+  if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');}
+  const title=document.getElementById('calViewTitle');if(title)title.textContent=isP?'经期':'日历';
+  try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
   if(isP&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
-    PV.open();
+    if(prev==='cal')PV.open(v);        // 从日历进入 → 回到当前年月 + 指定视图
+    else PV.setHomeView(v);            // 月↔年 只换缩放层级，保留当前位置
   }
 }
 
@@ -7936,7 +7962,8 @@ function openCalendar(){
   // 手机端打开日历时关闭侧边栏抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
-  setCalView(localStorage.getItem('my_list_cal_view')||'cal');   // 恢复上次视图（日历/经期）
+  let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
+  setCalView(_lv);   // 恢复上次视图（日历 / 经期月 / 经期年）
 }
 function closeCalendar(){
   document.getElementById('calOverlay').classList.remove('open');
