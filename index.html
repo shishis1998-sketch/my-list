@@ -2388,28 +2388,46 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 #calViewPeriod .calendar-container.month-view .sym-list {display: block; margin: var(--sp-card) 0 2px; padding: 16px 14px;
       background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
 #calViewPeriod .calendar-container.month-view .color-palette {margin-left: 4px; margin-right: 4px;}
-/* ── 经期月视图：紧凑 + 卡片化（对齐普通日历），筛选并入同一张卡 ── */
+/* ── 经期月视图：完全对齐普通日历的卡片 / 按钮 / 字号 / 间距（用 my-list 数值，避免经期 token 数值差异）── */
 /* 月视图：导航 + 筛选 + 日历合成一张白底描边卡片 */
-#calViewPeriod:not(.pv-year) .pv-cardwrap{background:var(--surface);border:1px solid var(--border);
-  border-radius:16px;margin:0 var(--sp-14) var(--sp-8);padding:4px 10px 10px;}
+#calViewPeriod:not(.pv-year) .pv-cardwrap{background:#FFFFFF;border:1px solid var(--border);
+  border-radius:16px;margin:0 14px 12px;padding:2px 10px 8px;}
 /* 年视图：不套卡，迷你月直接铺在背景上 */
-#calViewPeriod.pv-year .pv-cardwrap{margin:0 var(--sp-14) var(--sp-8);}
-/* 卡片内 header（导航+筛选）：透明贴合、收进卡片 */
-#calViewPeriod .pv-cardwrap .home-header{background:transparent;padding:6px 2px 8px;position:static;margin:0;}
-#calViewPeriod .pv-cardwrap .pv-nav{margin-left:-6px;}
-/* 去掉内层月卡重复的卡片样式（外层 pv-cardwrap 已是卡片） */
+#calViewPeriod.pv-year .pv-cardwrap{margin:0 14px 12px;}
+/* 卡片内 header（导航+筛选）：透明贴合 */
+#calViewPeriod .pv-cardwrap .home-header{background:transparent;padding:4px 2px 6px;position:static;margin:0;}
+#calViewPeriod .pv-cardwrap .pv-nav{display:flex;align-items:center;gap:0;margin-left:-4px;}
+/* 标题字号对齐普通日历（18px，而非经期作用域的 20px） */
+#calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
+  padding:0 4px;cursor:pointer;user-select:none;white-space:nowrap;}
+/* 翻页按钮：无描边、透明、墨绿，与普通日历 .cal-navbtn 一致 */
+#calViewPeriod .pv-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:8px;
+  cursor:pointer;font-size:18px;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;
+  padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
+/* 筛选按钮：去掉圆形描边和白底，跟普通日历一样朴素 */
+#calViewPeriod .home-filter-btn{width:32px;height:32px;border:none !important;background:transparent !important;
+  color:var(--accent);}
+#calViewPeriod .home-filter-btn.act{background:transparent !important;color:var(--accent) !important;}
+/* 去掉内层月卡重复卡片样式（外层 pv-cardwrap 已是卡片） */
 #calViewPeriod .calendar-container.month-view .month{background:transparent !important;border:none !important;
   box-shadow:none !important;padding:0 !important;margin:0 !important;}
-/* 紧凑固定行高（修掉 auto 行高把首行撑到 162px 的空档，行距贴近普通日历） */
-#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:44px !important;row-gap:2px !important;align-content:start !important;}
-#calViewPeriod .calendar-container.month-view .day{height:32px !important;}
-#calViewPeriod .calendar-container.month-view .dot-slot{height:8px !important;margin-top:2px !important;}
-/* 状态卡 / 信息卡 / 本月状态记录移到卡片外（#pvExtras），保持各自独立卡样式 */
-#calViewPeriod #pvExtras{margin:0 var(--sp-14);}
+/* 星期行：加分隔线 + 字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em） */
+#calViewPeriod .calendar-container.month-view .weekdays{border-bottom:1px solid var(--border);
+  padding:0 2px 8px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
+  letter-spacing:.18em;color:var(--text-secondary);}
+/* 网格：行高 42px、行距 2px、顶部留白 4px，对齐普通日历 */
+#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
+  padding-top:4px !important;align-content:start !important;}
+#calViewPeriod .calendar-container.month-view .day{height:32px !important;font-size:13px !important;}
+#calViewPeriod .calendar-container.month-view .dot-slot{height:8px !important;margin-top:0 !important;}
+/* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
+#calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
+#calViewPeriod #pvExtras > *{margin:0 !important;}
 #calViewPeriod #pvExtras .day-status-bar,
 #calViewPeriod #pvExtras .day-info-bar,
-#calViewPeriod #pvExtras .sym-list{display:block;background:#FFFFFF;border:1px solid var(--border);box-shadow:none;}
-#calViewPeriod #pvExtras .sym-list{margin:var(--sp-8) 0 2px;padding:16px 14px;border-radius:16px;}
+#calViewPeriod #pvExtras .sym-list{display:block;background:#FFFFFF;border:1px solid var(--border);
+  box-shadow:none;border-radius:16px;}
+#calViewPeriod #pvExtras .sym-list{padding:16px 14px;}
 </style>
 </head>
 <body>
@@ -2946,9 +2964,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <div class="pv-cardwrap">
         <div class="home-header">
           <div class="pv-nav">
-            <button class="hm-nav prev" onclick="PV.navPrev()" aria-label="上一页"></button>
+            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页">‹</button>
             <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
-            <button class="hm-nav next" onclick="PV.navNext()" aria-label="下一页"></button>
+            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页">›</button>
           </div>
           <div class="home-header-right">
             <div class="home-filter" id="homeFilter">
