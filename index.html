@@ -2388,6 +2388,28 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 #calViewPeriod .calendar-container.month-view .sym-list {display: block; margin: var(--sp-card) 0 2px; padding: 16px 14px;
       background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
 #calViewPeriod .calendar-container.month-view .color-palette {margin-left: 4px; margin-right: 4px;}
+/* ── 经期月视图：紧凑 + 卡片化（对齐普通日历），筛选并入同一张卡 ── */
+/* 月视图：导航 + 筛选 + 日历合成一张白底描边卡片 */
+#calViewPeriod:not(.pv-year) .pv-cardwrap{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;margin:0 var(--sp-14) var(--sp-8);padding:4px 10px 10px;}
+/* 年视图：不套卡，迷你月直接铺在背景上 */
+#calViewPeriod.pv-year .pv-cardwrap{margin:0 var(--sp-14) var(--sp-8);}
+/* 卡片内 header（导航+筛选）：透明贴合、收进卡片 */
+#calViewPeriod .pv-cardwrap .home-header{background:transparent;padding:6px 2px 8px;position:static;margin:0;}
+#calViewPeriod .pv-cardwrap .pv-nav{margin-left:-6px;}
+/* 去掉内层月卡重复的卡片样式（外层 pv-cardwrap 已是卡片） */
+#calViewPeriod .calendar-container.month-view .month{background:transparent !important;border:none !important;
+  box-shadow:none !important;padding:0 !important;margin:0 !important;}
+/* 紧凑固定行高（修掉 auto 行高把首行撑到 162px 的空档，行距贴近普通日历） */
+#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:44px !important;row-gap:2px !important;align-content:start !important;}
+#calViewPeriod .calendar-container.month-view .day{height:32px !important;}
+#calViewPeriod .calendar-container.month-view .dot-slot{height:8px !important;margin-top:2px !important;}
+/* 状态卡 / 信息卡 / 本月状态记录移到卡片外（#pvExtras），保持各自独立卡样式 */
+#calViewPeriod #pvExtras{margin:0 var(--sp-14);}
+#calViewPeriod #pvExtras .day-status-bar,
+#calViewPeriod #pvExtras .day-info-bar,
+#calViewPeriod #pvExtras .sym-list{display:block;background:#FFFFFF;border:1px solid var(--border);box-shadow:none;}
+#calViewPeriod #pvExtras .sym-list{margin:var(--sp-8) 0 2px;padding:16px 14px;border-radius:16px;}
 </style>
 </head>
 <body>
@@ -2914,7 +2936,14 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     </div>
     </div><!-- /#calViewCalendar -->
     <div id="calViewPeriod" style="display:none">
-      <div class="home-sticky">
+      <div class="year-picker-overlay" id="yearPickerOverlay" onclick="PV.closeYearPicker(event)">
+        <div class="year-picker-sheet">
+          <div class="year-picker-title">选择年份</div>
+          <div class="year-picker-list" id="yearPickerList"></div>
+        </div>
+      </div>
+      <!-- 月视图：导航 + 筛选 + 日历合成同一张卡片（与普通日历一致）；年视图不套卡 -->
+      <div class="pv-cardwrap">
         <div class="home-header">
           <div class="pv-nav">
             <button class="hm-nav prev" onclick="PV.navPrev()" aria-label="上一页"></button>
@@ -2930,14 +2959,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
             </div>
           </div>
         </div>
+        <div id="calendar" class="calendar-container"></div>
       </div>
-      <div class="year-picker-overlay" id="yearPickerOverlay" onclick="PV.closeYearPicker(event)">
-        <div class="year-picker-sheet">
-          <div class="year-picker-title">选择年份</div>
-          <div class="year-picker-list" id="yearPickerList"></div>
-        </div>
-      </div>
-      <div id="calendar" class="calendar-container"></div>
+      <div id="pvExtras"></div>
       <div id="bottomLegend">
         <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
         <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
@@ -5631,6 +5655,8 @@ window.PV = (function(){
       const yl = document.getElementById('yearLabel');
       if (yl) yl.textContent = year;
       updateNavLabel();   // 同步顶部「‹ 年 月 ›」导航文字
+      const pvRoot = document.getElementById('calViewPeriod');
+      if (pvRoot) pvRoot.classList.toggle('pv-year', homeView === 'year');   // 年视图去卡片壳
       // 底部 VOLUMEN 图例只在年视图显示(月视图下方色板已是图例,避免重复)
       const bl = document.getElementById('bottomLegend');
       if (bl) bl.style.display = homeView === 'year' ? '' : 'none';
@@ -5881,6 +5907,8 @@ window.PV = (function(){
     // 年视图:点整月 → 放大进该月月视图;月视图:注入色板 + 信息栏 + 本月状态记录。
     function afterRender() {
       const cal = document.getElementById('calendar');
+      const extras = document.getElementById('pvExtras');
+      if (extras) extras.innerHTML = '';   // 卡片外的 状态/信息/本月记录 每次重建
 
       if (homeView === 'year') {
         cal.querySelectorAll('.month').forEach(card => {
@@ -5908,21 +5936,24 @@ window.PV = (function(){
         s.onclick = (e) => { e.stopPropagation(); applySelectedColor(+s.dataset.level); };
       });
 
-      // 当天状态卡片(经期第几天等)—— 独立卡片,置于标签卡片之前
+      // 以下三块（状态卡 / 信息卡 / 本月状态记录）放在日历卡片之外，各自独立卡片
+      const host = extras || cal;
+
+      // 当天状态卡片(经期第几天等)
       const statusBar = document.createElement('div');
       statusBar.className = 'day-status-bar';
       statusBar.id = 'dayStatusBar';
-      cal.appendChild(statusBar);
+      host.appendChild(statusBar);
 
-      // 日期信息栏(选中某天后显示症状标签)—— 独立卡片,置于状态卡片下方
+      // 日期信息栏(选中某天后显示症状标签)
       const infoBar = document.createElement('div');
       infoBar.className = 'day-info-bar';
       infoBar.id = 'dayInfoBar';
-      cal.appendChild(infoBar);
+      host.appendChild(infoBar);
 
-      // 本月状态记录(只读汇总)追加在卡片下方
+      // 本月状态记录(只读汇总)
       const list = buildMonthSymList(viewMonth);
-      if (list) cal.appendChild(list);
+      if (list) host.appendChild(list);
 
       updateSelectedHighlight();
       renderDayInfoBar();
@@ -6195,12 +6226,12 @@ window.PV = (function(){
     // 症状变动后刷新月视图下方「本月状态记录」汇总
     function refreshMonthSymList() {
       if (homeView !== 'month') return;
-      const cal = document.getElementById('calendar');
-      if (!cal) return;
-      const old = cal.querySelector('.sym-list');
+      const host = document.getElementById('pvExtras') || document.getElementById('calendar');
+      if (!host) return;
+      const old = host.querySelector('.sym-list');
       const fresh = buildMonthSymList(viewMonth);
       if (old) { fresh ? old.replaceWith(fresh) : old.remove(); }
-      else if (fresh) cal.appendChild(fresh);
+      else if (fresh) host.appendChild(fresh);
     }
 
     function escapeHtml(s) {
