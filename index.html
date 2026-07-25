@@ -785,22 +785,20 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-detail{padding:var(--sp-20) var(--sp-4) var(--sp-8);}
 .cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-12);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
 .cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
-.cal-rec{padding:var(--sp-10) var(--sp-12);border-radius:var(--rlg);margin:0 0 var(--sp-6);background:var(--rc-bg,var(--bg));border:1px solid var(--rc-bd,transparent);display:flex;align-items:center;gap:var(--sp-10);cursor:pointer;transition:background .15s;}
-.cal-rec:hover{background:var(--rc-bghover,var(--accent-light));}
-.cal-rec-cover{width:32px;height:32px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;overflow:hidden;}
-.cal-rec-cover img{width:100%;height:100%;object-fit:cover;}
-.cal-rec-info{flex:1;min-width:0;}
-.cal-rec-name{font-size:var(--fs-body);font-weight:600;color:var(--text-primary);margin-bottom:var(--sp-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cal-rec-meta{font-size:var(--fs-caption);color:var(--text-muted);}
-.cal-rec-score{color:var(--gold);font-weight:600;font-family:var(--en);}
-/* 笔记/收集记录：色点 + 单行内容（无图标）*/
-.cal-rec-note{align-items:center;gap:var(--sp-8);}
-.cal-rec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.cal-rec-line{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);
+/* 详情记录行 —— 当天与往年统一：无圆点；影音显示封面、笔记纯文字；名称 + 右侧信息；当天用墨绿轻强调 */
+.cal-row{display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-10) var(--sp-4);cursor:pointer;
+  border-radius:var(--rsm);transition:background .15s;}
+.cal-row+.cal-row{border-top:1px solid var(--border-soft);}
+@media (hover:hover){.cal-row:hover{background:var(--bg);}}
+.cal-row-cover{width:26px;height:26px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
+.cal-row-cover img{width:100%;height:100%;object-fit:cover;}
+.cal-row-nm{flex:1;min-width:0;font-size:var(--fs-body);font-weight:600;color:var(--text-primary);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-rec-line strong{font-weight:700;}
-.cal-rec-day{color:var(--text-muted);font-size:var(--fs-caption);font-weight:400;flex-shrink:0;white-space:nowrap;font-variant-numeric:tabular-nums;}
-.cal-rec-range{color:var(--text-secondary);font-weight:600;}   /* 跨天事件的起止日区间 */
+.cal-row-tail{flex-shrink:0;font-size:var(--fs-caption);color:var(--text-muted);font-variant-numeric:tabular-nums;}
+.cal-row-tail .rg{color:var(--text-secondary);font-weight:600;}   /* 跨天事件的起止日区间 */
+.cal-row-cur .cal-row-nm{color:var(--accent);}                    /* 当天记录：墨绿轻强调 */
+.cal-row-cur .cal-row-tail{color:var(--accent-mid);font-weight:600;}
 .cal-empty{text-align:center;color:var(--text-muted);padding:var(--sp-20) var(--sp-12);font-size:var(--fs-caption);}
 .cal-hint{text-align:center;color:var(--text-muted);padding:var(--sp-16) var(--sp-12);font-size:var(--fs-caption);}
 
@@ -816,19 +814,6 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 隐藏滚动条，仍可滚动 */
 .cal-sheet #calDetailList::-webkit-scrollbar{display:none;}
 
-/* 往年 —— 扁平回忆列表：不加「往年今日」标题、不分年；每条 色点/封面 + 名称 + 右侧「N 年前」浅字 */
-.cal-past-sep{height:1px;background:var(--border);margin:var(--sp-12) var(--sp-4) var(--sp-6);}
-.cal-past{display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-10) var(--sp-4);cursor:pointer;
-  border-radius:var(--rsm);transition:background .15s;}
-.cal-past+.cal-past{border-top:1px solid var(--border-soft);}
-@media (hover:hover){.cal-past:hover{background:var(--bg);}}
-.cal-past-cover{width:26px;height:26px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
-.cal-past-cover img{width:100%;height:100%;object-fit:cover;}
-.cal-past-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.cal-past-nm{flex:1;min-width:0;font-size:var(--fs-body);font-weight:600;color:var(--text-primary);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-past-ago{flex-shrink:0;font-size:var(--fs-caption);color:var(--text-muted);font-variant-numeric:tabular-nums;}
 
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
 @media (max-width:768px){
@@ -6556,58 +6541,34 @@ function calDayRange(dateStr,x,y){
 }
 
 // 构建一条记录条目 DOM（当天记录、往年今日共用）
-function makeCalRecEl(r){
+// 详情记录行（当天/往年统一）：无圆点；影音显示封面、笔记纯文字；名称 + 右侧信息 tail；当天记录 isCur 标绿
+function makeCalRowEl(r,tail,isCur){
   const div=document.createElement('div');
-  div.className='cal-rec';
-  // 卡片按分类实际颜色着色：底色浅调 + 边框更浅调（hover 稍加深），替代统一淡灰
-  const _rcCol=r._isNote?noteDotColor(r.subCat):getCat(r.type).color;
-  div.style.setProperty('--rc-bg',calHexA(_rcCol,.10));
-  div.style.setProperty('--rc-bghover',calHexA(_rcCol,.18));
-  div.style.setProperty('--rc-bd',calHexA(_rcCol,.30));
+  div.className='cal-row'+(isCur?' cal-row-cur':'');
+  let main;
   if(r._isNote){
-    // 纯文字：分类色点 + 标题（+跨天事件的「第X天」），单行截断、无图标
-    const line=esc(calNoteTitle(r));
-    const dm=(r.body||'').match(/第(\d+)\/(\d+)天/);
-    let dayTag='';
-    if(dm){
-      const rng=calDayRange(r.title,+dm[1],+dm[2]);   // 由当天日期 + 第X/Y天推算起止日
-      dayTag=`<span class="cal-rec-day">${rng?`<span class="cal-rec-range">${rng}</span> · `:''}第${dm[1]}天</span>`;
-    }
-    div.classList.add('cal-rec-note');
-    div.innerHTML=`<div class="cal-rec-line">${line}</div>${dayTag}`;
+    main=`<span class="cal-row-nm">${esc(calNoteTitle(r))}</span>`;
     div.onclick=()=>showCalNotePreview(r.id);
   }else{
     const c=getCat(r.type);
     const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
-    div.innerHTML=`
-      <div class="cal-rec-cover">${coverH}</div>
-      <div class="cal-rec-info">
-        <div class="cal-rec-name">${esc(r.name)}</div>
-        <div class="cal-rec-meta">${esc(c.name)}${r.year?' · '+r.year:''}${r.creator?' · '+esc(r.creator):''}${r.score?' · <span class="cal-rec-score">'+r.score+'/5</span>':''}</div>
-      </div>`;
+    main=`<span class="cal-row-cover">${coverH}</span><span class="cal-row-nm">${esc(r.name)}</span>`;
     div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
   }
+  div.innerHTML=`${main}<span class="cal-row-tail">${tail||''}</span>`;
   return div;
 }
 
-// 往年记录：扁平行——色点/封面 + 名称 + 右侧「N 年前」浅字（点击行为同 makeCalRecEl）
-function makeCalPastEl(r,ago){
-  const div=document.createElement('div');
-  div.className='cal-past';
-  const agoTxt=ago>0?`${ago} 年前`:(ago<0?`${-ago} 年后`:'今天');
-  let left;
+// 当天记录右侧信息：笔记→跨天「第X天」(带起止日区间)；影音→分类(+评分)
+function calCurTail(r){
   if(r._isNote){
-    left=`<span class="cal-past-dot" style="background:${noteDotColor(r.subCat)}"></span>`
-        +`<span class="cal-past-nm">${esc(calNoteTitle(r))}</span>`;
-    div.onclick=()=>showCalNotePreview(r.id);
-  }else{
-    const c=getCat(r.type);
-    const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
-    left=`<span class="cal-past-cover">${coverH}</span><span class="cal-past-nm">${esc(r.name)}</span>`;
-    div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
+    const dm=(r.body||'').match(/第(\d+)\/(\d+)天/);
+    if(!dm)return '';
+    const rng=calDayRange(r.title,+dm[1],+dm[2]);   // 由当天日期 + 第X/Y天推算起止日
+    return `${rng?`<span class="rg">${rng}</span> · `:''}第${dm[1]}天`;
   }
-  div.innerHTML=`${left}<span class="cal-past-ago">${agoTxt}</span>`;
-  return div;
+  const c=getCat(r.type);
+  return `${esc(c.name)}${r.score?` · ${r.score}/5`:''}`;
 }
 
 function renderCalDetail(){
@@ -6643,24 +6604,21 @@ function renderCalDetail(){
   const listEl=document.getElementById('calDetailList');
   listEl.innerHTML='';
 
-  // 当天记录
+  // 当天记录（扁平行，墨绿轻强调）
   if(recs.length){
-    recs.forEach(r=>listEl.appendChild(makeCalRecEl(r)));
+    recs.forEach(r=>listEl.appendChild(makeCalRowEl(r,calCurTail(r),true)));
   }else{
     const e=document.createElement('div');e.className='cal-empty';
     e.textContent=pastTotal?'今天还没有新记录':'这一天没有记录';
     listEl.appendChild(e);
   }
 
-  // 往年 —— 扁平回忆列表：不加标题、不分年，每条右侧显示「N 年前」
+  // 往年 —— 同款扁平行，不分组，每条右侧显示「N 年前」
   if(pastTotal){
-    if(recs.length){                 // 今天有记录时，与往年之间加一条细分隔线
-      const sep=document.createElement('div');sep.className='cal-past-sep';
-      listEl.appendChild(sep);
-    }
     pastYears.forEach(y=>{
       const ago=parseInt(cy)-parseInt(y);
-      pastByYear[y].forEach(r=>listEl.appendChild(makeCalPastEl(r,ago)));
+      const agoTxt=ago>0?`${ago} 年前`:(ago<0?`${-ago} 年后`:'今天');
+      pastByYear[y].forEach(r=>listEl.appendChild(makeCalRowEl(r,agoTxt,false)));
     });
   }
 }
