@@ -790,13 +790,14 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* 事件白卡：当天一张、往年一张，浮在底色上 */
 .cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);}
 .cal-card:last-child{margin-bottom:0;}
-.cal-card-hd{font-size:var(--fs-body);font-weight:700;color:var(--accent);letter-spacing:.02em;padding:var(--sp-12) var(--sp-14) var(--sp-6);}   /* 卡标题 14px */
+.cal-card-hd{font-size:var(--fs-body);font-weight:700;color:var(--accent);letter-spacing:.02em;line-height:var(--lh-loose);
+  padding:var(--sp-10) var(--sp-14);background:var(--accent-light);}   /* 卡标题 14px · 淡绿底 · 上下 padding 与记录行一致 */
 /* 记录行 —— 两端对齐：名称靠左、时间靠右；无圆点；影音显示封面、笔记纯文字；当天用墨绿轻强调 */
 .cal-row{position:relative;display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-10) var(--sp-14);cursor:pointer;transition:background .15s;}
 .cal-row+.cal-row::before{content:"";position:absolute;top:0;left:var(--sp-14);right:var(--sp-14);height:1px;background:var(--border-soft);}   /* 缩进分隔线：左右两端都留白 */
 @media (hover:hover){.cal-row:hover{background:var(--bg);}}
-.cal-row-cover{width:26px;height:26px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
+.cal-row-cover{width:24px;height:24px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}   /* 24px：与文字行等高 */
 .cal-row-cover img{width:100%;height:100%;object-fit:cover;}
 .cal-row-nm{flex:1;min-width:0;font-size:var(--fs-body);font-weight:600;color:var(--text-primary);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}   /* 名称 14px */
