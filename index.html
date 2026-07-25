@@ -7837,7 +7837,7 @@ function saveCats(){
 
 // ── Import / Export ───────────────────────────────────────────────
 function exportJSON(){
-  const b=new Blob([JSON.stringify({data,categories:cats,notes,noteSubs},null,2)],{type:'application/json'});
+  const b=new Blob([JSON.stringify({data,categories:cats,notes,noteSubs,period:periodData},null,2)],{type:'application/json'});
   dl(b,'我的清单_'+today()+'.json'); toast('已导出 JSON');
 }
 function exportCSV(){
@@ -7856,10 +7856,17 @@ function importJSON(e){
   r.onload=ev=>{
     try{
       const p=JSON.parse(ev.target.result);
-      let imp,ic,ino,insub;
-      if(Array.isArray(p)){imp=p;}else{imp=p.data||[];ic=p.categories;ino=p.notes;insub=p.noteSubs;}
+      let imp,ic,ino,insub,iperiod;
+      if(Array.isArray(p)){imp=p;}else{imp=p.data||[];ic=p.categories;ino=p.notes;insub=p.noteSubs;iperiod=p.period;}
       if(!Array.isArray(imp))throw 0;
       if(ic&&ic.length){cats=ic;persistCats();renderTypeSelect();}
+      // 经期数据：备份里有就采用并回写本地 + 同步
+      if(iperiod&&iperiod.ALL_DATA){
+        periodData=_normPeriod(iperiod);
+        try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
+        if(window.PV&&_pvInited){PV.init(periodData);if(calView!=='cal')PV.render();}
+        scheduleSyncPush();
+      }
       // 笔记导入:存在则合并(按 id 去重)
       let addedN=0;
       if(Array.isArray(ino)){
