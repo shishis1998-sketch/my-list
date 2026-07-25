@@ -1571,6 +1571,806 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .stagger-in{animation:catStaggerIn .36s cubic-bezier(.22,.61,.36,1) both;}
 @media (prefers-reduced-motion: reduce){.stagger-in{animation:none !important;}}
 
+/* ===== 经期视图移植（scoped under #calViewPeriod）===== */
+/* ═══ 日历/经期 视图切换（my-list 侧 chrome）═══ */
+.cal-viewbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 6px;flex-shrink:0;background:var(--bg);}
+.cal-viewtitle{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);letter-spacing:.02em;}
+.cal-vtoggle{position:relative;display:inline-flex;background:var(--accent-light);border-radius:999px;padding:3px;}
+.cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);
+  background:var(--surface);border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.14);
+  transition:transform .22s cubic-bezier(.4,0,.2,1);}
+.cal-vtoggle .cvt-thumb.period{transform:translateX(100%);}
+.cal-vtoggle .cvt{position:relative;z-index:1;border:none;background:transparent;font-family:inherit;
+  font-size:var(--fs-caption);font-weight:600;color:var(--accent-mid);padding:6px 18px;cursor:pointer;
+  border-radius:999px;transition:color .2s;-webkit-tap-highlight-color:transparent;}
+.cal-vtoggle .cvt.on{color:var(--accent);}
+#calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+#calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+#calViewPeriod {--sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+      --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;
+      --sp-12: 48px; --sp-16: 64px; --sp-20: 80px;
+      
+      --sp-card: 18px;
+      
+      --page-gutter: var(--sp-4);   
+
+      
+      --fs-display:  40px;  
+      --fs-stat:     20px;  
+      --fs-title:    20px;  
+      --fs-subhead:  18px;  
+      --fs-body:     15px;  
+      --fs-callout:  14px;  
+      --fs-caption:  13px;  
+      --fs-footnote: 12px;  
+      --fs-micro:    10px;  
+
+      
+      --r-sm:   8px;    
+      --r-md:   12px;   
+      --r-lg:   16px;   
+      --r-full: 999px;  
+
+      
+      --shadow-sm:    0 1px 3px rgba(15,23,42,.08);      
+      --shadow-card:  0 8px 8px -8px rgba(15,23,42,.12); 
+      --shadow-lg:    0 12px 40px rgba(0,0,0,.25);       
+      --shadow-nav:   0 -2px 12px rgba(0,0,0,.05);       
+      --shadow-brand: 0 8px 18px rgba(199,31,55,.4);     
+
+      
+      --brand:      #C71F37;  --brand-dark: #A81A2E;
+      --brand-soft: #FCE7EB;  --brand-tint: #FFD5DC;
+      --ink:    #1A1A1A;  
+      --ink-2:  #334155;  
+      --body:   #475569;  
+      --muted:  #64748B;  
+      --faint:  #94A3B8;  
+      --disabled: #CBD5E1;
+      --bg:        #F9FAFB;  
+      
+      --bg-grad:   #FEFAFB;
+      
+      --grain:     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+      --frost:     #FFFFFF;  
+      --surface:   #FFFFFF;  
+      --surface-2: #F7F8FA;  
+      --line:      #E2E8F0;  
+      --line-soft: #F1F5F9;  
+      --info:   #0EA5E9;  --danger: #E11D48;  --ok: #16A34A;}
+#calViewPeriod {font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-grad);
+      background-attachment: fixed;
+      background-size: cover;
+      min-height: 100vh;
+      margin: 0;
+      padding: 8px 0 30px;
+      
+      touch-action: pan-y;}
+#calViewPeriod .header {text-align: center; margin-bottom: 6px;}
+#calViewPeriod h1 {color: var(--ink); font-size: var(--fs-title); margin: 0 0 3px 0;}
+#calViewPeriod .subtitle {color: var(--muted); font-size: var(--fs-footnote);}
+#calViewPeriod .home-sticky {position: sticky; top: 0; z-index: 50;
+      
+      background: var(--bg-grad); margin: -8px 0 var(--sp-card);}
+#calViewPeriod .home-header {background: transparent;
+      
+      padding: calc(14px + env(safe-area-inset-top)) var(--page-gutter) 14px;
+      
+      display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 12px;}
+#calViewPeriod .home-header h1 {margin: 0;}
+#calViewPeriod .home-year {cursor: pointer;}
+#calViewPeriod .home-subtitle {text-align: center; margin: 0 0 10px;}
+#calViewPeriod .home-header-right {display: flex; align-items: center; gap: 10px;}
+#calViewPeriod .home-filter {position: relative; flex: 0 0 auto;}
+#calViewPeriod .home-filter-btn {width: 34px; height: 34px; border-radius: 50%; background: #FFFFFF;
+      border: 1px solid var(--line); color: var(--muted); padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: transform .12s ease, background-color .15s ease;}
+#calViewPeriod .home-filter-btn svg {width: 16px; height: 16px;}
+#calViewPeriod .home-filter-btn:active {transform: scale(.9);}
+#calViewPeriod .home-filter-btn:not(.act):active, #calViewPeriod .home-filter-btn:not(.act).open {background: var(--line-soft);}
+#calViewPeriod .home-filter-btn.act {background: var(--brand); border-color: var(--brand); color: #FFFFFF;}
+#calViewPeriod .home-filter-menu {position: absolute; top: calc(100% + 8px); right: 0; z-index: 60;
+      
+      width: max-content; min-width: 108px; max-width: min(72vw, 240px);
+      background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-md);
+      padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.10);
+      max-height: 60vh; overflow-y: auto; display: none;}
+#calViewPeriod .home-filter-item {overflow: hidden; text-overflow: ellipsis;}
+#calViewPeriod .home-filter-menu.show {display: block;}
+#calViewPeriod .home-filter-menu::-webkit-scrollbar {display: none;}
+#calViewPeriod .home-filter-item {padding: 9px 12px; border-radius: 8px; font-size: var(--fs-caption);
+      color: var(--ink-2); white-space: nowrap; cursor: pointer;}
+#calViewPeriod .home-filter-item.on {background: var(--brand-soft); color: var(--brand); font-weight: 700;}
+#calViewPeriod .year-switcher {display: flex; align-items: center; justify-content: center;
+      gap: 16px; margin: 4px 0 8px;}
+#calViewPeriod .year-btn {background: none; border: none; font-size: var(--fs-subhead);
+      color: var(--faint); cursor: pointer; padding: 0 4px; line-height: 1;}
+#calViewPeriod .year-btn:hover {color: var(--ink-2);}
+#calViewPeriod .year-label {font-size: var(--fs-subhead); font-weight: bold; color: var(--ink);
+      min-width: 50px; text-align: center; cursor: pointer;
+      text-decoration: underline dotted var(--faint);}
+#calViewPeriod .year-picker-overlay {display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4); z-index: 100;
+      align-items: flex-end; justify-content: center;}
+#calViewPeriod .year-picker-overlay.show {display: flex;}
+#calViewPeriod .year-picker-sheet {background: white; width: 100%;
+      border-radius: 16px 16px 0 0; padding: 16px 0 32px;}
+#calViewPeriod .year-picker-title {text-align: center; font-size: var(--fs-caption); color: var(--faint); margin-bottom: 8px;}
+#calViewPeriod .year-picker-list {max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch;}
+#calViewPeriod .year-picker-item {text-align: center; padding: 12px 0; font-size: var(--fs-subhead); color: var(--ink-2); cursor: pointer;}
+#calViewPeriod .year-picker-item.active {color: var(--brand); font-weight: bold; font-size: var(--fs-title);}
+#calViewPeriod .year-picker-item:hover {background: #f9f9f9;}
+#calViewPeriod .legend {display: flex; justify-content: center; gap: 10px;
+      margin: 6px 0 10px; font-size: var(--fs-footnote); flex-wrap: nowrap;}
+#calViewPeriod .calendar-container {display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 18px; margin: 0 var(--page-gutter);}
+#calViewPeriod .calendar-container.one-col {grid-template-columns: 1fr;}
+#calViewPeriod .calendar-container.one-col .month {padding: 14px 12px 14px; border-radius: var(--r-md);}
+#calViewPeriod .calendar-container.one-col .month-title {font-size: var(--fs-title); margin-bottom: 10px;}
+#calViewPeriod .calendar-container.one-col .weekdays {grid-template-columns: repeat(7, 1fr);
+      font-size: var(--fs-caption); margin-bottom: 8px;}
+#calViewPeriod .calendar-container.one-col .days {grid-template-columns: repeat(7, 1fr);
+      grid-auto-rows: auto; min-height: 0;
+      row-gap: 6px; padding: 0 4px;}
+#calViewPeriod .calendar-container.one-col .day {--r: 17px;  
+      width: 100% !important;
+      height: 34px; font-size: var(--fs-body);
+      margin: 0 !important;}
+#calViewPeriod .calendar-container.one-col .day.has-sym::after {width: 7px; height: 7px; top: 5px; right: 5px;
+      box-shadow: 0 0 0 2px white;}
+#calViewPeriod .calendar-container.one-col .month:not(.zoomed) {animation: colPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);}
+@keyframes colPop {
+      from { transform: scale(0.9); }
+      to   { transform: scale(1); }
+    }
+#calViewPeriod .sym-list {display: none;}
+#calViewPeriod .calendar-container.one-col .month:not(.zoomed) .sym-list {display: block;
+      margin: var(--sp-card) 0 2px;
+      padding: 16px 14px;
+      background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
+#calViewPeriod .sym-list-title {font-size: var(--fs-footnote); color: var(--brand); font-weight: 700;
+      letter-spacing: 1px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;}
+#calViewPeriod .sym-list-title::before {content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--brand); box-shadow: 0 0 0 2px white; display: inline-block;}
+#calViewPeriod .sym-row {display: flex; align-items: center; gap: 10px; padding: 7px 2px;}
+#calViewPeriod .sym-row + .sym-row {border-top: 1px dashed #f0f0f0;}
+#calViewPeriod .sym-name {flex: 0 0 96px;}
+#calViewPeriod .sym-days {flex: 1; font-size: var(--fs-caption); color: var(--ink); line-height: 1.5;}
+#calViewPeriod .sym-tag {display: inline-block;
+      font-size: var(--fs-footnote); padding: 3px 9px; border-radius: var(--r-md);
+      background: var(--brand-soft); color: var(--brand-dark); word-break: break-all;}
+#calViewPeriod .sym-bars {display: flex; align-items: flex-end; justify-content: safe center; flex-wrap: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 8px 2px 2px;}
+#calViewPeriod .sym-col {flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; padding: 0 7px;}
+#calViewPeriod .sym-col-tags {display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 6px;}
+#calViewPeriod .sym-col-tag {font-size: 11px; line-height: 1.3; color: var(--ink-2); white-space: nowrap;}
+#calViewPeriod .sym-col-bar {width: 14px; min-height: 10px; background: var(--brand); border-radius: 5px 5px 2px 2px;}
+#calViewPeriod .sym-col-day {font-size: 10.5px; color: var(--muted); font-weight: 600; margin-top: 5px;
+      font-variant-numeric: tabular-nums;}
+#calViewPeriod .month {background: transparent; border-radius: var(--r-md);
+      padding: 4px 2px 10px; box-shadow: none;}
+#calViewPeriod .month-title {text-align: center; font-size: var(--fs-callout); font-weight: bold; color: var(--ink); margin-bottom: 4px;}
+#calViewPeriod .weekdays {display: grid; grid-template-columns: repeat(7, 21px);
+      text-align: center; font-size: var(--fs-footnote); color: var(--faint);
+      margin-bottom: 3px; justify-content: center; column-gap: 2px;}
+#calViewPeriod .days {display: grid; grid-template-columns: repeat(7, 21px);
+      row-gap: 3px; column-gap: 2px; justify-content: center; padding: 0;
+      grid-auto-rows: 21px;
+      min-height: 141px;}
+#calViewPeriod .day {--r: 8px;
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center; justify-content: center;
+      border-radius: 5px; font-size: var(--fs-footnote); cursor: pointer;
+      
+      transition: background-color 0.2s, box-shadow 0.2s, transform 0.15s;
+      box-sizing: border-box;
+      background-clip: padding-box;
+      background: transparent;   
+      color: var(--ink-2);}
+#calViewPeriod .day:hover {transform: scale(1.05);}
+#calViewPeriod .level-g {background-color: var(--disabled); color: var(--body); --c: var(--disabled); box-shadow: inset 0 0 0 1.5px rgba(74,81,88,.42);}
+#calViewPeriod .level-1 {background-color: var(--brand-tint); color: #640D14; --c: var(--brand-tint);}
+#calViewPeriod .level-2 {background-color: #cf4865; color: white; --c: #cf4865;}
+#calViewPeriod .level-3 {background-color: #834047; color: white; --c: #834047;}
+#calViewPeriod .day.ext-l {box-shadow: -3px 0 0 0 var(--c);}
+#calViewPeriod .day.ext-r {box-shadow:  3px 0 0 0 var(--c);}
+#calViewPeriod .day.ext-l.ext-r {box-shadow: -3px 0 0 0 var(--c), 3px 0 0 0 var(--c);}
+#calViewPeriod .today {color: var(--brand) !important; font-weight: 700;}
+#calViewPeriod .calendar-container.sym-on .day:not(.sym-hit) {opacity: .28;}
+#calViewPeriod .day.sym-hit {outline: 2px solid var(--brand); outline-offset: -2px; z-index: 3;}
+#calViewPeriod .sync-bar {display: flex; justify-content: center; gap: 10px;
+      margin: 12px 30px 6px;}
+#calViewPeriod .sync-btn {flex: 1; padding: 9px 0; border: none; border-radius: var(--r-sm);
+      font-size: var(--fs-caption); cursor: pointer; font-family: inherit;}
+#calViewPeriod .btn-save {background: var(--brand); color: white; font-weight: bold;}
+#calViewPeriod .btn-stats {background: var(--body); color: white; font-weight: bold;}
+#calViewPeriod .btn-gray {background: var(--line-soft); color: var(--ink-2);}
+#calViewPeriod .btn-cloud {background: var(--info); color: white; font-weight: bold; position: relative;}
+#calViewPeriod .cloud-status-dot {display: inline-block; width: 7px; height: 7px;
+      background: var(--faint); border-radius: 50%; margin-left: 5px;
+      vertical-align: middle;}
+#calViewPeriod .cloud-status-dot.ok {background: #4ade80;}
+#calViewPeriod .cloud-status-dot.err {background: #f87171;}
+#calViewPeriod .cloud-status-dot.busy {background: #fbbf24; animation: cloudPulse 0.8s infinite;}
+@keyframes cloudPulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+#calViewPeriod .sync-field {margin-bottom: 12px;}
+#calViewPeriod .sync-field label {display:block; font-size:var(--fs-caption); color:var(--body); font-weight:600; margin-bottom:5px;}
+#calViewPeriod .sync-input {width:100%; box-sizing:border-box; padding:9px 11px;
+      border:1px solid var(--line); border-radius:8px; font-size:var(--fs-callout);
+      font-family:inherit; outline:none; -webkit-appearance:none;}
+#calViewPeriod .sync-input:focus {border-color:var(--info);}
+#calViewPeriod .sync-auto-row {display:flex; align-items:center; gap:8px; font-size:var(--fs-caption); color:var(--body); margin:6px 0 14px; cursor:pointer;}
+#calViewPeriod .sync-btn-row {display:flex; gap:10px; margin-bottom:10px;}
+#calViewPeriod .sync-action-btn {flex:1; padding:10px 0; border:none; border-radius:8px; font-size:var(--fs-caption); font-weight:600; cursor:pointer; font-family:inherit;}
+#calViewPeriod .act-pull {background:#e0f2fe; color:#0369a1;}
+#calViewPeriod .act-push {background:var(--info); color:white;}
+#calViewPeriod .sync-save-cfg {width:100%; padding:10px 0; border:none; border-radius:8px; background:var(--body); color:white; font-size:var(--fs-caption); font-weight:600; cursor:pointer; font-family:inherit;}
+#calViewPeriod .sync-log {font-size:var(--fs-footnote); color:var(--muted); margin-top:10px; text-align:center; min-height:16px;}
+#calViewPeriod .sync-log.ok {color:#16a34a;}
+#calViewPeriod .sync-log.err {color:#dc2626;}
+#calViewPeriod .stats-overlay {display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 130;
+      align-items: center; justify-content: center;
+      padding: 20px;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);}
+#calViewPeriod .stats-overlay.show {display: flex;}
+#calViewPeriod .stats-modal {background: white; width: 88%;
+      max-width: 380px;
+      border-radius: var(--r-lg);
+      padding: 0;
+      max-height: 85vh;
+      display: flex; flex-direction: column;
+      animation: statsPop 0.22s ease-out;}
+@keyframes statsPop {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+#calViewPeriod .stats-header {display: flex; justify-content: space-between;
+      align-items: center;
+      padding: 14px var(--page-gutter);
+      border-bottom: 1px solid var(--line-soft);}
+#calViewPeriod .stats-title {font-size: var(--fs-body); font-weight: bold; color: var(--ink);}
+#calViewPeriod .stats-close {background: var(--line-soft); border: none;
+      width: 28px; height: 28px; border-radius: 50%;
+      font-size: var(--fs-body); cursor: pointer; color: var(--body);}
+#calViewPeriod .stats-body {padding: 14px var(--page-gutter) var(--sp-5);
+      overflow-y: auto;}
+#calViewPeriod .stats-row {display: flex; justify-content: space-between;
+      align-items: baseline;
+      padding: 5px 0;}
+#calViewPeriod .stats-label {font-size: var(--fs-body); color: var(--body);}
+#calViewPeriod .stats-value {font-size: var(--fs-body); font-weight: 600; color: var(--ink);}
+#calViewPeriod .stats-value-big {font-size: var(--fs-stat); font-weight: bold; color: var(--brand);}
+#calViewPeriod .stats-section {font-size: var(--fs-caption); color: var(--muted);
+      font-weight: 600;
+      margin: var(--sp-6) 0 var(--sp-2);
+      padding-bottom: var(--sp-2);
+      border-bottom: 2px solid var(--line);}
+#calViewPeriod .stats-section:first-child {margin-top: 0;}
+#calViewPeriod .stats-sub {font-size: var(--fs-footnote); color: var(--faint);
+      margin-left: 6px;
+      font-weight: normal;}
+#calViewPeriod .stats-empty {text-align: center; color: var(--faint);
+      padding: 30px 0; font-size: var(--fs-caption);}
+#calViewPeriod .stats-pred {background: linear-gradient(135deg, #fef2f4, var(--brand-soft));
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      margin-top: 12px;}
+#calViewPeriod .stats-pred-label {font-size: var(--fs-footnote); color: var(--brand);
+      letter-spacing: 1px; font-weight: 600;
+      text-transform: uppercase;}
+#calViewPeriod .stats-pred-date {font-size: var(--fs-subhead); font-weight: bold; color: var(--ink);
+      margin-top: 4px;}
+#calViewPeriod .stats-pred-sub {font-size: var(--fs-footnote); color: var(--muted); margin-top: 2px;}
+#calViewPeriod .stats-hint {font-size: var(--fs-footnote); color: var(--faint);
+      margin-top: 14px; line-height: 1.5;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);}
+#calViewPeriod .stcard {background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+      
+      padding: var(--sp-5) var(--sp-4) var(--sp-4); margin-top: var(--sp-card);}
+#calViewPeriod .stcard-title {font-size: var(--fs-subhead); font-weight: 700; color: var(--ink); margin: 0 0 var(--sp-4);}
+#calViewPeriod .stcard-title .sub {font-size: var(--fs-footnote); font-weight: 400; color: var(--faint); margin-left: 6px;}
+#calViewPeriod .cyc-head {display: flex; align-items: center; justify-content: space-between;}
+#calViewPeriod .cyc-yearbar {display: flex; align-items: center; gap: 8px;}
+#calViewPeriod .cyc-nav {background: #FFFFFF; border: 1px solid rgba(0,0,0,0.07); border-radius: 50%;
+      width: 30px; height: 30px; box-sizing: border-box; position: relative;
+      font-size: 0; color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent;}
+#calViewPeriod .cyc-nav:active {background: var(--line-soft);}
+#calViewPeriod .hm-nav::before, #calViewPeriod .cyc-nav::before, #calViewPeriod .mv-nav::before {content: ""; position: absolute; top: 50%; width: 5px; height: 5px;
+      border-right: 1.4px solid currentColor; border-bottom: 1.4px solid currentColor;}
+#calViewPeriod .hm-nav.prev::before, #calViewPeriod .cyc-nav.prev::before {left: 50%; transform: translate(-30%, -50%) rotate(135deg);}
+#calViewPeriod .hm-nav.next::before, #calViewPeriod .cyc-nav.next::before {left: 50%; transform: translate(-70%, -50%) rotate(-45deg);}
+#calViewPeriod .mv-nav.prev::before {left: 14px;  transform: translateY(-50%) rotate(135deg);}
+#calViewPeriod .mv-nav.next::before {right: 14px; transform: translateY(-50%) rotate(-45deg);}
+#calViewPeriod .cyc-year {font-size: var(--fs-callout); font-weight: 700; color: var(--ink-2);
+      min-width: 40px; text-align: center; font-variant-numeric: tabular-nums;}
+#calViewPeriod .st-tiles {display: grid; grid-template-columns: 1fr 1fr; gap: 10px;}
+#calViewPeriod .st-tile {background: var(--surface-2); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-3) 14px;}
+#calViewPeriod .st-tile .lab {font-size: var(--fs-footnote); color: var(--muted);}
+#calViewPeriod .st-tile .val {font-size: var(--fs-stat); font-weight: 700; color: var(--ink); line-height: 1.15;
+      margin-top: 3px; font-variant-numeric: tabular-nums;}
+#calViewPeriod .st-tile .val .u {font-size: var(--fs-footnote); font-weight: 600; color: var(--muted); margin-left: 2px;}
+#calViewPeriod .st-tile .foot {font-size: var(--fs-micro); color: var(--faint); margin-top: 2px;}
+#calViewPeriod .st-tile.accent {background: var(--brand-soft);}
+#calViewPeriod .st-tile.accent .val {color: var(--brand-dark);}
+#calViewPeriod .st-tile.accent .lab {color: var(--brand-dark); opacity: .8;}
+#calViewPeriod .st-tile.accent .foot {color: var(--brand); opacity: .75;}
+#calViewPeriod .cyc-legend {display: flex; gap: 16px; margin: -2px 0 14px;}
+#calViewPeriod .cyc-legend span {display: flex; align-items: center; gap: 6px; font-size: var(--fs-footnote); color: var(--body);}
+#calViewPeriod .cyc-legend i {width: 10px; height: 10px; border-radius: 3px;}
+#calViewPeriod .cyc-plot {height: 150px; display: flex; align-items: flex-end;
+      border-bottom: 1.5px solid var(--line); position: relative;}
+#calViewPeriod .cyc-grid {position: absolute; inset: 0; pointer-events: none;}
+#calViewPeriod .cyc-grid i {position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line-soft);}
+#calViewPeriod .cyc-col {flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center;
+      gap: 2px; position: relative;}
+#calViewPeriod .cyc-bar {width: 9px; border-radius: 4px 4px 0 0; position: relative;}
+#calViewPeriod .cyc-bar.p {background: var(--brand);}
+#calViewPeriod .cyc-bar.c {background: #1c5a48;}
+#calViewPeriod .cyc-bar .num {position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+      font-size: var(--fs-micro); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;}
+#calViewPeriod .cyc-bar.p .num {color: var(--brand);}
+#calViewPeriod .cyc-bar.c .num {color: var(--ink-2);}
+#calViewPeriod .cyc-col.empty::before {content: ""; position: absolute; bottom: 0; left: 22%; right: 22%;
+      border-top: 2px dashed var(--disabled); border-radius: 2px;}
+#calViewPeriod .cyc-col.hm-track-col {cursor: pointer; -webkit-tap-highlight-color: transparent;}
+#calViewPeriod .cyc-col.hm-track-col:active .cyc-bar.c {background: #2f8368;}
+#calViewPeriod .cyc-col.hm-track-col:active::after {content: ""; position: absolute; bottom: -1.5px; left: 50%; transform: translateX(-50%);
+      width: 16px; height: 3px; border-radius: 2px; background: var(--hm-accent); z-index: 2;}
+#calViewPeriod .cyc-x {display: flex; margin-top: 7px;}
+#calViewPeriod .cyc-x span {flex: 1; text-align: center; font-size: var(--fs-micro); color: var(--faint);}
+#calViewPeriod .cyc-empty {text-align: center; color: var(--faint); font-size: var(--fs-footnote); padding: 30px 0;}
+#calViewPeriod .st-sub {font-size: var(--fs-caption); font-weight: 600; color: var(--muted); margin: 14px 0 2px;}
+#calViewPeriod .st-sub:first-of-type {margin-top: 0;}
+#calViewPeriod .stcard .stats-row {padding: 9px 0; border-bottom: 1px solid var(--line-soft);}
+#calViewPeriod .stcard .stats-row:last-of-type {border-bottom: 0;}
+#calViewPeriod .stcard .stats-hint {border-top: 0; margin-top: 12px; padding-top: 2px;}
+#calViewPeriod .toast {position: fixed; top: max(16px, env(safe-area-inset-top)); left: 50%;
+      transform: translateX(-50%); background: rgba(0,0,0,0.8);
+      color: white; padding: 8px 18px; border-radius: var(--r-lg);
+      font-size: var(--fs-caption); opacity: 0; transition: opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+      z-index: 200;}
+#calViewPeriod .toast.show {opacity: 1;}
+#calViewPeriod .unsaved-dot {display: inline-block; width: 7px; height: 7px;
+      background: #fde047; border-radius: 50%; margin-left: 5px;
+      vertical-align: middle; opacity: 0; transition: opacity 0.3s;}
+#calViewPeriod .unsaved-dot.show {opacity: 1;}
+#calViewPeriod .zoom-backdrop {display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 90;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);}
+#calViewPeriod .zoom-backdrop.show {display: block;}
+#calViewPeriod .month.zoomed {position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 82vw;
+      max-width: 420px;
+      max-height: 88vh;
+      overflow-y: auto;
+      z-index: 95;
+      background: #fff; border-radius: var(--r-lg);
+      padding: 18px 14px 14px;
+      box-shadow: var(--shadow-lg);
+      animation: zoomPop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);}
+@keyframes zoomPop {
+      0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      60%  { opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+    }
+#calViewPeriod .month.zoomed .month-title {font-size: var(--fs-stat);
+      margin-bottom: 10px;}
+#calViewPeriod .month.zoomed .weekdays {grid-template-columns: repeat(7, 1fr);
+      font-size: var(--fs-caption);
+      margin-bottom: 8px;}
+#calViewPeriod .month.zoomed .days {grid-template-columns: repeat(7, 1fr);
+      grid-auto-rows: auto;
+      min-height: 0;
+      row-gap: 6px;
+      padding: 0 4px;}
+#calViewPeriod .month.zoomed .day {--r: 15px;  
+      width: 100% !important;
+      height: 30px;
+      font-size: var(--fs-body);
+      margin: 0 !important;}
+#calViewPeriod .calendar-container.one-col .day, #calViewPeriod .month.zoomed .day {border-radius: var(--r-sm);}
+#calViewPeriod .zoom-close {position: absolute; top: 8px; right: 12px;
+      width: 32px; height: 32px;
+      background: var(--line-soft); border: none; border-radius: 50%;
+      font-size: var(--fs-subhead); color: var(--body); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2;}
+#calViewPeriod .color-palette {margin-top: var(--sp-3);          
+      padding: var(--sp-2) 2px 0;       
+      border-top: 1px solid var(--line);
+      display: flex; gap: var(--sp-3);  
+      justify-content: flex-start; align-items: center; flex-wrap: wrap;}
+#calViewPeriod .swatch {flex: 0 0 auto; cursor: pointer;
+      display: flex; flex-direction: row;
+      align-items: center; gap: var(--sp-1);   
+      padding: 2px 0;
+      transition: transform 0.15s;}
+#calViewPeriod .swatch:active {transform: scale(0.94);}
+#calViewPeriod .swatch-dot {width: 8px; height: 8px; border-radius: var(--r-full);
+      box-sizing: border-box; flex: 0 0 auto;}
+#calViewPeriod .swatch-text {font-size: var(--fs-micro); color: var(--muted);
+      letter-spacing: 0.3px; font-weight: 500;}
+#calViewPeriod .swatch-g .swatch-dot {background: var(--disabled); box-shadow: inset 0 0 0 1.5px rgba(74,81,88,.42);}
+#calViewPeriod .swatch-1 .swatch-dot {background: var(--brand-tint);}
+#calViewPeriod .swatch-2 .swatch-dot {background: #cf4865;}
+#calViewPeriod .swatch-3 .swatch-dot {background: #834047;}
+#calViewPeriod .day {position: relative;}
+#calViewPeriod .day.has-sym {z-index: 2;}
+#calViewPeriod .day.has-sym::after {content: '';
+      position: absolute;
+      top: 3px; right: 3px;        
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 1.5px white;
+      z-index: 3;
+      pointer-events: none;}
+#calViewPeriod .month.zoomed .day.has-sym::after {width: 7px; height: 7px;
+      top: 5px; right: 5px;
+      box-shadow: 0 0 0 2px white;}
+#calViewPeriod .day.selected-view {outline: 2px solid var(--brand);
+      outline-offset: -2px;}
+#calViewPeriod .day-status-bar {margin-top: var(--sp-card);
+      padding: 6px 14px;
+      border-radius: var(--r-lg);}
+#calViewPeriod .ds-row {display: flex; justify-content: space-between; align-items: baseline;
+      gap: 12px; padding: 11px 0;
+      border-bottom: 1px solid var(--line-soft);}
+#calViewPeriod .ds-row:last-child {border-bottom: none;}
+#calViewPeriod .ds-k {font-size: var(--fs-footnote); color: var(--faint);
+      flex: 0 0 auto;}
+#calViewPeriod .ds-v {font-size: var(--fs-caption); color: var(--ink); font-weight: 400;
+      text-align: right;}
+#calViewPeriod .ds-v.ds-hl {color: var(--brand-dark);}
+#calViewPeriod .day-info-bar {margin-top: var(--sp-card);
+      padding: 16px 14px;
+      border-radius: var(--r-lg);}
+#calViewPeriod .info-date {font-size: var(--fs-callout); font-weight: bold;
+      color: var(--ink); margin-bottom: 6px;
+      text-align: center;}
+#calViewPeriod .info-empty {text-align: center; font-size: var(--fs-footnote);
+      color: var(--faint); padding: 6px 0;}
+#calViewPeriod .info-section-title {font-size: var(--fs-footnote); color: var(--faint);
+      letter-spacing: 1px; margin: 10px 0 6px;
+      text-transform: uppercase;}
+#calViewPeriod .info-tags {display: flex; flex-wrap: wrap; gap: 6px;}
+#calViewPeriod .info-tags.collapsed {max-height: 30px; overflow: hidden;}
+#calViewPeriod .info-toggle {margin-top: 8px; padding: 0; border: none; background: none;
+      color: var(--brand); font-size: var(--fs-footnote); font-weight: 600;
+      font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;}
+#calViewPeriod .info-toggle:active {opacity: 0.6;}
+#calViewPeriod .info-tag {display: inline-flex; align-items: center;
+      padding: 5px 10px; border-radius: var(--r-lg);
+      background: var(--line-soft); color: var(--body);
+      font-size: var(--fs-footnote); cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+      -webkit-user-select: none;}
+#calViewPeriod .info-tag.active {background: var(--brand-soft);
+      color: var(--brand-dark);
+      border-color: var(--brand);
+      font-weight: 600;}
+#calViewPeriod .info-tag .del {margin-left: 5px;
+      color: var(--disabled);
+      font-size: var(--fs-caption);
+      line-height: 1;}
+#calViewPeriod .info-tag .del:hover {color: #ef4444;}
+#calViewPeriod .info-add-row {display: flex; gap: 6px; margin-top: 8px;
+      position: relative;}
+#calViewPeriod .info-input {flex: 1; padding: 7px 10px;
+      border: 1px solid var(--line); border-radius: var(--r-sm);
+      font-size: var(--fs-caption); font-family: inherit;
+      outline: none;
+      -webkit-appearance: none;
+      min-width: 0;}
+#calViewPeriod .info-input:focus {border-color: var(--brand);}
+#calViewPeriod .info-add-btn {padding: 7px 14px; border: none; border-radius: var(--r-sm);
+      background: var(--brand); color: white;
+      font-size: var(--fs-footnote); cursor: pointer; font-weight: 600;
+      white-space: nowrap;}
+#calViewPeriod .add-flash {position: absolute;
+      right: 60px; top: 50%;
+      transform: translateY(-50%);
+      background: #10b981; color: white;
+      padding: 4px 10px; border-radius: var(--r-md);
+      font-size: var(--fs-footnote); font-weight: 600;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;}
+#calViewPeriod .add-flash.show {opacity: 1;
+      animation: flashPop 0.25s ease-out;}
+@keyframes flashPop {
+      0%   { transform: translateY(-50%) scale(0.7); }
+      60%  { transform: translateY(-50%) scale(1.1); }
+      100% { transform: translateY(-50%) scale(1); }
+    }
+#calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}
+#calViewPeriod .bottom-nav {position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
+      display: flex; align-items: center; gap: 6px;
+      
+      background: #FFFFFF;
+      border: none; border-top: 1px solid var(--line-soft);
+      border-top-left-radius: 20px; border-top-right-radius: 20px;
+      
+      box-shadow: 0 -4px 20px -4px rgba(70, 55, 75, 0.10);
+      padding: 7px 10px calc(8px + env(safe-area-inset-bottom));}
+#calViewPeriod .bnav-pill {flex: 1; display: flex; align-items: center; justify-content: space-between;
+      background: none; border-radius: 0; padding: 0; gap: 2px; box-shadow: none;}
+#calViewPeriod .bnav-tab {position: relative; flex: 1; height: 40px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      color: var(--faint); border-radius: 14px;   
+      background: none; border: none; cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: color .2s, background .25s, flex .28s cubic-bezier(.22,1,.36,1);}
+#calViewPeriod .bnav-tab.on {color: var(--brand);}
+#calViewPeriod .bnav-lbl {display: none;}
+#calViewPeriod .bnav-tab svg {width: 22px; height: 22px; flex: none; position: relative; z-index: 1;}
+#calViewPeriod .bnav-tab svg.ic-line {stroke: currentColor; fill: none;}
+#calViewPeriod .bnav-tab svg.ic-fill {fill: currentColor; stroke: none; display: none;}
+#calViewPeriod .bnav-tab.on svg.ic-line {display: none;}
+#calViewPeriod .bnav-tab.on svg.ic-fill {display: block;}
+#calViewPeriod .bnav-dot {position: absolute; top: 6px; right: calc(50% - 14px);
+      width: 7px; height: 7px; background: #f43f5e; border-radius: 50%;
+      opacity: 0; transition: opacity 0.3s;}
+#calViewPeriod .bnav-dot.show {opacity: 1;}
+#calViewPeriod .me-body .stcard {margin-top: var(--sp-card);}
+#calViewPeriod .me-tiles {display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;}
+#calViewPeriod .me-tile {background: var(--surface); box-shadow: var(--shadow-sm); border-radius: var(--r-lg); padding: var(--sp-3) var(--sp-1); text-align: center;}
+#calViewPeriod .me-tile .n {font-size: var(--fs-stat); font-weight: bold; color: var(--brand); font-variant-numeric: tabular-nums;}
+#calViewPeriod .me-tile .l {font-size: var(--fs-footnote); color: var(--muted); margin-top: 4px;}
+#calViewPeriod .me-row {display: flex; align-items: center; gap: 12px; width: 100%;
+      padding: 12px 2px; border: none; background: none; border-bottom: 1px solid var(--line-soft);
+      color: var(--ink); font-size: var(--fs-callout); font-family: inherit; cursor: pointer; text-align: left;}
+#calViewPeriod .me-row:last-child {border-bottom: 0;}
+#calViewPeriod .me-row:active {background: var(--line-soft);}
+#calViewPeriod .me-row .me-ic {font-size: var(--fs-subhead); width: 22px; text-align: center;}
+#calViewPeriod .me-row .me-tx {flex: 1;}
+#calViewPeriod .me-row .me-ar {color: var(--disabled); font-size: var(--fs-body);}
+#calViewPeriod .me-row.danger {color: var(--danger);}
+#calViewPeriod .me-row.danger .me-ar {color: var(--danger); opacity: .6;}
+#calViewPeriod .me-cta {margin: var(--sp-5) 0 0;}
+#calViewPeriod .me-clear {margin-top: var(--sp-5);}
+#calViewPeriod .me-btn {display: flex; align-items: center; gap: 12px;
+      width: 100%; padding: 13px var(--sp-3); border: none; border-radius: var(--r-md);
+      background: var(--surface-2); color: var(--ink); font-size: var(--fs-callout); font-family: inherit;
+      cursor: pointer; text-align: left;}
+#calViewPeriod .me-btn:active {background: var(--line-soft);}
+#calViewPeriod .me-btn .me-ic {font-size: var(--fs-subhead); width: 22px; text-align: center;}
+#calViewPeriod .me-btn .me-txt {flex: 1;}
+#calViewPeriod .me-btn .me-arrow {color: var(--disabled); font-size: var(--fs-body);}
+#calViewPeriod .me-btn.primary {background: var(--brand); color: #fff; font-weight: bold;}
+#calViewPeriod .me-btn.primary:active {background: var(--brand-dark);}
+#calViewPeriod .me-btn.danger {background: #fff1f2; color: var(--danger);}
+#calViewPeriod .me-btn.danger:active {background: #ffe4e6;}
+#calViewPeriod .me-cloud-dot {display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--faint);}
+#calViewPeriod .me-cloud-dot.ok {background: #4ade80;}
+#calViewPeriod .me-cloud-dot.err {background: #f87171;}
+#calViewPeriod .me-cloud-dot.busy {background: #fbbf24; animation: cloudPulse 0.8s infinite;}
+#calViewPeriod .me-foot {text-align: center; font-size: var(--fs-footnote); color: var(--disabled); margin-top: 18px;}
+#calViewPeriod .ce-row {display: flex; align-items: center; gap: 12px;
+      padding: 10px 4px; border-bottom: 1px solid var(--line-soft);}
+#calViewPeriod .ce-color {width: 40px; height: 40px; padding: 0; border: none; border-radius: var(--r-md);
+      background: none; cursor: pointer; flex: 0 0 auto;
+      -webkit-appearance: none; appearance: none;}
+#calViewPeriod .ce-color::-webkit-color-swatch-wrapper {padding: 0;}
+#calViewPeriod .ce-color::-webkit-color-swatch {border: 1px solid var(--line); border-radius: var(--r-md);}
+#calViewPeriod .ce-name {flex: 1; min-width: 0; box-sizing: border-box;
+      padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--r-sm);
+      font-size: var(--fs-callout); font-family: inherit; outline: none;}
+#calViewPeriod .ce-name:focus {border-color: var(--brand);}
+#calViewPeriod .ce-tag {flex: 0 0 44px; font-size: var(--fs-footnote); color: var(--faint); text-align: center;}
+#calViewPeriod .ce-actions {display: flex; gap: 10px; margin-top: 16px;}
+#calViewPeriod .ce-actions button {flex: 1; padding: 11px 0; border: none; border-radius: var(--r-sm);
+      font-size: var(--fs-callout); font-weight: 600; cursor: pointer; font-family: inherit;}
+#calViewPeriod .ce-reset {background: var(--line-soft); color: var(--body);}
+#calViewPeriod .ce-save {background: var(--brand); color: #fff;}
+#calViewPeriod .ce-hint {font-size: var(--fs-footnote); color: var(--faint); margin-top: 12px; line-height: 1.6;}
+#calViewPeriod .about-logo {text-align: center; font-size: var(--fs-display); margin: 4px 0 2px;}
+#calViewPeriod .about-name {text-align: center; font-size: var(--fs-subhead); font-weight: bold; color: var(--ink);}
+#calViewPeriod .about-ver {text-align: center; font-size: var(--fs-footnote); color: var(--faint); margin-bottom: 16px;}
+#calViewPeriod .about-row {display: flex; justify-content: space-between; padding: 8px 2px; border-bottom: 1px solid var(--line-soft); font-size: var(--fs-caption);}
+#calViewPeriod .about-row .k {color: var(--muted);}
+#calViewPeriod .about-row .v {color: var(--ink); font-weight: 600;}
+#calViewPeriod .about-note {font-size: var(--fs-footnote); color: var(--faint); line-height: 1.7; margin-top: 16px;
+      background: var(--surface-2); border-radius: var(--r-md); padding: 12px 14px;}
+#calViewPeriod .pred-dial-wrap {text-align: center; margin-top: 0;}
+#calViewPeriod .pred-dial {position: relative; width: 220px; height: 220px; margin: 0 auto;}
+#calViewPeriod .pred-dial svg {width: 220px; height: 220px; display: block;}
+#calViewPeriod .pd-arc {transition: stroke-dasharray 0.6s ease;}
+#calViewPeriod .pd-center {position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; pointer-events: none;}
+#calViewPeriod .pd-top {font-size: var(--fs-footnote); color: var(--faint); letter-spacing: 1px;}
+#calViewPeriod .pd-num {font-size: 52px; font-weight: 800; color: var(--ink); line-height: 1; margin-top: 2px;}
+#calViewPeriod .pd-num small {font-size: var(--fs-subhead); font-weight: 600; margin-left: 2px;}
+#calViewPeriod .pd-date {margin-top: 8px; font-size: var(--fs-footnote); color: var(--faint);}
+#calViewPeriod .pd-pill {margin-top: 8px; font-size: var(--fs-footnote); font-weight: 600; padding: 3px 12px;
+      border-radius: var(--r-md); background: #fff0f3; color: var(--brand);}
+#calViewPeriod .pd-legend {display: flex; justify-content: center; gap: 18px; margin-top: 12px;
+      font-size: var(--fs-footnote); color: var(--muted);}
+#calViewPeriod .pd-legend i {display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+      margin-right: 5px; vertical-align: middle;}
+#calViewPeriod .pd-note {font-size: var(--fs-footnote); color: var(--disabled); margin-top: 8px;}
+#calViewPeriod .stats-overlay.as-page {background: var(--grain), var(--bg-grad);
+      background-attachment: fixed, fixed; background-size: 140px 140px, cover; padding: 0;
+      -webkit-backdrop-filter: none; backdrop-filter: none; z-index: 70;}
+#calViewPeriod .stats-overlay.as-page.show {display: block;}
+#calViewPeriod .stats-overlay.as-page .stats-modal {width: 100%; max-width: none; height: 100%; max-height: none;
+      border-radius: 0; box-shadow: none; animation: none;
+      background: transparent; display: flex; flex-direction: column;}
+@keyframes pageIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+#calViewPeriod .stats-overlay.as-page.show .stats-modal {animation: pageIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);}
+#calViewPeriod .stats-overlay.as-page.show .stats-header {animation: pageHeadIn 0.28s ease;}
+@keyframes pageHeadIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+#calViewPeriod .stats-overlay.as-page.show .stats-modal, #calViewPeriod .stats-overlay.as-page.show .stats-header {animation: none;}
+}
+#calViewPeriod .stats-overlay.as-page .stats-header {position: relative;
+      justify-content: center;            
+      background: var(--frost); border-bottom: 1px solid rgba(199,31,55,.10);
+      padding: calc(14px + env(safe-area-inset-top)) var(--page-gutter) 14px;}
+#calViewPeriod .stats-overlay.as-page .stats-title {font-size: var(--fs-title); text-align: center;}
+#calViewPeriod .stats-overlay.as-page .page-back {position: absolute; right: var(--page-gutter);
+      top: calc(14px + env(safe-area-inset-top)); bottom: 14px;
+      margin: auto 0; height: 28px;}
+#calViewPeriod .stats-overlay.as-page .stats-body {flex: 1; overflow-y: auto; padding-bottom: 110px;}
+#calViewPeriod #statsOverlay .stats-body, #calViewPeriod #meOverlay .stats-body {padding-top: calc(14px + env(safe-area-inset-top));}
+#calViewPeriod .page-back {background: var(--line-soft); border: none; border-radius: var(--r-lg);
+      height: 28px; padding: 0 12px; font-size: var(--fs-caption); color: var(--body);
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px;}
+#calViewPeriod .heatmap-page {--hm0: #ecedf0; --hm1: #cfe1d7; --hm2: #86b5a0; --hm3: #407f66; --hm4: #164a3b;
+      --hm-accent: #1c5a48;
+      --hm-canvas: #F9FAFB;}
+#calViewPeriod .stats-overlay.as-page.heatmap-page {background: var(--grain), var(--hm-canvas);}
+#calViewPeriod .stats-overlay.as-page .hm-header {flex-direction: row; justify-content: space-between; align-items: center; gap: 12px;
+      border-bottom: none;
+      background: var(--hm-canvas);}
+#calViewPeriod .hm-yearbar {display: flex; align-items: center; justify-content: center; gap: 18px; margin: 0;}
+#calViewPeriod .hm-year {font-size: var(--fs-title); font-weight: bold; color: var(--ink); min-width: 66px; text-align: center;}
+#calViewPeriod .hm-nav {background: #FFFFFF; border: 1px solid rgba(0,0,0,0.07); border-radius: 50%;
+      width: 30px; height: 30px; box-sizing: border-box; position: relative;
+      font-size: 0; color: var(--muted); cursor: pointer; -webkit-tap-highlight-color: transparent;}
+#calViewPeriod .hm-nav:active {background: var(--line-soft);}
+#calViewPeriod .heatmap-page .stats-body {padding-top: 0;}
+#calViewPeriod .hm-sub {text-align: center; font-size: var(--fs-footnote); color: var(--faint); margin: 0 0 14px;}
+#calViewPeriod .hm-chips {display: flex; gap: 7px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      position: sticky; top: 0; z-index: 6; background: var(--hm-canvas);   
+      
+      margin: 0 calc(-1 * var(--page-gutter)) 14px; padding: 10px var(--page-gutter);
+      box-shadow: var(--shadow-card);}
+#calViewPeriod .hm-chips::-webkit-scrollbar {display: none;}
+#calViewPeriod .hm-chip {flex: 0 0 auto; font-size: var(--fs-footnote); padding: 6px var(--sp-3); border-radius: var(--r-full);
+      background: var(--line-soft); color: var(--muted); white-space: nowrap; cursor: pointer; border: none; font-family: inherit;}
+#calViewPeriod .hm-chip.on {background: #FFFFFF; color: var(--ink); font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.10);}
+#calViewPeriod .hm-tiles {display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-bottom: 0;}
+#calViewPeriod .hm-tile {background: var(--surface); box-shadow: var(--shadow-sm); border-radius: var(--r-lg); padding: 12px 6px; text-align: center;}
+#calViewPeriod .hm-tile .n {font-size: var(--fs-stat); font-weight: 800; color: var(--hm-accent); line-height: 1.15;}
+#calViewPeriod .hm-tile .n small {font-size: var(--fs-footnote); font-weight: 700;}
+#calViewPeriod .hm-tile .l {font-size: var(--fs-footnote); color: var(--muted); margin-top: 4px;}
+#calViewPeriod .hm-year-grid {display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 14px;}
+#calViewPeriod .hm-mini .mt {font-size: var(--fs-callout); color: var(--ink); font-weight: bold; margin-bottom: 4px; text-align: center;}
+#calViewPeriod .hm-mini .wk, #calViewPeriod .hm-mini .dd {display: grid; grid-template-columns: repeat(7, 21px); row-gap: 3px; column-gap: 2px; justify-content: center;}
+#calViewPeriod .hm-mini .wk div {text-align: center; font-size: var(--fs-footnote); color: var(--faint); margin-bottom: 3px;}
+#calViewPeriod .hm-cellwrap {aspect-ratio: 1;}
+#calViewPeriod .hm-cell {width: 100%; height: 100%; border-radius: 5px; background: var(--hm0);
+      display: flex; align-items: center; justify-content: center; font-size: var(--fs-footnote); color: var(--ink-2);}
+#calViewPeriod .hm-cell.dark {color: rgba(255,255,255,.92);}
+#calViewPeriod .hm-cell.empty {background: transparent;}
+#calViewPeriod .hm-dist {margin-top: 20px; padding-top: 16px; border-top: 1px solid #eef0f3;}
+#calViewPeriod .stcard .hm-dist {margin-top: 0; padding-top: 0; border-top: 0;}
+#calViewPeriod .hm-distbar {display: flex; height: 9px; border-radius: 5px; overflow: hidden; margin-bottom: 12px;}
+#calViewPeriod .hm-distbar div:not(:last-child) {margin-right: 1px;}
+#calViewPeriod .hm-distlegend {display: flex; flex-direction: column; gap: 7px;}
+#calViewPeriod .hm-dl {display: flex; align-items: center; gap: 8px; font-size: var(--fs-footnote); color: var(--muted);}
+#calViewPeriod .hm-dl .sw {width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto;}
+#calViewPeriod .hm-dl b {color: var(--ink);}
+#calViewPeriod .hm-empty {text-align: center; color: var(--faint); font-size: var(--fs-caption); padding: 40px 10px; line-height: 1.8;}
+#calViewPeriod .hm-viewtoggle {position: relative; display: flex; width: auto; flex: 0 0 auto; background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-full); padding: 3px;}
+#calViewPeriod .hm-vt-thumb {position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+      background: var(--line-soft); border-radius: var(--r-full); box-shadow: none;
+      transform: translateX(0);}
+#calViewPeriod .hm-vt {position: relative; z-index: 1; flex: 0 0 auto; border: none; background: transparent; font-family: inherit;
+      font-size: var(--fs-footnote); font-weight: 600; color: var(--muted); padding: 5px 11px;
+      border-radius: var(--r-full); cursor: pointer; transition: color .32s ease;
+      -webkit-appearance: none; appearance: none; outline: none;
+      -webkit-tap-highlight-color: transparent;   
+      user-select: none; -webkit-user-select: none;}
+#calViewPeriod .hm-vt.on {color: var(--ink);}
+#calViewPeriod #hmContent {overflow: hidden;}
+@media (prefers-reduced-motion: no-preference) {
+#calViewPeriod .hm-vt-thumb {transition: transform .40s cubic-bezier(.22,.61,.36,1);}
+#calViewPeriod .hm-layer.hm-enter-fwd {animation: hmSlideInR .34s cubic-bezier(.22,.61,.36,1) both;}
+#calViewPeriod .hm-layer.hm-enter-back {animation: hmSlideInL .34s cubic-bezier(.22,.61,.36,1) both;}
+}
+@keyframes hmSlideInR { from { opacity:0; transform: translateX(8%);  } to { opacity:1; transform: translateX(0); } }
+@keyframes hmSlideInL { from { opacity:0; transform: translateX(-8%); } to { opacity:1; transform: translateX(0); } }
+#calViewPeriod .hm-tagcards {display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; margin-top: var(--sp-card);}
+#calViewPeriod .hm-tcard {background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--r-lg);
+      box-shadow: var(--shadow-sm); padding: 12px 11px 11px;
+      
+      min-width: 0;}
+#calViewPeriod .hm-tc-head {margin-bottom: 2px;}
+#calViewPeriod .hm-tc-name {font-size: var(--fs-callout); font-weight: 700; color: var(--ink);
+      display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+#calViewPeriod .hm-tc-meta {font-size: var(--fs-footnote); color: var(--muted); margin: 0 0 9px;}
+#calViewPeriod .hm-tc-meta b {color: var(--hm-accent); font-weight: 700;}
+#calViewPeriod .hm-tc-wk {display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 3px;}
+#calViewPeriod .hm-tc-wk div {text-align: center; font-size: 9px; color: var(--faint);}
+#calViewPeriod .hm-tc-dd {display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;}
+#calViewPeriod .hm-tc-cell {aspect-ratio: 1; border-radius: 4px; background: var(--hm0); display: flex;
+      align-items: center; justify-content: center; font-size: 9px; color: var(--ink-2);}
+#calViewPeriod .hm-tc-cell.on {background: var(--hm4); color: rgba(255,255,255,.94); font-weight: 600;}
+#calViewPeriod .hm-tc-cell.today {outline: 2px solid var(--brand); outline-offset: -2px;}
+#calViewPeriod .hm-tc-cell.empty {background: transparent;}
+#calViewPeriod .hm-empty-center {display: flex; align-items: center; justify-content: center; min-height: 55vh; padding: 0;}
+#calViewPeriod .home-viewtoggle {position: relative; display: flex; width: auto; flex: 0 0 auto;
+      
+      background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-full); padding: 3px; margin: 0;}
+#calViewPeriod .hvt-thumb {position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+      
+      background: var(--line-soft); border-radius: var(--r-full); box-shadow: none;
+      transform: translateX(0); transition: transform .35s cubic-bezier(.22,.61,.36,1);}
+#calViewPeriod .hvt-thumb.year {transform: translateX(100%);}
+#calViewPeriod .hvt {position: relative; z-index: 1; flex: 0 0 auto; border: none; background: transparent; font-family: inherit;
+      font-size: var(--fs-footnote); font-weight: 600; color: var(--muted); padding: 5px 11px;
+      border-radius: var(--r-full); cursor: pointer; transition: color .3s;
+      -webkit-appearance: none; appearance: none; outline: none;
+      -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;}
+#calViewPeriod .hvt.on {color: var(--ink);}
+@media (prefers-reduced-motion: no-preference) {
+#calViewPeriod #calendar.cal-enter-fwd {animation: hmSlideInR .34s cubic-bezier(.22,.61,.36,1) both;}
+#calViewPeriod #calendar.cal-enter-back {animation: hmSlideInL .34s cubic-bezier(.22,.61,.36,1) both;}
+}
+#calViewPeriod .calendar-container.month-view {display: block; margin: 0 var(--page-gutter);}
+#calViewPeriod .calendar-container.year-view {display: grid; grid-template-columns: repeat(2, 1fr);}
+#calViewPeriod .calendar-container.month-view .month {background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
+      padding: 6px 12px 16px;}
+#calViewPeriod .calendar-container.month-view .month, #calViewPeriod .calendar-container.month-view .day-info-bar, #calViewPeriod .calendar-container.month-view .day-status-bar, #calViewPeriod .stcard, #calViewPeriod .me-tile, #calViewPeriod .hm-tile, #calViewPeriod .hm-tcard {background: #FFFFFF;
+      border: 1px solid var(--line);
+      box-shadow: none;}
+#calViewPeriod .mv-head {display: flex; align-items: center; margin: 8px 0 12px;}
+#calViewPeriod .mv-nav {background: none; border: none; flex: 1 1 0; height: 40px; position: relative;
+      font-size: 0; color: var(--muted); cursor: pointer;
+      -webkit-tap-highlight-color: transparent;}
+#calViewPeriod .mv-nav:active {color: var(--ink);}
+#calViewPeriod .mv-title {font-size: var(--fs-subhead); font-weight: 700; flex: 0 0 auto; text-align: center; color: var(--ink);}
+#calViewPeriod .calendar-container.month-view .weekdays {grid-template-columns: repeat(7, 1fr); font-size: var(--fs-caption);
+      margin-bottom: 8px; column-gap: 4px; padding: 0 2px;}
+#calViewPeriod .calendar-container.month-view .days {grid-template-columns: repeat(7, 1fr); grid-auto-rows: auto; min-height: 0;
+      row-gap: 4px; column-gap: 4px; padding: 0 2px;}
+#calViewPeriod .calendar-container.month-view .day {width: 100%; height: 38px; border-radius: 10px; font-size: var(--fs-body);}
+#calViewPeriod .calendar-container.year-view .month {cursor: pointer;}
+#calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
+#calViewPeriod .calendar-container.year-view .days {grid-auto-rows: auto; min-height: 0; row-gap: 2px;}
+#calViewPeriod .calendar-container.year-view .day {width: 100%; height: auto; aspect-ratio: 1; border-radius: 5px; font-size: var(--fs-footnote);}
+#calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
+#calViewPeriod .daywrap.empty {visibility: hidden;}
+#calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
+#calViewPeriod .rec-dot {width: 6px; height: 6px; border-radius: 50%; background: var(--brand); display: none;}
+#calViewPeriod .daywrap.has-rec .rec-dot {display: block;}
+#calViewPeriod .calendar-container.year-view .dot-slot {height: 5px; margin-top: 1px;}
+#calViewPeriod .calendar-container.year-view .rec-dot {width: 3px; height: 3px;}
+#calViewPeriod .calendar-container.month-view .day.today, #calViewPeriod .calendar-container.year-view  .day.today {box-shadow: inset 0 0 0 2px var(--brand);}
+#calViewPeriod .calendar-container.month-view .sym-list {display: block; margin: var(--sp-card) 0 2px; padding: 16px 14px;
+      background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
+#calViewPeriod .calendar-container.month-view .color-palette {margin-left: 4px; margin-right: 4px;}
 </style>
 </head>
 <body>
@@ -2031,6 +2831,15 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 <!-- ===== CALENDAR MODAL ===== -->
 <div class="cal-overlay" id="calOverlay" onclick="if(event.target===this)closeCalendar()">
   <div class="cal-modal">
+    <div class="cal-viewbar">
+      <div class="cal-viewtitle">日历</div>
+      <div class="cal-vtoggle" role="tablist" aria-label="视图切换">
+        <span class="cvt-thumb" id="cvtThumb"></span>
+        <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
+        <button class="cvt" data-cv="period" onclick="setCalView('period')">经期</button>
+      </div>
+    </div>
+    <div id="calViewCalendar" class="cal-view">
     <div class="cal-hdr">
       <div class="cal-titlenav">
         <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月">‹</button>
@@ -2085,6 +2894,43 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       </div>
       <div id="calDetailList"></div>
     </div>
+    </div><!-- /#calViewCalendar -->
+    <div id="calViewPeriod" style="display:none">
+      <div class="home-sticky">
+        <div class="home-header">
+          <div class="hm-yearbar">
+            <button class="hm-nav prev" onclick="PV.changeYear(-1)" aria-label="上一年"></button>
+            <div class="hm-year home-year" id="yearLabel" onclick="PV.openYearPicker()">2026</div>
+            <button class="hm-nav next" onclick="PV.changeYear(1)" aria-label="下一年"></button>
+          </div>
+          <div class="home-header-right">
+            <div class="home-filter" id="homeFilter">
+              <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选症状">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+              </button>
+              <div class="home-filter-menu" id="homeFilterMenu"></div>
+            </div>
+            <div class="home-viewtoggle" id="homeViewToggle">
+              <div class="hvt-thumb" id="hvtThumb"></div>
+              <button class="hvt on" data-view="month" onclick="PV.setHomeView('month')">月</button>
+              <button class="hvt" data-view="year" onclick="PV.setHomeView('year')">年</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="year-picker-overlay" id="yearPickerOverlay" onclick="PV.closeYearPicker(event)">
+        <div class="year-picker-sheet">
+          <div class="year-picker-title">选择年份</div>
+          <div class="year-picker-list" id="yearPickerList"></div>
+        </div>
+      </div>
+      <div id="calendar" class="calendar-container"></div>
+      <div id="bottomLegend">
+        <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
+        <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -4595,6 +5441,941 @@ var qrcode = function() {
 
 </script>
 <script>
+const PERIOD_SEED = {"ALL_DATA":{"2021-1-18":2,"2021-1-19":2,"2021-1-20":2,"2021-1-21":2,"2021-1-22":2,"2021-1-23":2,"2021-1-24":2,"2021-1-25":2,"2021-1-26":2,"2021-3-4":2,"2021-3-5":2,"2021-3-6":2,"2021-3-7":2,"2021-3-8":2,"2021-3-9":2,"2021-3-10":2,"2021-3-11":2,"2021-3-12":2,"2021-4-16":2,"2021-4-17":2,"2021-4-18":2,"2021-4-19":2,"2021-4-20":2,"2021-4-21":2,"2021-4-22":2,"2021-4-23":2,"2021-4-24":2,"2021-5-29":2,"2021-5-30":2,"2021-5-31":2,"2021-6-1":2,"2021-6-2":2,"2021-6-3":2,"2021-6-4":2,"2021-6-5":2,"2021-6-6":2,"2021-7-2":2,"2021-7-3":2,"2021-7-4":2,"2021-7-5":2,"2021-7-6":2,"2021-7-7":2,"2021-7-8":2,"2021-7-9":2,"2021-7-10":2,"2021-7-11":2,"2021-8-3":2,"2021-8-4":2,"2021-8-5":2,"2021-8-6":2,"2021-8-7":2,"2021-8-8":2,"2021-8-9":2,"2021-8-10":2,"2021-8-11":2,"2021-9-5":2,"2021-9-6":2,"2021-9-7":2,"2021-9-8":2,"2021-9-9":2,"2021-9-10":2,"2021-9-11":2,"2021-9-12":2,"2021-9-13":2,"2021-10-12":2,"2021-10-13":2,"2021-10-14":2,"2021-10-15":2,"2021-10-16":2,"2021-10-17":2,"2021-10-18":2,"2021-10-19":2,"2021-10-20":2,"2021-11-14":2,"2021-11-15":2,"2021-11-16":2,"2021-11-17":2,"2021-11-18":2,"2021-11-19":2,"2021-11-20":2,"2021-11-21":2,"2021-12-20":2,"2021-12-21":2,"2021-12-22":2,"2021-12-23":2,"2021-12-24":2,"2021-12-25":2,"2021-12-26":2,"2021-12-27":2,"2022-1-19":2,"2022-1-20":2,"2022-1-21":2,"2022-1-22":2,"2022-1-23":2,"2022-1-24":2,"2022-1-25":2,"2022-1-26":2,"2022-1-27":2,"2022-2-20":2,"2022-2-21":2,"2022-2-22":2,"2022-2-23":2,"2022-2-24":2,"2022-2-25":2,"2022-2-26":2,"2022-2-27":2,"2022-3-28":2,"2022-3-29":2,"2022-3-30":2,"2022-3-31":2,"2022-4-1":2,"2022-4-2":2,"2022-4-3":2,"2022-4-4":2,"2022-4-5":2,"2022-5-1":2,"2022-5-2":2,"2022-5-3":2,"2022-5-4":2,"2022-5-5":2,"2022-5-6":2,"2022-5-7":2,"2022-5-8":2,"2022-5-9":2,"2022-5-10":2,"2022-5-11":2,"2022-5-26":2,"2022-5-27":2,"2022-5-28":2,"2022-5-29":2,"2022-5-30":2,"2022-5-31":2,"2022-6-1":2,"2022-6-2":2,"2022-6-21":2,"2022-6-22":2,"2022-6-23":2,"2022-6-24":2,"2022-6-25":2,"2022-6-26":2,"2022-6-27":2,"2022-6-28":2,"2022-6-29":2,"2022-7-8":2,"2022-7-9":2,"2022-7-10":2,"2022-7-11":2,"2022-7-12":2,"2022-7-13":2,"2022-7-14":2,"2022-7-25":2,"2022-7-26":2,"2022-7-27":2,"2022-7-28":2,"2022-7-29":2,"2022-7-30":2,"2022-7-31":2,"2022-8-1":2,"2022-8-9":2,"2022-8-10":2,"2022-8-11":2,"2022-8-12":2,"2022-8-13":2,"2022-8-14":2,"2022-8-15":2,"2022-9-7":2,"2022-9-8":2,"2022-9-9":2,"2022-9-10":2,"2022-9-11":2,"2022-9-12":2,"2022-9-13":2,"2022-9-14":2,"2022-9-15":2,"2022-10-11":2,"2022-10-12":2,"2022-10-13":2,"2022-10-14":2,"2022-10-15":2,"2022-10-16":2,"2022-10-17":2,"2022-10-18":2,"2022-11-1":2,"2022-11-2":2,"2022-11-3":2,"2022-11-4":2,"2022-11-5":2,"2022-11-12":2,"2022-11-13":2,"2022-11-14":2,"2022-11-15":2,"2022-11-16":2,"2022-11-17":2,"2022-11-18":2,"2022-11-19":2,"2022-11-20":2,"2022-11-25":2,"2022-11-26":2,"2022-11-27":2,"2022-12-1":2,"2022-12-2":2,"2022-12-3":2,"2022-12-19":2,"2022-12-20":2,"2022-12-21":2,"2022-12-22":2,"2022-12-23":2,"2022-12-24":2,"2022-12-25":2,"2022-12-26":2,"2022-12-27":2,"2022-12-28":2,"2022-12-29":2,"2022-12-30":2,"2023-1-8":2,"2023-1-9":2,"2023-1-10":2,"2023-1-11":2,"2023-1-12":2,"2023-1-13":2,"2023-1-14":2,"2023-1-15":2,"2023-1-16":2,"2023-2-7":2,"2023-2-8":2,"2023-2-9":2,"2023-2-10":2,"2023-2-11":2,"2023-2-12":2,"2023-2-13":2,"2023-2-14":2,"2023-2-15":2,"2023-3-15":2,"2023-3-16":2,"2023-3-17":2,"2023-3-18":2,"2023-3-19":2,"2023-3-20":2,"2023-3-21":2,"2023-3-22":2,"2023-4-1":2,"2023-4-2":2,"2023-4-3":2,"2023-4-4":2,"2023-4-5":2,"2023-4-26":2,"2023-4-27":2,"2023-4-28":2,"2023-4-29":2,"2023-4-30":2,"2023-5-1":2,"2023-5-2":2,"2023-5-25":2,"2023-5-26":2,"2023-5-27":2,"2023-5-28":2,"2023-5-29":2,"2023-5-30":2,"2023-5-31":2,"2023-6-1":2,"2023-6-26":2,"2023-6-27":2,"2023-6-28":2,"2023-6-29":2,"2023-6-30":2,"2023-7-1":2,"2023-7-2":2,"2023-7-3":2,"2023-7-4":2,"2023-7-5":2,"2023-7-6":2,"2023-7-7":2,"2023-7-8":2,"2023-7-9":2,"2023-8-3":2,"2023-8-4":2,"2023-8-5":2,"2023-8-6":2,"2023-8-7":2,"2023-8-8":2,"2023-8-9":2,"2023-8-10":2,"2023-8-11":2,"2023-9-3":2,"2023-9-4":2,"2023-9-5":2,"2023-9-6":2,"2023-9-7":2,"2023-9-8":2,"2023-9-9":2,"2023-9-10":2,"2023-9-11":2,"2023-9-23":2,"2023-9-24":2,"2023-9-25":2,"2023-9-26":2,"2023-9-27":2,"2023-9-28":2,"2023-9-29":2,"2023-9-30":2,"2023-10-1":2,"2023-10-17":2,"2023-10-18":2,"2023-10-19":2,"2023-10-20":2,"2023-10-21":2,"2023-10-22":2,"2023-10-23":2,"2023-10-24":2,"2023-10-25":2,"2023-11-9":2,"2023-11-10":2,"2023-11-11":2,"2023-11-12":2,"2023-11-13":2,"2023-11-14":2,"2023-11-15":2,"2023-11-16":2,"2023-12-1":2,"2023-12-2":2,"2023-12-3":2,"2023-12-4":2,"2023-12-5":2,"2023-12-6":2,"2023-12-7":2,"2024-1-6":2,"2024-1-7":2,"2024-1-8":2,"2024-1-9":2,"2024-1-10":2,"2024-1-11":2,"2024-1-12":2,"2024-1-13":2,"2024-2-1":2,"2024-2-2":2,"2024-2-3":2,"2024-2-4":2,"2024-2-5":2,"2024-2-6":2,"2024-2-7":2,"2024-2-8":2,"2024-2-9":2,"2024-3-9":2,"2024-3-10":2,"2024-3-11":2,"2024-3-12":2,"2024-3-13":2,"2024-3-14":2,"2024-3-15":2,"2024-3-16":2,"2024-3-17":2,"2024-3-18":2,"2024-3-19":2,"2024-3-20":2,"2024-4-8":2,"2024-4-9":2,"2024-4-10":2,"2024-4-11":2,"2024-4-12":2,"2024-4-13":2,"2024-4-14":2,"2024-4-15":2,"2024-4-22":2,"2024-4-23":2,"2024-4-24":2,"2024-4-25":2,"2024-4-26":2,"2024-4-27":2,"2024-4-28":2,"2024-4-29":2,"2024-4-30":2,"2024-5-11":2,"2024-5-12":2,"2024-5-13":2,"2024-5-14":2,"2024-5-15":2,"2024-5-16":2,"2024-5-17":2,"2024-5-18":2,"2024-5-24":2,"2024-5-25":2,"2024-5-26":2,"2024-5-27":2,"2024-5-28":2,"2024-5-29":2,"2024-6-13":2,"2024-6-14":2,"2024-6-15":2,"2024-6-16":2,"2024-6-17":2,"2024-6-18":2,"2024-6-19":2,"2024-6-20":2,"2024-6-21":2,"2024-6-22":2,"2024-6-23":2,"2024-7-17":2,"2024-7-18":2,"2024-7-19":2,"2024-7-20":2,"2024-7-21":2,"2024-7-22":2,"2024-7-23":2,"2024-7-24":2,"2024-8-19":2,"2024-8-20":2,"2024-8-21":2,"2024-8-22":2,"2024-8-23":2,"2024-8-24":2,"2024-8-25":2,"2024-8-26":2,"2024-9-23":2,"2024-9-24":2,"2024-9-25":2,"2024-9-26":2,"2024-9-27":2,"2024-9-28":2,"2024-9-29":2,"2024-9-30":2,"2024-10-22":2,"2024-10-23":2,"2024-10-24":2,"2024-10-25":2,"2024-10-26":2,"2024-10-27":2,"2024-10-28":2,"2024-10-29":2,"2024-10-30":2,"2024-11-19":2,"2024-11-20":2,"2024-11-21":2,"2024-11-22":2,"2024-11-23":2,"2024-11-24":2,"2024-12-22":2,"2024-12-23":2,"2024-12-24":2,"2024-12-25":2,"2024-12-26":2,"2024-12-27":2,"2024-12-28":2,"2024-12-29":2,"2025-1-21":4,"2025-1-22":1,"2025-1-23":1,"2025-1-24":1,"2025-1-25":1,"2025-1-26":1,"2025-1-27":1,"2025-1-28":1,"2025-1-29":1,"2025-2-24":1,"2025-2-25":1,"2025-2-26":1,"2025-2-27":1,"2025-2-28":1,"2025-3-1":1,"2025-3-2":1,"2025-3-3":1,"2025-4-7":1,"2025-4-8":1,"2025-4-9":1,"2025-4-10":1,"2025-4-11":1,"2025-4-12":1,"2025-4-13":1,"2025-4-14":1,"2025-5-8":1,"2025-5-9":1,"2025-5-10":1,"2025-5-11":1,"2025-5-12":1,"2025-5-13":1,"2025-5-14":1,"2025-5-15":1,"2025-6-13":1,"2025-6-14":1,"2025-6-15":1,"2025-6-16":1,"2025-6-17":1,"2025-6-18":1,"2025-6-19":1,"2025-7-26":1,"2025-7-27":1,"2025-7-28":1,"2025-7-29":1,"2025-7-30":1,"2025-7-31":1,"2025-8-1":1,"2025-8-2":1,"2025-8-3":1,"2025-8-4":1,"2025-8-10":1,"2025-8-11":1,"2025-8-12":1,"2025-8-13":1,"2025-8-14":1,"2025-8-15":1,"2025-8-16":1,"2025-8-17":1,"2025-9-5":1,"2025-9-6":1,"2025-9-7":1,"2025-9-8":1,"2025-9-9":1,"2025-9-10":1,"2025-9-11":1,"2025-9-19":1,"2025-9-21":1,"2025-10-10":1,"2025-10-11":1,"2025-10-12":1,"2025-10-13":1,"2025-10-14":1,"2025-10-15":1,"2025-10-24":1,"2025-10-25":1,"2025-10-26":1,"2025-10-27":1,"2025-10-28":1,"2025-10-29":1,"2025-10-30":1,"2025-10-31":1,"2025-11-9":1,"2025-11-10":3,"2025-11-11":2,"2025-11-12":2,"2025-11-13":1,"2025-11-14":1,"2025-11-15":1,"2025-11-16":1,"2025-12-3":1,"2026-1-1":2,"2026-1-2":2,"2026-1-3":2,"2026-1-24":2,"2026-1-25":3,"2026-2-10":2,"2026-2-11":3,"2026-2-12":2,"2026-2-13":2,"2026-2-14":2,"2026-2-15":1,"2026-3-5":3,"2026-3-6":3,"2026-3-7":2,"2026-3-8":2,"2026-4-15":1,"2026-4-16":2,"2026-4-17":3,"2026-4-30":1,"2026-5-1":3,"2026-5-2":2,"2026-5-3":2,"2026-5-4":1,"2026-5-5":1,"2026-5-15":1,"2026-5-14":4,"2026-4-29":4,"2026-5-6":1,"2026-4-20":1,"2026-4-21":1,"2026-4-24":4,"2026-4-22":4,"2026-4-23":4,"2026-4-19":1,"2026-4-18":2,"2026-4-14":1,"2026-4-13":4,"2026-3-13":4,"2026-3-12":1,"2026-3-11":1,"2026-3-10":1,"2026-3-9":1,"2026-1-22":4,"2026-1-23":1,"2026-1-26":2,"2026-1-27":1,"2026-1-28":1,"2026-1-29":4,"2026-1-30":4,"2026-1-4":1,"2026-1-5":1,"2026-1-6":1,"2026-1-7":1,"2025-12-31":1,"2025-12-1":1,"2025-12-2":1,"2025-11-30":2,"2025-11-29":2,"2025-11-28":3,"2025-11-27":3,"2025-11-26":1,"2025-3-17":4,"2025-8-8":4,"2025-8-9":4,"2025-9-4":1,"2025-9-20":1,"2025-9-22":1,"2025-9-23":1,"2025-9-24":1,"2025-9-25":1,"2025-10-1":4,"2025-10-2":4,"2025-10-3":4,"2025-10-4":4,"2025-10-5":4,"2025-10-6":4,"2025-10-7":4,"2025-10-8":4,"2025-2-8":4,"2025-6-22":4,"2025-4-6":4,"2024-2-18":4,"2024-6-29":4,"2020-1-28":1,"2020-2-29":1,"2020-4-8":1,"2020-5-8":1,"2020-6-11":1,"2020-6-26":1,"2020-7-16":1,"2020-8-2":1,"2020-8-21":1,"2020-9-21":1,"2020-11-2":1,"2020-11-15":1,"2020-12-1":1,"2020-12-20":1,"2025-6-23":4,"2025-6-24":4,"2025-9-17":4,"2025-9-18":4,"2025-10-9":4,"2025-10-23":4,"2025-11-25":4,"2025-12-15":4,"2025-12-30":4,"2026-1-20":4,"2026-1-21":4,"2026-2-9":4,"2026-5-16":3,"2026-5-17":2,"2026-5-18":2,"2026-5-19":1,"2026-5-20":1,"2026-5-21":4,"2026-5-22":4},"SYMPTOMS_LIB":["头痛","腹痛","腰酸","乳房胀痛","情绪低落","疲倦","失眠","妇科检查","流鼻血"],"SYMPTOMS_DATA":{"2026-4-29":["妇科检查"],"2026-3-9":["妇科检查"],"2026-6-2":["腰酸"],"2026-1-20":["流鼻血"],"2026-1-22":["流鼻血"],"2026-1-24":["流鼻血"],"2026-3-18":["流鼻血"],"2026-3-19":["流鼻血"],"2026-3-20":["流鼻血"],"2026-4-27":["流鼻血"],"2026-7-14":["流鼻血"],"2025-8-22":["流鼻血"],"2025-8-27":["流鼻血"],"2025-9-5":["流鼻血"],"2025-11-24":["流鼻血"],"2025-12-11":["流鼻血"],"2025-12-22":["流鼻血"],"2024-5-17":["流鼻血"],"2025-4-30":["流鼻血"],"2025-6-3":["流鼻血"],"2025-6-18":["流鼻血"],"2025-8-10":["流鼻血"]},"PALETTE":{"1":{"name":"POCO","color":"#FFD5DC"},"2":{"name":"MEDIO","color":"#cf4865"},"3":{"name":"MUCHO","color":"#834047"},"4":{"name":"GOTAS","color":"#CBD5E1"}}};
+
+// ══════════════════════════════════════════════════════════════════
+// 经期视图 (Period View) —— 移植自独立「经期日历」App 的第一页
+// 全部逻辑封装在 PV 命名空间内，避免与 my-list 全局作用域冲突。
+// 数据 (ALL_DATA / SYMPTOMS_LIB / SYMPTOMS_DATA / PALETTE) 由 my-list
+// 通过 PV.init(store) 注入，改动经 persist() 回写 localStorage 并触发同步。
+// ══════════════════════════════════════════════════════════════════
+window.PV = (function(){
+  'use strict';
+
+  // ── 注入的数据引用（指向 my-list 的 periodData，原地增删即可被同步捕获）──
+  let ALL_DATA = {}, SYMPTOMS_LIB = [], SYMPTOMS_DATA = {}, PALETTE = {};
+
+  // ── 首页视图状态 ──
+  let year = new Date().getFullYear();
+  let unsaved = false;
+  let homeView = 'month';            // 'month' 单月 | 'year' 全年
+  let homeSwapDir = null;
+  let viewMonth = new Date().getMonth() + 1;
+
+  // ── 持久化：改动回写 my-list（localStorage + 自动 Gist 同步）──
+  function persist(){ if (typeof window.pvPersist === 'function') window.pvPersist(); }
+
+  // ── 提示：复用 my-list 的 toast ──
+  function showToast(msg){ if (typeof window.toast === 'function') window.toast(msg); }
+  // 未保存红点：经期视图不用独立保存按钮，置空
+  function setUnsavedDots(){}
+
+  function getLevel(y, m, d){ return ALL_DATA[`${y}-${m}-${d}`] || 0; }
+  function setLevel(y, m, d, val){
+    const key = `${y}-${m}-${d}`;
+    if (val === 0) delete ALL_DATA[key];
+    else ALL_DATA[key] = val;
+    persist();
+  }
+
+
+    // ── 年份切换 ──
+    function changeYear(delta) {
+      year += delta;
+      document.getElementById('yearLabel').textContent = year;
+      render();
+    }
+
+    function openYearPicker() {
+      const list = document.getElementById('yearPickerList');
+      const cur = new Date().getFullYear();
+      list.innerHTML = '';
+      for (let y = cur + 2; y >= 2020; y--) {
+        const item = document.createElement('div');
+        item.className = 'year-picker-item' + (y === year ? ' active' : '');
+        item.textContent = y;
+        item.onclick = () => selectYear(y);
+        list.appendChild(item);
+      }
+      document.getElementById('yearPickerOverlay').classList.add('show');
+      setTimeout(() => {
+        const active = list.querySelector('.active');
+        if (active) active.scrollIntoView({ block: 'center' });
+      }, 50);
+    }
+
+    function closeYearPicker(e) {
+      if (e.target === document.getElementById('yearPickerOverlay'))
+        document.getElementById('yearPickerOverlay').classList.remove('show');
+    }
+
+    function selectYear(y) {
+      year = y;
+      document.getElementById('yearLabel').textContent = year;
+      document.getElementById('yearPickerOverlay').classList.remove('show');
+      render();
+    }
+
+    // ── 渲染 ──
+    function getLevelClass(l) {
+      return l===4?'level-g':l===1?'level-1':l===2?'level-2':l===3?'level-3':'';
+    }
+
+    // 首页症状标签筛选(置顶标签条)：'全部' 或某个标签名 → 高亮当年记过该标签的日期
+    let homeSymFilter = '全部';
+    function renderHomeChips() {
+      const wrap = document.getElementById('homeFilter');
+      const btn = document.getElementById('homeFilterBtn');
+      const menu = document.getElementById('homeFilterMenu');
+      if (!wrap || !btn || !menu) return;
+      if (!SYMPTOMS_LIB || SYMPTOMS_LIB.length === 0) { wrap.style.display = 'none'; return; }
+      wrap.style.display = '';
+      const names = ['全部'].concat(SYMPTOMS_LIB);
+      menu.innerHTML = names.map(n =>
+        `<div class="home-filter-item${n === homeSymFilter ? ' on' : ''}" data-name="${escapeAttr(n)}">${escapeHtml(n)}</div>`
+      ).join('');
+      menu.querySelectorAll('.home-filter-item').forEach(el => {
+        el.onclick = () => { closeHomeFilter(); setHomeSymFilter(el.dataset.name); };
+      });
+      btn.classList.toggle('act', homeSymFilter !== '全部');
+    }
+    // 头部筛选下拉:开合与关闭(按钮同步 .open 态,呈现淡灰底反馈)
+    function toggleHomeFilter(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('homeFilterMenu');
+      const btn = document.getElementById('homeFilterBtn');
+      if (!menu) return;
+      const open = menu.classList.toggle('show');
+      if (btn) btn.classList.toggle('open', open);
+    }
+    function closeHomeFilter() {
+      const menu = document.getElementById('homeFilterMenu');
+      const btn = document.getElementById('homeFilterBtn');
+      if (menu) menu.classList.remove('show');
+      if (btn) btn.classList.remove('open');
+    }
+    // 点击下拉之外的地方收起
+    document.addEventListener('click', (e) => {
+      const f = document.getElementById('homeFilter');
+      if (f && !f.contains(e.target)) closeHomeFilter();
+    });
+    function setHomeSymFilter(name) {
+      homeSymFilter = name;
+      render();
+      // 选中具体标签时，自动跳到当年第一个高亮日期(rAF 等新 DOM 布局完成)
+      if (homeSymFilter !== '全部') {
+        requestAnimationFrame(() => {
+          const first = document.querySelector('#calendar .day.sym-hit');
+          if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          else showToast(`「${homeSymFilter}」${year} 年还没有记录`);
+        });
+      }
+    }
+
+    // 生成一个月的卡片。withNav=true 时(月视图)月头带 ‹ 月 › 翻月按钮。
+    // 每个日期 = 外壳 .daywrap(竖排):上为带色块的 .day,下为圆点槽(有记录才显示)。
+    function generateMonth(month, withNav) {
+      const firstDay = new Date(year, month-1, 1).getDay();
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+      const head = withNav
+        ? `<div class="mv-head"><button class="mv-nav prev" onclick="PV.changeViewMonth(-1)" aria-label="上一月"></button>` +
+          `<div class="mv-title">${month} 月</div>` +
+          `<button class="mv-nav next" onclick="PV.changeViewMonth(1)" aria-label="下一月"></button></div>`
+        : `<div class="month-title">${month} 月</div>`;
+
+      let html = `<div class="month" data-month="${month}">${head}
+        <div class="weekdays"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
+        <div class="days">`;
+      for (let i = 0; i < startOffset; i++)
+        html += `<div class="daywrap empty"><div class="day"></div><div class="dot-slot"></div></div>`;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const lv = getLevel(year, month, day);
+        const isToday = new Date().getFullYear()===year && new Date().getMonth()+1===month && new Date().getDate()===day;
+        const symList = SYMPTOMS_DATA[`${year}-${month}-${day}`] || [];
+        const hasSym = symList.length > 0;
+        const symHit = homeSymFilter && homeSymFilter !== '全部' && symList.includes(homeSymFilter);
+        html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
+                  `<div data-month="${month}" data-day="${day}"` +
+                  ` class="day ${getLevelClass(lv)} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
+                  ` style="user-select:none;-webkit-user-select:none;">${isToday ? '今' : day}</div>` +
+                  `<div class="dot-slot"><span class="rec-dot"></span></div>` +
+                `</div>`;
+      }
+      return html + `</div></div>`;
+    }
+
+    function render() {
+      const cal = document.getElementById('calendar');
+      const yl = document.getElementById('yearLabel');
+      if (yl) yl.textContent = year;
+      // 底部 VOLUMEN 图例只在年视图显示(月视图下方色板已是图例,避免重复)
+      const bl = document.getElementById('bottomLegend');
+      if (bl) bl.style.display = homeView === 'year' ? '' : 'none';
+
+      if (homeView === 'year') {
+        let html = '';
+        for (let m = 1; m <= 12; m++) html += generateMonth(m, false);
+        cal.innerHTML = html;
+        cal.classList.add('year-view');
+        cal.classList.remove('month-view', 'one-col');
+      } else {
+        cal.innerHTML = generateMonth(viewMonth, true);
+        cal.classList.add('month-view');
+        cal.classList.remove('year-view', 'one-col');
+      }
+      cal.classList.toggle('sym-on', !!homeSymFilter && homeSymFilter !== '全部');
+      // 切月度/年度时内容横向滑入(与热力图一致);仅切视图时触发
+      const dir = homeSwapDir; homeSwapDir = null;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      cal.classList.remove('cal-enter-fwd', 'cal-enter-back');
+      if (dir && !reduceMotion) {
+        void cal.offsetWidth;   // 强制回流,确保动画重新播放
+        const cls = 'cal-enter-' + dir;
+        cal.classList.add(cls);
+        cal.addEventListener('animationend', () => cal.classList.remove(cls), { once: true });
+      }
+      renderHomeChips();
+      updateViewToggleUI();
+      if (typeof afterRender === 'function') afterRender();
+    }
+
+    function updateViewToggleUI() {
+      const thumb = document.getElementById('hvtThumb');
+      if (thumb) thumb.classList.toggle('year', homeView === 'year');
+      document.querySelectorAll('.home-viewtoggle .hvt').forEach(b => {
+        b.classList.toggle('on', b.dataset.view === homeView);
+      });
+    }
+
+    // 顶部标签:切换 月视图 / 年视图
+    function setHomeView(v) {
+      if (homeView === v) return;
+      homeSwapDir = (v === 'year') ? 'fwd' : 'back';   // 年度从右滑入,月度从左滑入
+      homeView = v;
+      selectedView = null;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 年视图里点某个月 → 放大进该月的月视图(方案 A)
+    function openMonthView(m) {
+      viewMonth = m;
+      homeView = 'month';
+      selectedView = null;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 月视图 ‹ › 翻月;跨过 1 月 / 12 月自动跨年
+    function changeViewMonth(delta) {
+      let m = viewMonth + delta;
+      if (m < 1)  { m = 12; year -= 1; }
+      else if (m > 12) { m = 1; year += 1; }
+      viewMonth = m;
+      selectedView = null;
+      render();
+    }
+
+    // ── 事件处理：长按取消 / 单击循环（带滑动检测防误触）──
+    let pressTimer = null;
+    let didLongPress = false;
+    let pressMonth = 0, pressDay = 0;
+    let startX = 0, startY = 0;
+    let moved = false;
+    const MOVE_THRESHOLD = 10; // 像素，超过此距离视为滑动而非点击
+
+    function setupEvents() {
+      const cal = document.getElementById('calendar');
+
+      cal.addEventListener('touchstart', e => {
+        const el = e.target.closest('[data-day]');
+        if (!el) return;
+        // 只有月视图才允许编辑日期(年视图点整月是放大)
+        if (homeView !== 'month') return;
+        pressMonth = +el.dataset.month;
+        pressDay   = +el.dataset.day;
+        didLongPress = false;
+        moved = false;
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        pressTimer = setTimeout(() => {
+          if (moved) return;
+          didLongPress = true;
+          cancelDay(pressMonth, pressDay);
+        }, 500);
+      }, { passive: true });
+
+      cal.addEventListener('touchmove', e => {
+        if (!pressDay) return;
+        const t = e.touches[0];
+        if (Math.abs(t.clientX - startX) > MOVE_THRESHOLD ||
+            Math.abs(t.clientY - startY) > MOVE_THRESHOLD) {
+          moved = true;
+          clearTimeout(pressTimer);
+        }
+      }, { passive: true });
+
+      cal.addEventListener('touchend', e => {
+        clearTimeout(pressTimer);
+        if (!moved && !didLongPress && pressDay) {
+          e.preventDefault();
+          cycleDay(pressMonth, pressDay);
+        }
+        pressDay = 0;
+      });
+
+      cal.addEventListener('touchcancel', () => {
+        clearTimeout(pressTimer); pressDay = 0;
+      });
+
+      // 桌面鼠标
+      cal.addEventListener('mousedown', e => {
+        const el = e.target.closest('[data-day]');
+        if (!el) return;
+        // 只有月视图才允许编辑日期(年视图点整月是放大)
+        if (homeView !== 'month') return;
+        pressMonth = +el.dataset.month;
+        pressDay   = +el.dataset.day;
+        didLongPress = false;
+        moved = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        pressTimer = setTimeout(() => {
+          if (moved) return;
+          didLongPress = true;
+          cancelDay(pressMonth, pressDay);
+        }, 500);
+      });
+
+      cal.addEventListener('mousemove', e => {
+        if (!pressDay) return;
+        if (Math.abs(e.clientX - startX) > MOVE_THRESHOLD ||
+            Math.abs(e.clientY - startY) > MOVE_THRESHOLD) {
+          moved = true;
+          clearTimeout(pressTimer);
+        }
+      });
+
+      cal.addEventListener('mouseup', () => {
+        clearTimeout(pressTimer);
+        if (!moved && !didLongPress && pressDay) cycleDay(pressMonth, pressDay);
+        pressDay = 0;
+      });
+
+      cal.addEventListener('mouseleave', () => {
+        clearTimeout(pressTimer); pressDay = 0;
+      });
+    }
+
+    function cancelDay(month, day) {
+      if (getLevel(year, month, day) > 0) {
+        setLevel(year, month, day, 0);
+        rerenderZoomedMonth();
+        showToast('已取消');
+      }
+    }
+
+    function cycleDay(month, day) {
+      // 月视图下:单击 = 选中日期(在下方信息栏显示/编辑状态),不直接改色
+      if (homeView === 'month') {
+        selectDayForView(year, month, day);
+        return;
+      }
+    }
+
+    // 选中某天用于查看/编辑(放大态下)
+    function selectDayForView(y, m, d) {
+      selectedView = { y, m, d };
+      // 只更新高亮和信息栏,不重画整月,避免闪
+      updateSelectedHighlight();
+      renderDayInfoBar();
+    }
+
+    // 给当前选中的日期上色(从底部色卡点击触发)
+    function applySelectedColor(lv) {
+      if (!selectedView) {
+        showToast('请先点击日历选择一天');
+        return;
+      }
+      const { y, m, d } = selectedView;
+      const cur = getLevel(y, m, d);
+      // 同色再点 = 取消
+      setLevel(y, m, d, cur === lv ? 0 : lv);
+      rerenderZoomedMonth();
+      // 重画后 selected-view 类会丢,需要补回去
+      updateSelectedHighlight();
+      renderDayInfoBar();
+    }
+
+    function updateSelectedHighlight() {
+      document.querySelectorAll('.day.selected-view').forEach(el => {
+        el.classList.remove('selected-view');
+      });
+      if (!selectedView) return;
+      const { y, m, d } = selectedView;
+      if (y !== year) return;
+      const el = document.querySelector(`[data-month="${m}"][data-day="${d}"]`);
+      if (el) el.classList.add('selected-view');
+    }
+
+    // 只把月视图那张卡片里的 .days 内容替换掉，保留色板和信息栏
+    function rerenderZoomedMonth() {
+      if (homeView !== 'month') return;
+      const target = document.querySelector('#calendar .month');
+      if (!target) return;
+      const tmp = document.createElement('div');
+      tmp.innerHTML = generateMonth(viewMonth, true);
+      const newDays = tmp.querySelector('.days');
+      const oldDays = target.querySelector('.days');
+      if (newDays && oldDays) oldDays.replaceWith(newDays);
+    }
+
+    // ── 放大某个月卡片 ──
+    let zoomedMonth = null;   // 旧「弹窗放大」已废弃,保留变量恒为 null 以兼容历史判断
+    let selectedView = null;  // {y, m, d} - 当前在信息栏查看/编辑的日期
+    let libTagsExpanded = false; // 「从已有标签选择」是否展开(默认只显示一行)
+
+    // 旧「放大某月」→ 现在等价于切到该月的月视图
+    function zoomMonth(month) {
+      openMonthView(month);
+    }
+
+    // 旧「收起放大」→ 现在无弹窗,仅清空选中
+    function unzoomMonth() {
+      selectedView = null;
+      document.body.style.overflow = '';
+    }
+
+    function selectColor(lv) {
+      // 保留兼容性占位,新逻辑里色卡点击直接调 applySelectedColor
+      document.querySelectorAll('.swatch').forEach(s => {
+        s.classList.toggle('selected', +s.dataset.level === lv);
+      });
+    }
+
+    // 每次 render() 之后自动调用。
+    // 年视图:点整月 → 放大进该月月视图;月视图:注入色板 + 信息栏 + 本月状态记录。
+    function afterRender() {
+      const cal = document.getElementById('calendar');
+
+      if (homeView === 'year') {
+        cal.querySelectorAll('.month').forEach(card => {
+          const m = +card.dataset.month;
+          card.onclick = () => openMonthView(m);
+        });
+        return;
+      }
+
+      // ── 月视图 ──
+      const card = cal.querySelector('.month');
+      if (!card) return;
+
+      // 色板(先点日期选中,再点颜色上色;同色再点 = 取消)
+      const palette = document.createElement('div');
+      palette.className = 'color-palette';
+      palette.innerHTML = `
+        <div class="swatch swatch-g" data-level="4"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[4].name)}</div></div>
+        <div class="swatch swatch-1" data-level="1"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[1].name)}</div></div>
+        <div class="swatch swatch-2" data-level="2"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[2].name)}</div></div>
+        <div class="swatch swatch-3" data-level="3"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[3].name)}</div></div>
+      `;
+      card.appendChild(palette);
+      palette.querySelectorAll('.swatch').forEach(s => {
+        s.onclick = (e) => { e.stopPropagation(); applySelectedColor(+s.dataset.level); };
+      });
+
+      // 当天状态卡片(经期第几天等)—— 独立卡片,置于标签卡片之前
+      const statusBar = document.createElement('div');
+      statusBar.className = 'day-status-bar';
+      statusBar.id = 'dayStatusBar';
+      cal.appendChild(statusBar);
+
+      // 日期信息栏(选中某天后显示症状标签)—— 独立卡片,置于状态卡片下方
+      const infoBar = document.createElement('div');
+      infoBar.className = 'day-info-bar';
+      infoBar.id = 'dayInfoBar';
+      cal.appendChild(infoBar);
+
+      // 本月状态记录(只读汇总)追加在卡片下方
+      const list = buildMonthSymList(viewMonth);
+      if (list) cal.appendChild(list);
+
+      updateSelectedHighlight();
+      renderDayInfoBar();
+    }
+
+    // 把升序日期数组压成区间文本: [23,24,25,26,27]->"23-27日"; [4,13]->"4日、13日"
+    function formatDayRanges(days) {
+      const parts = [];
+      let start = days[0], prev = days[0];
+      for (let i = 1; i <= days.length; i++) {
+        const d = days[i];
+        if (d === prev + 1) { prev = d; continue; }
+        parts.push(start === prev ? `${start}日` : `${start}–${prev}日`);
+        start = d; prev = d;
+      }
+      return parts.join('、');
+    }
+
+    // 生成某月“本月状态记录”(只读)：按天的竖向柱状图。
+    // 横轴=日期,柱高=当天症状数,柱顶直接列出当天的症状;只显示有记录的日子。
+    function buildMonthSymList(m) {
+      const daysInMonth = new Date(year, m, 0).getDate();
+      // 逐日收集有记录的天
+      const perDay = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const syms = getSym(year, m, d);
+        if (syms.length) perDay.push({ d, syms });
+      }
+      if (perDay.length === 0) return null;
+
+      const UNIT = 14;  // 每个症状对应的柱高(px)
+      const cols = perDay.map(({ d, syms }) => {
+        const tags = syms.map(s => `<span class="sym-col-tag">${escapeHtml(s)}</span>`).join('');
+        return `<div class="sym-col">` +
+            `<div class="sym-col-tags">${tags}</div>` +
+            `<div class="sym-col-bar" style="height:${syms.length * UNIT}px"></div>` +
+            `<div class="sym-col-day">${d}</div>` +
+          `</div>`;
+      });
+
+      const el = document.createElement('div');
+      el.className = 'sym-list';
+      el.innerHTML = `<div class="sym-list-title">本月状态记录</div>` +
+                     `<div class="sym-bars">${cols.join('')}</div>`;
+      return el;
+    }
+
+    function getSym(y, m, d) {
+      return SYMPTOMS_DATA[`${y}-${m}-${d}`] || [];
+    }
+
+    function setSym(y, m, d, list) {
+      const key = `${y}-${m}-${d}`;
+      if (!list || list.length === 0) delete SYMPTOMS_DATA[key];
+      else SYMPTOMS_DATA[key] = list;
+      markUnsaved();
+    }
+
+    function markUnsaved() { persist(); }
+
+    // 判断某天的经期状态:none(无) / spotting(点滴 GOTAS) / period(经期,含第几天)
+    function getDayStatus(y, m, d) {
+      const lv = getLevel(y, m, d);
+      if (lv === 0) return { kind: 'none', lv };
+      if (lv === 4) return { kind: 'spotting', lv };   // GOTAS 点滴,不计入经期
+      // lv 1/2/3:真正的经期,找出所属经期段与是第几天
+      const { periods } = computeCycles();
+      const sel = new Date(y, m - 1, d).getTime();
+      for (const p of periods) {
+        if (sel >= p.start.getTime() && sel <= p.end.getTime()) {
+          const dayNo = Math.round((sel - p.start.getTime()) / 86400000) + 1;
+          return { kind: 'period', lv, dayNo, total: p.length };
+        }
+      }
+      return { kind: 'period', lv, dayNo: 1, total: 1 };
+    }
+
+    // 渲染「当天状态」卡片(经期第几天等)
+    function renderDayStatusBar() {
+      const sb = document.getElementById('dayStatusBar');
+      if (!sb) return;
+      if (!selectedView) { sb.style.display = 'none'; return; }
+      sb.style.display = '';
+      const { y, m, d } = selectedView;
+      const st = getDayStatus(y, m, d);
+      const row = (k, v, hl) =>
+        `<div class="ds-row"><span class="ds-k">${k}</span><span class="ds-v${hl ? ' ds-hl' : ''}">${v}</span></div>`;
+      let rows;
+      if (st.kind === 'period') {
+        const flow = PALETTE[st.lv] ? `${PALETTE[st.lv].name} ${LEVEL_SUFFIX[st.lv] || ''}`.trim() : '';
+        rows =
+          row('经期状态', `经期 · 第 ${st.dayNo} 天`, true) +
+          row('出血量', escapeHtml(flow));
+      } else if (st.kind === 'spotting') {
+        const nm = PALETTE[4] ? PALETTE[4].name : 'GOTAS';
+        rows =
+          row('经期状态', `点滴 · ${escapeHtml(nm)}`) +
+          row('说明', '少量出血，不计入经期');
+      } else {
+        rows = row('经期状态', '无经期记录');
+      }
+      sb.innerHTML = rows;
+    }
+
+    // 渲染放大态下底部的"日期信息栏"
+    function renderDayInfoBar() {
+      renderDayStatusBar();
+      const bar = document.getElementById('dayInfoBar');
+      if (!bar) return; // 没在放大态
+
+      if (!selectedView) {
+        bar.innerHTML = '<div class="info-empty">👆 点击上方任一日期查看 / 编辑</div>';
+        return;
+      }
+
+      const { y, m, d } = selectedView;
+      const today = getSym(y, m, d);
+
+      const todayTagsHtml = today.length === 0
+        ? '<div class="info-empty">还没有记录 — 从下方选择或新建</div>'
+        : today.map(name =>
+            `<span class="info-tag active" data-name="${escapeAttr(name)}">${escapeHtml(name)}</span>`
+          ).join('');
+
+      const notSelected = SYMPTOMS_LIB.filter(n => !today.includes(n));
+      const libTagsHtml = notSelected.length === 0
+        ? '<div class="info-empty">所有标签都已选 ✓</div>'
+        : notSelected.map(name =>
+            `<span class="info-tag" data-name="${escapeAttr(name)}">${escapeHtml(name)}<span class="del" data-action="del-from-lib">×</span></span>`
+          ).join('');
+
+      bar.innerHTML = `
+        <div class="info-section-title">当天症状</div>
+        <div class="info-tags" id="infoTodayTags">${todayTagsHtml}</div>
+        <div class="info-section-title">从已有标签选择</div>
+        <div class="info-tags${libTagsExpanded ? '' : ' collapsed'}" id="infoLibTags">${libTagsHtml}</div>
+        <button type="button" class="info-toggle" id="infoLibToggle" style="display:none"></button>
+        <div class="info-section-title">新建标签</div>
+        <div class="info-add-row">
+          <input type="text" class="info-input" id="infoInput" placeholder="例如:头痛、腰酸、情绪低落" maxlength="20">
+          <button class="info-add-btn" id="infoAddBtn">添加</button>
+          <span class="add-flash" id="addFlash">✓ 已添加</span>
+        </div>
+      `;
+
+      // 绑定事件
+      bar.querySelector('#infoTodayTags').querySelectorAll('.info-tag').forEach(el => {
+        el.onclick = (ev) => { ev.stopPropagation(); toggleSym(el.dataset.name); };
+      });
+      bar.querySelector('#infoLibTags').querySelectorAll('.info-tag').forEach(el => {
+        el.onclick = (ev) => {
+          ev.stopPropagation();
+          if (ev.target.dataset.action === 'del-from-lib') {
+            deleteFromLib(el.dataset.name);
+          } else {
+            toggleSym(el.dataset.name);
+          }
+        };
+      });
+      // 「从已有标签选择」默认只显示一行,超出时给出展开/收起按钮
+      const libTagsEl = bar.querySelector('#infoLibTags');
+      const libToggle = bar.querySelector('#infoLibToggle');
+      if (libTagsEl && libToggle) {
+        // 先按折叠态测量,判断标签是否超过一行
+        libTagsEl.classList.add('collapsed');
+        const needsToggle = libTagsEl.scrollHeight - libTagsEl.clientHeight > 1;
+        if (libTagsExpanded) libTagsEl.classList.remove('collapsed');
+        if (needsToggle) {
+          libToggle.style.display = '';
+          libToggle.textContent = libTagsExpanded ? '收起 ▲' : '展开全部 ▼';
+        } else {
+          libToggle.style.display = 'none';
+          libTagsEl.classList.remove('collapsed'); // 一行内放得下就不裁剪
+        }
+        libToggle.onclick = (ev) => {
+          ev.stopPropagation();
+          libTagsExpanded = !libTagsExpanded;
+          renderDayInfoBar();
+        };
+      }
+      bar.querySelector('#infoAddBtn').onclick = (ev) => {
+        ev.stopPropagation();
+        addNewSymptom();
+      };
+      bar.querySelector('#infoInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); addNewSymptom(); }
+      });
+      bar.querySelector('#infoInput').addEventListener('click', e => e.stopPropagation());
+    }
+
+    function toggleSym(name) {
+      if (!selectedView) return;
+      const { y, m, d } = selectedView;
+      const cur = getSym(y, m, d).slice();
+      const idx = cur.indexOf(name);
+      if (idx >= 0) cur.splice(idx, 1);
+      else cur.push(name);
+      setSym(y, m, d, cur);
+      renderDayInfoBar();
+      // 更新月历上小圆点指示器
+      updateSymDot(y, m, d);
+    }
+
+    function addNewSymptom() {
+      if (!selectedView) return;
+      const input = document.getElementById('infoInput');
+      const name = (input.value || '').trim();
+      if (!name) return;
+      if (name.length > 20) { showToast('标签太长(最多 20 字)'); return; }
+      // 加入标签库(去重)
+      if (!SYMPTOMS_LIB.includes(name)) {
+        SYMPTOMS_LIB.push(name);
+        markUnsaved();
+      }
+      // 同时勾选到今天
+      const { y, m, d } = selectedView;
+      const cur = getSym(y, m, d).slice();
+      if (!cur.includes(name)) {
+        cur.push(name);
+        setSym(y, m, d, cur);
+      }
+      input.value = '';
+      // 显示"已添加"闪烁,保持焦点便于继续输入
+      flashAdded();
+      renderDayInfoBar();
+      // 重画后输入框是新的,把焦点放回去
+      const newInput = document.getElementById('infoInput');
+      if (newInput) newInput.focus();
+      updateSymDot(y, m, d);
+    }
+
+    function flashAdded() {
+      const f = document.getElementById('addFlash');
+      if (!f) return;
+      f.classList.add('show');
+      setTimeout(() => f.classList.remove('show'), 1200);
+    }
+
+    function deleteFromLib(name) {
+      if (!confirm(`确定删除标签"${name}"吗?\n所有日子里这个标签的记录也会被清除。`)) return;
+      const idx = SYMPTOMS_LIB.indexOf(name);
+      if (idx >= 0) SYMPTOMS_LIB.splice(idx, 1);
+      // 找出受影响的日期(用于更新指示器)
+      const affected = [];
+      Object.keys(SYMPTOMS_DATA).forEach(key => {
+        if (SYMPTOMS_DATA[key].includes(name)) affected.push(key);
+        const filtered = SYMPTOMS_DATA[key].filter(n => n !== name);
+        if (filtered.length === 0) delete SYMPTOMS_DATA[key];
+        else SYMPTOMS_DATA[key] = filtered;
+      });
+      markUnsaved();
+      renderDayInfoBar();
+      // 整月重画一下,刷新所有小圆点
+      rerenderZoomedMonth();
+      updateSelectedHighlight();
+    }
+
+    // 只更新某个日期的 has-sym 小圆点,避免整月重画影响视觉
+    function updateSymDot(y, m, d) {
+      if (y !== year) return;
+      const el = document.querySelector(`[data-month="${m}"][data-day="${d}"]`);
+      if (!el) return;
+      const wrap = el.closest('.daywrap');
+      if (!wrap) return;
+      const has = (SYMPTOMS_DATA[`${y}-${m}-${d}`] || []).length > 0;
+      wrap.classList.toggle('has-rec', has);
+      refreshMonthSymList();
+    }
+
+    // 症状变动后刷新月视图下方「本月状态记录」汇总
+    function refreshMonthSymList() {
+      if (homeView !== 'month') return;
+      const cal = document.getElementById('calendar');
+      if (!cal) return;
+      const old = cal.querySelector('.sym-list');
+      const fresh = buildMonthSymList(viewMonth);
+      if (old) { fresh ? old.replaceWith(fresh) : old.remove(); }
+      else if (fresh) cal.appendChild(fresh);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, ch => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[ch]);
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    function computeCycles() {
+      const dates = [];
+      Object.keys(ALL_DATA).forEach(key => {
+        // 只统计真正的月经期(POCO=1 / MEDIO=2 / MUCHO=3)
+        // GOTAS(level 4, 灰色点滴)不算经期,排除
+        const lv = ALL_DATA[key];
+        if (lv === 1 || lv === 2 || lv === 3) {
+          const [y, m, d] = key.split('-').map(Number);
+          dates.push(new Date(y, m - 1, d));
+        }
+      });
+      if (dates.length === 0) return { periods: [], cycles: [] };
+
+      dates.sort((a, b) => a - b);
+
+      const periods = []; // [{ start: Date, end: Date, length: 天数 }]
+      let curStart = dates[0];
+      let curEnd = dates[0];
+      const TOLERANCE_DAYS = 1; // 容差:间隔超过 1 天才算新一段
+      for (let i = 1; i < dates.length; i++) {
+        const gap = Math.round((dates[i] - curEnd) / (1000 * 60 * 60 * 24));
+        if (gap <= TOLERANCE_DAYS) {
+          curEnd = dates[i];
+        } else {
+          periods.push({
+            start: curStart, end: curEnd,
+            length: Math.round((curEnd - curStart) / 86400000) + 1
+          });
+          curStart = dates[i];
+          curEnd = dates[i];
+        }
+      }
+      periods.push({
+        start: curStart, end: curEnd,
+        length: Math.round((curEnd - curStart) / 86400000) + 1
+      });
+
+      // 周期 = 这次开始 → 下次开始 之间的天数
+      const cycles = [];
+      for (let i = 1; i < periods.length; i++) {
+        const days = Math.round((periods[i].start - periods[i-1].start) / 86400000);
+        cycles.push(days);
+      }
+      return { periods, cycles };
+    }
+
+    const PALETTE_ORDER = [4, 1, 2, 3];               // 图例/色板显示顺序
+    const LEVEL_CLASS = { 1: 'level-1', 2: 'level-2', 3: 'level-3', 4: 'level-g' };
+    const SWATCH_CLASS = { 1: 'swatch-1', 2: 'swatch-2', 3: 'swatch-3', 4: 'swatch-g' };
+    const LEVEL_SUFFIX = { 1: '(少)', 2: '(中)', 3: '(多)', 4: '(点滴)' };
+    // 颜色一律用 #RRGGBB 十六进制(不能用 var()，否则 <input type="color"> 会回退成黑色)
+    const DEFAULT_PALETTE = {
+      1: { name: 'POCO',  color: '#FFD5DC' },  // = --brand-tint
+      2: { name: 'MEDIO', color: '#cf4865' },
+      3: { name: 'MUCHO', color: '#834047' },
+      4: { name: 'GOTAS', color: '#CBD5E1' }   // = --disabled
+    };
+    /* PALETTE held at module scope, seeded via PV.init */
+
+    function loadPalette() {
+      // 优先级：默认 → 文件内嵌(SAVED_PALETTE) → 本机 localStorage
+      if (typeof SAVED_PALETTE !== 'undefined' && SAVED_PALETTE) PALETTE = mergePalette(SAVED_PALETTE);
+      try {
+        const raw = localStorage.getItem('itimeline_palette');
+        if (raw) PALETTE = mergePalette(JSON.parse(raw));
+      } catch (e) {}
+    }
+    function savePalette() {
+      try { localStorage.setItem('itimeline_palette', JSON.stringify(PALETTE)); } catch (e) {}
+    }
+    function mergePalette(src) {
+      const out = JSON.parse(JSON.stringify(DEFAULT_PALETTE));
+      [1, 2, 3, 4].forEach(l => {
+        if (src && src[l]) {
+          if (src[l].name)  out[l].name  = String(src[l].name).slice(0, 12);
+          if (src[l].color) out[l].color = src[l].color;
+        }
+      });
+      return out;
+    }
+
+    function textOn(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+      if (!m) return 'var(--ink-2)';
+      const n = parseInt(m[1], 16);
+      const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return lum > 0.6 ? '#3a2a2e' : '#ffffff';
+    }
+    // 把当前色卡应用到：日历格子/色板/图例
+    function applyPalette() {
+      let css = '';
+      [1, 2, 3, 4].forEach(l => {
+        const c = PALETTE[l].color;
+        css += `#calViewPeriod .${LEVEL_CLASS[l]}{background-color:${c};color:${textOn(c)};--c:${c};}`;
+        css += `#calViewPeriod .${SWATCH_CLASS[l]} .swatch-dot{background:${c};}`;
+      });
+      let style = document.getElementById('paletteOverride');
+      if (!style) {
+        style = document.createElement('style');
+        style.id = 'paletteOverride';
+        document.head.appendChild(style);
+      }
+      style.textContent = css;
+      // 图例（页面可能有多处 .legend）
+      document.querySelectorAll('#calViewPeriod .legend').forEach(leg => {
+        leg.innerHTML = PALETTE_ORDER.map(l =>
+          `<div><span style="color:${PALETTE[l].color}">●</span> ${escapeHtml(PALETTE[l].name)}</div>`
+        ).join('');
+      });
+    }
+
+
+  // ── 初始化：注入数据 + 首次绑定事件 + 应用色板 ──
+  let _inited = false;
+  function init(store){
+    ALL_DATA      = store.ALL_DATA;
+    SYMPTOMS_LIB  = store.SYMPTOMS_LIB;
+    SYMPTOMS_DATA = store.SYMPTOMS_DATA;
+    PALETTE       = store.PALETTE;
+    if (!_inited){
+      _inited = true;
+      applyPalette();
+      setupEvents();
+    }
+  }
+  // 打开经期视图时调用：回到当前年月的月视图并渲染
+  function open(){
+    const now = new Date();
+    year = now.getFullYear();
+    viewMonth = now.getMonth() + 1;
+    homeView = 'month';
+    selectedView = null;
+    render();
+  }
+
+  return {
+    init, open, render,
+    // 供内联 onclick 使用的处理器
+    changeYear, openYearPicker, closeYearPicker,
+    toggleHomeFilter, setHomeView, changeViewMonth
+  };
+})();
+
+// ── 经期视图数据接入（种子 + 存储 + 同步）──
+const PERIOD_KEY='my_list_period_v1';
+let periodData=null;
+let calView='cal';
+let _pvInited=false;
+function _normPeriod(p){
+  if(!p||typeof p!=='object')p={};
+  p.ALL_DATA=p.ALL_DATA||{};
+  p.SYMPTOMS_LIB=p.SYMPTOMS_LIB||[];
+  p.SYMPTOMS_DATA=p.SYMPTOMS_DATA||{};
+  p.PALETTE=p.PALETTE||JSON.parse(JSON.stringify(PERIOD_SEED.PALETTE));
+  return p;
+}
+function loadPeriod(){
+  try{periodData=JSON.parse(localStorage.getItem(PERIOD_KEY));}catch(e){periodData=null;}
+  if(!periodData||!periodData.ALL_DATA){
+    periodData=JSON.parse(JSON.stringify(PERIOD_SEED));
+    try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
+  }
+  periodData=_normPeriod(periodData);
+}
+function savePeriod(){
+  try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
+  scheduleSyncPush();
+}
+window.pvPersist=savePeriod;
+function setCalView(v){
+  calView=(v==='period')?'period':'cal';
+  const isP=calView==='period';
+  const cv=document.getElementById('calViewCalendar');
+  const pv=document.getElementById('calViewPeriod');
+  if(cv)cv.style.display=isP?'none':'';
+  if(pv)pv.style.display=isP?'':'none';
+  document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===calView));
+  const thumb=document.getElementById('cvtThumb');if(thumb)thumb.classList.toggle('period',isP);
+  try{localStorage.setItem('my_list_cal_view',calView);}catch(e){}
+  if(isP&&window.PV&&periodData){
+    if(!_pvInited){PV.init(periodData);_pvInited=true;}
+    PV.open();
+  }
+}
+
 // ── Data ─────────────────────────────────────────────────────────
 const SK='my_list_v4', CK='my_list_cats_v3';
 const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
@@ -4694,6 +6475,7 @@ function fmtTitle(item){
 }
 
 function boot(){
+  loadPeriod();
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
   try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
   if(!cats||!cats.length) cats=DCATS.map(c=>({...c}));
@@ -4824,7 +6606,8 @@ async function syncPush(){
       version:1,
       updatedAt:new Date().toISOString(),
       data, categories:cats,
-      notes:notesToSync, noteSubs
+      notes:notesToSync, noteSubs,
+      period: periodData
     };
     const body={
       description:'My Media Tracker Data (auto-synced)',
@@ -4938,6 +6721,11 @@ async function syncPull(silent){
       if(encLeft&&!silent)toast('🔒 有 '+encLeft+' 条加密备忘需要主密码，请在云同步设置中填写');
     }
     if(Array.isArray(remote.noteSubs)&&remote.noteSubs.length) noteSubs=remote.noteSubs;
+    if(remote.period&&remote.period.ALL_DATA){
+      periodData=_normPeriod(remote.period);
+      try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
+      if(window.PV&&_pvInited){PV.init(periodData);if(calView==='period')PV.render();}
+    }
     // 拉取后也检查一次迁移(去掉标记重跑)
     localStorage.removeItem('my_list_migrated_watchdate_v1');
     migrateWatchDate();
@@ -6148,6 +7936,7 @@ function openCalendar(){
   // 手机端打开日历时关闭侧边栏抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
+  setCalView(localStorage.getItem('my_list_cal_view')||'cal');   // 恢复上次视图（日历/经期）
 }
 function closeCalendar(){
   document.getElementById('calOverlay').classList.remove('open');
