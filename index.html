@@ -2389,14 +2389,15 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
 #calViewPeriod .calendar-container.month-view .color-palette {margin-left: 4px; margin-right: 4px;}
 /* ── 经期月视图：完全对齐普通日历的卡片 / 按钮 / 字号 / 间距（用 my-list 数值，避免经期 token 数值差异）── */
-/* 月视图：导航 + 筛选 + 日历合成一张白底描边卡片 */
+/* 卡片（只含星期行+网格，对齐普通日历 .cal-scroll）：白底描边、圆角、卡外边距 */
 #calViewPeriod:not(.pv-year) .pv-cardwrap{background:#FFFFFF;border:1px solid var(--border);
-  border-radius:16px;margin:0 14px 12px;padding:2px 10px 8px;}
+  border-radius:16px;margin:0 14px 12px;padding:1px 10px 10px;}
 /* 年视图：不套卡，迷你月直接铺在背景上 */
-#calViewPeriod.pv-year .pv-cardwrap{margin:0 14px 12px;}
-/* 卡片内 header（导航+筛选）：透明贴合 */
-#calViewPeriod .pv-cardwrap .home-header{background:transparent;padding:12px 4px 10px;position:static;margin:0;}
-#calViewPeriod .pv-cardwrap .pv-nav{display:flex;align-items:center;gap:0;margin-left:-4px;}
+#calViewPeriod.pv-year .pv-cardwrap{margin:0 14px 12px;background:transparent;border:none;padding:0;}
+/* 标题条在卡片外（对齐普通日历 .cal-hdr）：透明、标题+筛选一行、内边距把标题定位到与普通日历同一高度 */
+#calViewPeriod .home-header{background:transparent;padding:15px 14px 8px;position:static;margin:0;
+  display:flex;flex-direction:row;justify-content:space-between;align-items:center;}
+#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-4px;}
 /* 标题字号对齐普通日历（18px，而非经期作用域的 20px） */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   padding:0 4px;cursor:pointer;user-select:none;white-space:nowrap;}
@@ -2416,7 +2417,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 #calViewPeriod .calendar-container.month-view{margin:0 !important;}
 /* 星期行：加分隔线 + 字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），横向内边距归零 */
 #calViewPeriod .calendar-container.month-view .weekdays{border-bottom:1px solid var(--border);
-  padding:12px 0 8px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
+  padding:6px 0 14px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
   letter-spacing:.18em;color:var(--text-secondary);column-gap:2px !important;}
 /* 网格：行高 42px、行距 2px、顶部留白 4px、横向内边距归零，对齐普通日历 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
@@ -2975,23 +2976,23 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
           <div class="year-picker-list" id="yearPickerList"></div>
         </div>
       </div>
-      <!-- 月视图：导航 + 筛选 + 日历合成同一张卡片（与普通日历一致）；年视图不套卡 -->
-      <div class="pv-cardwrap">
-        <div class="home-header">
-          <div class="pv-nav">
-            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页">‹</button>
-            <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
-            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页">›</button>
-          </div>
-          <div class="home-header-right">
-            <div class="home-filter" id="homeFilter">
-              <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选症状">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
-              </button>
-              <div class="home-filter-menu" id="homeFilterMenu"></div>
-            </div>
+      <!-- 标题条在卡片外（与普通日历 .cal-hdr 一致）；卡片只含星期行+网格（与 .cal-scroll 一致） -->
+      <div class="home-header">
+        <div class="pv-nav">
+          <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页">‹</button>
+          <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
+          <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页">›</button>
+        </div>
+        <div class="home-header-right">
+          <div class="home-filter" id="homeFilter">
+            <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选症状">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+            </button>
+            <div class="home-filter-menu" id="homeFilterMenu"></div>
           </div>
         </div>
+      </div>
+      <div class="pv-cardwrap">
         <div id="calendar" class="calendar-container"></div>
       </div>
       <div id="pvExtras"></div>
