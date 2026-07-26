@@ -1958,7 +1958,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 #calViewPeriod #pvTrend:empty {margin: 0;}
 #calViewPeriod .pv-trend-card {background: #FFFFFF; border: 1px solid var(--border);
       border-radius: 16px; padding: 16px 16px 14px;}
-#calViewPeriod .pv-trend-card .stcard-title {margin: 0 0 12px;}
+#calViewPeriod .pv-trend-card .stcard-title {margin: 0;}
+#calViewPeriod .pv-trend-card .cyc-head {margin: 0 0 12px;}
+#calViewPeriod .pv-trend-card .cyc-nav:disabled {opacity: .28; cursor: default;}
 #calViewPeriod .pv-trend-card .cyc-plot {margin-top: 2px;}
 #calViewPeriod .st-sub {font-size: var(--fs-caption); font-weight: 600; color: var(--muted); margin: 14px 0 2px;}
 #calViewPeriod .st-sub:first-of-type {margin-top: 0;}
@@ -6030,50 +6032,76 @@ window.PV = (function(){
       renderDayInfoBar();
     }
 
-    // 周期趋势柱状图（经期视图最底下）——复用移植过来的 .cyc-* 样式。
-    // 每根「柱」对应一次周期：深柱=距上一段经期的周期天数(带数字)，绿柱=本段经期长度。
+    // 周期趋势当前查看的年份（null=首次进入自动定位到最近有数据的年份）
+    let trendYear = null;
+
+    // 上一年 / 下一年（在有周期数据的年份区间内移动）
+    function trendYearShift(delta) {
+      const { periods } = computeCycles();
+      const years = periods.slice(1).map(p => p.start.getFullYear());
+      if (!years.length) return;
+      const minY = Math.min(...years), maxY = Math.max(...years);
+      const cur = (trendYear == null) ? maxY : trendYear;
+      trendYear = Math.max(minY, Math.min(maxY, cur + delta));
+      renderCycleTrend();
+    }
+
+    // 周期趋势柱状图（经期视图最底下）——复用移植过来的 .cyc-* 样式，可按年切换。
+    // 每根「柱」对应一次周期：深柱=距上一段经期的周期天数(带数字)，红柱=本段经期长度。
     function renderCycleTrend() {
       const host = document.getElementById('pvTrend');
       if (!host) return;
       const { periods, cycles } = computeCycles();
 
-      if (periods.length === 0) {
-        host.innerHTML =
-          '<div class="pv-trend-card"><div class="stcard-title">周期趋势</div>' +
-          '<div class="cyc-empty">还没有经期记录</div></div>';
-        return;
-      }
+      // 需至少两段经期才有「周期」可言
       if (cycles.length === 0) {
+        const msg = periods.length === 0 ? '还没有经期记录' : '记录满两段经期后显示周期趋势';
         host.innerHTML =
           '<div class="pv-trend-card"><div class="stcard-title">周期趋势</div>' +
-          '<div class="cyc-empty">记录满两段经期后显示周期趋势</div></div>';
+          `<div class="cyc-empty">${msg}</div></div>`;
         return;
       }
 
-      const MAX_COLS = 10;   // 只显示最近若干个周期，避免柱子过密
-      // cycles[i] = periods[i]→periods[i+1] 之间的天数；柱高同时展示该段经期长度
-      const cols = cycles.map((cyc, i) => ({
+      // 每个周期归入其「结束那段经期」的起始年份
+      const all = cycles.map((cyc, i) => ({
         cyc,
         len: periods[i + 1].length,
-        start: periods[i + 1].start
-      })).slice(-MAX_COLS);
+        start: periods[i + 1].start,
+        y: periods[i + 1].start.getFullYear()
+      }));
+      const years = all.map(c => c.y);
+      const minY = Math.min(...years), maxY = Math.max(...years);
+      if (trendYear == null || trendYear < minY || trendYear > maxY) trendYear = maxY;
 
-      const avg = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
-      const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len]), 1);
-      const h = v => Math.max(4, Math.round(v / maxV * 82));   // 留 ~18% 顶部空间给数字
+      const cols = all.filter(c => c.y === trendYear);
+      const atMin = trendYear <= minY, atMax = trendYear >= maxY;
+      const avg = cols.length
+        ? Math.round(cols.reduce((a, c) => a + c.cyc, 0) / cols.length) : 0;
 
-      const colsHtml = cols.map(c =>
-        '<div class="cyc-col">' +
-          `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
-          `<div class="cyc-bar p" style="height:${h(c.len)}%"></div>` +
-        '</div>').join('');
+      const head =
+        '<div class="cyc-head">' +
+          `<div class="stcard-title">周期趋势${cols.length ? `<span class="sub">平均 ${avg} 天</span>` : ''}</div>` +
+          '<div class="cyc-yearbar">' +
+            `<button class="cyc-nav prev" data-d="-1"${atMin ? ' disabled' : ''} aria-label="上一年"></button>` +
+            `<span class="cyc-year">${trendYear}</span>` +
+            `<button class="cyc-nav next" data-d="1"${atMax ? ' disabled' : ''} aria-label="下一年"></button>` +
+          '</div>' +
+        '</div>';
 
-      const xHtml = cols.map(c =>
-        `<span>${c.start.getMonth() + 1}/${c.start.getDate()}</span>`).join('');
-
-      host.innerHTML =
-        '<div class="pv-trend-card">' +
-          `<div class="stcard-title">周期趋势<span class="sub">平均 ${avg} 天</span></div>` +
+      let body;
+      if (cols.length === 0) {
+        body = '<div class="cyc-empty">本年暂无完整周期</div>';
+      } else {
+        const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len]), 1);
+        const h = v => Math.max(4, Math.round(v / maxV * 82));   // 留 ~18% 顶部空间给数字
+        const colsHtml = cols.map(c =>
+          '<div class="cyc-col">' +
+            `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
+            `<div class="cyc-bar p" style="height:${h(c.len)}%"></div>` +
+          '</div>').join('');
+        const xHtml = cols.map(c =>
+          `<span>${c.start.getMonth() + 1}/${c.start.getDate()}</span>`).join('');
+        body =
           '<div class="cyc-legend">' +
             '<span><i style="background:#1c5a48"></i>周期(天)</span>' +
             '<span><i style="background:var(--brand)"></i>经期(天)</span>' +
@@ -6082,8 +6110,13 @@ window.PV = (function(){
             '<div class="cyc-grid"><i style="top:25%"></i><i style="top:50%"></i><i style="top:75%"></i></div>' +
             colsHtml +
           '</div>' +
-          `<div class="cyc-x">${xHtml}</div>` +
-        '</div>';
+          `<div class="cyc-x">${xHtml}</div>`;
+      }
+
+      host.innerHTML = `<div class="pv-trend-card">${head}${body}</div>`;
+      host.querySelectorAll('.cyc-nav[data-d]').forEach(btn => {
+        btn.onclick = () => trendYearShift(+btn.dataset.d);
+      });
     }
 
     // 把升序日期数组压成区间文本: [23,24,25,26,27]->"23-27日"; [4,13]->"4日、13日"
