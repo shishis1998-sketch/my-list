@@ -2862,6 +2862,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <div id="sync-restore-time" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center"></div>
     </div>
 
+    <div id="sync-uploadlocal-row" style="display:none;margin-bottom:var(--sp-14)">
+      <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn">🔓 把「仅本机」备忘加密上云</button>
+      <div id="sync-uploadlocal-hint" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)"></div>
+    </div>
+
     <div style="margin-bottom:var(--sp-14)">
       <button class="btn btn-d" style="width:100%" onclick="openRecover()">🕘 从云端历史版本找回备忘</button>
       <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)">
@@ -6974,6 +6979,49 @@ function restoreBackup(){
   scheduleSyncPush(); // 把还原后的数据推回云端，保持一致
 }
 
+// ── 批量把「仅本机」备忘加密上云 ───────────────────────────────────
+// 从历史版本找回的备忘都是「仅本机」状态：只活在这个浏览器的 localStorage 里，
+// 清一次缓存就没了。一条条点锁按钮会触发几十次推送，这里合并成一次。
+async function uploadAllLocalMemos(){
+  const targets=notes.filter(n=>n.subCat==='备忘'&&n.localOnly);
+  if(!targets.length){toast('没有「仅本机」的备忘');return;}
+  if(!getToken()){toast('请先配置 token');return;}
+  const pw=getMasterPw();
+  if(!pw||!cryptoOk()){
+    if(!confirm('还没有设置主密码（或当前环境不支持加密），这 '+targets.length+' 条备忘会以【明文】同步到 Gist。\n\n'
+      +'建议先在下面填好主密码保存，再回来上云。\n\n仍要以明文上传吗？'))return;
+  }else if(!confirm('把 '+targets.length+' 条「仅本机」备忘加密后同步到云端？\n\n'
+      +'上云后它们才有异地备份，不会因为清缓存而丢失。云端只存密文。')){
+    return;
+  }
+  const ids=targets.map(n=>n.id);
+  // 两段式：先标 pendingCloud（拉取免疫），推送被云端确认后才算数
+  targets.forEach(n=>{n.localOnly=false;n.pendingCloud=true;});
+  localStorage.setItem(NSK,JSON.stringify(notes));render();
+  toast('正在加密并上传 '+ids.length+' 条备忘…');
+  clearTimeout(syncTimer);
+  const ok=await syncPush();
+  if(ok){
+    toast('✓ '+ids.length+' 条备忘已'+((pw&&cryptoOk())?'加密':'')+'上云');
+  }else{
+    const s=new Set(ids);
+    notes.forEach(n=>{if(s.has(n.id)){n.localOnly=true;delete n.pendingCloud;}});
+    localStorage.setItem(NSK,JSON.stringify(notes));
+    toast('⚠️ 上云失败，'+ids.length+' 条已全部退回「仅本机」，请检查网络后重试');
+  }
+  render();updateSyncBadge();
+  if(document.getElementById('syncModal').classList.contains('open'))refreshUploadLocalRow();
+}
+function refreshUploadLocalRow(){
+  const row=document.getElementById('sync-uploadlocal-row');if(!row)return;
+  const n=notes.filter(x=>x.subCat==='备忘'&&x.localOnly).length;
+  if(!n||!getToken()){row.style.display='none';return;}
+  row.style.display='block';
+  document.getElementById('sync-uploadlocal-btn').textContent='🔓 把 '+n+' 条「仅本机」备忘加密上云';
+  document.getElementById('sync-uploadlocal-hint').textContent=
+    '这 '+n+' 条只存在本机，清掉浏览器数据就没了。上云后云端只存密文。';
+}
+
 // ── 从 Gist 历史版本找回备忘 ──────────────────────────────────────
 // Gist 每次 PATCH 都会留一个 revision，内容永久保留。只要备忘曾经成功上过一次云，
 // 哪怕后来被某次推送顶掉，也还躺在历史版本里。这里把所有版本翻一遍，
@@ -7242,6 +7290,7 @@ function openSyncCfg(){
   }else{
     rr.style.display='none';
   }
+  refreshUploadLocalRow();
   document.getElementById('syncModal').classList.add('open');
 }
 function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
