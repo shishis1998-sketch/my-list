@@ -1592,7 +1592,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .cal-vtoggle.cvt3 .cvt{padding:6px 0;min-width:48px;text-align:center;}
 .cal-vtoggle .cvt.on{color:var(--accent);}
 #calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-#calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;}
+/* 隐藏纵向滚动条：选中日期后下方状态/信息卡展开会撑出滚动条，若占宽会把居中的日历网格整体挤向左侧（“向左偏”）。
+   与本 App 其余滚动区一致隐藏滚动条，保证内容宽度恒定、与普通日历像素对齐。 */
+#calViewPeriod::-webkit-scrollbar{display:none;}
 /* 经期视图：去掉粉色背景，与日历页统一纯色；月份导航沿用日历页「‹ 年 月 ›」样式 */
 #calViewPeriod,
 #calViewPeriod .home-sticky{background:var(--bg) !important;background-image:none !important;}
@@ -1946,6 +1950,14 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 #calViewPeriod .cyc-x {display: flex; margin-top: 7px;}
 #calViewPeriod .cyc-x span {flex: 1; text-align: center; font-size: var(--fs-micro); color: var(--faint);}
 #calViewPeriod .cyc-empty {text-align: center; color: var(--faint); font-size: var(--fs-footnote); padding: 30px 0;}
+/* 周期趋势柱状图卡片：白底 + 描边 + 16px 圆角，与经期视图其余卡片(状态/信息/本月记录)一致 */
+/* 顶部 12px：与经期视图其余卡片(状态/信息/本月记录)之间保持一致的 12px 卡间距 */
+#calViewPeriod #pvTrend {margin: 12px 14px;}
+#calViewPeriod #pvTrend:empty {margin: 0;}
+#calViewPeriod .pv-trend-card {background: #FFFFFF; border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px 16px 14px;}
+#calViewPeriod .pv-trend-card .stcard-title {margin: 0 0 12px;}
+#calViewPeriod .pv-trend-card .cyc-plot {margin-top: 2px;}
 #calViewPeriod .st-sub {font-size: var(--fs-caption); font-weight: 600; color: var(--muted); margin: 14px 0 2px;}
 #calViewPeriod .st-sub:first-of-type {margin-top: 0;}
 #calViewPeriod .stcard .stats-row {padding: 9px 0; border-bottom: 1px solid var(--line-soft);}
@@ -3006,6 +3018,8 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
         <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
       </div>
+      <!-- 周期趋势柱状图（经期视图最底下）：由 renderCycleTrend() 填充 -->
+      <div id="pvTrend"></div>
     </div>
 
   </div>
@@ -5963,6 +5977,8 @@ window.PV = (function(){
       const extras = document.getElementById('pvExtras');
       if (extras) extras.innerHTML = '';   // 卡片外的 状态/信息/本月记录 每次重建
 
+      renderCycleTrend();   // 周期趋势柱状图（月/年视图均显示在最底下）
+
       if (homeView === 'year') {
         cal.querySelectorAll('.month').forEach(card => {
           const m = +card.dataset.month;
@@ -6010,6 +6026,62 @@ window.PV = (function(){
 
       updateSelectedHighlight();
       renderDayInfoBar();
+    }
+
+    // 周期趋势柱状图（经期视图最底下）——复用移植过来的 .cyc-* 样式。
+    // 每根「柱」对应一次周期：深柱=距上一段经期的周期天数(带数字)，绿柱=本段经期长度。
+    function renderCycleTrend() {
+      const host = document.getElementById('pvTrend');
+      if (!host) return;
+      const { periods, cycles } = computeCycles();
+
+      if (periods.length === 0) {
+        host.innerHTML =
+          '<div class="pv-trend-card"><div class="stcard-title">周期趋势</div>' +
+          '<div class="cyc-empty">还没有经期记录</div></div>';
+        return;
+      }
+      if (cycles.length === 0) {
+        host.innerHTML =
+          '<div class="pv-trend-card"><div class="stcard-title">周期趋势</div>' +
+          '<div class="cyc-empty">记录满两段经期后显示周期趋势</div></div>';
+        return;
+      }
+
+      const MAX_COLS = 10;   // 只显示最近若干个周期，避免柱子过密
+      // cycles[i] = periods[i]→periods[i+1] 之间的天数；柱高同时展示该段经期长度
+      const cols = cycles.map((cyc, i) => ({
+        cyc,
+        len: periods[i + 1].length,
+        start: periods[i + 1].start
+      })).slice(-MAX_COLS);
+
+      const avg = Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length);
+      const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len]), 1);
+      const h = v => Math.max(4, Math.round(v / maxV * 82));   // 留 ~18% 顶部空间给数字
+
+      const colsHtml = cols.map(c =>
+        '<div class="cyc-col">' +
+          `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
+          `<div class="cyc-bar p" style="height:${h(c.len)}%"></div>` +
+        '</div>').join('');
+
+      const xHtml = cols.map(c =>
+        `<span>${c.start.getMonth() + 1}/${c.start.getDate()}</span>`).join('');
+
+      host.innerHTML =
+        '<div class="pv-trend-card">' +
+          `<div class="stcard-title">周期趋势<span class="sub">平均 ${avg} 天</span></div>` +
+          '<div class="cyc-legend">' +
+            '<span><i style="background:#1c5a48"></i>周期(天)</span>' +
+            '<span><i style="background:var(--brand)"></i>经期(天)</span>' +
+          '</div>' +
+          '<div class="cyc-plot">' +
+            '<div class="cyc-grid"><i style="top:25%"></i><i style="top:50%"></i><i style="top:75%"></i></div>' +
+            colsHtml +
+          '</div>' +
+          `<div class="cyc-x">${xHtml}</div>` +
+        '</div>';
     }
 
     // 把升序日期数组压成区间文本: [23,24,25,26,27]->"23-27日"; [4,13]->"4日、13日"
