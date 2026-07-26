@@ -6978,8 +6978,23 @@ function restoreBackup(){
 // Gist 每次 PATCH 都会留一个 revision，内容永久保留。只要备忘曾经成功上过一次云，
 // 哪怕后来被某次推送顶掉，也还躺在历史版本里。这里把所有版本翻一遍，
 // 把「本机现在没有的备忘」按 id 收集起来，同一条取最近一次出现的版本。
-let _recoverFound=[];
+let _recoverFound=[],_recDropHtml='',_recTimeline=[];
 function closeRecover(){document.getElementById('recoverModal').classList.remove('open');}
+// 云端备忘条数随时间的变化，让「哪一次同步删的」肉眼可见
+function _recTimelineHtml(){
+  if(!_recTimeline.length)return '';
+  const max=Math.max(1,..._recTimeline.map(t=>t.n));
+  const rows=[..._recTimeline].reverse().map(t=>{
+    const w=Math.round(t.n/max*100);
+    return '<div style="display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-4) 0">'
+      +'<div style="width:120px;flex:none;font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t.ts?new Date(t.ts).toLocaleString():'')+'</div>'
+      +'<div style="flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden">'
+      +'<div style="width:'+w+'%;height:100%;background:var(--accent)"></div></div>'
+      +'<div style="width:34px;flex:none;text-align:right;font-size:var(--fs-foot)">'+t.n+'</div></div>';
+  }).join('');
+  return '<details style="margin-top:var(--sp-12)"><summary style="cursor:pointer;font-size:var(--fs-foot);color:var(--text-muted)">'
+    +'查看云端备忘条数的完整变化（'+_recTimeline.length+' 个版本）</summary><div style="margin-top:var(--sp-8)">'+rows+'</div></details>';
+}
 function _recSay(html){document.getElementById('recoverBody').innerHTML=html;}
 
 async function openRecover(){
@@ -6999,6 +7014,7 @@ async function openRecover(){
     if(!hist.length){_recSay('<div>这个 Gist 没有历史版本。</div>');return;}
     const have=new Set(notes.map(n=>n.id));
     const byId=new Map();          // id → {note, ts}
+    const timeline=[];             // 每个版本的备忘条数，用来定位「是哪一次同步删的」
     let scanned=0,failed=0;
     for(const h of hist){
       _recSay('<div style="color:var(--text-muted)">正在翻查第 '+(scanned+1)+' / '+hist.length+' 个版本…</div>');
@@ -7011,16 +7027,35 @@ async function openRecover(){
         const f=rj.files&&rj.files[GIST_FILE];
         if(f&&f.content){
           const snap=JSON.parse(f.content);
-          (Array.isArray(snap.notes)?snap.notes:[]).forEach(n=>{
-            if(!n||n.subCat!=='备忘'||!n.id)return;
+          const memos=(Array.isArray(snap.notes)?snap.notes:[]).filter(n=>n&&n.subCat==='备忘'&&n.id);
+          timeline.push({ts:h.committed_at||'',n:memos.length,ok:true});
+          memos.forEach(n=>{
             if(have.has(n.id))return;            // 本机还在，不用捞
             if(byId.has(n.id))return;            // 历史是从新到旧，先到的更新
             byId.set(n.id,{note:n,ts:h.committed_at||''});
           });
+        }else{
+          timeline.push({ts:h.committed_at||'',n:0,ok:true});
         }
-      }catch(e){failed++;}
+      }catch(e){failed++;timeline.push({ts:h.committed_at||'',n:-1,ok:false});}
       scanned++;
     }
+    // 历史是从新到旧，反过来按时间顺序找「条数骤降」的那一次推送
+    const chrono=[...timeline].reverse().filter(t=>t.ok);
+    let drop=null;
+    for(let i=1;i<chrono.length;i++){
+      const d=chrono[i-1].n-chrono[i].n;
+      if(d>0&&(!drop||d>drop.d))drop={d,from:chrono[i-1].n,to:chrono[i].n,ts:chrono[i].ts};
+    }
+    _recDropHtml='';
+    if(drop&&drop.d>1){
+      _recDropHtml='<div style="background:var(--danger-bg);color:var(--danger);padding:var(--sp-10) var(--sp-12);'
+        +'border-radius:var(--r);margin-bottom:var(--sp-10);line-height:var(--lh-normal)">'
+        +'<b>找到了：'+esc(new Date(drop.ts).toLocaleString())+'</b> 那次同步，'
+        +'云端备忘从 <b>'+drop.from+'</b> 条被推成了 <b>'+drop.to+'</b> 条。'
+        +'<div style="font-size:var(--fs-foot);margin-top:var(--sp-6)">这一次推送覆盖了云端。之后每台设备启动时拉取，都会照着这份少掉的数据把本机的备忘删掉。</div></div>';
+    }
+    _recTimeline=chrono;
     // 解密（能解就解，解不开保留密文，卡片上会显示 🔒）
     const pw=getMasterPw();
     let locked=0;
@@ -7038,9 +7073,10 @@ async function openRecover(){
     }
     _recoverFound=[...byId.values()];
     if(!_recoverFound.length){
-      _recSay('<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的备忘。'
-        +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败。</span>':'')
-        +'<br><br><span style="color:var(--text-muted)">说明丢失的备忘从来没有成功上传过云端（一直是「仅本机」状态），历史版本里也就没有它们。这种情况只能靠本机的「还原到覆盖前的备份」。</span></div>');
+      _recSay(_recDropHtml+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的备忘。'
+        +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
+        +'<br><br><span style="color:var(--text-muted)">说明丢失的备忘从来没有成功上传过云端（一直是「仅本机」状态），历史版本里也就没有它们。这种情况只能靠本机的「还原到覆盖前的备份」。</span></div>'
+        +_recTimelineHtml());
       return;
     }
     const rows=_recoverFound.map(v=>{
@@ -7051,11 +7087,13 @@ async function openRecover(){
         +'<b>'+esc(n.title||'（无标题）')+'</b>'+lk
         +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t)+'</div></div>';
     }).join('');
-    _recSay('<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的备忘'
+    _recSay(_recDropHtml
+      +'<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的备忘'
       +(locked?'（其中 '+locked+' 条需要正确的主密码才能看到内容，但可以先捞回来）':'')+'：'
       +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
       +'</div>'+rows
-      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal)">找回的备忘会以「仅本机」状态加入，不会自动上云，也不会覆盖现有任何数据。确认内容无误后，再逐条点锁按钮改成加密上云。</div>');
+      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal)">找回的备忘会以「仅本机」状态加入，不会自动上云，也不会覆盖现有任何数据。确认内容无误后，再逐条点锁按钮改成加密上云。</div>'
+      +_recTimelineHtml());
     document.getElementById('recoverGoBtn').style.display='';
   }catch(e){
     _recSay('<div style="color:var(--danger)">读取失败：'+esc(e.message||String(e))+'</div>');
@@ -7215,6 +7253,18 @@ async function saveSyncCfg(){
   if(!t){toast('请填入 token');return;}
   if(p&&!cryptoOk()){toast('当前浏览器环境不支持加密（需要 https 或本地打开）');return;}
   const hadPw=!!getMasterPw();
+  // ⚠️ 清空主密码框 = 把「所有」上云备忘从云端撤下。密码框是预填的，
+  //    被输入法/密码管理器清掉、或误以为是「再输一次」而清空，都会走到这里。
+  //    这一步会推一份不含任何备忘的数据覆盖云端，其它设备下次拉取就会照着删本机的备忘。
+  //    这么重的动作绝不能静默执行，必须让人明确确认。
+  if(!p&&hadPw){
+    const n=notes.filter(x=>x.subCat==='备忘'&&!x.localOnly).length;
+    if(!confirm('主密码框是空的。\n\n继续保存会清除主密码，并把 '+n+' 条上云备忘从云端全部撤下（改为仅本机）。'
+      +'\n其它设备下次同步时，会照着这份「没有备忘」的数据把本机备忘删掉。\n\n'
+      +'如果你只是想改 token 或 Gist ID，请点「取消」，把主密码重新填回去再保存。\n\n确定要清除主密码吗？')){
+      return;
+    }
+  }
   localStorage.setItem(TK_KEY,t);
   if(g)localStorage.setItem(GIST_KEY,g);
   if(p)localStorage.setItem(MPW_KEY,p);
@@ -7277,7 +7327,11 @@ function syncPullNow(){
 }
 
 function clearSyncCfg(){
-  if(!confirm('断开同步后,本地数据保留,但不再上传到云端。确定?'))return;
+  const nm=notes.filter(x=>x.subCat==='备忘'&&!x.localOnly).length;
+  if(!confirm('断开同步后,本地数据保留,但不再上传到云端。'
+    +(nm?'\n\n另外 '+nm+' 条上云备忘会改回「仅本机」。以后重新配置 token 时，第一次推送会把它们从云端撤下——'
+        +'那之后这些备忘就只存在这台设备上了，清掉浏览器数据就没了。':'')
+    +'\n\n确定?'))return;
   localStorage.removeItem(TK_KEY);
   localStorage.removeItem(GIST_KEY);
   localStorage.removeItem(MPW_KEY);
