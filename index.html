@@ -6831,17 +6831,21 @@ function scheduleSyncPush(){
 }
 
 async function syncPush(){
-  const token=getToken();if(!token)return;
+  const token=getToken();if(!token)return false;
   isSyncing=true;lastSyncErr=null;updateSyncBadge();
+  // 本轮真正上传的笔记 id：推送成功后才据此摘掉 pendingCloud（见 clearPendingCloud）
+  let pushedIds=[];
   try{
     // 🔒 仅本机的笔记不上传 Gist
     // 设置了主密码时，备忘的字段先加密（云端只见密文）；密文态的备忘原样透传
     const pw=getMasterPw();
     const notesToSync=await Promise.all(notes.filter(n=>!n.localOnly).map(async n=>{
-      if(n.subCat!=='备忘')return n;
-      if(isEncLocked(n))return n;               // 本机没解开过 → 透传密文
-      if(!pw||!cryptoOk())return n;             // 未设主密码 → 维持原有明文行为
-      const {fields,customFields,...rest}=n;
+      pushedIds.push(n.id);
+      const {pendingCloud,...n2}=n;             // pendingCloud 只是本机标记，不上云
+      if(n2.subCat!=='备忘')return n2;
+      if(isEncLocked(n2))return n2;             // 本机没解开过 → 透传密文
+      if(!pw||!cryptoOk())return n2;            // 未设主密码 → 维持原有明文行为
+      const {fields,customFields,...rest}=n2;
       rest.encData=await encryptJSON({fields:fields||{},customFields:customFields||[]},pw);
       return rest;
     }));
@@ -6875,17 +6879,44 @@ async function syncPush(){
     }
     const j=await res.json();
     if(!gistId&&j.id){localStorage.setItem(GIST_KEY,j.id);toast('✓ 已创建云端备份');}
+    // ✅ 云端已确认收到这批笔记 → 摘掉「等待上云」标记，它们从此可以被云端覆盖
+    clearPendingCloud(pushedIds);
     isSyncing=false;updateSyncBadge();
+    return true;
   }catch(e){
     isSyncing=false;lastSyncErr=e.message||String(e);updateSyncBadge();
     console.error('[Sync push failed]',e);
+    // 推送失败 → pendingCloud 保持，syncPull 不会把这些笔记删掉
     // 不弹 toast 骚扰用户;只在状态徽章和配置弹窗显示
+    return false;
   }
 }
+
+// ── 「等待上云」保护：防止未成功上传的笔记被下一次拉取抹掉 ──────────
+// 背景：syncPull 是「云端覆盖本地」，只有 localOnly 的笔记免疫。
+// 一条备忘从 🔒仅本机 改成上云时，如果只把 localOnly 置为 false 就落盘，
+// 而推送还没成功（断网 / token 无 gist 权限 / 页面被系统回收），
+// 那么它既不在云端、又失去了 localOnly 保护，下次启动静默拉取就会被永久删除。
+// 因此改成两段式：先打 pendingCloud 标记，推送被云端确认后才摘掉。
+function clearPendingCloud(ids){
+  const s=new Set(ids);
+  let changed=0;
+  notes.forEach(n=>{if(n.pendingCloud&&s.has(n.id)){delete n.pendingCloud;changed++;}});
+  if(changed)localStorage.setItem(NSK,JSON.stringify(notes));
+}
+// 尚未被云端确认过的笔记（等同于 localOnly，受拉取覆盖保护）
+function isProtectedNote(n){return !!(n.localOnly||n.pendingCloud);}
 
 // ── 覆盖前自动备份 + 一键还原（防止扫错方向 / 误覆盖导致丢数据）──
 function backupLocal(reason){
   try{
+    // 备份槽只有一个：别让「已经变少的数据」把上一份更完整的备份顶掉。
+    // 典型场景是丢数据后又打开了几次 App，每次启动都拉取，好不容易存下的还原点被覆盖成空的。
+    const prev=getBackupMeta();
+    if(prev&&Date.now()-prev.ts<7*24*3600*1000){
+      const pn=(prev.notes||[]).length,pd=(prev.data||[]).length;
+      if(pn+pd>notes.length+data.length)return; // 旧备份更全 → 保留它
+    }
     localStorage.setItem(BK_KEY,JSON.stringify({ts:Date.now(),reason:reason||'',data,categories:cats,notes,noteSubs}));
   }catch(e){/* 备份失败不阻断主流程 */}
 }
@@ -6929,20 +6960,37 @@ async function syncPull(silent){
     // 覆盖前的安全网：若云端数据明显比本机少（可能扫错方向 / 云端被顶掉），先自动备份本机，可一键还原
     const rTotal=(Array.isArray(remote.data)?remote.data.length:0)+(Array.isArray(remote.notes)?remote.notes.length:0);
     const lTotal=(Array.isArray(data)?data.length:0)+(Array.isArray(notes)?notes.length:0);
-    if(rTotal<lTotal)backupLocal('pull-shrink');
+    if(rTotal<lTotal){
+      backupLocal('pull-shrink');
+      // 启动时的静默拉取也要出声：数据变少必须让人当场知道，否则等发现时备份早被顶掉了
+      toast('⚠️ 云端比本机少 '+(lTotal-rTotal)+' 条，已自动备份，可在云同步设置里一键还原');
+    }
     // 简单的「云端覆盖本地」策略:适用于单用户多设备场景
-    // 比较 updatedAt,如果云端较新就采用;首次拉取(本地无修改记录)直接采用
+    // 注意:这里不做 updatedAt 比较,云端一律覆盖本机 —— 所以任何还没成功上云的改动
+    // 都必须靠 localOnly / pendingCloud 标记来免疫,否则会被静默抹掉
     data=remote.data;
     if(Array.isArray(remote.categories)&&remote.categories.length)cats=remote.categories;
     // 笔记数据兼容:旧 Gist 没有 notes/noteSubs 字段时保持现状
     // 合并策略：保留本机的 🔒 仅本机笔记，云端覆盖云端同步的笔记
     if(Array.isArray(remote.notes)){
-      const localOnlyNotes=notes.filter(n=>n.localOnly);
+      const remoteIds=new Set(remote.notes.map(n=>n.id));
+      // 兜底：本机有、云端没有、又不是 localOnly 的备忘 → 说明「以为上了云其实没上」。
+      // 直接覆盖会永久丢失（备忘里是账号密码，不可再生），因此退回 localOnly 保护并提示用户。
+      // 代价：在另一台设备上删掉的备忘会以「仅本机」的形式留在这台设备上，需要手动再删一次。
+      // 这个方向的错误是可逆的，反过来（静默删除）不可逆，所以宁可留着。
+      let rescued=0;
+      notes.forEach(n=>{
+        if(n.subCat!=='备忘')return;
+        if(n.localOnly||remoteIds.has(n.id))return;
+        n.localOnly=true;delete n.pendingCloud;rescued++;
+      });
+      const localOnlyNotes=notes.filter(n=>isProtectedNote(n));
       // 远端笔记不会有 localOnly:true（推送时已过滤），但保险起见还是 filter 一次
       const remoteNotes=remote.notes.filter(n=>!n.localOnly);
-      // 去重：如果云端笔记的 id 和本机 localOnly 笔记的 id 冲突，云端优先（极少出现，但避免重复）
+      // 去重：如果云端笔记的 id 和本机受保护笔记的 id 冲突，云端优先（极少出现，但避免重复）
       const localOnlyIds=new Set(localOnlyNotes.map(n=>n.id));
       const filteredRemote=remoteNotes.filter(n=>!localOnlyIds.has(n.id));
+      if(rescued)toast('⚠️ 有 '+rescued+' 条备忘云端没有，已保留在本机并标记「仅本机」');
       // 解密加密备忘；主密码缺失/不对时保留密文（显示 🔒，不会丢数据）
       const pw=getMasterPw();
       let encLeft=0;
@@ -7043,11 +7091,24 @@ async function saveSyncCfg(){
   // 首次设置主密码 → 解锁全部备忘（此后默认加密上云）
   // ⚠️ 必须放在拉取之后执行：拉取是「云端覆盖本地」，只有 localOnly 的笔记受保护，
   //    先解锁再拉取会让尚未上云的本机备忘被覆盖丢失
+  // ⚠️ 翻转必须配合 pendingCloud：在推送被云端确认之前，这批备忘不能失去覆盖保护，
+  //    否则推送一失败它们就既不在云端、也不受 localOnly 保护，下次拉取即永久丢失。
   const unlockMemos=()=>{
-    if(!setPw)return;
-    let flipped=0;
-    notes.forEach(n=>{if(n.subCat==='备忘'&&n.localOnly){n.localOnly=false;flipped++;}});
-    if(flipped){localStorage.setItem(NSK,JSON.stringify(notes));render();toast('已将 '+flipped+' 条备忘改为加密上云');}
+    if(!setPw)return[];
+    const flipped=[];
+    notes.forEach(n=>{if(n.subCat==='备忘'&&n.localOnly){n.localOnly=false;n.pendingCloud=true;flipped.push(n.id);}});
+    if(flipped.length){localStorage.setItem(NSK,JSON.stringify(notes));render();toast('正在将 '+flipped.length+' 条备忘加密上云…');}
+    return flipped;
+  };
+  // 推送没成功就把这批备忘退回「仅本机」，宁可不上云也不能丢
+  const settleUnlocked=async(flipped)=>{
+    const ok=await syncPush();
+    if(!flipped.length)return;
+    if(ok){toast('✓ 已将 '+flipped.length+' 条备忘加密上云');return;}
+    const s=new Set(flipped);
+    notes.forEach(n=>{if(s.has(n.id)){n.localOnly=true;delete n.pendingCloud;}});
+    localStorage.setItem(NSK,JSON.stringify(notes));render();
+    toast('⚠️ 上云失败，'+flipped.length+' 条备忘已退回「仅本机」保护');
   };
   toast('设置已保存,开始同步...');
   closeSyncCfg();
@@ -7056,13 +7117,12 @@ async function saveSyncCfg(){
     syncPull(false).then(async ok=>{
       const dec=await decryptPendingMemos();
       if(dec)toast('✓ 已解密 '+dec+' 条备忘');
-      unlockMemos();
+      const flipped=unlockMemos();
       // 主密码变更需要强制推送：把新加密的备忘送上云 / 把撤回的备忘从云端删掉
-      if(setPw||clearedPw||(ok===false&&!lastSyncErr))syncPush();
+      if(setPw||clearedPw||(ok===false&&!lastSyncErr))await settleUnlocked(flipped);
     });
   }else{
-    unlockMemos();
-    syncPush();
+    await settleUnlocked(unlockMemos());
   }
   updateSyncBadge();
 }
@@ -9644,11 +9704,17 @@ async function toggleNoteLocal(id){
   const wasLocal=!!n.localOnly;
   // 先切状态、存本地、立即重绘
   n.localOnly=!wasLocal;
+  // 🔒 → 🔓 时打上「等待上云」标记：在云端确认收到之前，它仍然免疫拉取覆盖
+  if(wasLocal)n.pendingCloud=true;
   n.updatedAt=new Date().toISOString();
   localStorage.setItem(NSK,JSON.stringify(notes));
   render();
   // 未配置同步 → 纯本地模式，不用推
-  if(!getToken()){return;}
+  if(!getToken()){
+    // 没有云端可去，别让它停在「等待上云」的假状态
+    if(wasLocal){n.localOnly=true;delete n.pendingCloud;localStorage.setItem(NSK,JSON.stringify(notes));render();toast('尚未配置云同步，已保持「仅本机」');}
+    return;
+  }
   // 取消防抖中的待推送（避免被旧的覆盖）
   clearTimeout(syncTimer);
   // 🔓 → 🔒：必须等推送结果，失败要还原 + 提示
@@ -9664,8 +9730,15 @@ async function toggleNoteLocal(id){
       toast('⚠️ 云端删除失败，请检查网络');
     }
   }else{
-    // 🔒 → 🔓：触发普通推送（不等结果，失败由现有徽章提示）
-    scheduleSyncPush();
+    // 🔒 → 🔓：同样必须等推送结果。推送失败就退回「仅本机」，
+    // 否则这条备忘既不在云端、又没了 localOnly 保护，下次拉取会被静默删除。
+    const ok=await syncPush();
+    if(!ok){
+      n.localOnly=true;delete n.pendingCloud;
+      localStorage.setItem(NSK,JSON.stringify(notes));
+      render();
+      toast('⚠️ 上云失败，已退回「仅本机」保护，请检查网络后重试');
+    }
   }
 }
 
