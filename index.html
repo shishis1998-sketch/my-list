@@ -2862,6 +2862,13 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <div id="sync-restore-time" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center"></div>
     </div>
 
+    <div style="margin-bottom:var(--sp-14)">
+      <button class="btn btn-d" style="width:100%" onclick="openRecover()">🕘 从云端历史版本找回备忘</button>
+      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)">
+        Gist 保存每一次同步的历史版本。逐个翻查，把本机已经没有的备忘捞回来。
+      </div>
+    </div>
+
     <div class="fg">
       <label>GitHub Personal Access Token</label>
       <input type="password" id="f-gh-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
@@ -2891,6 +2898,21 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         <button class="btn btn-g" onclick="syncPullNow()">⬇ 从云端拉取</button>
         <button class="btn btn-p" onclick="saveSyncCfg()">保存并同步</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MEMO RECOVERY MODAL ===== -->
+<div class="moverlay" id="recoverModal" onclick="if(event.target===this)closeRecover()">
+  <div class="mbox" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="mhdr">
+      <div class="mtitle">从云端历史版本找回备忘</div>
+      <button class="mclose" onclick="closeRecover()">✕</button>
+    </div>
+    <div class="mbody" id="recoverBody"></div>
+    <div class="mftr" style="justify-content:space-between;flex-wrap:wrap;gap:var(--sp-8)">
+      <button class="btn btn-d" onclick="closeRecover()">关闭</button>
+      <button class="btn btn-p" id="recoverGoBtn" style="display:none" onclick="doRecoverMemos()">全部找回</button>
     </div>
   </div>
 </div>
@@ -6782,10 +6804,18 @@ async function deriveKey(pass,salt){
   const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
-async function encryptJSON(obj,pass){
+// 一次推送里所有备忘共用同一把派生密钥：PBKDF2 是 310000 轮，几十条备忘各派生一次
+// 能把一次同步拖到几十秒，手机上一旦被切走/锁屏，页面被冻结，推送就永远完不成。
+// 每条备忘仍然各自随机 IV（AES-GCM 的安全性靠 IV 不重复，不靠每条换 salt），
+// 且每次推送重新随机 salt。输出格式不变，老密文照常解密。
+async function prepKey(pass){
   const salt=crypto.getRandomValues(new Uint8Array(16));
+  return {salt,key:await deriveKey(pass,salt)};
+}
+async function encryptJSON(obj,pass,pre){
+  const salt=pre?pre.salt:crypto.getRandomValues(new Uint8Array(16));
+  const key=pre?pre.key:await deriveKey(pass,salt);
   const iv=crypto.getRandomValues(new Uint8Array(12));
-  const key=await deriveKey(pass,salt);
   const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));
   return {v:1,salt:bufB64(salt),iv:bufB64(iv),ct:bufB64(ct)};
 }
@@ -6839,14 +6869,15 @@ async function syncPush(){
     // 🔒 仅本机的笔记不上传 Gist
     // 设置了主密码时，备忘的字段先加密（云端只见密文）；密文态的备忘原样透传
     const pw=getMasterPw();
+    const pre=(pw&&cryptoOk())?await prepKey(pw):null;   // 整批只派生一次密钥
     const notesToSync=await Promise.all(notes.filter(n=>!n.localOnly).map(async n=>{
       pushedIds.push(n.id);
       const {pendingCloud,...n2}=n;             // pendingCloud 只是本机标记，不上云
       if(n2.subCat!=='备忘')return n2;
       if(isEncLocked(n2))return n2;             // 本机没解开过 → 透传密文
-      if(!pw||!cryptoOk())return n2;            // 未设主密码 → 维持原有明文行为
+      if(!pre)return n2;                        // 未设主密码 → 维持原有明文行为
       const {fields,customFields,...rest}=n2;
-      rest.encData=await encryptJSON({fields:fields||{},customFields:customFields||[]},pw);
+      rest.encData=await encryptJSON({fields:fields||{},customFields:customFields||[]},pw,pre);
       return rest;
     }));
     const payload={
@@ -6941,6 +6972,113 @@ function restoreBackup(){
   closeSyncCfg();
   toast('✓ 已还原到覆盖前的备份，共 '+data.length+' 条记录、'+notes.length+' 条笔记');
   scheduleSyncPush(); // 把还原后的数据推回云端，保持一致
+}
+
+// ── 从 Gist 历史版本找回备忘 ──────────────────────────────────────
+// Gist 每次 PATCH 都会留一个 revision，内容永久保留。只要备忘曾经成功上过一次云，
+// 哪怕后来被某次推送顶掉，也还躺在历史版本里。这里把所有版本翻一遍，
+// 把「本机现在没有的备忘」按 id 收集起来，同一条取最近一次出现的版本。
+let _recoverFound=[];
+function closeRecover(){document.getElementById('recoverModal').classList.remove('open');}
+function _recSay(html){document.getElementById('recoverBody').innerHTML=html;}
+
+async function openRecover(){
+  const token=getToken(),gistId=getGistId();
+  document.getElementById('recoverGoBtn').style.display='none';
+  _recoverFound=[];
+  document.getElementById('recoverModal').classList.add('open');
+  if(!token||!gistId){_recSay('<div style="color:var(--danger)">需要先配置 token 和 Gist ID 才能翻历史版本。</div>');return;}
+  _recSay('<div style="color:var(--text-muted)">正在读取历史版本列表…</div>');
+  try{
+    const res=await fetch('https://api.github.com/gists/'+gistId,{
+      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const j=await res.json();
+    const hist=Array.isArray(j.history)?j.history:[];
+    if(!hist.length){_recSay('<div>这个 Gist 没有历史版本。</div>');return;}
+    const have=new Set(notes.map(n=>n.id));
+    const byId=new Map();          // id → {note, ts}
+    let scanned=0,failed=0;
+    for(const h of hist){
+      _recSay('<div style="color:var(--text-muted)">正在翻查第 '+(scanned+1)+' / '+hist.length+' 个版本…</div>');
+      try{
+        const r=await fetch('https://api.github.com/gists/'+gistId+'/'+h.version,{
+          headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
+        });
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const rj=await r.json();
+        const f=rj.files&&rj.files[GIST_FILE];
+        if(f&&f.content){
+          const snap=JSON.parse(f.content);
+          (Array.isArray(snap.notes)?snap.notes:[]).forEach(n=>{
+            if(!n||n.subCat!=='备忘'||!n.id)return;
+            if(have.has(n.id))return;            // 本机还在，不用捞
+            if(byId.has(n.id))return;            // 历史是从新到旧，先到的更新
+            byId.set(n.id,{note:n,ts:h.committed_at||''});
+          });
+        }
+      }catch(e){failed++;}
+      scanned++;
+    }
+    // 解密（能解就解，解不开保留密文，卡片上会显示 🔒）
+    const pw=getMasterPw();
+    let locked=0;
+    for(const v of byId.values()){
+      const n=v.note;
+      if(!n.encData)continue;
+      if(pw&&cryptoOk()){
+        try{
+          const dec=await decryptJSON(n.encData,pw);
+          n.fields=dec.fields||{};n.customFields=dec.customFields||[];delete n.encData;
+          continue;
+        }catch(e){/* 主密码不对 */}
+      }
+      locked++;
+    }
+    _recoverFound=[...byId.values()];
+    if(!_recoverFound.length){
+      _recSay('<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的备忘。'
+        +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败。</span>':'')
+        +'<br><br><span style="color:var(--text-muted)">说明丢失的备忘从来没有成功上传过云端（一直是「仅本机」状态），历史版本里也就没有它们。这种情况只能靠本机的「还原到覆盖前的备份」。</span></div>');
+      return;
+    }
+    const rows=_recoverFound.map(v=>{
+      const n=v.note;
+      const t=v.ts?new Date(v.ts).toLocaleString():'';
+      const lk=n.encData?' <span style="color:var(--danger)">🔒需主密码</span>':'';
+      return '<div style="padding:var(--sp-8) 0;border-bottom:1px solid var(--line)">'
+        +'<b>'+esc(n.title||'（无标题）')+'</b>'+lk
+        +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t)+'</div></div>';
+    }).join('');
+    _recSay('<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的备忘'
+      +(locked?'（其中 '+locked+' 条需要正确的主密码才能看到内容，但可以先捞回来）':'')+'：'
+      +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
+      +'</div>'+rows
+      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal)">找回的备忘会以「仅本机」状态加入，不会自动上云，也不会覆盖现有任何数据。确认内容无误后，再逐条点锁按钮改成加密上云。</div>');
+    document.getElementById('recoverGoBtn').style.display='';
+  }catch(e){
+    _recSay('<div style="color:var(--danger)">读取失败：'+esc(e.message||String(e))+'</div>');
+  }
+}
+
+function doRecoverMemos(){
+  if(!_recoverFound.length)return;
+  backupLocal('before-recover');
+  const have=new Set(notes.map(n=>n.id));
+  let added=0;
+  _recoverFound.forEach(v=>{
+    if(have.has(v.note.id))return;
+    // 以「仅本机」加入：先让人核对内容，别让它立刻参与同步
+    const {pendingCloud,...rest}=v.note;
+    notes.unshift({...rest,localOnly:true});
+    added++;
+  });
+  localStorage.setItem(NSK,JSON.stringify(notes));
+  _recoverFound=[];
+  closeRecover();closeSyncCfg();
+  render();
+  toast('✓ 已找回 '+added+' 条备忘（均为「仅本机」）');
 }
 
 async function syncPull(silent){
