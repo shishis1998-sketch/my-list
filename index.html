@@ -1592,7 +1592,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .cal-vtoggle.cvt3 .cvt{padding:6px 0;min-width:48px;text-align:center;}
 .cal-vtoggle .cvt.on{color:var(--accent);}
 #calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-#calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;}
+/* 隐藏纵向滚动条：选中日期后下方状态/信息卡展开会撑出滚动条，若占宽会把居中的日历网格整体挤向左侧（“向左偏”）。
+   与本 App 其余滚动区一致隐藏滚动条，保证内容宽度恒定、与普通日历像素对齐。 */
+#calViewPeriod::-webkit-scrollbar{display:none;}
 /* 经期视图：去掉粉色背景，与日历页统一纯色；月份导航沿用日历页「‹ 年 月 ›」样式 */
 #calViewPeriod,
 #calViewPeriod .home-sticky{background:var(--bg) !important;background-image:none !important;}
