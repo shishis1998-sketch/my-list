@@ -1960,7 +1960,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       border-radius: 16px; padding: 16px 16px 14px;}
 #calViewPeriod .pv-trend-card .stcard-title {margin: 0;}
 #calViewPeriod .pv-trend-card .cyc-head {margin: 0 0 12px;}
-#calViewPeriod .pv-trend-card .cyc-nav:disabled {opacity: .28; cursor: default;}
+/* 年份切换箭头复用标题栏 .pv-navbtn（无描边/透明底/墨绿），到边界年份时淡化禁用 */
+#calViewPeriod .pv-trend-card .cyc-yearbar {gap: 0;}
+#calViewPeriod .pv-trend-card .pv-navbtn:disabled {opacity: .28; cursor: default;}
 #calViewPeriod .pv-trend-card .cyc-plot {margin-top: 2px;}
 #calViewPeriod .st-sub {font-size: var(--fs-caption); font-weight: 600; color: var(--muted); margin: 14px 0 2px;}
 #calViewPeriod .st-sub:first-of-type {margin-top: 0;}
@@ -6082,9 +6084,9 @@ window.PV = (function(){
         '<div class="cyc-head">' +
           `<div class="stcard-title">周期趋势${cols.length ? `<span class="sub">平均 ${avg} 天</span>` : ''}</div>` +
           '<div class="cyc-yearbar">' +
-            `<button class="cyc-nav prev" data-d="-1"${atMin ? ' disabled' : ''} aria-label="上一年"></button>` +
+            `<button class="pv-navbtn" data-d="-1"${atMin ? ' disabled' : ''} aria-label="上一年">‹</button>` +
             `<span class="cyc-year">${trendYear}</span>` +
-            `<button class="cyc-nav next" data-d="1"${atMax ? ' disabled' : ''} aria-label="下一年"></button>` +
+            `<button class="pv-navbtn" data-d="1"${atMax ? ' disabled' : ''} aria-label="下一年">›</button>` +
           '</div>' +
         '</div>';
 
@@ -6099,8 +6101,9 @@ window.PV = (function(){
             `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
             `<div class="cyc-bar p" style="height:${h(c.len)}%"></div>` +
           '</div>').join('');
+        // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
         const xHtml = cols.map(c =>
-          `<span>${c.start.getMonth() + 1}/${c.start.getDate()}</span>`).join('');
+          `<span>${c.start.getMonth() + 1}</span>`).join('');
         body =
           '<div class="cyc-legend">' +
             '<span><i style="background:#1c5a48"></i>周期(天)</span>' +
@@ -6114,7 +6117,7 @@ window.PV = (function(){
       }
 
       host.innerHTML = `<div class="pv-trend-card">${head}${body}</div>`;
-      host.querySelectorAll('.cyc-nav[data-d]').forEach(btn => {
+      host.querySelectorAll('.pv-navbtn[data-d]').forEach(btn => {
         btn.onclick = () => trendYearShift(+btn.dataset.d);
       });
     }
