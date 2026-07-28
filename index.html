@@ -3090,6 +3090,8 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
           <div class="year-picker-list" id="yearPickerList"></div>
         </div>
       </div>
+      <!-- 周期趋势柱状图：仅年度视图显示，且放在最上方；由 renderCycleTrend() 填充 -->
+      <div id="pvTrend"></div>
       <!-- 标题条在卡片外（与普通日历 .cal-hdr 一致）；卡片只含星期行+网格（与 .cal-scroll 一致） -->
       <div class="home-header">
         <div class="pv-nav">
@@ -3114,8 +3116,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
         <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
         <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
       </div>
-      <!-- 周期趋势柱状图（经期视图最底下）：由 renderCycleTrend() 填充 -->
-      <div id="pvTrend"></div>
     </div>
 
   </div>
@@ -6073,7 +6073,9 @@ window.PV = (function(){
       const extras = document.getElementById('pvExtras');
       if (extras) extras.innerHTML = '';   // 卡片外的 状态/信息/本月记录 每次重建
 
-      renderCycleTrend();   // 周期趋势柱状图（月/年视图均显示在最底下）
+      // 周期趋势柱状图：只在年度视图显示（月度视图不再重复）
+      if (homeView === 'year') { renderCycleTrend(); }
+      else { const _t = document.getElementById('pvTrend'); if (_t) _t.innerHTML = ''; }
 
       if (homeView === 'year') {
         cal.querySelectorAll('.month').forEach(card => {
