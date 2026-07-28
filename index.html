@@ -2862,6 +2862,18 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       <div id="sync-restore-time" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center"></div>
     </div>
 
+    <div class="fg">
+      <div class="local-toggle" id="roToggle" onclick="toggleReadOnly()">
+        <div class="local-toggle-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="local-toggle-text">
+          <div class="local-toggle-title">👀 只读模式（这台设备只看不传）</div>
+          <div class="local-toggle-desc">照常从云端拉取最新数据，但<b>永远不上传</b>。副机、借来的手机、公用电脑建议打开——从根上杜绝这台设备把云端数据顶掉。</div>
+        </div>
+      </div>
+    </div>
+
     <div id="sync-uploadlocal-row" style="display:none;margin-bottom:var(--sp-14)">
       <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn">🔓 把「仅本机」备忘加密上云</button>
       <div id="sync-uploadlocal-hint" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)"></div>
@@ -6651,6 +6663,7 @@ const SK='my_list_v4', CK='my_list_cats_v3';
 const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
 const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist', MPW_KEY='my_list_master_pw';
 const BK_KEY='my_list_overwrite_backup_v1';
+const RO_KEY='my_list_readonly_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
@@ -6796,6 +6809,26 @@ function persistNoteSubs(){
 }
 
 // ── GitHub Gist Sync ─────────────────────────────────────────────
+// ── 只读模式：这台设备只拉不推 ──────────────────────────────────
+// 副机的典型用法是「只想看看」，但推送是整份覆盖，一旦它手上的数据是旧的，
+// 随手改一条就会把云端顶掉。与其事后补救，不如让这类设备根本没有写权限。
+// 每台设备各自开关，存在本机，不进 Gist。
+function isReadOnly(){return localStorage.getItem(RO_KEY)==='1';}
+function toggleReadOnly(){
+  const on=!isReadOnly();
+  if(on){
+    const pend=notes.filter(n=>n.pendingCloud).length;
+    if(pend&&!confirm('还有 '+pend+' 条备忘正在上云途中。\n开启只读模式后它们不会被上传，会退回「仅本机」。\n\n继续？'))return;
+    notes.forEach(n=>{if(n.pendingCloud){n.localOnly=true;delete n.pendingCloud;}});
+    if(pend)localStorage.setItem(NSK,JSON.stringify(notes));
+    clearTimeout(syncTimer);
+  }
+  localStorage.setItem(RO_KEY,on?'1':'0');
+  document.getElementById('roToggle').classList.toggle('on',on);
+  updateSyncBadge();render();
+  toast(on?'👀 已开启只读模式，这台设备不会再上传任何数据':'已关闭只读模式，改动会照常同步');
+}
+
 function getToken(){return localStorage.getItem(TK_KEY)||'';}
 function getGistId(){return localStorage.getItem(GIST_KEY)||'';}
 function getMasterPw(){return localStorage.getItem(MPW_KEY)||'';}
@@ -6853,14 +6886,26 @@ async function decryptPendingMemos(){
 function updateSyncBadge(){
   const b=document.getElementById('sync-badge');if(!b)return;
   if(!getToken()){b.textContent='未配置';b.style.background='';b.style.color='';return;}
+  if(isReadOnly()){b.textContent='只读';b.style.background='#E5E7EB';b.style.color='#374151';return;}
   if(isSyncing){b.textContent='同步中';b.style.background='#FEF3C7';b.style.color='#92400E';return;}
   if(lastSyncErr){b.textContent='失败';b.style.background='#FCEBEB';b.style.color='#9B2020';return;}
   b.textContent='已同步';b.style.background='#DCFCE7';b.style.color='#14532D';
 }
 
 // 防抖:连续保存 1.5 秒内只推一次
+// 初值取当前时间：页面初始化本身会调 scheduleSyncPush（如 loadPeriod 发现种子更新），
+// 那不是用户的编辑，只读模式下不该为此弹提示。开头这几秒静默，之后的才是真编辑。
+let _roWarnAt=Date.now();
 function scheduleSyncPush(){
   if(!getToken())return; // 未配置 → 纯本地模式
+  if(isReadOnly()){
+    // 只读模式下仍然允许在本机改，但要说清楚：不会上传，且下次拉取会被云端覆盖
+    if(Date.now()-_roWarnAt>8000){
+      _roWarnAt=Date.now();
+      toast('👀 只读模式：改动只存本机，不会上传，下次拉取会被云端覆盖');
+    }
+    return;
+  }
   clearTimeout(syncTimer);
   syncTimer=setTimeout(syncPush,1500);
 }
@@ -6873,6 +6918,8 @@ let _cloudAligned=false,_aligning=false;
 
 async function syncPush(){
   const token=getToken();if(!token)return false;
+  // 只读模式是硬闸：不管从哪条路径调进来，这台设备一律不写云端
+  if(isReadOnly()){console.warn('[Sync push blocked] 只读模式');return false;}
   // 已有 gist 却还没成功拉取过 → 先拉一次对齐，别拿可能过时的本机数据盖掉云端
   if(getGistId()&&!_cloudAligned&&!_aligning){
     _aligning=true;
@@ -7006,6 +7053,7 @@ async function uploadAllLocalMemos(){
   const targets=notes.filter(n=>n.subCat==='备忘'&&n.localOnly);
   if(!targets.length){toast('没有「仅本机」的备忘');return;}
   if(!getToken()){toast('请先配置 token');return;}
+  if(isReadOnly()){toast('👀 这台设备是只读模式，请先关闭只读再上云');return;}
   const pw=getMasterPw();
   if(!pw||!cryptoOk()){
     if(!confirm('还没有设置主密码（或当前环境不支持加密），这 '+targets.length+' 条备忘会以【明文】同步到 Gist。\n\n'
@@ -7314,6 +7362,7 @@ function openSyncCfg(){
   }else{
     rr.style.display='none';
   }
+  document.getElementById('roToggle').classList.toggle('on',isReadOnly());
   refreshUploadLocalRow();
   document.getElementById('syncModal').classList.add('open');
 }
@@ -9966,6 +10015,7 @@ function toggleMemoLocal(){
 async function toggleNoteLocal(id){
   const n=notes.find(x=>x.id===id);
   if(!n)return;
+  if(isReadOnly()&&getToken()){toast('👀 这台设备是只读模式，不能改动上云状态');return;}
   const wasLocal=!!n.localOnly;
   // 先切状态、存本地、立即重绘
   n.localOnly=!wasLocal;
