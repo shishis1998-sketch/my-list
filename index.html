@@ -588,7 +588,7 @@ tr:hover .acts{opacity:1;}
   /* 日历手机端 - 全屏 */
   .cal-modal{max-height:none;height:100%;border-radius:0;}
   .cal-overlay{align-items:stretch;justify-content:stretch;padding:0;}
-  .cal-overlay.open .cal-modal{animation:mboxSlideIn var(--nav-dur) var(--nav-ease);}
+  /* 手机端 cal-modal 的进入动效已由顶层规则统一为 mboxPopIn（同 desktop）*/
   .cal-hdr{padding:var(--sp-14) var(--sp-14) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
   /* 月份标题＝独立页的页面标题，用 Title 18px 做锚点（手机端同 18，不再降到正文）*/
   .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
@@ -715,8 +715,9 @@ tr:hover .acts{opacity:1;}
 
 /* ===== CALENDAR（独立整页，非弹窗）===== */
 .cal-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:110;padding:0;}
-.cal-overlay.open{display:block;animation:calPageIn var(--nav-dur) var(--nav-ease);}
-@keyframes calPageIn{from{opacity:0;}to{opacity:1;}}
+.cal-overlay.open{display:block;}
+/* 外层 bg 瞬间铺满（挡住下方列表页），只让内层 cal-modal 淡入渐起 */
+.cal-overlay.open .cal-modal{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
 .cal-modal{background:var(--bg);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 /* 标题栏 = 日历卡的顶部（无色白底，与下方网格拼成一张卡）*/
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-10) var(--sp-10) var(--sp-8) var(--sp-14);flex-shrink:0;
@@ -847,6 +848,9 @@ body.cal-searching .cal-searchresults{display:flex;}
   body.sb-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
   body.sb-open .bb-actions{display:none;}
   body.sb-open .bb-tabs{max-height:64px;opacity:1;}
+  /* 手机端 sb-overlay 改成与设置页同色实底：作为静止背景挡住下方页面，
+     让 .sidebar 淡入渐起时看不到底下列表页透出（桌面端仍是半透明抽屉遮罩）*/
+  body.sb-open .sb-overlay.open{background:var(--surface);}
 }
 
 /* 日历按钮加到 sidebar 导航 */
