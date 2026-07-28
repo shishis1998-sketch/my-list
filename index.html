@@ -1616,6 +1616,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 6px;flex-shrink:0;background:var(--bg);}
 .cal-viewtitle{display:none;}  /* 「日历/经期」标题去掉，下方年月标题已足够，避免重复 */
 .cal-vtoggle{position:relative;display:inline-flex;background:var(--border);border-radius:999px;padding:3px;}
+.cal-vtoggle.cvt3{display:flex;width:100%;}   /* 三段视图切换铺满整行（等分） */
 .cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;
   background:var(--surface);border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.14);
   transition:transform .22s cubic-bezier(.4,0,.2,1);}
@@ -1628,7 +1629,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .cal-vtoggle .cvt{position:relative;z-index:1;border:none;background:transparent;font-family:inherit;
   font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);padding:6px 16px;cursor:pointer;
   border-radius:999px;transition:color .2s;-webkit-tap-highlight-color:transparent;white-space:nowrap;}
-.cal-vtoggle.cvt3 .cvt{padding:6px 0;min-width:48px;text-align:center;}
+.cal-vtoggle.cvt3 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}   /* 等分满宽 + 高度压低到约 30px */
 .cal-vtoggle .cvt.on{color:var(--text-primary);}
 #calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 #calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -5800,7 +5801,7 @@ window.PV = (function(){
         html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
                   `<div data-month="${month}" data-day="${day}"` +
                   ` class="day ${getLevelClass(lv)} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
-                  ` style="user-select:none;-webkit-user-select:none;">${day}</div>` +
+                  ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
                   `<div class="dot-slot"><span class="rec-dot"></span></div>` +
                 `</div>`;
       }
@@ -9069,7 +9070,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
   if(isToday)cell.classList.add('cal-today');
   if(isSel)cell.classList.add('cal-selected');
   const num=document.createElement('div');
-  num.className='cal-daynum';num.textContent=day;cell.appendChild(num);
+  num.className='cal-daynum';num.textContent=isToday?'今':day;cell.appendChild(num);
 
   if(lanes&&lanes.length){
     // 当天出现过的每种类目色只画一个圆点（去重），表达「今天收集了哪些类型」而非数量
