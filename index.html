@@ -634,6 +634,12 @@ tr:hover .acts{opacity:1;}
      所以留出 64px + 手势条安全区即可精确避开，不必用 JS 实测。 */
   .moverlay{padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));}
 
+  /* 云同步设置内容多，做成整页：从顶部铺到导航条上沿，不留空隙（否则会透出灰底），
+     导航条仍显示在下方可点。align-items:stretch + max-height:100% 让白卡填满，
+     底部按钮正好贴在导航条上方。 */
+  #syncModal{align-items:stretch;justify-content:center;padding:0 0 calc(64px + env(safe-area-inset-bottom)) 0;}
+  #syncModal .mbox{max-width:100%;max-height:100%;border-radius:0;box-shadow:none;}
+
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
     background:var(--surface);border-top:1px solid var(--border);
@@ -8058,17 +8064,27 @@ function onSort(v){curSort=v;render();}
 function syncBottomTabs(){
   const all=document.getElementById('bbtab-all');
   const notes=document.getElementById('bbtab-notes');
+  const menu=document.getElementById('bbtab-menu');
   if(!all||!notes) return;
   // 日历页打开时，高亮独占「日历」tab；即便底层是笔记模式也不要再点亮「笔记」
   if(document.body.classList.contains('cal-open')){
     all.classList.remove('on');
     notes.classList.remove('on');
+    menu&&menu.classList.remove('on');
     return;
   }
+  // 设置页（侧栏）打开时同理：独占高亮「设置」，别再点亮「笔记/全部」——
+  // 云同步设置就在设置页里，否则会出现「明明在设置里，底部却停在笔记」
+  if(document.body.classList.contains('sb-open')){
+    all.classList.remove('on');
+    notes.classList.remove('on');
+    menu&&menu.classList.add('on');
+    return;
+  }
+  menu&&menu.classList.remove('on');
   const isNotes=isNoteMode();
   all.classList.toggle('on', !isNotes);
   notes.classList.toggle('on', isNotes);
-  // 日历/设置是弹层/抽屉，不做持续高亮
 }
 
 // ── 底部栏排序抽屉 ────────────────────────────────────────────────
