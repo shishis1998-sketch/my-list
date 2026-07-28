@@ -7278,7 +7278,7 @@ async function openRecover(){
     });
     _recoverFound=[...byId.values()];
     if(!_recoverFound.length){
-      _recSay(_recDropHtml+_recShrunkHtml()+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的笔记。'
+      _recSay(_undoMergeHtml()+_recDropHtml+_recShrunkHtml()+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的笔记。'
         +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
         +'<br><br><span style="color:var(--text-muted)">说明丢失的内容从来没有成功上传过云端，历史版本里也就没有它们。这种情况只能靠本机的「还原到覆盖前的备份」，或你自己导出的 JSON。</span></div>'
         +_recTimelineHtml());
@@ -7311,7 +7311,7 @@ async function openRecover(){
       }
       return '<div style="margin-top:var(--sp-10)"><div style="font-weight:600">'+hdr+'</div>'+items+'</div>';
     }).join('');
-    _recSay(_recDropHtml+_recShrunkHtml()
+    _recSay(_undoMergeHtml()+_recDropHtml+_recShrunkHtml()
       +'<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的笔记'
       +(locked?'（其中 '+locked+' 条备忘需要正确的主密码才能看到内容，但可以先捞回来）':'')+'：'
       +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
@@ -7343,6 +7343,78 @@ function shrinkVerdict(v){
     c:'var(--text-muted)'};
   return {k:'same',t:'⚠️ 两个版本修改时间一样，判断不了',c:'var(--text-muted)'};
 }
+// ── 按章节归位的合并 ─────────────────────────────────────────────
+// 直接把缺的段落追加到正文末尾是错的：它们本来分属不同章节，堆到最后
+// 会全部落进最后一章里面。正确做法是按标题把每段送回它原来的那一章，
+// 并且在章内也放回原来的相对位置。
+const MERGE_MARK_RE=/\n*-{3,}\n*（以下 \d+ 段由历史版本补回[^）]*）[\s\S]*$/;
+function _paraSep(body){return /\n{2,}/.test(String(body||''))?'\n\n':'\n';}
+function splitSections(body){
+  const lines=String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const secs=[];let cur={head:null,items:[]};
+  for(const L of lines){
+    if(/^#{1,6}\s+/.test(L)){secs.push(cur);cur={head:L,items:[]};}
+    else cur.items.push(L);
+  }
+  secs.push(cur);
+  return secs.filter(x=>x.head!==null||x.items.length);
+}
+// 把 old 里有、now 里没有的段落插回 now 对应章节的原位；now 自己的新内容一律保留
+function smartMerge(oldBody,nowBody){
+  const oldSecs=splitSections(oldBody), nowSecs=splitSections(nowBody);
+  const out=nowSecs.map(x=>({head:x.head,items:x.items.slice()}));
+  const idxOf=new Map();
+  out.forEach((x,i)=>{if(x.head!==null&&!idxOf.has(x.head))idxOf.set(x.head,i);});
+  let added=0, newSecs=0;
+  for(const os of oldSecs){
+    const has=os.head!==null&&idxOf.has(os.head);
+    const tgt=has?out[idxOf.get(os.head)]:(os.head===null?out.find(x=>x.head===null):null);
+    if(!tgt){
+      // 当前正文里没有这一章 → 整章按原样补上
+      if(os.items.length){out.push({head:os.head,items:os.items.slice()});added+=os.items.length;newSecs++;}
+      continue;
+    }
+    const C=tgt.items, res=[]; let ci=0;
+    for(const o of os.items){
+      const at=C.indexOf(o,ci);
+      if(at>=0){for(let k=ci;k<=at;k++)res.push(C[k]);ci=at+1;}
+      else{res.push(o);added++;}                      // 缺的这段，插回它原来的位置
+    }
+    for(let k=ci;k<C.length;k++)res.push(C[k]);       // now 里多出来的新内容，保留在后面
+    tgt.items=res;
+  }
+  const sep=_paraSep(nowBody);
+  const body=out.map(x=>(x.head!==null?[x.head].concat(x.items):x.items).join(sep)).join(sep);
+  return {body,added,newSecs};
+}
+
+// 撤销之前那次「追加到末尾」的补回：整块删掉，正文回到补回之前
+function notesWithMergeMark(){return notes.filter(n=>n.body&&MERGE_MARK_RE.test(n.body));}
+function undoMergeMark(id){
+  const n=notes.find(x=>x.id===id);
+  if(!n||!MERGE_MARK_RE.test(n.body||'')){toast('这条里没有找到补回标记');return;}
+  if(!confirm('撤销《'+(n.title||'无标题')+'》上次补回的内容？\n\n'
+    +'会删掉正文末尾「由历史版本补回」那一整块，回到补回之前的样子。\n'
+    +'撤销后可以再点一次「补回少掉的段落」，这次会按章节归位。'))return;
+  backupLocal('before-undo-merge');
+  n.body=String(n.body).replace(MERGE_MARK_RE,'');
+  n.updatedAt=Date.now();
+  persistNotes();render();
+  toast('✓ 已撤销，可以重新补回了');
+  openRecover();
+}
+function _undoMergeHtml(){
+  const list=notesWithMergeMark();
+  if(!list.length)return '';
+  return '<div style="background:var(--danger-bg);padding:var(--sp-10) var(--sp-12);border-radius:var(--r);margin-bottom:var(--sp-10)">'
+    +'<b style="color:var(--danger)">有 '+list.length+' 条笔记带着「追加到末尾」的补回块</b>'
+    +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-4)">'
+    +'早先那次补回是直接堆在正文最后的，会全部落进最后一章里。撤销后重新补一次，就会按章节归位。</div>'
+    +list.map(n=>'<button class="btn btn-d" style="margin-top:var(--sp-8)" onclick="undoMergeMark(\''+n.id+'\')">'
+      +'撤销《'+esc(n.title||'无标题')+'》的补回块</button>').join('')
+    +'</div>';
+}
+
 // 按段落比对，算出旧版本里有、当前正文里已经没有的那几段
 function missingFragments(oldB,nowB){
   const norm=t=>String(t||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
@@ -7377,10 +7449,10 @@ function _recShrunkHtml(){
       +goneHtml
       +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">历史版本时间：'+esc(t)+'</div>'
       +'<div style="display:flex;gap:var(--sp-8);flex-wrap:wrap;margin-top:var(--sp-8)">'
-      +'<button class="btn btn-p" onclick="mergeShrunk('+i+')">补回少掉的段落（推荐）</button>'
+      +'<button class="btn btn-p" onclick="mergeShrunk('+i+')">按章节补回少掉的段落（推荐）</button>'
       +'<button class="btn btn-d" onclick="restoreShrunk('+i+')">整条换成长版本</button></div>'
       +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-4)">'
-      +'「补回」只在末尾追加，现有内容不动；「整条换」会用历史版本覆盖当前正文。</div>'
+      +'「按章节补回」把每段放回它原来的章节和位置，不删你现有的内容；「整条换」会用历史版本覆盖当前正文。</div>'
       +'</div>';
   }).join('');
   return '<div style="background:var(--danger-bg);padding:var(--sp-10) var(--sp-12);border-radius:var(--r);margin-bottom:var(--sp-10)">'
@@ -7397,18 +7469,20 @@ function mergeShrunk(i){
   if(!n){toast('这条笔记本机已经没有了');return;}
   const gone=missingFragments(v.note.body,n.body);
   if(!gone.length){toast('没有可补的段落');return;}
-  if(!confirm('把 '+gone.length+' 段补回《'+(n.title||'无标题')+'》的正文末尾？\n\n'
-    +'现有内容一个字都不会动，只在后面追加。补回后可以自己再调整顺序。')) return;
+  const mg=smartMerge(v.note.body,n.body);
+  if(!mg.added){toast('没有可补的段落');return;}
+  if(!confirm('把 '+mg.added+' 段补回《'+(n.title||'无标题')+'》？\n\n'
+    +'每段会放回它原来所属的章节和位置'
+    +(mg.newSecs?'（其中 '+mg.newSecs+' 个章节当前正文里没有，会整章补在末尾）':'')+'。\n'
+    +'你现有的内容一个字都不会删。')) return;
   backupLocal('before-merge-body');
-  n.body=String(n.body||'').replace(/\s+$/,'')
-    +'\n\n---\n（以下 '+gone.length+' 段由历史版本补回，'+new Date().toLocaleString()+'）\n\n'
-    +gone.join('\n\n');
+  n.body=mg.body;
   n.updatedAt=Date.now();
   persistNotes();render();
   _recShrunk.splice(i,1);
-  _recSay(_recDropHtml+_recShrunkHtml()+'<div style="margin-top:var(--sp-10)">✓ 已把 '+gone.length
-    +' 段补回《'+esc(n.title||'无标题')+'》，原有内容未改动。</div>');
-  toast('✓ 已补回 '+gone.length+' 段');
+  _recSay(_recDropHtml+_recShrunkHtml()+'<div style="margin-top:var(--sp-10)">✓ 已把 '+mg.added
+    +' 段按章节补回《'+esc(n.title||'无标题')+'》，原有内容未删改。</div>');
+  toast('✓ 已按章节补回 '+mg.added+' 段');
 }
 
 function restoreShrunk(i){
