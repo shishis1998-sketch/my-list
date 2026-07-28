@@ -6126,19 +6126,7 @@ window.PV = (function(){
       renderDayInfoBar();
     }
 
-    // 周期趋势当前查看的年份（null=首次进入自动定位到最近有数据的年份）
-    let trendYear = null;
-
-    // 上一年 / 下一年（在有周期数据的年份区间内移动）
-    function trendYearShift(delta) {
-      const { periods } = computeCycles();
-      const years = periods.slice(1).map(p => p.start.getFullYear());
-      if (!years.length) return;
-      const minY = Math.min(...years), maxY = Math.max(...years);
-      const cur = (trendYear == null) ? maxY : trendYear;
-      trendYear = Math.max(minY, Math.min(maxY, cur + delta));
-      renderCycleTrend();
-    }
+    // 周期趋势跟随日历卡当前年份（year），不再单独切换年份
 
     // 周期趋势柱状图（经期视图最底下）——复用移植过来的 .cyc-* 样式，可按年切换。
     // 每根「柱」对应一次周期：深柱=距上一段经期的周期天数(带数字)，红柱=本段经期长度。
@@ -6163,23 +6151,14 @@ window.PV = (function(){
         start: periods[i + 1].start,
         y: periods[i + 1].start.getFullYear()
       }));
-      const years = all.map(c => c.y);
-      const minY = Math.min(...years), maxY = Math.max(...years);
-      if (trendYear == null || trendYear < minY || trendYear > maxY) trendYear = maxY;
-
-      const cols = all.filter(c => c.y === trendYear);
-      const atMin = trendYear <= minY, atMax = trendYear >= maxY;
+      const cols = all.filter(c => c.y === year);   // 跟随日历卡当前年份
       const avg = cols.length
         ? Math.round(cols.reduce((a, c) => a + c.cyc, 0) / cols.length) : 0;
 
       const head =
         '<div class="cyc-head">' +
           `<div class="stcard-title">周期趋势${cols.length ? `<span class="sub">平均 ${avg} 天</span>` : ''}</div>` +
-          '<div class="cyc-yearbar">' +
-            `<button class="pv-navbtn" data-d="-1"${atMin ? ' disabled' : ''} aria-label="上一年">‹</button>` +
-            `<span class="cyc-year">${trendYear}</span>` +
-            `<button class="pv-navbtn" data-d="1"${atMax ? ' disabled' : ''} aria-label="下一年">›</button>` +
-          '</div>' +
+          `<span class="cyc-year">${year}</span>` +
         '</div>';
 
       let body;
@@ -6209,9 +6188,6 @@ window.PV = (function(){
       }
 
       host.innerHTML = `<div class="pv-trend-card">${head}${body}</div>`;
-      host.querySelectorAll('.pv-navbtn[data-d]').forEach(btn => {
-        btn.onclick = () => trendYearShift(+btn.dataset.d);
-      });
     }
 
     // 把升序日期数组压成区间文本: [23,24,25,26,27]->"23-27日"; [4,13]->"4日、13日"
