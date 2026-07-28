@@ -5800,7 +5800,7 @@ window.PV = (function(){
         html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
                   `<div data-month="${month}" data-day="${day}"` +
                   ` class="day ${getLevelClass(lv)} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
-                  ` style="user-select:none;-webkit-user-select:none;">${day}</div>` +
+                  ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
                   `<div class="dot-slot"><span class="rec-dot"></span></div>` +
                 `</div>`;
       }
@@ -9069,7 +9069,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
   if(isToday)cell.classList.add('cal-today');
   if(isSel)cell.classList.add('cal-selected');
   const num=document.createElement('div');
-  num.className='cal-daynum';num.textContent=day;cell.appendChild(num);
+  num.className='cal-daynum';num.textContent=isToday?'今':day;cell.appendChild(num);
 
   if(lanes&&lanes.length){
     // 当天出现过的每种类目色只画一个圆点（去重），表达「今天收集了哪些类型」而非数量
