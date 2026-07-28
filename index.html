@@ -6865,8 +6865,27 @@ function scheduleSyncPush(){
   syncTimer=setTimeout(syncPush,1500);
 }
 
+// 本会话是否已经成功从云端读过一次。推送是「整份覆盖」，一台拿着旧数据的设备
+// 只要推一次，云端就会被它的旧内容顶掉——这正是「另一台手机只看了看笔记」也能
+// 让几十条备忘从云端消失的原因：那台设备手上根本没有这些备忘。
+// 所以规则改成：没跟云端对齐过，就不准覆盖云端。
+let _cloudAligned=false,_aligning=false;
+
 async function syncPush(){
   const token=getToken();if(!token)return false;
+  // 已有 gist 却还没成功拉取过 → 先拉一次对齐，别拿可能过时的本机数据盖掉云端
+  if(getGistId()&&!_cloudAligned&&!_aligning){
+    _aligning=true;
+    let aligned=false;
+    try{aligned=await syncPull(true);}catch(e){aligned=false;}
+    _aligning=false;
+    if(!aligned){
+      lastSyncErr='尚未与云端对齐，已暂停上传（避免旧数据覆盖云端）';
+      isSyncing=false;updateSyncBadge();
+      console.warn('[Sync push skipped] 未能先拉取对齐，跳过本次推送');
+      return false;
+    }
+  }
   isSyncing=true;lastSyncErr=null;updateSyncBadge();
   // 本轮真正上传的笔记 id：推送成功后才据此摘掉 pendingCloud（见 clearPendingCloud）
   let pushedIds=[];
@@ -6914,7 +6933,8 @@ async function syncPush(){
       throw new Error(`HTTP ${res.status}: ${t.slice(0,120)}`);
     }
     const j=await res.json();
-    if(!gistId&&j.id){localStorage.setItem(GIST_KEY,j.id);toast('✓ 已创建云端备份');}
+    // 刚创建的 gist 里就是本机这份，天然是对齐的
+    if(!gistId&&j.id){localStorage.setItem(GIST_KEY,j.id);_cloudAligned=true;toast('✓ 已创建云端备份');}
     // ✅ 云端已确认收到这批笔记 → 摘掉「等待上云」标记，它们从此可以被云端覆盖
     clearPendingCloud(pushedIds);
     isSyncing=false;updateSyncBadge();
@@ -7206,6 +7226,9 @@ async function syncPull(silent){
       notes.forEach(n=>{
         if(n.subCat!=='备忘')return;
         if(n.localOnly||remoteIds.has(n.id))return;
+        // pendingCloud = 正在上云的途中（推送还没回来），云端暂时没有它是正常的，
+        // 别把它降级回「仅本机」，否则紧接着的推送就会把它漏掉
+        if(n.pendingCloud)return;
         n.localOnly=true;delete n.pendingCloud;rescued++;
       });
       const localOnlyNotes=notes.filter(n=>isProtectedNote(n));
@@ -7256,6 +7279,7 @@ async function syncPull(silent){
     localStorage.setItem(CK,JSON.stringify(cats));
     localStorage.setItem(NSK,JSON.stringify(notes));
     localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
+    _cloudAligned=true;   // 从此本机这份是基于云端最新数据改出来的，可以安全覆盖云端
     isSyncing=false;updateSyncBadge();
     if(typeof render==='function'){renderTypeSelect();render();}
     if(!silent)toast('✓ 已从云端同步 '+data.length+' 条记录、'+notes.length+' 条笔记');
