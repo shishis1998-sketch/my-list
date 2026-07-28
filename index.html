@@ -37,6 +37,14 @@
   /* === 12 级间距阶梯(按值命名,见 design.md)=== */
   --sp-2:2px;--sp-4:4px;--sp-6:6px;--sp-8:8px;--sp-10:10px;--sp-12:12px;
   --sp-14:14px;--sp-16:16px;--sp-20:20px;--sp-24:24px;
+  /* === 导航转场令牌(方案 B · 淡入渐起,全站统一)=== */
+  --nav-dur:240ms;                        /* 进入 */
+  --nav-dur-exit:200ms;                   /* 返回略快,更跟手 */
+  --nav-ease:cubic-bezier(.22,1,.36,1);   /* 统一缓动曲线 */
+  --nav-rise:16px;                        /* 进入时的上移距离 */
+}
+@media (prefers-reduced-motion:reduce){
+  :root{--nav-dur:1ms;--nav-dur-exit:1ms;--nav-rise:0px;}
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 /* 去掉按钮/链接/可点击元素被点击后残留的蓝色聚焦背景（安卓 Chromium）；
@@ -259,10 +267,11 @@ tr:hover .acts{opacity:1;}
 
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:var(--sp-20);}
-.moverlay.open{display:flex;animation:movFadeIn .16s ease-out;}
-.moverlay.open .mbox{animation:mboxPopIn .18s cubic-bezier(0.34, 1.4, 0.56, 1);}
+.moverlay.open{display:flex;animation:movFadeIn var(--nav-dur) var(--nav-ease);}
+.moverlay.open .mbox{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
 @keyframes movFadeIn{from{background:rgba(10,8,6,0);}to{background:rgba(10,8,6,.55);}}
-@keyframes mboxPopIn{from{opacity:0;transform:scale(0.96);}to{opacity:1;transform:scale(1);}}
+/* 方案 B · 淡入渐起:淡入 + 上移 --nav-rise */
+@keyframes mboxPopIn{from{opacity:0;transform:translateY(var(--nav-rise));}to{opacity:1;transform:translateY(0);}}
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
@@ -391,14 +400,17 @@ tr:hover .acts{opacity:1;}
     scrollbar-width:none;-ms-overflow-style:none;
     padding:0 0 calc(var(--sp-24) + env(safe-area-inset-bottom));
     border-right:none;
-    transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+    /* 方案 B · 淡入渐起:淡入 + 上移(替代原横向滑入,与全站转场统一) */
+    transform:translateY(var(--nav-rise));opacity:0;visibility:hidden;pointer-events:none;
+    transition:transform var(--nav-dur) var(--nav-ease),opacity var(--nav-dur) var(--nav-ease),visibility 0s linear var(--nav-dur);
     /* 覆盖底栏(z-index:90)与顶栏,成为独立整屏页面 */
     z-index:100;box-shadow:none;
   }
   .sidebar::-webkit-scrollbar{display:none;}
   /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
   .sidebar .nsec{flex-shrink:0;}
-  .sidebar.open{transform:translateX(0);}
+  .sidebar.open{transform:translateY(0);opacity:1;visibility:visible;pointer-events:auto;
+    transition:transform var(--nav-dur) var(--nav-ease),opacity var(--nav-dur) var(--nav-ease),visibility 0s;}
   /* 整屏「设置」页:用页头替代 logo，去掉分类区上多余留白 */
   .sidebar .logo{display:none;}
   .sidebar .nsec-cats{margin-top:var(--sp-24);}
@@ -543,8 +555,8 @@ tr:hover .acts{opacity:1;}
 
   /* 弹窗 - 手机端全屏 */
   .moverlay{padding:0;align-items:stretch;justify-content:stretch;}
-  .moverlay.open .mbox{animation:mboxSlideIn .18s cubic-bezier(0.34, 1.4, 0.56, 1);}
-  @keyframes mboxSlideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .moverlay.open .mbox{animation:mboxSlideIn var(--nav-dur) var(--nav-ease);}
+  @keyframes mboxSlideIn{from{opacity:0;transform:translateY(var(--nav-rise));}to{opacity:1;transform:translateY(0);}}
   .mbox{
     border-radius:0;
     max-width:100%;width:100%;max-height:none;height:100%;
@@ -580,7 +592,7 @@ tr:hover .acts{opacity:1;}
   /* 日历手机端 - 全屏 */
   .cal-modal{max-height:none;height:100%;border-radius:0;}
   .cal-overlay{align-items:stretch;justify-content:stretch;padding:0;}
-  .cal-overlay.open .cal-modal{animation:mboxSlideIn .18s cubic-bezier(0.34, 1.4, 0.56, 1);}
+  .cal-overlay.open .cal-modal{animation:mboxSlideIn var(--nav-dur) var(--nav-ease);}
   .cal-hdr{padding:var(--sp-14) var(--sp-14) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
   /* 月份标题＝独立页的页面标题，用 Title 18px 做锚点（手机端同 18，不再降到正文）*/
   .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
@@ -687,7 +699,7 @@ tr:hover .acts{opacity:1;}
   @keyframes bbFade{from{opacity:0}to{opacity:1}}
   .bb-sortpanel{position:absolute;left:0;right:0;bottom:0;background:var(--surface);
     border-radius:var(--rxl) var(--rxl) 0 0;padding:8px 0 calc(10px + env(safe-area-inset-bottom));
-    box-shadow:0 -4px 24px rgba(0,0,0,.18);animation:bbSlideUp .22s cubic-bezier(0.16,1,0.3,1);
+    box-shadow:0 -4px 24px rgba(0,0,0,.18);animation:bbSlideUp var(--nav-dur) var(--nav-ease);
     max-height:82vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   @keyframes bbSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   .bb-sortpanel .bb-sorthd{font-size:var(--fs-caption);font-weight:600;letter-spacing:.08em;text-transform:uppercase;
@@ -707,7 +719,7 @@ tr:hover .acts{opacity:1;}
 
 /* ===== CALENDAR（独立整页，非弹窗）===== */
 .cal-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:110;padding:0;}
-.cal-overlay.open{display:block;animation:calPageIn .18s ease-out;}
+.cal-overlay.open{display:block;animation:calPageIn var(--nav-dur) var(--nav-ease);}
 @keyframes calPageIn{from{opacity:0;}to{opacity:1;}}
 .cal-modal{background:var(--bg);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 /* 标题栏 = 日历卡的顶部（无色白底，与下方网格拼成一张卡）*/
@@ -1074,11 +1086,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 
 /* ===== 章节底部弹窗：点章节从底部滑起，直接可编辑，关闭即保存 ===== */
 .tlsheet-mask{position:fixed;inset:0;background:rgba(10,8,6,.42);opacity:0;pointer-events:none;
-  transition:opacity .3s cubic-bezier(.32,.72,0,1);z-index:1500;}
+  transition:opacity var(--nav-dur) var(--nav-ease);z-index:1500;}
 .tlsheet-mask.show{opacity:1;pointer-events:auto;}
 .tlsheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:540px;z-index:1501;max-height:88vh;
   background:var(--surface);border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;
-  transform:translateY(101%);transition:transform .4s cubic-bezier(.32,.72,0,1);
+  transform:translateY(101%);transition:transform var(--nav-dur) var(--nav-ease);
   box-shadow:0 -8px 30px -10px rgba(0,0,0,.32);}
 .tlsheet.show{transform:translateY(0);}
 .tlsheet.dragging{transition:none;}
@@ -1349,11 +1361,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 @media (hover:hover){.memo-field-value.editable:hover{background:var(--accent-light);}}
 
 /* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
-.mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity .22s;z-index:1400;}
+.mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity var(--nav-dur) var(--nav-ease);z-index:1400;}
 .mfsheet-mask.show{opacity:1;pointer-events:auto;}
 .mfsheet{position:fixed;left:0;right:0;bottom:0;z-index:1401;background:var(--surface);border-top:1px solid var(--border);
   padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
-  transform:translateY(110%);transition:transform .26s cubic-bezier(.22,1,.36,1);box-shadow:0 -8px 30px rgba(0,0,0,.12);}
+  transform:translateY(110%);transition:transform var(--nav-dur) var(--nav-ease);box-shadow:0 -8px 30px rgba(0,0,0,.12);}
 .mfsheet.show{transform:translateY(0);}
 .mfsheet-grip{width:38px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 14px;}
 .mfsheet-label{font-size:var(--fs-foot);font-weight:600;color:var(--accent-mid);margin-bottom:8px;letter-spacing:.02em;}
@@ -2253,11 +2265,11 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
       border-radius: 0; box-shadow: none; animation: none;
       background: transparent; display: flex; flex-direction: column;}
 @keyframes pageIn {
-      from { opacity: 0; transform: translateY(18px); }
+      from { opacity: 0; transform: translateY(var(--nav-rise)); }
       to   { opacity: 1; transform: translateY(0); }
     }
-#calViewPeriod .stats-overlay.as-page.show .stats-modal {animation: pageIn 0.28s cubic-bezier(0.22, 1, 0.36, 1);}
-#calViewPeriod .stats-overlay.as-page.show .stats-header {animation: pageHeadIn 0.28s ease;}
+#calViewPeriod .stats-overlay.as-page.show .stats-modal {animation: pageIn var(--nav-dur) var(--nav-ease);}
+#calViewPeriod .stats-overlay.as-page.show .stats-header {animation: pageHeadIn var(--nav-dur) var(--nav-ease);}
 @keyframes pageHeadIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
 #calViewPeriod .stats-overlay.as-page.show .stats-modal, #calViewPeriod .stats-overlay.as-page.show .stats-header {animation: none;}
