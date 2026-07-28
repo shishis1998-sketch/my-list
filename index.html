@@ -6857,8 +6857,20 @@ async function encryptJSON(obj,pass,pre){
   const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));
   return {v:1,salt:bufB64(salt),iv:bufB64(iv),ct:bufB64(ct)};
 }
+// 解密侧同样不能每条各派生一次：拉取 38 条加密备忘 = 38 × 310000 轮 PBKDF2，
+// 手机上足够卡几十秒，而每次启动都要拉一次。同一个 salt 的密钥缓存起来复用——
+// 一次推送里的备忘共用一个 salt，于是 38 次派生塌缩成 1 次。
+// 只存在内存里，从不落盘；主密码变了就整个作废。
+let _keyCache=new Map();
+function clearKeyCache(){_keyCache=new Map();}
+async function deriveKeyCached(pass,saltB64){
+  const ck=pass+'|'+saltB64;
+  let key=_keyCache.get(ck);
+  if(!key){key=await deriveKey(pass,b64Buf(saltB64));_keyCache.set(ck,key);}
+  return key;
+}
 async function decryptJSON(blob,pass){
-  const key=await deriveKey(pass,b64Buf(blob.salt));
+  const key=await deriveKeyCached(pass,blob.salt);
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64Buf(blob.iv)},key,b64Buf(blob.ct));
   return JSON.parse(new TextDecoder().decode(pt));
 }
@@ -7391,6 +7403,7 @@ async function saveSyncCfg(){
   if(g)localStorage.setItem(GIST_KEY,g);
   if(p)localStorage.setItem(MPW_KEY,p);
   else localStorage.removeItem(MPW_KEY);
+  clearKeyCache();   // 主密码变了，旧的派生密钥全部作废
   const setPw=!!p&&!hadPw, clearedPw=!p&&hadPw;
   // 清除主密码 → 全部备忘立即重新上锁（随后的推送会把它们从云端撤下，避免以后明文上云）
   if(clearedPw){
@@ -7443,7 +7456,7 @@ function syncPullNow(){
   const p=document.getElementById('f-gh-pw').value;
   if(!t||!g){toast('请先填入 token 和 Gist ID 再拉取');return;}
   localStorage.setItem(TK_KEY,t);localStorage.setItem(GIST_KEY,g);
-  if(p)localStorage.setItem(MPW_KEY,p);
+  if(p){localStorage.setItem(MPW_KEY,p);clearKeyCache();}
   closeSyncCfg();
   syncPull(false);
 }
@@ -7457,6 +7470,7 @@ function clearSyncCfg(){
   localStorage.removeItem(TK_KEY);
   localStorage.removeItem(GIST_KEY);
   localStorage.removeItem(MPW_KEY);
+  clearKeyCache();
   // 断开后备忘回到「仅本机」的安全默认，避免以后重新配置 token 时明文上云
   notes.forEach(n=>{if(n.subCat==='备忘'&&!n.localOnly){n.localOnly=true;}});
   localStorage.setItem(NSK,JSON.stringify(notes));
