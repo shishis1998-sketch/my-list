@@ -1615,6 +1615,12 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .cal-viewbar{display:flex;align-items:center;justify-content:flex-end;gap:12px;
   padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 6px;flex-shrink:0;background:var(--bg);}
 .cal-viewtitle{display:none;}  /* 「日历/经期」标题去掉，下方年月标题已足够，避免重复 */
+/* 经期视图：不再把视图切换条钉在顶部——让整块 modal 一起滚动，切换条随内容向上滑走
+   （月份导航 .home-sticky 仍 sticky 吸顶，滚动时可继续翻月）。日历视图不受影响。 */
+body.cal-view-period .cal-modal{overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;}
+body.cal-view-period .cal-modal::-webkit-scrollbar{display:none;}
+body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;}
 .cal-vtoggle{position:relative;display:inline-flex;background:var(--border);border-radius:999px;padding:3px;}
 .cal-vtoggle.cvt3{display:flex;width:100%;}   /* 三段视图切换铺满整行（等分） */
 .cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;
@@ -6671,6 +6677,7 @@ function setCalView(v){
   const pv=document.getElementById('calViewPeriod');
   if(cv)cv.style.display=isP?'none':'';
   if(pv)pv.style.display=isP?'':'none';
+  document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
   document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   const thumb=document.getElementById('cvtThumb');
   if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');}
@@ -8723,6 +8730,7 @@ function openCalendar(){
 function closeCalendar(){
   document.getElementById('calOverlay').classList.remove('open');
   document.body.classList.remove('cal-open');
+  document.body.classList.remove('cal-view-period');
   closeCalSearch();                // 退出日历时收起搜索
   closeCalFilter();                // 退出日历时收起筛选
   hideCalSheet();
