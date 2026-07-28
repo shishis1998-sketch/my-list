@@ -634,11 +634,20 @@ tr:hover .acts{opacity:1;}
      所以留出 64px + 手势条安全区即可精确避开，不必用 JS 实测。 */
   .moverlay{padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));}
 
-  /* 云同步设置内容多，做成整页：从顶部铺到导航条上沿，不留空隙（否则会透出灰底），
-     导航条仍显示在下方可点。align-items:stretch + max-height:100% 让白卡填满，
-     底部按钮正好贴在导航条上方。 */
-  #syncModal{align-items:stretch;justify-content:center;padding:0 0 calc(64px + env(safe-area-inset-bottom)) 0;}
-  #syncModal .mbox{max-width:100%;max-height:100%;border-radius:0;box-shadow:none;}
+  /* 云同步设置内容多，手机端做成一整页自然滚动（跟「全部/笔记/日历」一样）：
+     整个 .mbox 是滚动容器，头/尾随内容一起滚，不再固定成三段夹一条。
+     底部留出导航条高度，最后一行按钮不被压住。 */
+  #syncModal{align-items:stretch;justify-content:center;padding:0;}
+  #syncModal .mbox{
+    max-width:100%;max-height:100%;border-radius:0;box-shadow:none;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+  }
+  #syncModal .mhdr{position:sticky;top:0;z-index:2;flex:0 0 auto;}
+  #syncModal .mbody{flex:0 0 auto;overflow:visible;}
+  #syncModal .mftr{
+    flex:0 0 auto;border-top:1px solid var(--border-soft);
+    padding-bottom:calc(var(--sp-14) + 64px + env(safe-area-inset-bottom));
+  }
 
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
@@ -7469,7 +7478,10 @@ function openSyncCfg(){
   }
   document.getElementById('roToggle').classList.toggle('on',isReadOnly());
   refreshUploadLocalRow();
-  document.getElementById('syncModal').classList.add('open');
+  const sm=document.getElementById('syncModal');
+  sm.classList.add('open');
+  // 手机端整个 .mbox 是滚动容器，打开时回到顶部
+  const smBox=sm.querySelector('.mbox');if(smBox)smBox.scrollTop=0;
 }
 function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
 
