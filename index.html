@@ -2880,6 +2880,13 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
     </div>
 
     <div style="margin-bottom:var(--sp-14)">
+      <button class="btn btn-d" style="width:100%" onclick="wipeLocalDevice()">🧹 用完了，清除这台设备的本机数据</button>
+      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)">
+        备忘解密后明文会留在本机，只清主密码是不够的。借来的手机、副机用完点这个，云端不受影响。
+      </div>
+    </div>
+
+    <div style="margin-bottom:var(--sp-14)">
       <button class="btn btn-d" style="width:100%" onclick="openRecover()">🕘 从云端历史版本找回备忘</button>
       <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)">
         Gist 保存每一次同步的历史版本。逐个翻查，把本机已经没有的备忘捞回来。
@@ -7459,6 +7466,38 @@ function syncPullNow(){
   if(p){localStorage.setItem(MPW_KEY,p);clearKeyCache();}
   closeSyncCfg();
   syncPull(false);
+}
+
+// ── 用完清除：把这台设备上的本机痕迹擦干净 ────────────────────────
+// 备忘一旦用主密码解开，明文就写进了 localStorage —— 只清主密码是不够的，
+// 明文还在。借来的手机 / 副机用完，应该整个抹掉。云端 Gist 不受影响。
+// 唯一的风险是「仅本机 / 待上云」的备忘：那些云端没有副本，抹了就没了，所以要拦一道。
+function appLocalKeys(){
+  const ks=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&/^(my_list_|itimeline_|hapticOff)/.test(k))ks.push(k);
+  }
+  return ks;
+}
+function wipeLocalDevice(){
+  const risk=notes.filter(n=>n.subCat==='备忘'&&(n.localOnly||n.pendingCloud)).length;
+  const dec=notes.filter(n=>n.subCat==='备忘'&&n.fields).length;
+  let msg='这会清空【这台设备】上本应用的全部本机数据：\n'
+    +'· 所有收集、笔记、日历、经期数据的本机副本\n'
+    +(dec?'· '+dec+' 条已解密的备忘明文\n':'')
+    +'· 主密码、token、Gist ID\n\n'
+    +'☁️ 云端 Gist 不受影响。以后在这台设备重新填 token 就能再拉下来。\n\n';
+  if(risk){
+    msg+='⚠️ 注意：有 '+risk+' 条备忘处于「仅本机 / 待上云」状态，云端没有副本，'
+       +'清除后将永久丢失。\n建议先取消，把它们加密上云、或用「导出 JSON」备份，再回来清除。\n\n';
+  }
+  if(!confirm(msg+'确定要清除吗？'))return;
+  if(risk&&!confirm('再确认一次：那 '+risk+' 条只存在这台设备的备忘会永久消失，无法找回。\n\n真的要继续？'))return;
+  appLocalKeys().forEach(k=>localStorage.removeItem(k));
+  clearKeyCache();
+  alert('已清除本机数据，页面将重新载入。');
+  location.reload();
 }
 
 function clearSyncCfg(){
