@@ -7213,8 +7213,14 @@ async function openRecover(){
             const oldB=String(n.body||''), nowB=String(now.body||'');
             if(oldB.length<=nowB.length+20)return;      // 只关心明显变短的
             const prev=shrunk.get(n.id);
-            if(prev&&prev.oldLen>=oldB.length)return;
-            shrunk.set(n.id,{note:n,ts:h.committed_at||'',oldLen:oldB.length,nowLen:nowB.length});
+            // shrinkAfter = 仍然是长版本的最近一个版本，正文就是在它之后变短的
+            if(!prev){
+              shrunk.set(n.id,{note:n,ts:h.committed_at||'',oldLen:oldB.length,nowLen:nowB.length,
+                               shrinkAfter:h.committed_at||''});
+              return;
+            }
+            if(prev.oldLen>=oldB.length)return;
+            prev.note=n;prev.ts=h.committed_at||'';prev.oldLen=oldB.length;
           });
         }else{
           timeline.push({ts:h.committed_at||'',n:0,sub:{},ok:true});
@@ -7259,7 +7265,12 @@ async function openRecover(){
       }
       locked++;
     }
-    _recShrunk=[...shrunk.values()].sort((x,y)=>(y.oldLen-y.nowLen)-(x.oldLen-x.nowLen));
+    // 「几乎可以确定被顶掉」的排最前，「更像是你自己删的」沉底
+    const _vrank={overwritten:0,unknown:1,same:1,manual:2};
+    _recShrunk=[...shrunk.values()].sort((x,y)=>{
+      const rx=_vrank[shrinkVerdict(x).k]??1, ry=_vrank[shrinkVerdict(y).k]??1;
+      return rx!==ry?rx-ry:(y.oldLen-y.nowLen)-(x.oldLen-x.nowLen);
+    });
     _recoverFound=[...byId.values()];
     if(!_recoverFound.length){
       _recSay(_recDropHtml+_recShrunkHtml()+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的笔记。'
@@ -7268,10 +7279,15 @@ async function openRecover(){
         +_recTimelineHtml());
       return;
     }
-    // 按子分类分组列出，一眼看清哪类丢了多少
+    // 按子分类分组列出，一眼看清哪类丢了多少。
+    // 小分类排前面：537 条日历排在前头的话，后面几条读书笔记根本滚不到。
     const groups={};
     _recoverFound.forEach(v=>{const k=v.note.subCat||'（未分类）';(groups[k]=groups[k]||[]).push(v);});
-    const rows=Object.keys(groups).map(k=>{
+    const gkeys=Object.keys(groups).sort((a,b)=>groups[a].length-groups[b].length);
+    const summary='<div style="margin-bottom:var(--sp-10);padding:var(--sp-8) var(--sp-10);background:var(--bg);border-radius:var(--r)">'
+      +'<b>各分类缺失条数</b><div style="margin-top:var(--sp-4)">'
+      +gkeys.map(k=>esc(k)+' <b>'+groups[k].length+'</b> 条').join('　·　')+'</div></div>';
+    const rows=summary+gkeys.map(k=>{
       const items=groups[k].map(v=>{
         const n=v.note;
         const t=v.ts?new Date(v.ts).toLocaleString():'';
@@ -7282,8 +7298,13 @@ async function openRecover(){
           +'<b>'+esc(n.title||'（无标题）')+'</b>'+lk+preview
           +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t)+'</div></div>';
       }).join('');
-      return '<div style="margin-top:var(--sp-10)"><div style="font-weight:600">'+esc(k)
-        +' <span style="color:var(--text-muted);font-weight:400">'+groups[k].length+' 条</span></div>'+items+'</div>';
+      const hdr=esc(k)+' <span style="color:var(--text-muted);font-weight:400">'+groups[k].length+' 条</span>';
+      // 超过 20 条就折叠，默认收起，避免把小分类挤到几百条之后
+      if(groups[k].length>20){
+        return '<details style="margin-top:var(--sp-10)"><summary style="cursor:pointer;font-weight:600">'
+          +hdr+'（点击展开）</summary>'+items+'</details>';
+      }
+      return '<div style="margin-top:var(--sp-10)"><div style="font-weight:600">'+hdr+'</div>'+items+'</div>';
     }).join('');
     _recSay(_recDropHtml+_recShrunkHtml()
       +'<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的笔记'
@@ -7298,18 +7319,58 @@ async function openRecover(){
   }
 }
 
+// 判断正文变短是「你自己删的」还是「被旧数据顶回去的」。
+// 关键信号是 updatedAt：手动编辑一定会把它推到更新的时间；而被一台拿着旧数据的
+// 设备覆盖时，推上来的是整个旧笔记对象，连 updatedAt 一起退回去了。
+// 当前版本的 updatedAt 反而比历史版本还老 —— 时间倒流，编辑做不出这种事。
+function _ts(x){const t=new Date(x||0).getTime();return isNaN(t)?0:t;}
+function shrinkVerdict(v){
+  const now=notes.find(x=>x.id===v.note.id);
+  const tNow=_ts(now&&now.updatedAt), tOld=_ts(v.note.updatedAt);
+  if(!tNow||!tOld)return {k:'unknown',t:'⚠️ 这条没有可比的修改时间，只能你自己回忆',c:'var(--text-muted)'};
+  if(tOld>tNow)return {k:'overwritten',
+    t:'⛔ 几乎可以确定是被顶掉的：当前版本的修改时间（'+new Date(tNow).toLocaleString()
+      +'）比历史版本（'+new Date(tOld).toLocaleString()+'）还早，时间倒流了，手动编辑不会这样',
+    c:'var(--danger)'};
+  if(tNow>tOld)return {k:'manual',
+    t:'✅ 更像是你自己删的：当前版本（'+new Date(tNow).toLocaleString()
+      +'）比那个长版本更新，说明你在之后又编辑过',
+    c:'var(--text-muted)'};
+  return {k:'same',t:'⚠️ 两个版本修改时间一样，判断不了',c:'var(--text-muted)'};
+}
+// 按段落比对，算出旧版本里有、当前正文里已经没有的那几段
+function missingFragments(oldB,nowB){
+  const norm=t=>String(t||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const nowSet=new Set(norm(nowB));
+  return norm(oldB).filter(x=>!nowSet.has(x));
+}
 // 「笔记还在但正文被改短」的区块：只比对 id 发现不了这种丢法
 let _recShrunk=[];
 function _recShrunkHtml(){
   if(!_recShrunk.length)return '';
   const rows=_recShrunk.map((v,i)=>{
     const t=v.ts?new Date(v.ts).toLocaleString():'';
+    const now=notes.find(x=>x.id===v.note.id);
+    const gone=missingFragments(v.note.body,now?now.body:'');
+    const goneHtml=gone.length
+      ? '<div style="margin:var(--sp-6) 0"><div style="font-size:var(--fs-foot);color:var(--danger);font-weight:600">'
+        +'少了这 '+gone.length+' 段：</div>'
+        +gone.slice(0,8).map(g=>'<div style="font-size:var(--fs-foot);white-space:pre-wrap;background:var(--bg);'
+          +'border-left:3px solid var(--danger);padding:var(--sp-6) var(--sp-8);margin-top:var(--sp-4);border-radius:var(--rsm)">'
+          +esc(g.slice(0,300))+(g.length>300?'…':'')+'</div>').join('')
+        +(gone.length>8?'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-4)">…另有 '+(gone.length-8)+' 段</div>':'')
+        +'</div>'
+      : '<div style="font-size:var(--fs-foot);color:var(--text-muted);margin:var(--sp-6) 0">'
+        +'整段都还在，差异在段落内部（可能是删了句子或改了措辞）。</div>';
+    const vd=shrinkVerdict(v);
     return '<div style="padding:var(--sp-8) 0;border-bottom:1px solid var(--line)">'
       +'<b>'+esc(v.note.title||'（无标题）')+'</b>'
       +' <span style="font-size:var(--fs-foot);color:var(--danger)">'+v.oldLen+' 字 → 现在 '+v.nowLen+' 字</span>'
-      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);white-space:pre-wrap;max-height:5em;overflow:hidden;margin:var(--sp-4) 0">'
-      +esc(String(v.note.body||'').slice(0,200))+'…</div>'
-      +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t)+'</div>'
+      +'<div style="font-size:var(--fs-foot);color:'+vd.c+';margin-top:var(--sp-4);line-height:var(--lh-normal)">'+esc(vd.t)+'</div>'
+      +(v.shrinkAfter?'<div style="font-size:var(--fs-foot);color:var(--text-muted)">变短发生在 '
+        +esc(new Date(v.shrinkAfter).toLocaleString())+' 之后的某次同步</div>':'')
+      +goneHtml
+      +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">历史版本时间：'+esc(t)+'</div>'
       +'<button class="btn btn-d" style="margin-top:var(--sp-6)" onclick="restoreShrunk('+i+')">恢复这条的长版本</button>'
       +'</div>';
   }).join('');
