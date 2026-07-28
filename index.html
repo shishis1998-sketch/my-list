@@ -7161,9 +7161,26 @@ async function openRecover(){
     });
     if(!res.ok)throw new Error('HTTP '+res.status);
     const j=await res.json();
-    const hist=Array.isArray(j.history)?j.history:[];
+    // ⚠️ GET /gists/{id} 里的 history 字段最多只给 30 个版本——丢失如果发生在更早，
+    //    只翻这 30 个就会得出「什么都没少」的错误结论。
+    //    /gists/{id}/commits 是分页的，能拿到完整历史，所以优先走它。
+    let hist=[];
+    for(let page=1;page<=10;page++){
+      _recSay('<div style="color:var(--text-muted)">正在读取历史版本列表…（第 '+page+' 页，已 '+hist.length+' 个）</div>');
+      const r=await fetch('https://api.github.com/gists/'+gistId+'/commits?per_page=100&page='+page,{
+        headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
+      });
+      if(!r.ok)break;
+      const arr=await r.json();
+      if(!Array.isArray(arr)||!arr.length)break;
+      hist=hist.concat(arr);
+      if(arr.length<100)break;
+    }
+    if(!hist.length)hist=Array.isArray(j.history)?j.history:[];   // 兜底：退回只有 30 个的字段
     if(!hist.length){_recSay('<div>这个 Gist 没有历史版本。</div>');return;}
     const have=new Set(notes.map(n=>n.id));
+    const cur=new Map(notes.map(n=>[n.id,n]));
+    const shrunk=new Map();        // id → {note, ts, oldLen} 正文比现在长的历史版本
     const byId=new Map();          // id → {note, ts}
     const timeline=[];             // 每个版本的备忘条数，用来定位「是哪一次同步删的」
     let scanned=0,failed=0;
@@ -7184,9 +7201,20 @@ async function openRecover(){
           all.forEach(n=>{const k=n.subCat||'（未分类）';bySub[k]=(bySub[k]||0)+1;});
           timeline.push({ts:h.committed_at||'',n:all.length,sub:bySub,ok:true});
           all.forEach(n=>{
-            if(have.has(n.id))return;            // 本机还在，不用捞
-            if(byId.has(n.id))return;            // 历史是从新到旧，先到的更新
-            byId.set(n.id,{note:n,ts:h.committed_at||''});
+            if(!have.has(n.id)){
+              if(byId.has(n.id))return;          // 历史是从新到旧，先到的更新
+              byId.set(n.id,{note:n,ts:h.committed_at||''});
+              return;
+            }
+            // 这条本机还在，但正文可能被改短过——「笔记还在，片段没了」是另一种丢法，
+            // 只比对 id 是发现不了的。记下历史上最长的那个版本。
+            const now=cur.get(n.id);
+            if(!now||now.subCat==='备忘')return;
+            const oldB=String(n.body||''), nowB=String(now.body||'');
+            if(oldB.length<=nowB.length+20)return;      // 只关心明显变短的
+            const prev=shrunk.get(n.id);
+            if(prev&&prev.oldLen>=oldB.length)return;
+            shrunk.set(n.id,{note:n,ts:h.committed_at||'',oldLen:oldB.length,nowLen:nowB.length});
           });
         }else{
           timeline.push({ts:h.committed_at||'',n:0,sub:{},ok:true});
@@ -7231,9 +7259,10 @@ async function openRecover(){
       }
       locked++;
     }
+    _recShrunk=[...shrunk.values()].sort((x,y)=>(y.oldLen-y.nowLen)-(x.oldLen-x.nowLen));
     _recoverFound=[...byId.values()];
     if(!_recoverFound.length){
-      _recSay(_recDropHtml+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的笔记。'
+      _recSay(_recDropHtml+_recShrunkHtml()+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的笔记。'
         +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
         +'<br><br><span style="color:var(--text-muted)">说明丢失的内容从来没有成功上传过云端，历史版本里也就没有它们。这种情况只能靠本机的「还原到覆盖前的备份」，或你自己导出的 JSON。</span></div>'
         +_recTimelineHtml());
@@ -7256,7 +7285,7 @@ async function openRecover(){
       return '<div style="margin-top:var(--sp-10)"><div style="font-weight:600">'+esc(k)
         +' <span style="color:var(--text-muted);font-weight:400">'+groups[k].length+' 条</span></div>'+items+'</div>';
     }).join('');
-    _recSay(_recDropHtml
+    _recSay(_recDropHtml+_recShrunkHtml()
       +'<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的笔记'
       +(locked?'（其中 '+locked+' 条备忘需要正确的主密码才能看到内容，但可以先捞回来）':'')+'：'
       +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
@@ -7267,6 +7296,41 @@ async function openRecover(){
   }catch(e){
     _recSay('<div style="color:var(--danger)">读取失败：'+esc(e.message||String(e))+'</div>');
   }
+}
+
+// 「笔记还在但正文被改短」的区块：只比对 id 发现不了这种丢法
+let _recShrunk=[];
+function _recShrunkHtml(){
+  if(!_recShrunk.length)return '';
+  const rows=_recShrunk.map((v,i)=>{
+    const t=v.ts?new Date(v.ts).toLocaleString():'';
+    return '<div style="padding:var(--sp-8) 0;border-bottom:1px solid var(--line)">'
+      +'<b>'+esc(v.note.title||'（无标题）')+'</b>'
+      +' <span style="font-size:var(--fs-foot);color:var(--danger)">'+v.oldLen+' 字 → 现在 '+v.nowLen+' 字</span>'
+      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);white-space:pre-wrap;max-height:5em;overflow:hidden;margin:var(--sp-4) 0">'
+      +esc(String(v.note.body||'').slice(0,200))+'…</div>'
+      +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t)+'</div>'
+      +'<button class="btn btn-d" style="margin-top:var(--sp-6)" onclick="restoreShrunk('+i+')">恢复这条的长版本</button>'
+      +'</div>';
+  }).join('');
+  return '<div style="background:var(--danger-bg);padding:var(--sp-10) var(--sp-12);border-radius:var(--r);margin-bottom:var(--sp-10)">'
+    +'<b style="color:var(--danger)">有 '+_recShrunk.length+' 条笔记的正文比历史版本短</b>'
+    +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-4)">'
+    +'笔记还在、但里面的片段少了——这种丢法只比对条数是看不出来的。逐条核对，确认是被顶掉的再恢复（你自己删改过的就别动）。</div>'
+    +'</div>'+rows;
+}
+function restoreShrunk(i){
+  const v=_recShrunk[i];if(!v)return;
+  const n=notes.find(x=>x.id===v.note.id);
+  if(!n){toast('这条笔记本机已经没有了');return;}
+  if(!confirm('把《'+(n.title||'无标题')+'》的正文换成历史版本（'+v.oldLen+' 字，现在 '+v.nowLen+' 字）？\n\n当前正文会被替换。')) return;
+  backupLocal('before-restore-body');
+  n.body=v.note.body||'';
+  n.updatedAt=Date.now();
+  persistNotes();render();
+  _recShrunk.splice(i,1);
+  _recSay(_recDropHtml+_recShrunkHtml()+'<div style="margin-top:var(--sp-10)">✓ 已恢复《'+esc(n.title||'无标题')+'》的长版本。</div>');
+  toast('✓ 已恢复正文');
 }
 
 function doRecoverMemos(){
