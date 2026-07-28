@@ -398,7 +398,8 @@ tr:hover .acts{opacity:1;}
     overflow-y:auto;-webkit-overflow-scrolling:touch;
     /* 隐藏原生滚动条：部分安卓浏览器会画一条灰色经典滚动条，露在页面右侧（与全站无滚动条风格一致）*/
     scrollbar-width:none;-ms-overflow-style:none;
-    padding:0 0 calc(var(--sp-24) + env(safe-area-inset-bottom));
+    /* 底部给常驻的 tab 底栏留位（与日历页一致，内容不被底栏遮挡）*/
+    padding:0 0 calc(76px + env(safe-area-inset-bottom));
     border-right:none;
     /* 方案 B · 淡入渐起:淡入 + 上移(替代原横向滑入,与全站转场统一) */
     transform:translateY(var(--nav-rise));opacity:0;visibility:hidden;pointer-events:none;
@@ -422,13 +423,8 @@ tr:hover .acts{opacity:1;}
     padding-top:calc(var(--sp-14) + env(safe-area-inset-top));
   }
   .sb-mhdr-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);letter-spacing:.01em;}
-  .sb-mclose{
-    display:flex;align-items:center;justify-content:center;
-    width:34px;height:34px;flex-shrink:0;
-    border:none;background:var(--bg);border-radius:var(--r);
-    color:var(--text-secondary);cursor:pointer;transition:background .15s,color .15s;
-  }
-  .sb-mclose:active{background:var(--accent-light);color:var(--accent);}
+  /* 关闭按钮已移除：改用底部 tab 导航切走，与其它页统一 */
+  .sb-mclose{display:none;}
   /* 整屏页:分组区留白 + 分组标题放大到 16px */
   .sidebar .page,.sidebar .nsec{padding:0 var(--sp-14);}
   .sidebar .nsec{margin-bottom:var(--sp-24);}
@@ -847,6 +843,10 @@ body.cal-searching .cal-searchresults{display:flex;}
   body.cal-open .cal-grid{border-bottom:none;}     /* 去掉网格自身底线 → 全屏只剩底栏一条分界 */
   body.cal-open .cal-scroll{scrollbar-width:none;overflow:hidden;overscroll-behavior:none;} /* 日历页固定不滚动 */
   body.cal-open .cal-scroll::-webkit-scrollbar{display:none;}
+  /* 「设置」页与日历同一套导航：底栏浮于其上、只留 tab 行，靠点其它 tab 切走，无需关闭按钮 */
+  body.sb-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
+  body.sb-open .bb-actions{display:none;}
+  body.sb-open .bb-tabs{max-height:64px;opacity:1;}
 }
 
 /* 日历按钮加到 sidebar 导航 */
@@ -7826,7 +7826,16 @@ function toggleSidebar(open){
   if(open && document.body.classList.contains('cal-open')) closeCalendar();  // 「设置」从日历页切走
   sb.classList.toggle('open',open);
   ov.classList.toggle('open',open);
+  document.body.classList.toggle('sb-open',open);  // 设置页：底栏浮于其上、只留 tab（与日历一致）
+  setMenuTabActive(open);                           // 高亮底部「设置」tab
   document.body.style.overflow=open?'hidden':'';
+}
+// 底部 tab 高亮：设置页时点亮「设置」，退出时交还给 syncBottomTabs（与 setCalTabActive 对称）
+function setMenuTabActive(on){
+  const menu=document.getElementById('bbtab-menu');
+  if(menu)menu.classList.toggle('on',on);
+  if(on){['bbtab-all','bbtab-notes','bbtab-cal'].forEach(id=>{const t=document.getElementById(id);t&&t.classList.remove('on');});}
+  else{syncBottomTabs();}
 }
 
 // 当前是否处于笔记模式
