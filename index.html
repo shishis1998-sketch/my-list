@@ -267,27 +267,15 @@ tr:hover .acts{opacity:1;}
 
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:var(--sp-20);}
-/* 侧栏/日历打开时底栏会被提到 z-index:115，高过弹窗，会把弹窗底部的按钮压住。
-   与其盖住底栏，不如让弹窗给它让出高度——按钮就落在导航条上方，两者都能点。
-   --bbh 是底栏实测高度，由 JS 写入；拿不到时退回一个够用的估值。 */
-.moverlay{padding-bottom:calc(var(--sp-20) + var(--bbh,0px));}
 
 .moverlay.open{display:flex;animation:movFadeIn var(--nav-dur) var(--nav-ease);}
 .moverlay.open .mbox{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
 @keyframes movFadeIn{from{background:rgba(10,8,6,0);}to{background:rgba(10,8,6,.55);}}
 /* 方案 B · 淡入渐起:淡入 + 上移 --nav-rise */
 @keyframes mboxPopIn{from{opacity:0;transform:translateY(var(--nav-rise));}to{opacity:1;transform:translateY(0);}}
-/* max-height 同时受 100% 约束：92vh 是按视口算的，会无视 .moverlay 给底栏留出的
-   padding-bottom，再被 align-items:center 一居中就溢出到底栏下面。
-   加上 100%（容器已扣掉底栏高度）后，弹窗底部一定停在导航条上方。 */
+/* 弹窗最高 92vh，且不超过容器（手机端下面已给底栏留出高度，见 @media 里的 padding-bottom）。
+   底部按钮行固定在弹窗底边，容器一收窄，按钮就停在导航条上方，导航条仍可见可点。 */
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
-/* 云同步设置内容多、按钮又在最底部，做成居中弹窗总会被底栏压住。
-   干脆当成「设置的下一页」：占满整屏，打开时把底部导航条藏掉，
-   底部按钮就一定露得出来。底栏在桌面端本来就不显示，隐藏它没有副作用。 */
-#syncModal{padding:0;align-items:stretch;justify-content:center;}
-#syncModal .mbox{max-width:560px;max-height:100%;height:100%;border-radius:0;box-shadow:none;}
-#syncModal .mftr{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
-body.syncpage-open .bottombar{display:none !important;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
@@ -640,6 +628,11 @@ body.syncpage-open .bottombar{display:none !important;}
   .catfrow .nfsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
   /* 笔记模式下隐藏分类条(此时显示 nfrow 子分类条) */
   body.notes-mode .catfrow{display:none !important;}
+
+  /* 手机端：弹窗给底部导航条让出高度，底部按钮就停在导航条上方，导航条依旧可见可点。
+     只有侧栏/日历打开时导航条会盖到弹窗上（z-index:115），那时它只剩 64px 高的标签行，
+     所以留出 64px + 手势条安全区即可精确避开，不必用 JS 实测。 */
+  .moverlay{padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));}
 
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
@@ -7471,12 +7464,8 @@ function openSyncCfg(){
   document.getElementById('roToggle').classList.toggle('on',isReadOnly());
   refreshUploadLocalRow();
   document.getElementById('syncModal').classList.add('open');
-  document.body.classList.add('syncpage-open');   // 当成整页：藏起底部导航条
 }
-function closeSyncCfg(){
-  document.getElementById('syncModal').classList.remove('open');
-  document.body.classList.remove('syncpage-open');
-}
+function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
 
 async function saveSyncCfg(){
   const t=document.getElementById('f-gh-token').value.trim();
@@ -10517,25 +10506,6 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 // B. 键盘悬浮、布局不变（iOS Safari 等）：innerHeight 不变，用
 //    visualViewport 的可视区底部钉住底栏（--bbty / vv-track 模式）。
 // 不支持 visualViewport 的老浏览器自动跳过，维持原行为
-// 把底栏实测高度写进 --bbh，供弹窗留白用（见 .moverlay 的 padding-bottom）。
-// 底栏只在移动端显示，桌面端量到 0，弹窗就不留白，正好。
-(function(){
-  const bar=document.querySelector('.bottombar');
-  if(!bar)return;
-  const root=document.documentElement;
-  const sync=()=>{
-    try{
-      const hidden=(typeof getComputedStyle==='function')&&getComputedStyle(bar).display==='none';
-      const h=hidden?0:(bar.getBoundingClientRect().height||0);
-      root.style.setProperty('--bbh',Math.round(h)+'px');
-    }catch(e){/* 量不到就维持默认值，不影响其它功能 */}
-  };
-  sync();
-  window.addEventListener('resize',sync);
-  window.addEventListener('orientationchange',()=>setTimeout(sync,150));
-  if(window.ResizeObserver)new ResizeObserver(sync).observe(bar);
-})();
-
 (function(){
   const vv=window.visualViewport;
   const bar=document.querySelector('.bottombar');
