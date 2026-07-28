@@ -281,6 +281,13 @@ tr:hover .acts{opacity:1;}
    padding-bottom，再被 align-items:center 一居中就溢出到底栏下面。
    加上 100%（容器已扣掉底栏高度）后，弹窗底部一定停在导航条上方。 */
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
+/* 云同步设置内容多、按钮又在最底部，做成居中弹窗总会被底栏压住。
+   干脆当成「设置的下一页」：占满整屏，打开时把底部导航条藏掉，
+   底部按钮就一定露得出来。底栏在桌面端本来就不显示，隐藏它没有副作用。 */
+#syncModal{padding:0;align-items:stretch;justify-content:center;}
+#syncModal .mbox{max-width:560px;max-height:100%;height:100%;border-radius:0;box-shadow:none;}
+#syncModal .mftr{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
+body.syncpage-open .bottombar{display:none !important;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
@@ -7464,8 +7471,12 @@ function openSyncCfg(){
   document.getElementById('roToggle').classList.toggle('on',isReadOnly());
   refreshUploadLocalRow();
   document.getElementById('syncModal').classList.add('open');
+  document.body.classList.add('syncpage-open');   // 当成整页：藏起底部导航条
 }
-function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
+function closeSyncCfg(){
+  document.getElementById('syncModal').classList.remove('open');
+  document.body.classList.remove('syncpage-open');
+}
 
 async function saveSyncCfg(){
   const t=document.getElementById('f-gh-token').value.trim();
