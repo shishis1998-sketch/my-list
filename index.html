@@ -2438,7 +2438,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 #calViewPeriod .calendar-container.year-view .month {cursor: pointer;}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
 #calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 28px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
-#calViewPeriod .calendar-container.year-view .day {width: 22px; height: 22px; aspect-ratio: auto; border-radius: 5px; font-size: var(--fs-footnote);}  /* 固定小方块：配合 .days 的固定行高，桌面端也不会被拉成大方块 */
+#calViewPeriod .calendar-container.year-view .day {width: 22px; height: 22px; aspect-ratio: auto; border-radius: 50%; font-size: var(--fs-footnote);}  /* 固定小圆点：配合 .days 的固定行高，桌面端也不会被拉成大圆；圆形与日历/月度视图一致 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
