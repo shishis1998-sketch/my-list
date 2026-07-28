@@ -7350,7 +7350,9 @@ function shrinkVerdict(v){
 const MERGE_MARK_RE=/\n*-{3,}\n*（以下 \d+ 段由历史版本补回[^）]*）[\s\S]*$/;
 function _paraSep(body){return /\n{2,}/.test(String(body||''))?'\n\n':'\n';}
 function splitSections(body){
-  const lines=String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  // 同样要滤掉「补回」留下的分隔线和说明行，免得重新合并时又被塞回正文
+  const junk=x=>/^-{3,}$/.test(x)||/^（以下 \d+ 段由历史版本补回/.test(x);
+  const lines=String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).filter(x=>!junk(x));
   const secs=[];let cur={head:null,items:[]};
   for(const L of lines){
     if(/^#{1,6}\s+/.test(L)){secs.push(cur);cur={head:L,items:[]};}
@@ -7417,7 +7419,9 @@ function _undoMergeHtml(){
 
 // 按段落比对，算出旧版本里有、当前正文里已经没有的那几段
 function missingFragments(oldB,nowB){
-  const norm=t=>String(t||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  // 「补回」插入过的分隔线和说明行是工具自己的痕迹，不是笔记内容，别混进缺失清单
+  const junk=x=>/^-{3,}$/.test(x)||/^（以下 \d+ 段由历史版本补回/.test(x);
+  const norm=t=>String(t||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).filter(x=>!junk(x));
   const nowSet=new Set(norm(nowB));
   return norm(oldB).filter(x=>!nowSet.has(x));
 }
@@ -7430,13 +7434,16 @@ function _recShrunkHtml(){
     const now=notes.find(x=>x.id===v.note.id);
     const gone=missingFragments(v.note.body,now?now.body:'');
     const goneHtml=gone.length
-      ? '<div style="margin:var(--sp-6) 0"><div style="font-size:var(--fs-foot);color:var(--danger);font-weight:600">'
-        +'少了这 '+gone.length+' 段：</div>'
-        +gone.slice(0,8).map(g=>'<div style="font-size:var(--fs-foot);white-space:pre-wrap;background:var(--bg);'
-          +'border-left:3px solid var(--danger);padding:var(--sp-6) var(--sp-8);margin-top:var(--sp-4);border-radius:var(--rsm)">'
-          +esc(g.slice(0,300))+(g.length>300?'…':'')+'</div>').join('')
-        +(gone.length>8?'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-4)">…另有 '+(gone.length-8)+' 段</div>':'')
-        +'</div>'
+      ? '<div style="margin:var(--sp-6) 0">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-8);flex-wrap:wrap">'
+        +'<div style="font-size:var(--fs-foot);color:var(--danger);font-weight:600">少了这 '+gone.length+' 段（全部列在下面，可滚动）：</div>'
+        +'<button class="btn btn-d" onclick="copyGone('+i+')">复制这 '+gone.length+' 段</button></div>'
+        +'<div style="max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:var(--sp-4);'
+        +'border:1px solid var(--border-soft);border-radius:var(--r);padding:var(--sp-6)">'
+        +gone.map((g,gi)=>'<div style="font-size:var(--fs-foot);white-space:pre-wrap;background:var(--bg);'
+          +'border-left:3px solid var(--danger);padding:var(--sp-6) var(--sp-8);margin-bottom:var(--sp-4);border-radius:var(--rsm)">'
+          +'<span style="color:var(--text-muted)">'+(gi+1)+'.</span> '+esc(g)+'</div>').join('')
+        +'</div></div>'
       : '<div style="font-size:var(--fs-foot);color:var(--text-muted);margin:var(--sp-6) 0">'
         +'整段都还在，差异在段落内部（可能是删了句子或改了措辞）。</div>';
     const vd=shrinkVerdict(v);
@@ -7463,6 +7470,18 @@ function _recShrunkHtml(){
 }
 // 合并式恢复：只把「当前正文里已经没有的段落」追加回去，现有内容一个字不动。
 // 判定说「更像是你自己删的」时尤其重要——那说明当前版本更新，整条替换会把新内容盖掉。
+// 把缺失的段落整段复制出去，方便自己贴回原处或先存一份
+function copyGone(i){
+  const v=_recShrunk[i];if(!v)return;
+  const n=notes.find(x=>x.id===v.note.id);
+  const gone=missingFragments(v.note.body,n?n.body:'');
+  if(!gone.length){toast('没有可复制的段落');return;}
+  const txt=gone.map((g,k)=>(k+1)+'. '+g).join('\n\n');
+  if(!navigator.clipboard){toast('当前环境不支持复制，请手动选中');return;}
+  navigator.clipboard.writeText(txt).then(()=>toast('✓ 已复制 '+gone.length+' 段'),
+                                          ()=>toast('复制失败，请手动选中'));
+}
+
 function mergeShrunk(i){
   const v=_recShrunk[i];if(!v)return;
   const n=notes.find(x=>x.id===v.note.id);
