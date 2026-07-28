@@ -267,6 +267,11 @@ tr:hover .acts{opacity:1;}
 
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:var(--sp-20);}
+/* 侧栏/日历打开时底栏会被提到 z-index:115，高过弹窗，会把弹窗底部的按钮压住。
+   与其盖住底栏，不如让弹窗给它让出高度——按钮就落在导航条上方，两者都能点。
+   --bbh 是底栏实测高度，由 JS 写入；拿不到时退回一个够用的估值。 */
+.moverlay{padding-bottom:calc(var(--sp-20) + var(--bbh,0px));}
+
 .moverlay.open{display:flex;animation:movFadeIn var(--nav-dur) var(--nav-ease);}
 .moverlay.open .mbox{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
 @keyframes movFadeIn{from{background:rgba(10,8,6,0);}to{background:rgba(10,8,6,.55);}}
@@ -7371,7 +7376,11 @@ function _recShrunkHtml(){
         +esc(new Date(v.shrinkAfter).toLocaleString())+' 之后的某次同步</div>':'')
       +goneHtml
       +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">历史版本时间：'+esc(t)+'</div>'
-      +'<button class="btn btn-d" style="margin-top:var(--sp-6)" onclick="restoreShrunk('+i+')">恢复这条的长版本</button>'
+      +'<div style="display:flex;gap:var(--sp-8);flex-wrap:wrap;margin-top:var(--sp-8)">'
+      +'<button class="btn btn-p" onclick="mergeShrunk('+i+')">补回少掉的段落（推荐）</button>'
+      +'<button class="btn btn-d" onclick="restoreShrunk('+i+')">整条换成长版本</button></div>'
+      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-4)">'
+      +'「补回」只在末尾追加，现有内容不动；「整条换」会用历史版本覆盖当前正文。</div>'
       +'</div>';
   }).join('');
   return '<div style="background:var(--danger-bg);padding:var(--sp-10) var(--sp-12);border-radius:var(--r);margin-bottom:var(--sp-10)">'
@@ -7380,6 +7389,28 @@ function _recShrunkHtml(){
     +'笔记还在、但里面的片段少了——这种丢法只比对条数是看不出来的。逐条核对，确认是被顶掉的再恢复（你自己删改过的就别动）。</div>'
     +'</div>'+rows;
 }
+// 合并式恢复：只把「当前正文里已经没有的段落」追加回去，现有内容一个字不动。
+// 判定说「更像是你自己删的」时尤其重要——那说明当前版本更新，整条替换会把新内容盖掉。
+function mergeShrunk(i){
+  const v=_recShrunk[i];if(!v)return;
+  const n=notes.find(x=>x.id===v.note.id);
+  if(!n){toast('这条笔记本机已经没有了');return;}
+  const gone=missingFragments(v.note.body,n.body);
+  if(!gone.length){toast('没有可补的段落');return;}
+  if(!confirm('把 '+gone.length+' 段补回《'+(n.title||'无标题')+'》的正文末尾？\n\n'
+    +'现有内容一个字都不会动，只在后面追加。补回后可以自己再调整顺序。')) return;
+  backupLocal('before-merge-body');
+  n.body=String(n.body||'').replace(/\s+$/,'')
+    +'\n\n---\n（以下 '+gone.length+' 段由历史版本补回，'+new Date().toLocaleString()+'）\n\n'
+    +gone.join('\n\n');
+  n.updatedAt=Date.now();
+  persistNotes();render();
+  _recShrunk.splice(i,1);
+  _recSay(_recDropHtml+_recShrunkHtml()+'<div style="margin-top:var(--sp-10)">✓ 已把 '+gone.length
+    +' 段补回《'+esc(n.title||'无标题')+'》，原有内容未改动。</div>');
+  toast('✓ 已补回 '+gone.length+' 段');
+}
+
 function restoreShrunk(i){
   const v=_recShrunk[i];if(!v)return;
   const n=notes.find(x=>x.id===v.note.id);
@@ -10597,6 +10628,25 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 // B. 键盘悬浮、布局不变（iOS Safari 等）：innerHeight 不变，用
 //    visualViewport 的可视区底部钉住底栏（--bbty / vv-track 模式）。
 // 不支持 visualViewport 的老浏览器自动跳过，维持原行为
+// 把底栏实测高度写进 --bbh，供弹窗留白用（见 .moverlay 的 padding-bottom）。
+// 底栏只在移动端显示，桌面端量到 0，弹窗就不留白，正好。
+(function(){
+  const bar=document.querySelector('.bottombar');
+  if(!bar)return;
+  const root=document.documentElement;
+  const sync=()=>{
+    try{
+      const hidden=(typeof getComputedStyle==='function')&&getComputedStyle(bar).display==='none';
+      const h=hidden?0:(bar.getBoundingClientRect().height||0);
+      root.style.setProperty('--bbh',Math.round(h)+'px');
+    }catch(e){/* 量不到就维持默认值，不影响其它功能 */}
+  };
+  sync();
+  window.addEventListener('resize',sync);
+  window.addEventListener('orientationchange',()=>setTimeout(sync,150));
+  if(window.ResizeObserver)new ResizeObserver(sync).observe(bar);
+})();
+
 (function(){
   const vv=window.visualViewport;
   const bar=document.querySelector('.bottombar');
