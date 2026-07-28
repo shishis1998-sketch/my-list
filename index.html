@@ -6191,7 +6191,7 @@ window.PV = (function(){
         const colsHtml = cols.map(c =>
           '<div class="cyc-col">' +
             `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
-            `<div class="cyc-bar p" style="height:${h(c.len)}%"></div>` +
+            `<div class="cyc-bar p" style="height:${h(c.len)}%"><span class="num">${c.len}</span></div>` +
           '</div>').join('');
         // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
         const xHtml = cols.map(c =>
