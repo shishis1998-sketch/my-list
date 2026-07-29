@@ -585,6 +585,10 @@ tr:hover .acts{opacity:1;}
   /* 抽屉顶部小抓手 */
   #noteModal .mhdr{position:relative;padding-top:var(--sp-20);}
   #noteModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
+  /* 读书时间线（章节列表）弹窗：铺满到屏幕底边，不在下方留出导航条空档（否则会露出被压暗的底栏，看着像空了一块）。
+     底部内容加上安全区内边距，最后一章不被手势条压住。 */
+  #tlModal.moverlay{padding-bottom:0;}
+  #tlModal #tl-body{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
