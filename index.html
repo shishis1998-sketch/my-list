@@ -2240,9 +2240,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 弹窗内复用 .day-info-bar 时去掉其外层卡片留白，避免与弹窗自身内边距叠加 */
 #calViewPeriod .pv-sheet-body .day-info-bar{margin-top:0;padding:0;background:transparent;}
 #calViewPeriod .pv-sheet-body .info-section-title:first-child{margin-top:0;}
+/* 即便系统开启「减弱动态效果」，也保留一段克制、更短的滑入/淡入，
+   让弹窗仍有可见的动态反馈(而非瞬间弹出) */
 @media (prefers-reduced-motion: reduce){
-  .pv-sheet{transition:none;} .pv-sheet-scrim{transition:none;}
-  .pv-sw,.pv-sw:active,.pv-btn,.pv-btn:active,.pv-sheet-close:active{transition:none;transform:none;}
+  .pv-sheet{transition:transform .2s ease;}
+  .pv-sheet-scrim{transition:opacity .2s ease;}
 }
 /* 手机端底部 tab 栏(.bottombar z-index:115)会盖住弹窗底部按钮，弹窗打开时先隐藏它 */
 @media (max-width:768px){ body.pv-sheet-open .bottombar{display:none;} }
