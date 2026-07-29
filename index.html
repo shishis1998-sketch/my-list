@@ -567,6 +567,19 @@ tr:hover .acts{opacity:1;}
   }
   .mbody{padding:var(--sp-14) var(--sp-20);}
   .mftr{padding:var(--sp-12) var(--sp-20);padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
+  #noteModal.moverlay{align-items:flex-end;justify-content:center;}
+  #noteModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  @keyframes mboxSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  #noteModal .mbox{
+    width:100%;max-width:100%;height:auto;
+    max-height:min(72vh,100%);min-height:56vh;
+    border-radius:var(--rxl) var(--rxl) 0 0;
+    box-shadow:0 -4px 24px rgba(0,0,0,.18);
+  }
+  /* 抽屉顶部小抓手 */
+  #noteModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #noteModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
