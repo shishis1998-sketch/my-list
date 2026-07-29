@@ -2185,6 +2185,67 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       100% { transform: translateY(-50%) scale(1); }
     }
 #calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}
+
+/* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */
+.pv-sheet-scrim{position:fixed;inset:0;background:rgba(20,10,14,.30);
+  opacity:0;pointer-events:none;transition:opacity .28s ease;z-index:200;}
+.pv-sheet-scrim.open{opacity:1;pointer-events:auto;}
+.pv-sheet{position:fixed;left:0;right:0;bottom:0;z-index:201;
+  width:100%;max-width:540px;margin:0 auto;
+  background:var(--surface);color:var(--text-primary);
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -12px 34px -14px rgba(60,20,35,.30);
+  transform:translateY(102%);transition:transform .34s cubic-bezier(.22,.9,.32,1);
+  padding:8px 16px calc(16px + env(safe-area-inset-bottom));
+  max-height:86vh;display:flex;flex-direction:column;
+  font-family:var(--zh);}
+.pv-sheet.open{transform:translateY(0);}
+.pv-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);
+  margin:4px auto 10px;flex:0 0 auto;}
+.pv-sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex:0 0 auto;}
+.pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
+.pv-sheet-status{font-size:11px;font-weight:700;color:var(--brand);
+  background:var(--brand-soft);padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.pv-sheet-close{margin-left:auto;flex:0 0 auto;width:28px;height:28px;border:none;
+  background:var(--surface-2);border-radius:50%;color:var(--text-muted);
+  font-size:14px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.pv-sheet-close:active{transform:scale(.9);}
+.pv-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;}
+.pv-sheet-body::-webkit-scrollbar{display:none;}
+/* 「经血量」小标题与症状区小标题(.info-section-title)保持同一套外观 */
+.pv-flow-title{font-size:var(--fs-footnote);color:var(--faint);letter-spacing:1px;
+  text-transform:uppercase;margin:0 0 6px;}
+.pv-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.pv-sw{border:1px solid var(--border);background:var(--surface);border-radius:12px;
+  padding:10px 4px 8px;font-family:var(--zh);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  transition:border-color .15s,background .15s,transform .1s;
+  -webkit-tap-highlight-color:transparent;}
+.pv-sw:active{transform:scale(.94);}
+.pv-sw-dot{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);}
+.pv-sw-name{font-size:11px;font-weight:700;color:var(--text-secondary);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.3px;}
+.pv-sw-cn{font-size:10px;color:var(--text-muted);}
+.pv-sw.on{border-color:var(--brand);background:var(--brand-soft);}
+.pv-sw.on .pv-sw-name{color:var(--brand);}
+.pv-sheet-actions{flex:0 0 auto;display:flex;gap:10px;padding-top:12px;
+  border-top:1px solid var(--border-soft);margin-top:4px;}
+.pv-btn{border:none;border-radius:12px;padding:12px 0;font-size:14px;font-weight:700;
+  font-family:var(--zh);cursor:pointer;transition:transform .1s,opacity .15s;
+  -webkit-tap-highlight-color:transparent;}
+.pv-btn:active{transform:scale(.98);}
+.pv-btn-done{flex:2;background:var(--brand);color:#fff;}
+.pv-btn-clear{flex:1;background:var(--surface);color:var(--text-muted);border:1px solid var(--border);}
+/* 弹窗内复用 .day-info-bar 时去掉其外层卡片留白，避免与弹窗自身内边距叠加 */
+#calViewPeriod .pv-sheet-body .day-info-bar{margin-top:0;padding:0;background:transparent;}
+#calViewPeriod .pv-sheet-body .info-section-title:first-child{margin-top:0;}
+@media (prefers-reduced-motion: reduce){
+  .pv-sheet{transition:none;} .pv-sheet-scrim{transition:none;}
+  .pv-sw,.pv-sw:active,.pv-btn,.pv-btn:active,.pv-sheet-close:active{transition:none;transform:none;}
+}
+/* 手机端底部 tab 栏(.bottombar z-index:115)会盖住弹窗底部按钮，弹窗打开时先隐藏它 */
+@media (max-width:768px){ body.pv-sheet-open .bottombar{display:none;} }
 #calViewPeriod .bottom-nav {position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
       display: flex; align-items: center; gap: 6px;
       
@@ -3122,6 +3183,22 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <div id="bottomLegend">
         <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
         <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
+      </div>
+
+      <!-- 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）-->
+      <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.closeDaySheet()"></div>
+      <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
+        <div class="pv-sheet-grab"></div>
+        <div class="pv-sheet-head">
+          <span class="pv-sheet-date" id="pvSheetDate"></span>
+          <span class="pv-sheet-status" id="pvSheetStatus" style="display:none"></span>
+          <button class="pv-sheet-close" onclick="PV.closeDaySheet()" aria-label="关闭">✕</button>
+        </div>
+        <div class="pv-sheet-body" id="pvSheetBody"></div>
+        <div class="pv-sheet-actions">
+          <button class="pv-btn pv-btn-clear" onclick="PV.clearDayRecord()">清除记录</button>
+          <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
+        </div>
       </div>
     </div>
 
@@ -5821,6 +5898,7 @@ window.PV = (function(){
     }
 
     function render() {
+      closeDaySheet();   // 翻月/切视图/切年 等任何重画都收起底部弹窗
       const cal = document.getElementById('calendar');
       const yl = document.getElementById('yearLabel');
       if (yl) yl.textContent = year;
@@ -5996,9 +6074,10 @@ window.PV = (function(){
     }
 
     function cycleDay(month, day) {
-      // 月视图下:单击 = 选中日期(在下方信息栏显示/编辑状态),不直接改色
+      // 月视图下:单击某天 → 从底部弹出编辑弹窗(经血量 + 症状),不直接改色
       if (homeView === 'month') {
         selectDayForView(year, month, day);
+        openDaySheet(year, month, day);
         return;
       }
     }
@@ -6006,9 +6085,96 @@ window.PV = (function(){
     // 选中某天用于查看/编辑(放大态下)
     function selectDayForView(y, m, d) {
       selectedView = { y, m, d };
-      // 只更新高亮和信息栏,不重画整月,避免闪
+      // 只更新高亮,不重画整月,避免闪(信息编辑改到底部弹窗里)
       updateSelectedHighlight();
+    }
+
+    // ── 底部弹窗：点日期弹出，一次编辑「经血量 + 症状」──
+    const WEEKDAY_CN = ['周日','周一','周二','周三','周四','周五','周六'];
+
+    // 弹窗里的经血量色板(4 个色块，点选/取消)
+    function buildFlowSwatches() {
+      const flow = document.getElementById('pvFlow');
+      if (!flow || !selectedView) return;
+      const { y, m, d } = selectedView;
+      const cur = getLevel(y, m, d);
+      const cn = { 4: '点滴', 1: '少', 2: '中', 3: '多' };
+      flow.innerHTML = PALETTE_ORDER.map(lv => {
+        const p = PALETTE[lv] || {};
+        const on = cur === lv ? ' on' : '';
+        return `<button type="button" class="pv-sw${on}" data-lv="${lv}">` +
+                 `<span class="pv-sw-dot" style="background:${p.color || '#ccc'}"></span>` +
+                 `<span class="pv-sw-name">${escapeHtml(p.name || '')}</span>` +
+                 `<span class="pv-sw-cn">${cn[lv] || ''}</span>` +
+               `</button>`;
+      }).join('');
+      flow.querySelectorAll('.pv-sw').forEach(b => {
+        b.onclick = () => applySelectedColor(+b.dataset.lv);
+      });
+    }
+
+    // 弹窗顶部的经期状态药丸(经期第几天 / 点滴 / 无)
+    function updateDaySheetStatus() {
+      const el = document.getElementById('pvSheetStatus');
+      if (!el || !selectedView) return;
+      const { y, m, d } = selectedView;
+      const st = getDayStatus(y, m, d);
+      if (st.kind === 'period') {
+        el.textContent = `经期 · 第 ${st.dayNo} 天`;
+        el.style.display = '';
+      } else if (st.kind === 'spotting') {
+        el.textContent = '点滴 · 不计入经期';
+        el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
+    function openDaySheet(y, m, d) {
+      const body = document.getElementById('pvSheetBody');
+      const sheet = document.getElementById('pvSheet');
+      const scrim = document.getElementById('pvSheetScrim');
+      const dateEl = document.getElementById('pvSheetDate');
+      if (!body || !sheet || !scrim) return;
+      selectedView = { y, m, d };
+      if (dateEl) dateEl.textContent = `${m} 月 ${d} 日 · ${WEEKDAY_CN[new Date(y, m - 1, d).getDay()]}`;
+      // 弹窗内容：经血量色板 + 复用原有的症状信息栏(#dayInfoBar)
+      body.innerHTML =
+        `<div class="pv-flow-title">经血量</div>` +
+        `<div class="pv-flow" id="pvFlow"></div>` +
+        `<div class="day-info-bar" id="dayInfoBar"></div>`;
+      buildFlowSwatches();
+      renderDayInfoBar();       // 填充症状标签(内部会尝试渲染 #dayStatusBar，此处不放该元素故自动跳过)
+      updateDaySheetStatus();
+      updateSelectedHighlight();
+      document.body.classList.add('pv-sheet-open');
+      scrim.classList.add('open');
+      requestAnimationFrame(() => sheet.classList.add('open'));
+    }
+
+    function closeDaySheet() {
+      const sheet = document.getElementById('pvSheet');
+      const scrim = document.getElementById('pvSheetScrim');
+      if (sheet) sheet.classList.remove('open');
+      if (scrim) scrim.classList.remove('open');
+      document.body.classList.remove('pv-sheet-open');
+      selectedView = null;
+      updateSelectedHighlight();
+    }
+
+    // 弹窗底部「清除记录」：一键抹掉这天的经血量 + 症状
+    function clearDayRecord() {
+      if (!selectedView) return;
+      const { y, m, d } = selectedView;
+      setLevel(y, m, d, 0);
+      setSym(y, m, d, []);
+      rerenderZoomedMonth();
+      updateSelectedHighlight();
+      updateSymDot(y, m, d);
+      buildFlowSwatches();
       renderDayInfoBar();
+      updateDaySheetStatus();
+      showToast('已清除');
     }
 
     // 给当前选中的日期上色(从底部色卡点击触发)
@@ -6025,6 +6191,9 @@ window.PV = (function(){
       // 重画后 selected-view 类会丢,需要补回去
       updateSelectedHighlight();
       renderDayInfoBar();
+      // 同步弹窗里的色块选中态与顶部状态药丸
+      buildFlowSwatches();
+      updateDaySheetStatus();
     }
 
     function updateSelectedHighlight() {
@@ -6096,41 +6265,15 @@ window.PV = (function(){
       const card = cal.querySelector('.month');
       if (!card) return;
 
-      // 色板(先点日期选中,再点颜色上色;同色再点 = 取消)
-      const palette = document.createElement('div');
-      palette.className = 'color-palette';
-      palette.innerHTML = `
-        <div class="swatch swatch-g" data-level="4"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[4].name)}</div></div>
-        <div class="swatch swatch-1" data-level="1"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[1].name)}</div></div>
-        <div class="swatch swatch-2" data-level="2"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[2].name)}</div></div>
-        <div class="swatch swatch-3" data-level="3"><div class="swatch-dot"></div><div class="swatch-text">${escapeHtml(PALETTE[3].name)}</div></div>
-      `;
-      card.appendChild(palette);
-      palette.querySelectorAll('.swatch').forEach(s => {
-        s.onclick = (e) => { e.stopPropagation(); applySelectedColor(+s.dataset.level); };
-      });
-
-      // 以下三块（状态卡 / 信息卡 / 本月状态记录）放在日历卡片之外，各自独立卡片
+      // 经血量色板 + 症状编辑都改到「点日期弹出的底部弹窗」里(openDaySheet)，
+      // 这里不再往日历下方注入常驻色板/状态栏/信息栏。
       const host = extras || cal;
-
-      // 当天状态卡片(经期第几天等)
-      const statusBar = document.createElement('div');
-      statusBar.className = 'day-status-bar';
-      statusBar.id = 'dayStatusBar';
-      host.appendChild(statusBar);
-
-      // 日期信息栏(选中某天后显示症状标签)
-      const infoBar = document.createElement('div');
-      infoBar.className = 'day-info-bar';
-      infoBar.id = 'dayInfoBar';
-      host.appendChild(infoBar);
 
       // 本月状态记录(只读汇总)
       const list = buildMonthSymList(viewMonth);
       if (list) host.appendChild(list);
 
       updateSelectedHighlight();
-      renderDayInfoBar();
     }
 
     // 周期趋势跟随日历卡当前年份（year），不再单独切换年份
@@ -6631,7 +6774,8 @@ window.PV = (function(){
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
-    navPrev, navNext
+    navPrev, navNext,
+    closeDaySheet, clearDayRecord
   };
 })();
 
