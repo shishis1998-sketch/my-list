@@ -6379,7 +6379,7 @@ window.PV = (function(){
 
     // 生成某月“本月状态记录”(只读)：横向时间线。
     // 每个症状一行(按本月出现次数排序)，圆点落在该症状出现的日子上；
-    // 底部日期刻度每 3 天一个，当天有记录的日期标红。
+    // 横轴会把长期无记录的空白折叠掉，宽度还给有症状的日子；底部刻度落在每个记录日上。
     function buildMonthSymList(m) {
       const daysInMonth = new Date(year, m, 0).getDate();
       // 症状 -> 出现的日子
@@ -6391,22 +6391,39 @@ window.PV = (function(){
       if (rank.length === 0) return null;
 
       const ROW = 26, AXIS = 18;                       // 行高 / 底部日期区高度
-      const pos = d => (d - 0.5) / daysInMonth * 100;  // 日 -> 横向百分比
       const recorded = new Set();
       rank.forEach(([, ds]) => ds.forEach(d => recorded.add(d)));
 
-      const ticks = [];
-      for (let d = 1; d <= daysInMonth; d += 3) ticks.push(d);
-      if (ticks[ticks.length - 1] !== daysInMonth) ticks.push(daysInMonth);
+      // 折叠长期空白：连续超过 GAP_MIN 天没有任何记录的整段，压成一个固定窄格，
+      // 省下的宽度还给有症状的日子。短空隙照旧保留，前后间隔感不丢。
+      // 全月天天有记录时不触发折叠，效果与线性轴一致。
+      const GAP_MIN = 3, GAP_W = 1.4;                  // 阈值(天) / 折叠格宽(相当于几天)
+      const pos = {};                                  // 日 -> 横向百分比(中心)
+      {
+        const segs = [];
+        let run = 0;                                   // 当前连续空白天数
+        const flush = () => { if (run > 0) { segs.push({ day: 0, w: run > GAP_MIN ? GAP_W : run }); run = 0; } };
+        for (let d = 1; d <= daysInMonth; d++) {
+          if (recorded.has(d)) { flush(); segs.push({ day: d, w: 1 }); }
+          else run++;
+        }
+        flush();
+        const total = segs.reduce((s, x) => s + x.w, 0) || 1;
+        let acc = 0;
+        segs.forEach(s => { if (s.day) pos[s.day] = (acc + s.w / 2) / total * 100; acc += s.w; });
+      }
+
+      // 刻度只落在有记录的日子上——现在腾出了宽度，每个记录日都标得下。
+      const ticks = [...recorded].sort((a, b) => a - b);
 
       const H = rank.length * ROW;
       const names = rank.map(([n]) => `<div class="symtl-nm">${escapeHtml(n)}</div>`).join('');
       const tracks = rank.map((_, i) =>
         `<div class="symtl-track" style="top:${i * ROW + 5}px"></div>`).join('');
       const dots = rank.map(([, ds], i) => ds.map(d =>
-        `<div class="symtl-dot" style="left:${pos(d)}%;top:${i * ROW + 13}px"></div>`).join('')).join('');
+        `<div class="symtl-dot" style="left:${pos[d]}%;top:${i * ROW + 13}px"></div>`).join('')).join('');
       const nums = ticks.map(d =>
-        `<div class="symtl-num${recorded.has(d) ? ' on' : ''}" style="left:${pos(d)}%;top:${H + 6}px">${d}</div>`
+        `<div class="symtl-num on" style="left:${pos[d]}%;top:${H + 6}px">${d}</div>`
       ).join('');
 
       const el = document.createElement('div');
