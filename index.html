@@ -577,6 +577,10 @@ tr:hover .acts{opacity:1;}
     max-height:min(72vh,100%);min-height:56vh;
     border-radius:var(--rxl) var(--rxl) 0 0;
     box-shadow:0 -4px 24px rgba(0,0,0,.18);
+    /* 有「正文」滚动区的子分类（读书笔记等）里，安卓 Chrome 会因内部滚动/合成层
+       导致 overflow:hidden 的圆角失效、顶部变直角。提升为独立合成层后圆角裁剪恢复；
+       备忘子分类隐藏了正文，本就没这问题。 */
+    transform:translateZ(0);
   }
   /* 抽屉顶部小抓手 */
   #noteModal .mhdr{position:relative;padding-top:var(--sp-20);}
