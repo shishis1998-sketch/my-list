@@ -2568,12 +2568,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 上/下月补位日期：灰色淡化，与普通日历 .cal-other 一致 */
 #calViewPeriod .calendar-container.month-view .day.cal-otherday{color:var(--text-muted) !important;opacity:.5;
   background:transparent !important;box-shadow:none !important;font-weight:400 !important;}
-/* 今天：墨绿加粗数字 + 墨绿细圈，与普通日历今天/选中一致 */
-#calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--accent-mid) !important;
-  background:transparent !important;color:var(--accent) !important;font-weight:700;}
-/* 选中：与普通日历一致——数字外一圈墨绿 */
+/* 今天：经期红加粗数字 + 经期红细圈，与经期主题(经血量/症状标签)统一 */
+#calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--brand) !important;
+  background:transparent !important;color:var(--brand) !important;font-weight:700;}
+/* 选中：数字外一圈经期红 */
 #calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
-  box-shadow:0 0 0 1px var(--accent-mid) !important;}
+  box-shadow:0 0 0 1px var(--brand) !important;}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
