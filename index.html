@@ -568,7 +568,8 @@ tr:hover .acts{opacity:1;}
   .mbody{padding:var(--sp-14) var(--sp-20);}
   .mftr{padding:var(--sp-12) var(--sp-20);padding-bottom:calc(16px + env(safe-area-inset-bottom));}
   /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
-  #noteModal.moverlay{align-items:flex-end;justify-content:center;}
+  /* padding-bottom:0 覆盖下方为导航条留白的通用规则，让抽屉真正贴到屏幕底边，不悬空 */
+  #noteModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
   #noteModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
   @keyframes mboxSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
   #noteModal .mbox{
