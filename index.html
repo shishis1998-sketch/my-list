@@ -1656,7 +1656,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 body.cal-view-period .cal-modal{overflow-y:auto;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
 body.cal-view-period .cal-modal::-webkit-scrollbar{display:none;}
-body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;}
+body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;padding-top:0;}   /* 顶部间距改由首卡 margin 提供，使「视图切换→首卡」与卡片间距一致 */
 .cal-vtoggle{position:relative;display:inline-flex;background:var(--border);border-radius:999px;padding:3px;}
 .cal-vtoggle.cvt3{display:flex;width:100%;}   /* 三段视图切换铺满整行（等分） */
 .cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;
@@ -2041,7 +2041,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .cyc-empty {text-align: center; color: var(--faint); font-size: var(--fs-footnote); padding: 30px 0;}
 /* 周期趋势柱状图卡片：白底 + 描边 + 16px 圆角，与经期视图其余卡片(状态/信息/本月记录)一致 */
 /* 顶部 12px：与经期视图其余卡片(状态/信息/本月记录)之间保持一致的 12px 卡间距 */
-#calViewPeriod #pvTrend {margin: 12px 14px;}
+#calViewPeriod #pvTrend {margin: 6px 14px 12px;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
 #calViewPeriod #pvTrend:empty {margin: 0;}
 #calViewPeriod .pv-trend-card {background: #FFFFFF; border: 1px solid var(--border);
       border-radius: 16px; padding: 16px 16px 14px;}
@@ -2558,7 +2558,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .color-palette {margin-left: 4px; margin-right: 4px;}
 /* ── 经期月视图：完全对齐普通日历的卡片 / 按钮 / 字号 / 间距（用 my-list 数值，避免经期 token 数值差异）── */
 /* 标题栏（白色，含筛选）——完全复刻普通日历 .cal-hdr：白底、上+左右描边、上圆角、无下边框 */
-#calViewPeriod .home-header{position:static;margin:4px 14px 0;padding:10px 12px 8px 14px;background:transparent;
+#calViewPeriod .home-header{position:static;margin:6px 14px 0;padding:10px 12px 8px 14px;background:transparent;
   display:flex;flex-direction:row;justify-content:space-between;align-items:center;}
 #calViewPeriod .home-header{background:var(--surface);border:1px solid var(--border);
   border-bottom:none;border-radius:16px 16px 0 0;}
