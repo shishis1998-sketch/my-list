@@ -589,6 +589,17 @@ tr:hover .acts{opacity:1;}
      底部内容加上安全区内边距，最后一章不被手势条压住。 */
   #tlModal.moverlay{padding-bottom:0;}
   #tlModal #tl-body{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
+  /* 日历·事件预览弹窗：改成从底部升起的抽屉，贴底、随内容高度、顶部圆角 + 抓手，避免全屏后下面空一大块 */
+  #calNotePreviewModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
+  #calNotePreviewModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  #calNotePreviewModal .mbox{
+    width:100%;max-width:100%;height:auto;max-height:min(80vh,100%);
+    border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);
+    transform:translateZ(0);
+  }
+  #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
+  #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
