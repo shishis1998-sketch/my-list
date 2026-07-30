@@ -842,10 +842,12 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-12);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
 .cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
 /* 事件白卡：单张卡内一条竖向时间线（去掉标题与颜色）*/
-.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);}
+.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
+  max-height:100%;display:flex;flex-direction:column;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留、不被直角裁剪 */
 .cal-card:last-child{margin-bottom:0;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
-.cal-tl{padding:var(--sp-6) var(--sp-14) var(--sp-10);}
+.cal-tl{padding:var(--sp-6) var(--sp-14) var(--sp-10);overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 滚动改到卡片内部，保住卡片圆角 */
+.cal-tl::-webkit-scrollbar{display:none;}
 .cal-tl-row{position:relative;display:flex;align-items:flex-start;gap:var(--sp-10);padding:var(--sp-8) 0 var(--sp-8) var(--sp-20);cursor:pointer;border-radius:var(--rsm);transition:background .15s;}
 /* 圆点/竖线锚定在「第一行文字」的中心（上内边距 + 半行高），而非整行中点，长事件名换行时圆点仍停在第一行 */
 .cal-tl-row::before{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--border);}   /* 竖线 */
@@ -877,8 +879,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   padding:0 var(--sp-14) var(--sp-16);}
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
-.cal-sheet #calDetailList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 隐藏滚动条，仍可滚动 */
-.cal-sheet #calDetailList::-webkit-scrollbar{display:none;}
+.cal-sheet #calDetailList{flex:1;min-height:0;display:flex;flex-direction:column;}   /* 不在此滚动：改由内部 .cal-tl 滚动，卡片圆角框固定不动 */
 
 
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
