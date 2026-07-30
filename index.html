@@ -846,13 +846,14 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-card:last-child{margin-bottom:0;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 .cal-tl{padding:var(--sp-6) var(--sp-14) var(--sp-10);}
-.cal-tl-row{position:relative;display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-8) 0 var(--sp-8) var(--sp-20);cursor:pointer;border-radius:var(--rsm);transition:background .15s;}
+.cal-tl-row{position:relative;display:flex;align-items:flex-start;gap:var(--sp-10);padding:var(--sp-8) 0 var(--sp-8) var(--sp-20);cursor:pointer;border-radius:var(--rsm);transition:background .15s;}
+/* 圆点/竖线锚定在「第一行文字」的中心（上内边距 + 半行高），而非整行中点，长事件名换行时圆点仍停在第一行 */
 .cal-tl-row::before{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--border);}   /* 竖线 */
-.cal-tl-row:first-child::before{top:50%;}
-.cal-tl-row:last-child::before{bottom:50%;}
+.cal-tl-row:first-child::before{top:calc(var(--sp-8) + 10px);}                     /* 首行：从第一行圆点处向下 */
+.cal-tl-row:last-child::before{bottom:auto;height:calc(var(--sp-8) + 10px);}       /* 末行：从顶到第一行圆点处 */
 .cal-tl-row:only-child::before{display:none;}
 @media (hover:hover){.cal-tl-row:hover{background:var(--bg);}}
-.cal-tl-dot{position:absolute;left:0;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;box-sizing:border-box;
+.cal-tl-dot{position:absolute;left:0;top:calc(var(--sp-8) + 10px);transform:translateY(-50%);width:12px;height:12px;border-radius:50%;box-sizing:border-box;
   background:var(--surface);border:2px solid var(--accent-mid);z-index:1;}
 .cal-tl-cur .cal-tl-dot{background:var(--accent);border-color:var(--accent);}   /* 当天：墨绿实心 */
 .cal-row-cover{width:24px;height:24px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
