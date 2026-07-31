@@ -9543,8 +9543,8 @@ function renderNotes(){
     if(n.subCat==='备忘') return renderMemoCard(n);
     const title=n.title||'（无标题）';
     const titleCls=n.title?'':' empty';
-    // ── 「收集」子分类：卡片可展开/收起显示全文（默认展开）──
-    if(n.subCat==='收集'){
+    // ── 「收集」「日记」子分类：卡片可展开/收起显示全文（默认展开），共用 collect 样式 ──
+    if(n.subCat==='收集'||n.subCat==='日记'){
       const fullBody=renderRich(n.body||'');
       return `<div class="note-card collect expanded" data-nid="${n.id}" onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
