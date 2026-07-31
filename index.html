@@ -9770,9 +9770,30 @@ function closeTimeline(){
 }
 
 // ── 章节底部弹窗：点章节打开，内容直接可编辑，关闭即保存 ──────────
-let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetSegs=[], tlSheetOrigJoined='', tlSheetEdit=-1, tlSheetDragInit=false;
-// block → 原始行文本（编号段还原「N. 」前缀，供编辑/保存）
-function tlBlockRaw(b){ return b.type==='num' ? (b.num+'. '+b.text) : b.text; }
+let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetSegs=[], tlSheetOrigRaw='', tlSheetEdit=-1, tlSheetDragInit=false;
+// 把「标题行之后的原文」拆成段：每段带 gap（本段前保留的换行/空行），使编辑保存能原样留住段间空行
+// gap 语义：首段 = 标题后额外的空行；其余段 = 1 个基础换行 + 段间空行。编号段沿用重新编号后的「N. 」前缀
+function parseChapterSegs(rest){
+  const lines=String(rest||'').split('\n');
+  const segs=[];
+  let blanks=0, first=true, numCounter=0;
+  for(const raw of lines){
+    if(raw.trim()===''){ blanks++; continue; }
+    const line=raw.trim();
+    const m=line.match(TL_PARA_RE);
+    let text;
+    if(m){ numCounter++; text=numCounter+'. '+line.replace(TL_PARA_RE,''); }
+    else text=line;
+    segs.push({text, gap:'\n'.repeat(first?blanks:blanks+1)});
+    blanks=0; first=false;
+  }
+  return segs;
+}
+// 段数组 → 本章原文（标题 + 段间空行）；空段（被清空的段落）自动删除
+function buildChapterRaw(segs){
+  const body=segs.filter(s=>s.text!=='').map(s=>s.gap+s.text).join('');
+  return (tlSheetLead+tlSheetHeading+'\n'+body).replace(/\s+$/,'');
+}
 // 单行推断类型：编号 / 小标题（≤上限的短行）/ 正文
 function tlSegType(line){
   const t=(line||'').trim();
@@ -9793,8 +9814,9 @@ function openChapterSheet(idx){
   const afterLead=c.raw.slice(tlSheetLead.length);
   const nl=afterLead.indexOf('\n');
   tlSheetHeading=(nl<0?afterLead:afterLead.slice(0,nl)).replace(/\s+$/,'');  // 「第X章…」标题行原样保留
-  tlSheetSegs=parseParagraphs(c.body||'').map(tlBlockRaw);   // 分段（原始行）
-  tlSheetOrigJoined=tlSheetSegs.join('\n');                  // 归一化原文，用于判断是否有改动
+  const rest=nl<0?'':afterLead.slice(nl+1);                  // 标题行之后的原文（含段间空行）
+  tlSheetSegs=parseChapterSegs(rest);                        // 分段（每段带前置空行 gap）
+  tlSheetOrigRaw=buildChapterRaw(tlSheetSegs);              // 归一化原文（保留空行），用于判断是否有改动
   document.getElementById('tlSheetTitle').textContent=c.title||'本章';
   renderChapterSheet();
   const sheet=document.getElementById('tlSheet');
@@ -9808,7 +9830,8 @@ function openChapterSheet(idx){
 function renderChapterSheet(){
   const body=document.getElementById('tlSheetBody');
   let num=0;
-  const rows=tlSheetSegs.map((line,i)=>{
+  const rows=tlSheetSegs.map((seg,i)=>{
+    const line=seg.text;
     const type=tlSegType(line);
     if(type==='num') num++;
     if(i===tlSheetEdit){
@@ -9842,26 +9865,25 @@ function renderChapterSheet(){
     el.addEventListener('click',()=>{ tlSheetEdit=+el.dataset.tap; renderChapterSheet(); });
   });
   const addBtn=document.getElementById('tlSegAdd');
-  if(addBtn) addBtn.addEventListener('click',()=>{ tlSheetSegs.push(''); tlSheetEdit=tlSheetSegs.length-1; renderChapterSheet(); });
+  if(addBtn) addBtn.addEventListener('click',()=>{ tlSheetSegs.push({text:'',gap:'\n\n'}); tlSheetEdit=tlSheetSegs.length-1; renderChapterSheet(); });
 }
 function commitTlSeg(ta){
   const i=+ta.dataset.edit;
-  if(tlSheetSegs[i]!=null) tlSheetSegs[i]=ta.value.trim();
+  if(tlSheetSegs[i]!=null) tlSheetSegs[i].text=ta.value.trim();
   tlSheetEdit=-1;
-  tlSheetSegs=tlSheetSegs.filter(s=>s!=='');   // 空段落自动删除
+  tlSheetSegs=tlSheetSegs.filter(s=>s.text!=='');   // 空段落自动删除
   renderChapterSheet();
 }
 
 function closeChapterSheet(){
   // 先提交正在编辑的段
   const ta=document.querySelector('#tlSheetBody .tlseg-edit');
-  if(ta){ const i=+ta.dataset.edit; if(tlSheetSegs[i]!=null) tlSheetSegs[i]=ta.value.trim(); ta.blur(); }
+  if(ta){ const i=+ta.dataset.edit; if(tlSheetSegs[i]!=null) tlSheetSegs[i].text=ta.value.trim(); ta.blur(); }
   if(tlSheetIdx!=null){
-    const newBody=tlSheetSegs.map(s=>s.trim()).filter(Boolean).join('\n');
-    if(newBody!==tlSheetOrigJoined){
+    const newRaw=buildChapterRaw(tlSheetSegs);   // 保留段间空行地拼回本章
+    if(newRaw!==tlSheetOrigRaw){
       const n=(notes||[]).find(x=>x.id===tlCurId);
       if(n){
-        const newRaw=tlSheetLead+tlSheetHeading+'\n'+newBody;
         n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
         n.updatedAt=Date.now();
         persistNotes();
