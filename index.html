@@ -6948,7 +6948,8 @@ function renderRich(text){
   const out=[];
   let listBuf=null,paraBuf=null;
   function flushList(){if(listBuf){out.push('<ul class="rt-ul">'+listBuf.join('')+'</ul>');listBuf=null;}}
-  function flushPara(){if(paraBuf){out.push('<p class="rt-p">'+paraBuf.join('<br>')+'</p>');paraBuf=null;}}
+  // 段内先按 <br> 拼好再套加粗，让 **…** 可以跨行（只要没被空行断开段落）
+  function flushPara(){if(paraBuf){out.push('<p class="rt-p">'+inlineBold(paraBuf.join('<br>'))+'</p>');paraBuf=null;}}
   for(const raw of lines){
     const line=raw.replace(/\s+$/,'');
     if(!line.trim()){flushList();flushPara();continue;}
@@ -6956,7 +6957,7 @@ function renderRich(text){
     if(m){flushList();flushPara();const lvl=m[1].length;out.push(`<h${lvl} class="rt-h${lvl}">`+inlineBold(hl(m[2]))+`</h${lvl}>`);continue;}
     m=/^[-*]\s+(.+)$/.exec(line);
     if(m){flushPara();if(!listBuf)listBuf=[];listBuf.push('<li>'+inlineBold(hl(m[1]))+'</li>');continue;}
-    flushList();if(!paraBuf)paraBuf=[];paraBuf.push(inlineBold(hl(line)));
+    flushList();if(!paraBuf)paraBuf=[];paraBuf.push(hl(line));
   }
   flushList();flushPara();
   return out.join('');
