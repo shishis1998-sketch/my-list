@@ -1039,9 +1039,9 @@ body.cal-searching .cal-searchresults{display:flex;}
   display:inline-flex;align-items:center;height:24px;line-height:1;
   font-family:var(--zh);
 }
-/* 收集卡片专属字号：标题/正文 18（大标题 Title 档）/ 标签 11 */
-.note-card.collect .note-title{font-size:var(--fs-title);}
-.note-card.collect .note-preview{font-size:var(--fs-title);}
+/* 收集卡片专属字号：标题/正文 16（标题 Headline 档）/ 标签 11 */
+.note-card.collect .note-title{font-size:var(--fs-headline);}
+.note-card.collect .note-preview{font-size:var(--fs-headline);}
 /* 收集卡标签：与其它卡片统一(方案 B)，子分类=墨绿、自定义标签=中性灰，
    尺寸/字号/内边距全部走 .note-subcat 与 .note-foot .ctag 的统一规范，此处不再单独覆盖 */
 /* 收集卡标签区与正文拉开间距 */
@@ -1055,7 +1055,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   white-space:pre-wrap;
   overflow-wrap:anywhere;word-break:break-word;  /* 长文本/长串强制换行，绝不横向溢出 */
   max-width:100%;min-width:0;
-  max-height:54px;            /* 折叠时约 2 行（正文 18px × 行高 1.5 ≈ 27px/行）*/
+  max-height:50px;            /* 折叠时约 2 行（正文 16px × 行高 1.5 ≈ 24px/行）*/
   overflow:hidden;
   position:relative;
   transition:max-height .25s ease;
