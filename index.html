@@ -6837,18 +6837,26 @@ window.PV = (function(){
       setupEvents();
     }
   }
-  // 从日历进入经期视图：回到当前年月 + 指定视图（'month'|'year'）
+  // 本次日历页会话里，经期视图是否已经停留过某个年月
+  let posKept = false;
+  // 从日历进入经期视图：默认停在上次停留的年月（首次进入才回到当前年月）+ 指定视图（'month'|'year'）
   function open(view){
-    const now = new Date();
-    year = now.getFullYear();
-    viewMonth = now.getMonth() + 1;
+    if (!posKept) {
+      const now = new Date();
+      year = now.getFullYear();
+      viewMonth = now.getMonth() + 1;
+      selectedView = null;
+      posKept = true;
+    }
     homeView = (view === 'year') ? 'year' : 'month';
-    selectedView = null;
     render();
   }
+  // 重新打开日历页时调用：下次进经期视图重新回到当前年月（与「日历」重置到今天一致）
+  function resetPos(){ posKept = false; }
+  function hasPos(){ return posKept; }
 
   return {
-    init, open, render,
+    init, open, render, resetPos, hasPos,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
@@ -6907,7 +6915,8 @@ function setCalView(v){
   try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
   if(isP&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
-    if(prev==='cal')PV.open(v);        // 从日历进入 → 回到当前年月 + 指定视图
+    // 从日历进入（或刚重开日历页、位置已重置）→ 停在上次停留的年月，首次才回当前月
+    if(prev==='cal'||!PV.hasPos())PV.open(v);
     else PV.setHomeView(v);            // 月↔年 只换缩放层级，保留当前位置
   }
 }
@@ -8978,6 +8987,7 @@ function openCalendar(){
   // 手机端打开日历时关闭侧边栏抽屉
   if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
+  if(window.PV&&PV.resetPos)PV.resetPos();   // 重新打开日历页：经期视图也回到当前年月（与上面日历重置到今天一致）
   let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
   setCalView(_lv);   // 恢复上次视图（日历 / 经期月 / 经期年）
 }
