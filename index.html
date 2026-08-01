@@ -813,7 +813,7 @@ body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:au
 .cal-searchwrap{display:none;align-items:center;gap:var(--sp-10);padding:calc(var(--sp-14) + env(safe-area-inset-top)) var(--sp-14) var(--sp-12);flex-shrink:0;}
 body.cal-searching .cal-searchwrap{display:flex;}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
-body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid{display:none;}
+body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
 body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
 .cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-8) var(--sp-12);}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;}
@@ -834,6 +834,20 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);grid-auto-rows:42px;}
+/* —— 拖动把手收起：网格裁剪容器 + 底部把手 —— */
+/* --p：收起进度 0=整月 1=只留焦点周那一行；--cal-rows 行数、--cal-focus 焦点周下标由 renderCal 写入 */
+@property --p{syntax:"<number>";inherits:true;initial-value:0;}
+.cal-gridclip{--ru:44px;--cellh:42px;--padt:var(--sp-4);position:relative;overflow:hidden;
+  height:calc(var(--padt) + var(--cellh) + (var(--cal-rows,6) - 1) * var(--ru) * (1 - var(--p)));}
+.cal-gridclip.cal-animating{transition:--p .42s cubic-bezier(.4,0,.15,1);}
+.cal-gridclip .cal-grid{transform:translateY(calc(-1 * var(--cal-focus,0) * var(--ru) * var(--p)));}
+.cal-grabrow{display:flex;align-items:center;justify-content:center;height:22px;margin-top:var(--sp-2);
+  cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;border-top:1px solid var(--border-soft);}
+.cal-grabrow:active{cursor:grabbing;}
+.cal-grabrow:focus-visible{outline:2px solid var(--accent-mid);outline-offset:-2px;border-radius:var(--r);}
+.cal-grab-bar{width:36px;height:5px;border-radius:3px;background:var(--border);transition:background .15s,width .15s;}
+@media (hover:hover){.cal-grabrow:hover .cal-grab-bar{background:var(--accent-mid);width:44px;}}
+@media (prefers-reduced-motion:reduce){.cal-gridclip.cal-animating{transition:none;}}
 .cal-day{background:transparent;min-height:42px;padding:var(--sp-6) var(--sp-2) var(--sp-4);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s,box-shadow .15s;}
 .cal-day:hover{background:var(--accent-light);}
 .cal-day.cal-other{color:var(--text-muted);}
@@ -3174,7 +3188,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <div class="cal-weekcell">六</div>
         <div class="cal-weekcell">日</div>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-gridclip" id="calGridClip"><div class="cal-grid" id="calGrid"></div></div>
+      <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
       <div class="cal-searchresults" id="calSearchResults"></div>
     </div>
     <!-- 点击某天从底部滑出的详情抽屉 -->
@@ -8932,6 +8947,7 @@ function toast(msg,hap='tap'){
 
 // ── Calendar ─────────────────────────────────────────────────────
 let calYear, calMonth, calSelDate=null;
+let calGridRows=6;                 // 当前月网格行数（拖动收起时算全程距离用）
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
 function openCalendar(){
@@ -8942,6 +8958,8 @@ function openCalendar(){
   calSelDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;  // 默认选中今天，下半区常驻显示
   renderCalLegend();
   renderCal();
+  const _clip=document.getElementById('calGridClip');   // 每次打开都从「整月展开」开始
+  if(_clip){_clip.classList.remove('cal-animating');_clip.style.setProperty('--p','0');}
   renderCalDetail();               // 内嵌下半区：直接填入今天的记录
   closeCalSearch();                // 确保搜索收起
   closeCalFilter();                // 确保筛选面板收起
@@ -9034,6 +9052,48 @@ function closeCalSheet(){
   grab.addEventListener('mousedown',onStart);
   window.addEventListener('mousemove',onMove);
   window.addEventListener('mouseup',onEnd);
+})();
+
+// —— 拖动日历卡底部把手：整月 ⇄ 焦点周那一行 ——
+(function calGridDrag(){
+  const clip=document.getElementById('calGridClip');
+  const grab=document.getElementById('calGrabRow');
+  if(!clip||!grab)return;
+  const RU=44;                                   // 行距 = 格高 42 + 行间距 2
+  let dragging=false,startY=0,startP=0,lastY=0,lastT=0,vel=0,moved=false,animT=null;
+  const curP=()=>parseFloat(clip.style.getPropertyValue('--p'))||0;
+  const maxD=()=>Math.max(1,(calGridRows-1)*RU);  // 全程距离：整月 ↔ 一行
+  const setP=p=>clip.style.setProperty('--p',Math.max(0,Math.min(1,p)));
+  function snap(to){
+    clip.classList.add('cal-animating');setP(to);
+    clearTimeout(animT);animT=setTimeout(()=>clip.classList.remove('cal-animating'),460);
+    try{haptic('tap');}catch(e){}
+  }
+  function down(e){
+    dragging=true;moved=false;startY=e.clientY;startP=curP();
+    lastY=e.clientY;lastT=performance.now();vel=0;
+    clip.classList.remove('cal-animating');clearTimeout(animT);
+    try{grab.setPointerCapture(e.pointerId);}catch(_){}
+  }
+  function move(e){
+    if(!dragging)return;
+    const dy=e.clientY-startY;if(Math.abs(dy)>3)moved=true;
+    const now=performance.now();vel=(e.clientY-lastY)/((now-lastT)||16);lastY=e.clientY;lastT=now;
+    setP(startP+(-dy)/maxD());                    // 上拖(dy<0)→收起
+  }
+  function up(){
+    if(!dragging)return;dragging=false;
+    if(!moved){snap(curP()>0.5?0:1);return;}       // 轻点把手 = 切换
+    if(Math.abs(vel)>0.35)snap(vel<0?1:0);         // 快速甩动
+    else snap(curP()>0.4?1:0);                      // 就近吸附
+  }
+  grab.addEventListener('pointerdown',down);
+  grab.addEventListener('pointermove',move);
+  grab.addEventListener('pointerup',up);
+  grab.addEventListener('pointercancel',up);
+  grab.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();snap(curP()>0.5?0:1);}
+  });
 })();
 
 // 日历分类：图例即筛选器。key 用来把每条记录归类
@@ -9267,6 +9327,17 @@ function renderCal(){
     const ds=fmtd(cd);
     const isOther=cd.getMonth()!==calMonth;
     grid.appendChild(makeCalCell(cd.getDate(),isOther,ds,ds===todayStr,ds===calSelDate,laneMap[ds]||null));
+  }
+  // 拖动收起：写入网格行数 + 焦点周下标（收起时保留「选中日 → 今天 → 第 0 行」所在的一行）
+  const rows=cellCount/7;
+  const dayIndex=ds=>{const dt=new Date(ds+'T00:00:00');const diff=Math.round((dt-gridStart)/86400000);return (diff<0||diff>=cellCount)?-1:diff;};
+  let fi=calSelDate?dayIndex(calSelDate):-1; if(fi<0)fi=dayIndex(todayStr); if(fi<0)fi=0;
+  calGridRows=rows;
+  const clip=document.getElementById('calGridClip');
+  if(clip){
+    clip.style.setProperty('--cal-rows',rows);
+    clip.style.setProperty('--cal-focus',Math.floor(fi/7));
+    if(clip.style.getPropertyValue('--p')==='')clip.style.setProperty('--p','0');
   }
 }
 // 下一天 'YYYY-MM-DD'
