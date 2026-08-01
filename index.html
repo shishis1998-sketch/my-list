@@ -840,9 +840,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-gridclip{--ru:44px;--cellh:42px;--padt:var(--sp-4);--collapse-h:42px;position:relative;overflow:hidden;
   --fullh:calc(var(--cellh) + var(--padt) + (var(--cal-rows,6) - 1) * var(--ru));
   height:calc(var(--fullh) - (var(--fullh) - var(--collapse-h)) * var(--p));}
-.cal-gridclip.cal-animating{transition:--p .42s cubic-bezier(.4,0,.15,1);}
+.cal-gridclip.cal-animating{transition:--p .42s cubic-bezier(.22,1,.36,1);}   /* ease-out，收放更顺滑 */
 /* 收起时把网格顶部 padding 一并上移：焦点周上下留白对称（上=格内上边距，下=格内下边距+把手间距）*/
 .cal-gridclip .cal-grid{transform:translateY(calc(-1 * (var(--padt) + var(--cal-focus,0) * var(--ru)) * var(--p)));}
+/* 渐隐折叠：收起时非焦点周随进度淡出（opacity 走合成层，便宜且顺滑）；焦点周始终不透明 */
+.cal-gridclip .cal-day:not(.cal-focusrow){opacity:calc(1 - var(--p));}
 .cal-grabrow{display:flex;align-items:center;justify-content:center;height:22px;margin-top:var(--sp-2);
   cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;border-top:1px solid var(--border-soft);}
 .cal-grabrow:active{cursor:grabbing;}
@@ -871,7 +873,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
 /* 事件白卡：单张卡内一条竖向时间线（去掉标题与颜色）*/
 .cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
-  max-height:100%;display:flex;flex-direction:column;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留、不被直角裁剪 */
+  max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
 .cal-card:last-child{margin-bottom:0;}
 /* 卡片内日期标题（点某天后显示「N 月 N 日」，默认墨绿）*/
 .cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14) var(--sp-4);
@@ -9068,31 +9070,37 @@ function closeCalSheet(){
   const grab=document.getElementById('calGrabRow');
   if(!clip||!grab)return;
   let dragging=false,startY=0,startP=0,lastY=0,lastT=0,vel=0,moved=false,animT=null;
+  let pendingP=null,rafId=0;
   const curP=()=>parseFloat(clip.style.getPropertyValue('--p'))||0;
   const maxD=()=>Math.max(1,calCollapseTravel);   // 全程距离：整月高 − 收起高（跟手）
-  const setP=p=>{p=Math.max(0,Math.min(1,p));clip.style.setProperty('--p',p);grab.classList.toggle('cal-grab-on',p>0.98);};
+  const writeP=p=>{p=Math.max(0,Math.min(1,p));clip.style.setProperty('--p',p);grab.classList.toggle('cal-grab-on',p>0.98);};
+  // 拖动按帧节流：一帧只写一次 --p，避免同一帧多次改高度反复回流（卡顿主因）
+  const schedule=p=>{pendingP=p;if(!rafId)rafId=requestAnimationFrame(()=>{rafId=0;if(pendingP!=null){writeP(pendingP);pendingP=null;}});};
   function snap(to){
-    clip.classList.add('cal-animating');setP(to);
-    clearTimeout(animT);animT=setTimeout(()=>clip.classList.remove('cal-animating'),460);
+    if(rafId){cancelAnimationFrame(rafId);rafId=0;pendingP=null;}
+    clip.classList.add('cal-animating');writeP(to);
+    clearTimeout(animT);animT=setTimeout(()=>{clip.classList.remove('cal-animating');clip.style.willChange='';},460);
     try{haptic('tap');}catch(e){}
   }
   function down(e){
     dragging=true;moved=false;startY=e.clientY;startP=curP();
     lastY=e.clientY;lastT=performance.now();vel=0;
     clip.classList.remove('cal-animating');clearTimeout(animT);
+    clip.style.willChange='height';               // 提示浏览器，收起时走更省的路径
     try{grab.setPointerCapture(e.pointerId);}catch(_){}
   }
   function move(e){
     if(!dragging)return;
     const dy=e.clientY-startY;if(Math.abs(dy)>3)moved=true;
     const now=performance.now();vel=(e.clientY-lastY)/((now-lastT)||16);lastY=e.clientY;lastT=now;
-    setP(startP+(-dy)/maxD());                    // 上拖(dy<0)→收起
+    schedule(startP+(-dy)/maxD());                 // 上拖(dy<0)→收起，按帧节流
   }
   function up(){
     if(!dragging)return;dragging=false;
-    if(!moved){snap(curP()>0.5?0:1);return;}       // 轻点把手 = 切换
+    const cp=pendingP!=null?Math.max(0,Math.min(1,pendingP)):curP();
+    if(!moved){snap(cp>0.5?0:1);return;}           // 轻点把手 = 切换
     if(Math.abs(vel)>0.35)snap(vel<0?1:0);         // 快速甩动
-    else snap(curP()>0.4?1:0);                      // 就近吸附
+    else snap(cp>0.4?1:0);                          // 就近吸附
   }
   grab.addEventListener('pointerdown',down);
   grab.addEventListener('pointermove',move);
@@ -9347,8 +9355,10 @@ function renderCal(){
     clip.style.setProperty('--cal-focus',focusRow);
     if(clip.style.getPropertyValue('--p')==='')clip.style.setProperty('--p','0');
     // 量焦点周内容最低点，让收起后「上（线→日期）」与「下（圆点→分隔线）」留白对称
+    // 同时给焦点周的格子打标记：收起时其它行渐隐（.cal-focusrow 保持不透明）
     let cb=0;const kids=grid.children;
     for(let i=focusRow*7;i<focusRow*7+7&&i<kids.length;i++){
+      kids[i].classList.add('cal-focusrow');
       const num=kids[i].querySelector('.cal-daynum');const bd=kids[i].querySelector('.cal-badges');
       let bottom=num?num.offsetTop+num.offsetHeight:0;
       if(bd)bottom=Math.max(bottom,bd.offsetTop+bd.offsetHeight);
