@@ -9487,9 +9487,11 @@ function makeCalTlEmpty(text){
 function calCurTail(r){
   if(r._isNote){
     const dm=(r.body||'').match(/第(\d+)\/(\d+)天/);
-    if(!dm)return '';
-    const rng=calDayRange(r.title,+dm[1],+dm[2]);   // 由当天日期 + 第X/Y天推算起止日
-    return `${rng?`<span class="rg">${rng}</span> · `:''}第${dm[1]}天`;
+    if(dm){
+      const rng=calDayRange(r.title,+dm[1],+dm[2]);   // 由当天日期 + 第X/Y天推算起止日
+      return `${rng?`<span class="rg">${rng}</span> · `:''}第${dm[1]}天`;
+    }
+    return esc(r.subCat||'');                          // 无跨天信息时，右侧显示分类名（日记 / 收集 / 读书笔记…）
   }
   const c=getCat(r.type);
   return `${esc(c.name)}${r.score?` · ${r.score}/5`:''}`;
