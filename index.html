@@ -874,10 +874,8 @@ body.cal-searching .cal-searchresults{display:flex;}
   max-height:100%;display:flex;flex-direction:column;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留、不被直角裁剪 */
 .cal-card:last-child{margin-bottom:0;}
 /* 卡片内日期标题（点某天后显示「N 月 N 日」，默认墨绿）*/
-.cal-card-date{flex-shrink:0;display:flex;align-items:baseline;gap:var(--sp-8);
-  padding:var(--sp-12) var(--sp-14) var(--sp-4);font-size:var(--fs-sub);font-weight:700;
-  color:var(--accent);letter-spacing:.02em;}
-.cal-card-date .cnt{font-size:var(--fs-caption);font-weight:400;color:var(--text-muted);font-family:var(--en);}
+.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14) var(--sp-4);
+  font-size:var(--fs-sub);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 .cal-tl{padding:var(--sp-6) var(--sp-14) var(--sp-10);overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 滚动改到卡片内部，保住卡片圆角 */
 .cal-tl::-webkit-scrollbar{display:none;}
@@ -9522,9 +9520,9 @@ function renderCalDetail(){
 
   // 事件时间线（单张白卡）：当天记录（墨绿实心节点）→ 往年记录（空心节点），每条一个节点、时间在右
   const card=document.createElement('div');card.className='cal-card';
-  // 卡片顶部日期标题：「N 月 N 日」，默认墨绿；有当天记录时右侧带条数
+  // 卡片顶部日期标题：「N 月 N 日」，默认墨绿
   const dhd=document.createElement('div');dhd.className='cal-card-date';
-  dhd.innerHTML=`<span>${parseInt(cm)} 月 ${parseInt(cd)} 日</span>`+(recs.length?`<span class="cnt">${recs.length} 条</span>`:'');
+  dhd.innerHTML=`<span>${parseInt(cm)} 月 ${parseInt(cd)} 日</span>`;
   card.appendChild(dhd);
   if(!recs.length && !pastTotal){
     const e=document.createElement('div');e.className='cal-empty';
