@@ -837,15 +837,18 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* —— 拖动把手收起：网格裁剪容器 + 底部把手 —— */
 /* --p：收起进度 0=整月 1=只留焦点周那一行；--cal-rows 行数、--cal-focus 焦点周下标由 renderCal 写入 */
 @property --p{syntax:"<number>";inherits:true;initial-value:0;}
-.cal-gridclip{--ru:44px;--cellh:42px;--padt:var(--sp-4);position:relative;overflow:hidden;
-  height:calc(var(--padt) + var(--cellh) + (var(--cal-rows,6) - 1) * var(--ru) * (1 - var(--p)));}
+.cal-gridclip{--ru:44px;--cellh:42px;--padt:var(--sp-4);--collapse-h:42px;position:relative;overflow:hidden;
+  --fullh:calc(var(--cellh) + var(--padt) + (var(--cal-rows,6) - 1) * var(--ru));
+  height:calc(var(--fullh) - (var(--fullh) - var(--collapse-h)) * var(--p));}
 .cal-gridclip.cal-animating{transition:--p .42s cubic-bezier(.4,0,.15,1);}
-.cal-gridclip .cal-grid{transform:translateY(calc(-1 * var(--cal-focus,0) * var(--ru) * var(--p)));}
+/* 收起时把网格顶部 padding 一并上移：焦点周上下留白对称（上=格内上边距，下=格内下边距+把手间距）*/
+.cal-gridclip .cal-grid{transform:translateY(calc(-1 * (var(--padt) + var(--cal-focus,0) * var(--ru)) * var(--p)));}
 .cal-grabrow{display:flex;align-items:center;justify-content:center;height:22px;margin-top:var(--sp-2);
   cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;border-top:1px solid var(--border-soft);}
 .cal-grabrow:active{cursor:grabbing;}
 .cal-grabrow:focus-visible{outline:2px solid var(--accent-mid);outline-offset:-2px;border-radius:var(--r);}
 .cal-grab-bar{width:36px;height:5px;border-radius:3px;background:var(--border);transition:background .15s,width .15s;}
+.cal-grabrow.cal-grab-on .cal-grab-bar{background:var(--accent-mid);}   /* 收起状态：把手变墨绿，作状态提示 */
 @media (hover:hover){.cal-grabrow:hover .cal-grab-bar{background:var(--accent-mid);width:44px;}}
 @media (prefers-reduced-motion:reduce){.cal-gridclip.cal-animating{transition:none;}}
 .cal-day{background:transparent;min-height:42px;padding:var(--sp-6) var(--sp-2) var(--sp-4);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s,box-shadow .15s;}
@@ -8948,6 +8951,7 @@ function toast(msg,hap='tap'){
 // ── Calendar ─────────────────────────────────────────────────────
 let calYear, calMonth, calSelDate=null;
 let calGridRows=6;                 // 当前月网格行数（拖动收起时算全程距离用）
+let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起高），跟手距离用
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
 function openCalendar(){
@@ -8960,6 +8964,7 @@ function openCalendar(){
   renderCal();
   const _clip=document.getElementById('calGridClip');   // 每次打开都从「整月展开」开始
   if(_clip){_clip.classList.remove('cal-animating');_clip.style.setProperty('--p','0');}
+  const _grab=document.getElementById('calGrabRow');if(_grab)_grab.classList.remove('cal-grab-on');
   renderCalDetail();               // 内嵌下半区：直接填入今天的记录
   closeCalSearch();                // 确保搜索收起
   closeCalFilter();                // 确保筛选面板收起
@@ -9059,11 +9064,10 @@ function closeCalSheet(){
   const clip=document.getElementById('calGridClip');
   const grab=document.getElementById('calGrabRow');
   if(!clip||!grab)return;
-  const RU=44;                                   // 行距 = 格高 42 + 行间距 2
   let dragging=false,startY=0,startP=0,lastY=0,lastT=0,vel=0,moved=false,animT=null;
   const curP=()=>parseFloat(clip.style.getPropertyValue('--p'))||0;
-  const maxD=()=>Math.max(1,(calGridRows-1)*RU);  // 全程距离：整月 ↔ 一行
-  const setP=p=>clip.style.setProperty('--p',Math.max(0,Math.min(1,p)));
+  const maxD=()=>Math.max(1,calCollapseTravel);   // 全程距离：整月高 − 收起高（跟手）
+  const setP=p=>{p=Math.max(0,Math.min(1,p));clip.style.setProperty('--p',p);grab.classList.toggle('cal-grab-on',p>0.98);};
   function snap(to){
     clip.classList.add('cal-animating');setP(to);
     clearTimeout(animT);animT=setTimeout(()=>clip.classList.remove('cal-animating'),460);
@@ -9332,12 +9336,24 @@ function renderCal(){
   const rows=cellCount/7;
   const dayIndex=ds=>{const dt=new Date(ds+'T00:00:00');const diff=Math.round((dt-gridStart)/86400000);return (diff<0||diff>=cellCount)?-1:diff;};
   let fi=calSelDate?dayIndex(calSelDate):-1; if(fi<0)fi=dayIndex(todayStr); if(fi<0)fi=0;
+  const focusRow=Math.floor(fi/7);
   calGridRows=rows;
   const clip=document.getElementById('calGridClip');
   if(clip){
     clip.style.setProperty('--cal-rows',rows);
-    clip.style.setProperty('--cal-focus',Math.floor(fi/7));
+    clip.style.setProperty('--cal-focus',focusRow);
     if(clip.style.getPropertyValue('--p')==='')clip.style.setProperty('--p','0');
+    // 量焦点周内容最低点，让收起后「上（线→日期）」与「下（圆点→分隔线）」留白对称
+    let cb=0;const kids=grid.children;
+    for(let i=focusRow*7;i<focusRow*7+7&&i<kids.length;i++){
+      const num=kids[i].querySelector('.cal-daynum');const bd=kids[i].querySelector('.cal-badges');
+      let bottom=num?num.offsetTop+num.offsetHeight:0;
+      if(bd)bottom=Math.max(bottom,bd.offsetTop+bd.offsetHeight);
+      if(bottom>cb)cb=bottom;
+    }
+    const collapseH=cb>20?cb+4:42;                       // +4 = 下留白(6) − 把手间距(2)；无内容时回退 42
+    clip.style.setProperty('--collapse-h',collapseH+'px');
+    calCollapseTravel=(42+4+(rows-1)*44)-collapseH;      // 整月高 − 收起高
   }
 }
 // 下一天 'YYYY-MM-DD'
