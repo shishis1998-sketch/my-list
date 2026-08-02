@@ -618,7 +618,8 @@ tr:hover .acts{opacity:1;}
   #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
   /* 日历导入配色弹窗：同款底部抽屉，随内容高度、贴到屏幕底边、顶部圆角 + 抓手 */
-  #icsColorModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
+  /* 设置页/日历页会把底栏抬到 z-index:115，抽屉得比它高，否则底部按钮被压住 */
+  #icsColorModal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
   #icsColorModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
   #icsColorModal .mbox{
     width:100%;max-width:100%;height:auto;max-height:min(80vh,100%);
@@ -9856,7 +9857,8 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
 }
 
 // 把一条笔记转成日历记录对象
-function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||''};}
+function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||'',
+  tags:n.tags||[],_icsCal:n._icsCal,_icsColor:n._icsColor};}   // 配色字段一并带上，时间线节点要用
 
 // 笔记分类 → 图例色（与顶部图例一致）
 function noteDotColor(subCat){
@@ -9901,6 +9903,12 @@ function makeCalTlRow(r,tail,isCur){
     div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
   }
   div.innerHTML=`<span class="cal-tl-dot"></span>${main}<span class="cal-tl-tail">${tail||''}</span>`;
+  // 节点用这条记录自己的颜色（和月历格子里的圆点同一套色）：
+  // 当天=实心，往年今日=空心圆环，都上色
+  const col=r._isNote?calNoteColor(r):getCat(r.type).color;
+  const dot=div.querySelector('.cal-tl-dot');
+  dot.style.borderColor=col;
+  if(isCur)dot.style.background=col;
   return div;
 }
 // 当天无记录时的占位节点（实心）
