@@ -15,7 +15,9 @@
   /* === 极简风：黑灰白底 + 一点墨绿点缀 === */
   --bg:#F7F7F5;--surface:#FFFFFF;--border:#ECECEA;--border-soft:#F2F2F0;
   --text-primary:#1A1A1A;--text-secondary:#6B6B6B;--text-muted:#9B9B9B;
+  /* 主题色(可在设置里切换,见 THEMES / applyTheme)。四个值一套 + rgb 分量供半透明用 */
   --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-mid:#4A7B68;
+  --accent-dark:#1E3830;--accent-rgb:43,77,63;
   --danger:#9B2020;--danger-bg:#FBEDED;--gold:#6B6B6B;
   /* 极简风：次级浅灰块代替米色衬底 */
   --surface-2:#F2F2F0;
@@ -45,6 +47,16 @@
 }
 @media (prefers-reduced-motion:reduce){
   :root{--nav-dur:1ms;--nav-dur-exit:1ms;--nav-rise:0px;}
+}
+/* === 可选主题色（设置 › 外观）。只换这五个值，其余配色不动 ===
+   经期视图另有一套 --brand 红（作用域 #calViewPeriod），不受影响 */
+:root[data-theme="azure"]{      /* 晴蓝 */
+  --accent:#1964C7;--accent-light:#E6EEF9;--accent-mid:#3275CD;
+  --accent-dark:#144E9B;--accent-rgb:25,100,199;
+}
+:root[data-theme="vermilion"]{  /* 朱橘 */
+  --accent:#AC451A;--accent-light:#F6EBE6;--accent-mid:#B65B35;
+  --accent-dark:#863614;--accent-rgb:172,69,26;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 /* 去掉按钮/链接/可点击元素被点击后残留的蓝色聚焦背景（安卓 Chromium）；
@@ -92,11 +104,14 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nitem.parent-on{color:var(--accent);font-weight:700;}
 .nitem.parent-on .chev{color:var(--accent);}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* 设置 › 外观：主题色沿用分类管理那套列表行,选中行本身就是该主题色的预览 */
+.theme-check{margin-left:auto;display:inline-flex;color:currentColor;opacity:0;transition:opacity .15s;}
+.nitem.on .theme-check{opacity:1;}
 .ncnt{
   margin-left:auto;font-size:var(--fs-foot);font-family:var(--en);
   color:var(--text-muted);background:var(--bg);padding:var(--sp-2) var(--sp-8);border-radius:var(--rchip);
 }
-.nitem.on .ncnt{background:rgba(43,77,63,.12);color:var(--accent-mid);}
+.nitem.on .ncnt{background:rgba(var(--accent-rgb),.12);color:var(--accent-mid);}
 
 /* ===== MAIN ===== */
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;}
@@ -156,7 +171,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   cursor:pointer;transition:background .15s;
   white-space:nowrap;
 }
-.addbtn:hover{background:#1E3830;}
+.addbtn:hover{background:var(--accent-dark);}
 
 /* 分类筛选条：桌面端隐藏（桌面用左侧栏），手机端 @media 里开启 */
 .catfrow{display:none;}
@@ -243,7 +258,7 @@ tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
   transition:background .15s, color .15s;
   line-height:1;
 }
-.cnote-toggle:hover{background:rgba(43,77,63,.12);color:var(--accent);}
+.cnote-toggle:hover{background:rgba(var(--accent-rgb),.12);color:var(--accent);}
 /* .cnote-toggle:active 颜色已去除 */
 .cnote-toggle .arr{display:inline-block;transition:transform .2s;line-height:1;font-size:10px;}
 tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
@@ -339,7 +354,7 @@ tr:hover .acts{opacity:1;}
 .mftr{display:flex;justify-content:flex-end;gap:var(--sp-8);padding:var(--sp-14) var(--sp-24) var(--sp-24);border-top:1px solid var(--border-soft);flex:0 0 auto;}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-6);padding:var(--sp-8) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
 .btn-p{background:var(--accent);color:#fff;border-color:var(--accent);}
-.btn-p:hover{background:#1E3830;}
+.btn-p:hover{background:var(--accent-dark);}
 .btn-g{background:var(--bg);border-color:var(--border);color:var(--text-secondary);}
 .btn-g:hover{border-color:var(--text-muted);color:var(--text-primary);}
 .btn-d{background:var(--danger-bg);color:var(--danger);}
@@ -1132,7 +1147,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   background:var(--accent);color:#fff;
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
-.tl-swipe-edit:active{background:#22392f;}
+.tl-swipe-edit:active{background:var(--accent-dark);}
 
 /* 章节卡片本体：与时间线外面的笔记卡片同款描边（1px var(--ink)），无阴影 */
 .tl-item{background:var(--surface);border:var(--bd) solid var(--ink);border-radius:var(--rlg);
@@ -1373,9 +1388,9 @@ body.cal-searching .cal-searchresults{display:flex;}
 .nf-body-wrap textarea.is-book{overflow-y:scroll;scrollbar-width:none;-ms-overflow-style:none;padding-right:var(--sp-24);}
 .nf-body-wrap textarea.is-book::-webkit-scrollbar{display:none;}
 .nf-thumb{position:absolute;right:0;width:22px;background:transparent;touch-action:none;display:none;z-index:5;cursor:grab;}
-.nf-thumb::before{content:"";position:absolute;right:5px;top:0;width:6px;height:100%;border-radius:var(--rsm);background:rgba(43,77,63,0.10);transition:background .3s;}
-.nf-thumb.active::before{background:rgba(43,77,63,0.30);}
-.nf-thumb:active::before{background:rgba(43,77,63,0.38);}
+.nf-thumb::before{content:"";position:absolute;right:5px;top:0;width:6px;height:100%;border-radius:var(--rsm);background:rgba(var(--accent-rgb),0.10);transition:background .3s;}
+.nf-thumb.active::before{background:rgba(var(--accent-rgb),0.30);}
+.nf-thumb:active::before{background:rgba(var(--accent-rgb),0.38);}
 
 /* 笔记子分类管理弹窗里的列表（复用 .cml/.cmi 但去掉颜色和emoji） */
 .cmi-note{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-8) var(--sp-10);background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
@@ -1467,11 +1482,11 @@ textarea.mfsheet-input{min-height:110px;resize:none;white-space:pre-wrap;}
 /* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
 .cf-row{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-10);}
 .cf-key{width:100%;height:34px;padding:0 var(--sp-12);background:transparent;border:1px solid transparent;border-radius:var(--r);font-size:var(--fs-body);color:var(--accent);font-weight:600;-webkit-appearance:none;box-sizing:border-box;font-family:var(--zh);}
-.cf-key:focus{outline:none;background:var(--surface);border-color:rgba(43,77,63,0.18);}
+.cf-key:focus{outline:none;background:var(--surface);border-color:rgba(var(--accent-rgb),0.18);}
 .cf-val{width:100%;height:44px;padding:0 var(--sp-12);background:var(--bg);border:1px solid transparent;border-radius:var(--r);font-size:var(--fs-headline);color:var(--text-primary);font-family:var(--en);-webkit-appearance:none;box-sizing:border-box;}
-.cf-val:focus{outline:none;background:var(--surface);border-color:rgba(43,77,63,0.18);}
+.cf-val:focus{outline:none;background:var(--surface);border-color:rgba(var(--accent-rgb),0.18);}
 
-.add-field-btn{width:100%;height:40px;background:transparent;border:1px dashed rgba(43,77,63,0.18);color:var(--accent);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);cursor:pointer;margin-bottom:var(--sp-14);transition:background .12s,border-color .12s;-webkit-appearance:none;}
+.add-field-btn{width:100%;height:40px;background:transparent;border:1px dashed rgba(var(--accent-rgb),0.18);color:var(--accent);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);cursor:pointer;margin-bottom:var(--sp-14);transition:background .12s,border-color .12s;-webkit-appearance:none;}
 /* .add-field-btn:active 颜色已去除 */
 @media (hover:hover){.add-field-btn:hover{background:var(--accent-light);border-color:var(--accent-mid);}}
 
@@ -1750,6 +1765,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       
       --brand:      #C71F37;  --brand-dark: #A81A2E;
       --brand-soft: #FCE7EB;  --brand-tint: #FFD5DC;
+      /* 经期视图（月度 / 年度）不跟随设置里的主题色：在这里把 accent 一族钉回原本的墨绿，
+         这样这棵子树里现在和以后的 var(--accent*) 都不受换肤影响 */
+      --accent:#2B4D3F;  --accent-light:#E8EEEB;  --accent-mid:#4A7B68;
+      --accent-dark:#1E3830;  --accent-rgb:43,77,63;
       --ink:    #1A1A1A;  
       --ink-2:  #334155;  
       --body:   #475569;  
@@ -2641,6 +2660,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   box-shadow:none;border-radius:16px;}
 #calViewPeriod #pvExtras .sym-list{padding:16px 14px;}
 </style>
+<script>
+// 主题色：尽早写上 data-theme，避免加载时先闪一下墨绿
+(function(){try{var t=localStorage.getItem('my_list_theme_v1');
+  if(t&&t!=='green')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 </head>
 <body>
 <div class="app">
@@ -2685,6 +2709,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     </div>
     <!-- 手机端:分类管理列表(点=编辑,由 JS 渲染) -->
     <div class="ncard ncard-cats-mobile" id="mcatmgr"></div>
+  </div>
+  <div class="nsec">
+    <div class="nlbl">外观</div>
+    <div class="ncard" id="themeRow" role="radiogroup" aria-label="主题色"></div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
@@ -7021,7 +7049,49 @@ function fmtTitle(item){
   return `${wrapped}<span class="cyear">（${yr}）</span>`;
 }
 
+// ── 主题色（设置 › 外观）────────────────────────────────
+// 每套只改 5 个 CSS 变量，定义在 :root[data-theme=...]；'green' 是 :root 默认值，不写属性
+const THEME_KEY='my_list_theme_v1';
+const THEMES=[
+  {id:'green',     name:'墨绿', c:'#2B4D3F'},
+  {id:'azure',     name:'晴蓝', c:'#1964C7'},
+  {id:'vermilion', name:'朱橘', c:'#AC451A'},
+];
+let curTheme='green';   // 当前生效的主题；列表的选中态以它为准，不再回读 localStorage
+function getTheme(){
+  let t=null;try{t=localStorage.getItem(THEME_KEY);}catch(e){}
+  return THEMES.some(x=>x.id===t)?t:'green';
+}
+// save=写入 localStorage；quiet=不弹提示（同步拉取时用）
+function applyTheme(id,save,quiet){
+  const t=THEMES.some(x=>x.id===id)?id:'green';
+  curTheme=t;
+  if(t==='green')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',t);
+  if(save){
+    try{localStorage.setItem(THEME_KEY,t);}catch(e){}
+    if(!quiet){
+      const name=(THEMES.find(x=>x.id===t)||{}).name||'';
+      toast('已切换到'+name);
+    }
+  }
+  renderThemeRow();
+}
+function renderThemeRow(){
+  const row=document.getElementById('themeRow');
+  if(!row)return;
+  const cur=curTheme;
+  const tick='<span class="theme-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"'+
+    ' stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
+    '<polyline points="20 6 9 17 4 12"/></svg></span>';
+  row.innerHTML=THEMES.map(t=>
+    `<button type="button" class="nitem${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
+    ` role="radio" aria-checked="${t.id===cur}" onclick="applyTheme('${t.id}',true)">`+
+    `<span class="dot" style="background:${t.c}"></span>${t.name}${tick}</button>`).join('');
+}
+
 function boot(){
+  applyTheme(getTheme(),false);
   loadPeriod();
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
   try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
@@ -7256,7 +7326,8 @@ async function syncPush(){
       updatedAt:new Date().toISOString(),
       data, categories:cats,
       notes:notesToSync, noteSubs,
-      period: periodData
+      period: periodData,
+      theme: getTheme()
     };
     const body={
       description:'My Media Tracker Data (auto-synced)',
@@ -7608,6 +7679,8 @@ async function syncPull(silent){
     // 都必须靠 localOnly / pendingCloud 标记来免疫,否则会被静默抹掉
     data=remote.data;
     if(Array.isArray(remote.categories)&&remote.categories.length)cats=remote.categories;
+    // 主题色跟着同步走；旧 Gist 没这个字段时保持本机选择
+    if(typeof remote.theme==='string')applyTheme(remote.theme,true,true);
     // 笔记数据兼容:旧 Gist 没有 notes/noteSubs 字段时保持现状
     // 合并策略：保留本机的 🔒 仅本机笔记，云端覆盖云端同步的笔记
     if(Array.isArray(remote.notes)){
