@@ -700,8 +700,8 @@ tr:hover .acts{opacity:1;}
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
     background:var(--surface);border-top:1px solid var(--border);
-    /* 底栏整体做成带圆角的浮起卡片：顶部两角圆角 */
-    border-radius:var(--rxl) var(--rxl) 0 0;overflow:hidden;
+    /* 底栏是平的：直角、无阴影，只用 1px 上边框和页面分开（圆角会让它看着「浮起来」）*/
+    border-radius:0;overflow:hidden;
     box-shadow:none;
     padding-bottom:env(safe-area-inset-bottom);
     /* 键盘弹起时整条上移到键盘上方（--kb 由 JS 用 visualViewport 计算）*/
@@ -1034,11 +1034,13 @@ body.cal-searching .cal-searchresults{display:flex;}
 .note-edit,.note-act{padding-left:var(--sp-6);padding-right:var(--sp-6);}
 .note-edit + .note-act,.note-act + .note-act{margin-left:var(--sp-2);}
 
-/* ── 手机端：卡片左滑露出「删除」；桌面端保留常驻删除按钮 ── */
+/* ── 手机端：卡片左滑露出「删除」、右滑露出「编辑」；桌面端保留常驻按钮 ── */
 @media (hover:none){
   /* 触摸设备没有 hover，常驻的灰色删除既不好看又易误触，改用左滑。
      用 !important 压过收集卡/备忘卡里更高优先级的 .note-act 规则。 */
   .note-card .note-act{display:none !important;}
+  /* 「收集」「日记」卡片的编辑同理：从标题行挪到反方向（右滑）的绿色面板 */
+  .note-card .note-edit{display:none !important;}
 }
 .swipe-wrap{position:relative;overflow:hidden;border-radius:var(--rlg);}
 .swipe-wrap>.note-card{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
@@ -1053,10 +1055,22 @@ body.cal-searching .cal-searchresults{display:flex;}
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
 .swipe-del:active{background:#7f1a1a;}
+/* 右滑露出的绿色「编辑」面板（仅「收集」「日记」卡片有），与红色删除左右对称 */
+.swipe-edit{
+  position:absolute;top:1px;left:1px;bottom:1px;width:84px;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  border:0;margin:0;padding:0;cursor:pointer;
+  border-radius:var(--rlg) 0 0 var(--rlg);
+  background:var(--accent);color:#fff;
+  font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
+}
+.swipe-edit:active{background:var(--accent-dark);}
 /* 滑动进行中/已滑开时，卡片右侧改为直角：卡片(左圆角)+删除面板(右圆角)拼成
    一个完整的圆角矩形，二者无缝融合，消除中间的白色圆角缺口。
    静止态不加此类，卡片仍自带四角圆角(不依赖父级 overflow 裁切，真机稳)。 */
 .swipe-wrap>.note-card.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
+/* 右滑时同理：卡片左侧改直角，与绿色「编辑」面板拼成整块圆角矩形 */
+.swipe-wrap>.note-card.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
 
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
@@ -9934,35 +9948,39 @@ function renderNotes(){
   enhanceNoteSwipe(list);
 }
 
-// ── 手机端：笔记卡片左滑露出「删除」──────────────────
-// 桌面端（有 hover）不启用，保留卡片上的常驻删除按钮。
-const SWIPE_OPEN_W = 84;   // 露出的删除面板宽度，与 .swipe-del 的 width 一致
+// ── 手机端：笔记卡片左滑露出「删除」、右滑露出「编辑」──────────────────
+// 桌面端（有 hover）不启用，保留卡片上的常驻按钮。
+// 「编辑」只给带 .note-edit 的卡片（「收集」「日记」子分类）加。
+const SWIPE_OPEN_W = 84;   // 露出面板的宽度，与 .swipe-del / .swipe-edit 的 width 一致
 let swipeOpenCard = null;  // 当前处于「已滑开」状态的 .note-card
 
 function closeSwipe(card){
   if(!card) return;
   card.style.transition='transform .3s cubic-bezier(.22,.61,.36,1)';
   card.style.transform='translateX(0)';
-  if(swipeOpenCard===card) swipeOpenCard=null;
-  // 收回到位后再取消「右侧直角」，让卡片恢复四角圆角；期间卡片已完全遮住面板，无跳变
-  setTimeout(()=>{ if(swipeOpenCard!==card) card.classList.remove('swipe-cut'); },320);
+  if(swipeOpenCard===card){ swipeOpenCard=null; card._openSide=null; }
+  // 收回到位后再取消「一侧直角」，让卡片恢复四角圆角；期间卡片已完全遮住面板，无跳变
+  setTimeout(()=>{ if(swipeOpenCard!==card) card.classList.remove('swipe-cut','swipe-cut-l'); },320);
 }
-function openSwipe(card){
+// side: 'del' = 左滑露出右侧红色删除；'edit' = 右滑露出左侧绿色编辑
+function openSwipe(card, side){
+  side = side||'del';
   if(swipeOpenCard && swipeOpenCard!==card) closeSwipe(swipeOpenCard);
-  card.classList.add('swipe-cut');
+  card.classList.toggle('swipe-cut', side==='del');
+  card.classList.toggle('swipe-cut-l', side==='edit');
   card.style.transition='transform .2s';
-  card.style.transform='translateX(-'+SWIPE_OPEN_W+'px)';
-  swipeOpenCard=card;
+  card.style.transform='translateX('+(side==='edit'?SWIPE_OPEN_W:-SWIPE_OPEN_W)+'px)';
+  swipeOpenCard=card; card._openSide=side;
 }
 
 function enhanceNoteSwipe(list){
-  // 只在无 hover 的触摸设备启用；桌面端直接用常驻删除按钮
+  // 只在无 hover 的触摸设备启用；桌面端直接用常驻按钮
   if(window.matchMedia('(hover:hover)').matches) return;
   swipeOpenCard=null; // innerHTML 重建后旧节点已失效
   list.querySelectorAll('.note-card').forEach(card=>{
     const nid=card.getAttribute('data-nid');
     if(!nid) return;
-    // 包一层滑动容器：删除面板在下层（右侧），卡片在上层可左右平移
+    // 包一层滑动容器：面板在下层（删除在右、编辑在左），卡片在上层可左右平移
     const wrap=document.createElement('div');
     wrap.className='swipe-wrap';
     card.parentNode.insertBefore(wrap, card);
@@ -9972,17 +9990,27 @@ function enhanceNoteSwipe(list){
     del.textContent='删除';
     del.addEventListener('click',(e)=>{ e.stopPropagation(); closeSwipe(card); askDelNoteById(nid); });
     wrap.appendChild(del);
+    // 卡片自带「编辑」按钮的（收集 / 日记）：手机端把它挪到右滑面板里
+    const hasEdit=!!card.querySelector('.note-edit');
+    if(hasEdit){
+      const ed=document.createElement('button');
+      ed.type='button';
+      ed.className='swipe-edit';
+      ed.textContent='编辑';
+      ed.addEventListener('click',(e)=>{ e.stopPropagation(); closeSwipe(card); openNoteEdit(nid); });
+      wrap.appendChild(ed);
+    }
     wrap.appendChild(card);
-    attachSwipe(card);
+    attachSwipe(card, hasEdit);
   });
 }
 
-function attachSwipe(card){
+function attachSwipe(card, hasEdit){
   let startX=0,startY=0,base=0,dir=null,moved=false,active=false,lastT=0;
   card.addEventListener('touchstart',(e)=>{
     if(e.touches.length!==1){ active=false; return; }
     startX=e.touches[0].clientX; startY=e.touches[0].clientY;
-    base=(swipeOpenCard===card)?-SWIPE_OPEN_W:0;
+    base=(swipeOpenCard===card)?(card._openSide==='edit'?SWIPE_OPEN_W:-SWIPE_OPEN_W):0;
     lastT=base; dir=null; moved=false; active=true;
     card.style.transition='none';
   },{passive:true});
@@ -9994,11 +10022,14 @@ function attachSwipe(card){
       dir=Math.abs(dx)>Math.abs(dy)?'h':'v';
     }
     if(dir==='v'){ active=false; return; }   // 纵向：交给页面正常滚动
-    card.classList.add('swipe-cut');          // 横向滑动即把卡片右侧改直角，和删除面板无缝拼接
     e.preventDefault();
     let t=base+dx;
-    if(t>0) t*=0.3;                                              // 右滑到底后加阻尼
+    const maxR=hasEdit?SWIPE_OPEN_W:0;                           // 无编辑面板的卡片右滑只能回到 0
+    if(t>maxR) t=maxR+(t-maxR)*0.3;                              // 右滑到底后加阻尼
     else if(t<-SWIPE_OPEN_W) t=-SWIPE_OPEN_W-(-t-SWIPE_OPEN_W)*0.3; // 左滑超出后加阻尼
+    // 露出哪一侧，就把卡片那一侧改直角，和面板无缝拼接
+    if(t<0){ card.classList.add('swipe-cut'); card.classList.remove('swipe-cut-l'); }
+    else if(t>0){ card.classList.add('swipe-cut-l'); card.classList.remove('swipe-cut'); }
     if(Math.abs(dx)>8) moved=true;
     lastT=t;
     card.style.transform='translateX('+t+'px)';
@@ -10007,7 +10038,9 @@ function attachSwipe(card){
     if(!active) return;
     active=false;
     if(dir==='h'){
-      if(lastT<-SWIPE_OPEN_W/2) openSwipe(card); else closeSwipe(card);
+      if(lastT<-SWIPE_OPEN_W/2) openSwipe(card,'del');
+      else if(hasEdit && lastT>SWIPE_OPEN_W/2) openSwipe(card,'edit');
+      else closeSwipe(card);
       if(moved) card._suppressClick=true;   // 拦掉这次滑动尾随的点击
     }else{
       // 纯点按：若卡片已滑开，先收起而不是进入编辑
