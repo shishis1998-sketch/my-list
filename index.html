@@ -104,19 +104,9 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nitem.parent-on{color:var(--accent);font-weight:700;}
 .nitem.parent-on .chev{color:var(--accent);}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-/* 设置 › 外观：主题色一行色点 */
-.themerow{display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-8) var(--sp-10);flex-wrap:wrap;}
-.themedot{
-  width:26px;height:26px;border-radius:50%;flex-shrink:0;cursor:pointer;padding:0;
-  border:2px solid transparent;background-clip:content-box;
-  display:inline-flex;align-items:center;justify-content:center;
-  transition:transform .12s,box-shadow .15s;-webkit-appearance:none;appearance:none;
-}
-.themedot:active{transform:scale(.92);}
-.themedot.on{box-shadow:0 0 0 1.5px var(--surface) inset,0 0 0 2px currentColor;}
-.themedot .tick{width:11px;height:11px;color:#fff;opacity:0;transition:opacity .12s;}
-.themedot.on .tick{opacity:1;}
-.themelbl{margin-left:auto;font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--zh);}
+/* 设置 › 外观：主题色沿用分类管理那套列表行,选中行本身就是该主题色的预览 */
+.theme-check{margin-left:auto;display:inline-flex;color:currentColor;opacity:0;transition:opacity .15s;}
+.nitem.on .theme-check{opacity:1;}
 .ncnt{
   margin-left:auto;font-size:var(--fs-foot);font-family:var(--en);
   color:var(--text-muted);background:var(--bg);padding:var(--sp-2) var(--sp-8);border-radius:var(--rchip);
@@ -1775,6 +1765,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       
       --brand:      #C71F37;  --brand-dark: #A81A2E;
       --brand-soft: #FCE7EB;  --brand-tint: #FFD5DC;
+      /* 经期视图（月度 / 年度）不跟随设置里的主题色：在这里把 accent 一族钉回原本的墨绿，
+         这样这棵子树里现在和以后的 var(--accent*) 都不受换肤影响 */
+      --accent:#2B4D3F;  --accent-light:#E8EEEB;  --accent-mid:#4A7B68;
+      --accent-dark:#1E3830;  --accent-rgb:43,77,63;
       --ink:    #1A1A1A;  
       --ink-2:  #334155;  
       --body:   #475569;  
@@ -2718,9 +2712,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   </div>
   <div class="nsec">
     <div class="nlbl">外观</div>
-    <div class="ncard">
-      <div class="themerow" id="themeRow" role="radiogroup" aria-label="主题色"></div>
-    </div>
+    <div class="ncard" id="themeRow" role="radiogroup" aria-label="主题色"></div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
@@ -7065,6 +7057,7 @@ const THEMES=[
   {id:'azure',     name:'晴蓝', c:'#1964C7'},
   {id:'vermilion', name:'朱橘', c:'#AC451A'},
 ];
+let curTheme='green';   // 当前生效的主题；列表的选中态以它为准，不再回读 localStorage
 function getTheme(){
   let t=null;try{t=localStorage.getItem(THEME_KEY);}catch(e){}
   return THEMES.some(x=>x.id===t)?t:'green';
@@ -7072,6 +7065,7 @@ function getTheme(){
 // save=写入 localStorage；quiet=不弹提示（同步拉取时用）
 function applyTheme(id,save,quiet){
   const t=THEMES.some(x=>x.id===id)?id:'green';
+  curTheme=t;
   if(t==='green')document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme',t);
   if(save){
@@ -7086,15 +7080,14 @@ function applyTheme(id,save,quiet){
 function renderThemeRow(){
   const row=document.getElementById('themeRow');
   if(!row)return;
-  const cur=getTheme();
+  const cur=curTheme;
+  const tick='<span class="theme-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"'+
+    ' stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
+    '<polyline points="20 6 9 17 4 12"/></svg></span>';
   row.innerHTML=THEMES.map(t=>
-    `<button type="button" class="themedot${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
-    ` style="background:${t.c};color:${t.c}" role="radio" aria-checked="${t.id===cur}"`+
-    ` title="${t.name}" aria-label="${t.name}" onclick="applyTheme('${t.id}',true)">`+
-    `<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4"`+
-    ` stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`+
-    `</button>`).join('')+
-    `<span class="themelbl">${(THEMES.find(t=>t.id===cur)||{}).name||''}</span>`;
+    `<button type="button" class="nitem${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
+    ` role="radio" aria-checked="${t.id===cur}" onclick="applyTheme('${t.id}',true)">`+
+    `<span class="dot" style="background:${t.c}"></span>${t.name}${tick}</button>`).join('');
 }
 
 function boot(){
