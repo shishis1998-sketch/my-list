@@ -1723,12 +1723,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 /* ═══ 标签视图（第四段）：当月记过的每个症状标签一张卡，卡内是整月网格 ═══ */
 /* 移植自经期 App 热力图的「月」视图（renderTagCards）。字号/间距/圆角按 design.md
-   落到 token：原 9px 的星期头与格内日期一律提到 --fs-foot 11px，卡片 --rlg、格子 --rsm。
+   落到 token：原 9px 的星期头与格内日期一律提到 --fs-foot 11px，卡片 --rlg，日期格取正圆。
    与经期视图同样把 accent 钉回墨绿，不跟随设置里的主题色。 */
 #calViewHeat{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--sp-14) var(--sp-20);
   --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-dark:#1E3830;
-  --hm-off:#ECEDF0;    /* 未记录格 */
   --hm-hit:#164A3B;    /* 记录格（沿用热力图色阶最深一档） */}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与日历页的「‹ 年 月 ›」同款 */
@@ -1758,12 +1757,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-wk div{text-align:center;font-size:var(--fs-foot);line-height:1;
   color:var(--text-muted);}
 #calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);}
-#calViewHeat .hm-cell{aspect-ratio:1;border-radius:var(--rsm);background:var(--hm-off);
+/* 日期格与「月度」同一套语言：平时只有数字，记过的那天才出现一个实心正圆
+   （aspect-ratio:1 保证圆不被压扁）*/
+#calViewHeat .hm-cell{aspect-ratio:1;border-radius:50%;background:transparent;
   display:flex;align-items:center;justify-content:center;font-family:var(--en);
-  font-size:var(--fs-foot);line-height:1;color:var(--text-secondary);}
+  font-size:var(--fs-foot);line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-cell.on{background:var(--hm-hit);color:rgba(255,255,255,.94);font-weight:600;}
 #calViewHeat .hm-cell.today{outline:2px solid var(--accent);outline-offset:-2px;}
-#calViewHeat .hm-cell.pad{background:transparent;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
 #calViewHeat .hm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:var(--sp-10);padding:var(--sp-40) var(--sp-20);text-align:center;}
