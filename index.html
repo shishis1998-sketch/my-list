@@ -1882,14 +1882,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* ═══ 标签视图（第四段）：当月记过的每个症状标签一张卡，卡内是整月网格 ═══ */
 /* 移植自经期 App 热力图的「月」视图（renderTagCards）。字号/间距/圆角按 design.md
    落到 token：原 9px 的星期头与格内日期一律提到 --fs-foot 11px，卡片 --rlg，日期格取正圆。
-   与经期视图同样把 accent 钉回墨绿，不跟随设置里的主题色。 */
+   accent 不再钉死：这一屏跟随设置里的主题色（经期/年度那两屏仍是固定墨绿）。 */
 #calViewHeat{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--sp-14) var(--sp-20);
-  --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-dark:#1E3830;
-  --hm-hit:#164A3B;    /* 记录格（沿用热力图色阶最深一档） */}
+  scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--sp-14) var(--sp-20);}
 #calViewHeat::-webkit-scrollbar{display:none;}
-/* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色
-   （白天黑、夜间白）。这里的 --accent 是钉死的墨绿，拿来做文字夜间会看不清。 */
+/* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
 #calViewHeat .hm-hdr{display:flex;align-items:center;padding:var(--sp-6) 0 var(--sp-12);}
 #calViewHeat .hm-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}
 #calViewHeat .hm-titlenav .cal-navbtn{width:26px;color:var(--text-primary);}
@@ -1923,7 +1920,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-cell{width:18px;height:18px;margin:0 auto;border-radius:50%;background:transparent;
   display:flex;align-items:center;justify-content:center;font-family:var(--en);
   font-size:var(--fs-foot);line-height:1;color:var(--text-muted);}
-#calViewHeat .hm-cell.on{background:var(--hm-hit);color:rgba(255,255,255,.94);font-weight:600;}
+#calViewHeat .hm-cell.on{background:var(--accent);color:#FFFFFF;font-weight:600;}
+/* 夜间 accent 是提亮版，圆里的字得反过来用深色 */
+:root[data-mode="dark"] #calViewHeat .hm-cell.on{color:var(--on-accent);}
 /* 今天：1px 细圈。画成 inset 落在圆内侧，外径与上面的实心圆严格相等
    （落在圆外的话外径会大 2px，两种圆看着不一样大）*/
 #calViewHeat .hm-cell.today{box-shadow:inset 0 0 0 var(--bd) var(--accent);}
@@ -2890,9 +2889,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 :root[data-mode="dark"] .memo-lock.plain{color:#E8B45C;background:#33270F;}
 
 /* 标签视图把 accent 钉死成墨绿（不跟主题色），夜间要提亮，否则近乎看不见 */
-:root[data-mode="dark"] #calViewHeat{
-  --accent:#6FB394;--accent-light:#1E2C26;--accent-dark:#8ECBB0;--hm-hit:#3E8A6C;
-}
 
 /* ── 经期视图：自带一整套浅色调色板，整体翻到深色 ── */
 :root[data-mode="dark"] #calViewPeriod{
