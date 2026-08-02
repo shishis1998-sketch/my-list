@@ -1702,13 +1702,17 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 两段（历史保留）/ 三段 缩略块宽度 */
 .cal-vtoggle .cvt-thumb{width:calc(50% - 3px);}
 .cal-vtoggle.cvt3 .cvt-thumb{width:calc((100% - 6px)/3);}
+.cal-vtoggle.cvt4{display:flex;width:100%;}   /* 四段视图切换铺满整行（等分） */
+.cal-vtoggle.cvt4 .cvt-thumb{width:calc((100% - 6px)/4);}
 .cal-vtoggle .cvt-thumb.period,
 .cal-vtoggle .cvt-thumb.m{transform:translateX(100%);}
 .cal-vtoggle .cvt-thumb.y{transform:translateX(200%);}
+.cal-vtoggle .cvt-thumb.h{transform:translateX(300%);}   /* 第四档：标签 */
 .cal-vtoggle .cvt{position:relative;z-index:1;border:none;background:transparent;font-family:inherit;
   font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);padding:6px 16px;cursor:pointer;
   border-radius:999px;transition:color .2s;-webkit-tap-highlight-color:transparent;white-space:nowrap;}
-.cal-vtoggle.cvt3 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}   /* 等分满宽 + 高度压低到约 30px */
+.cal-vtoggle.cvt3 .cvt,
+.cal-vtoggle.cvt4 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}   /* 等分满宽 + 高度压低到约 30px */
 .cal-vtoggle .cvt.on{color:var(--text-primary);}
 #calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
 #calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -1716,6 +1720,57 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 隐藏纵向滚动条：选中日期后下方状态/信息卡展开会撑出滚动条，若占宽会把居中的日历网格整体挤向左侧（“向左偏”）。
    与本 App 其余滚动区一致隐藏滚动条，保证内容宽度恒定、与普通日历像素对齐。 */
 #calViewPeriod::-webkit-scrollbar{display:none;}
+
+/* ═══ 标签视图（第四段）：当月记过的每个症状标签一张卡，卡内是整月网格 ═══ */
+/* 移植自经期 App 热力图的「月」视图（renderTagCards）。字号/间距/圆角按 design.md
+   落到 token：原 9px 的星期头与格内日期一律提到 --fs-foot 11px，卡片 --rlg、格子 --rsm。
+   与经期视图同样把 accent 钉回墨绿，不跟随设置里的主题色。 */
+#calViewHeat{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--sp-14) var(--sp-20);
+  --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-dark:#1E3830;
+  --hm-off:#ECEDF0;    /* 未记录格 */
+  --hm-hit:#164A3B;    /* 记录格（沿用热力图色阶最深一档） */}
+#calViewHeat::-webkit-scrollbar{display:none;}
+/* 月份导航：与日历页的「‹ 年 月 ›」同款 */
+#calViewHeat .hm-hdr{display:flex;align-items:center;justify-content:space-between;
+  gap:var(--sp-8);padding:var(--sp-6) 0 var(--sp-12);}
+#calViewHeat .hm-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}
+#calViewHeat .hm-titlenav .cal-navbtn{width:26px;}
+#calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);
+  letter-spacing:.03em;padding:0 var(--sp-2);white-space:nowrap;}
+#calViewHeat .hm-sum{font-size:var(--fs-foot);color:var(--text-muted);white-space:nowrap;}
+/* 标签卡：手机两列，宽屏自动加列 */
+#calViewHeat .hm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:var(--sp-12);align-items:start;}
+/* 桌面端卡片放大一档：手机固定两列，宽屏按 200px 起排，别摊成一排小格子 */
+@media(min-width:769px){
+  #calViewHeat .hm-cards{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+}
+#calViewHeat .hm-card{background:var(--surface);border:var(--bd) solid var(--border);
+  border-radius:var(--rlg);padding:var(--sp-12);}
+#calViewHeat .hm-card-name{display:block;font-size:var(--fs-sub);font-weight:600;
+  color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);
+  margin:var(--sp-2) 0 var(--sp-10);}
+#calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
+#calViewHeat .hm-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);
+  margin-bottom:var(--sp-2);}
+#calViewHeat .hm-wk div{text-align:center;font-size:var(--fs-foot);line-height:1;
+  color:var(--text-muted);}
+#calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);}
+#calViewHeat .hm-cell{aspect-ratio:1;border-radius:var(--rsm);background:var(--hm-off);
+  display:flex;align-items:center;justify-content:center;font-family:var(--en);
+  font-size:var(--fs-foot);line-height:1;color:var(--text-secondary);}
+#calViewHeat .hm-cell.on{background:var(--hm-hit);color:rgba(255,255,255,.94);font-weight:600;}
+#calViewHeat .hm-cell.today{outline:2px solid var(--accent);outline-offset:-2px;}
+#calViewHeat .hm-cell.pad{background:transparent;}
+/* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
+#calViewHeat .hm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--sp-10);padding:var(--sp-40) var(--sp-20);text-align:center;}
+#calViewHeat .hm-empty-ic{font-size:34px;line-height:1;}
+#calViewHeat .hm-empty p{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);}
+#calViewHeat .hm-empty small{font-size:var(--fs-foot);color:var(--text-muted);line-height:var(--lh-normal);}
+
 /* 经期视图：去掉粉色背景，与日历页统一纯色；月份导航沿用日历页「‹ 年 月 ›」样式 */
 #calViewPeriod,
 #calViewPeriod .home-sticky{background:var(--bg) !important;background-image:none !important;}
@@ -3176,11 +3231,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   <div class="cal-modal">
     <div class="cal-viewbar">
       <div class="cal-viewtitle" id="calViewTitle">日历</div>
-      <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
+      <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
         <span class="cvt-thumb" id="cvtThumb"></span>
         <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
         <button class="cvt" data-cv="month" onclick="setCalView('month')">月度</button>
         <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
+        <button class="cvt" data-cv="heat" onclick="setCalView('heat')">标签</button>
       </div>
     </div>
     <div id="calViewCalendar" class="cal-view">
@@ -3289,6 +3345,19 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
           <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
         </div>
       </div>
+    </div><!-- /#calViewPeriod -->
+
+    <!-- 标签视图：当月记过的每个症状标签一张卡（移植自经期 App 热力图的「月」视图）-->
+    <div id="calViewHeat" style="display:none">
+      <div class="hm-hdr">
+        <div class="hm-titlenav">
+          <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月">‹</button>
+          <div class="hm-title" id="hmTitle">2026 年 1 月</div>
+          <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
+        </div>
+        <div class="hm-sum" id="hmSum"></div>
+      </div>
+      <div id="hmContent"></div>
     </div>
 
   </div>
@@ -6880,15 +6949,95 @@ window.PV = (function(){
     render();
   }
   // 重新打开日历页时调用：下次进经期视图重新回到当前年月（与「日历」重置到今天一致）
-  function resetPos(){ posKept = false; }
+  function resetPos(){ posKept = false; heatPos = false; }
   function hasPos(){ return posKept; }
+
+  // ── 标签视图（切换条第四段）───────────────────────────────────
+  // 当月记过的每个症状标签一张卡，卡内是整月网格，记过的那天填深绿。
+  // 移植自经期 App 热力图的「月」视图（renderTagCards），只读 SYMPTOMS_*，不写数据。
+  const HEAT_WK = ['一','二','三','四','五','六','日'];
+  let heatYear = 0, heatMonth = 0, heatPos = false;
+
+  // 从「月度 / 年度」切进来 → 跟随那边当前停留的年月；
+  // 从「日历」切进来 → 保留自己的位置，本次日历页会话里第一次进入才回到当前月
+  function openHeat(prev){
+    if (prev === 'month' || prev === 'year') {
+      heatYear = year; heatMonth = viewMonth; heatPos = true;
+    } else if (!heatPos) {
+      heatToToday();
+    }
+    renderHeat();
+  }
+  function heatToToday(){
+    const now = new Date();
+    heatYear = now.getFullYear(); heatMonth = now.getMonth() + 1; heatPos = true;
+  }
+
+  // ‹ › 翻月：只动标签视图自己，不回写「月度」的位置
+  function heatShift(delta){
+    let m = heatMonth + delta;
+    if (m < 1) { m = 12; heatYear -= 1; }
+    else if (m > 12) { m = 1; heatYear += 1; }
+    heatMonth = m;
+    renderHeat();
+  }
+
+  function renderHeat(){
+    const box = document.getElementById('hmContent');
+    if (!box) return;
+    if (!heatPos) heatToToday();
+    const title = document.getElementById('hmTitle');
+    const sum = document.getElementById('hmSum');
+    if (title) title.textContent = `${heatYear} 年 ${heatMonth} 月`;
+
+    const lead = (new Date(heatYear, heatMonth - 1, 1).getDay() + 6) % 7;   // 周一起始
+    const dim = new Date(heatYear, heatMonth, 0).getDate();
+    const now = new Date();
+    const todayD = (now.getFullYear() === heatYear && now.getMonth() + 1 === heatMonth) ? now.getDate() : 0;
+
+    // 按 SYMPTOMS_LIB 原序收集当月记过的标签（顺序与记录面板一致）
+    const cards = [];
+    const dayHit = {};
+    (SYMPTOMS_LIB || []).forEach(tag => {
+      const days = [];
+      for (let d = 1; d <= dim; d++) {
+        const list = SYMPTOMS_DATA[`${heatYear}-${heatMonth}-${d}`];
+        if (list && list.includes(tag)) { days.push(d); dayHit[d] = 1; }
+      }
+      if (days.length) cards.push({ tag, days });
+    });
+
+    if (!cards.length) {
+      if (sum) sum.textContent = '';
+      box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
+        '<p>这个月还没有标签记录</p>' +
+        '<small>在「月度」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
+      return;
+    }
+    if (sum) sum.textContent = `${cards.length} 个标签 · ${Object.keys(dayHit).length} 天`;
+
+    const wkHead = HEAT_WK.map(w => `<div>${w}</div>`).join('');
+    box.innerHTML = '<div class="hm-cards">' + cards.map(c => {
+      let cells = '<div class="hm-cell pad"></div>'.repeat(lead);
+      for (let d = 1; d <= dim; d++) {
+        const on = c.days.includes(d) ? ' on' : '';
+        const today = d === todayD ? ' today' : '';
+        cells += `<div class="hm-cell${on}${today}">${d}</div>`;
+      }
+      return '<div class="hm-card">' +
+        `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
+        `<div class="hm-card-meta">本月 <b>${c.days.length}</b> 天</div>` +
+        `<div class="hm-wk">${wkHead}</div><div class="hm-dd">${cells}</div></div>`;
+    }).join('') + '</div>';
+  }
 
   return {
     init, open, render, resetPos, hasPos,
+    openHeat, renderHeat,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
-    navPrev, navNext,
+    navPrev, navNext, heatShift,
     closeDaySheet, clearDayRecord
   };
 })();
@@ -6926,25 +7075,39 @@ function savePeriod(){
   scheduleSyncPush();
 }
 window.pvPersist=savePeriod;
+// 经期数据被云端同步/导入换掉后，把当前正开着的那个视图重画一遍
+function refreshCalPeriodView(){
+  if(!window.PV||!_pvInited)return;
+  if(calView==='month'||calView==='year')PV.render();
+  else if(calView==='heat')PV.renderHeat();
+}
 function setCalView(v){
-  // v: 'cal'（日历） | 'month'（经期·月） | 'year'（经期·年）——合并成一个三段控件
-  if(v!=='cal'&&v!=='month'&&v!=='year')v='cal';
+  // v: 'cal'（日历） | 'month'（经期·月） | 'year'（经期·年） | 'heat'（标签）——合并成一个四段控件
+  if(v!=='cal'&&v!=='month'&&v!=='year'&&v!=='heat')v='cal';
   const prev=calView; calView=v;
-  const isP=(v!=='cal');
+  const isP=(v==='month'||v==='year');   // 经期日历
+  const isH=(v==='heat');                // 标签视图
   const cv=document.getElementById('calViewCalendar');
   const pv=document.getElementById('calViewPeriod');
-  if(cv)cv.style.display=isP?'none':'';
+  const hv=document.getElementById('calViewHeat');
+  if(cv)cv.style.display=(isP||isH)?'none':'';
   if(pv)pv.style.display=isP?'':'none';
+  if(hv)hv.style.display=isH?'':'none';
   document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
   document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   const thumb=document.getElementById('cvtThumb');
-  if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');}
-  const title=document.getElementById('calViewTitle');if(title)title.textContent=isP?'经期':'日历';
+  if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
+            thumb.classList.toggle('h',isH);}
+  const title=document.getElementById('calViewTitle');if(title)title.textContent=(isP||isH)?'经期':'日历';
   try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
+  if(isH&&window.PV&&periodData){
+    if(!_pvInited){PV.init(periodData);_pvInited=true;}
+    PV.openHeat(prev);   // 从月度/年度切进来时跟随那边的年月
+  }
   if(isP&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
     // 从日历进入（或刚重开日历页、位置已重置）→ 停在上次停留的年月，首次才回当前月
-    if(prev==='cal'||!PV.hasPos())PV.open(v);
+    if(prev==='cal'||prev==='heat'||!PV.hasPos())PV.open(v);
     else PV.setHomeView(v);            // 月↔年 只换缩放层级，保留当前位置
   }
 }
@@ -7743,7 +7906,7 @@ async function syncPull(silent){
       if(rRev>=lRev){
         periodData=_normPeriod(remote.period);
         try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
-        if(window.PV&&_pvInited){PV.init(periodData);if(calView==='period')PV.render();}
+        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();}
       }else{
         // 本地种子更新 → 保留本地并推上云端，覆盖旧 period
         scheduleSyncPush();
@@ -8851,7 +9014,7 @@ function importJSON(e){
       if(iperiod&&iperiod.ALL_DATA){
         periodData=_normPeriod(iperiod);
         try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
-        if(window.PV&&_pvInited){PV.init(periodData);if(calView!=='cal')PV.render();}
+        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();}
         scheduleSyncPush();
       }
       // 笔记导入:存在则合并(按 id 去重)
