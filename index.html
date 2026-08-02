@@ -291,6 +291,8 @@ tr:hover .acts{opacity:1;}
 /* 弹窗最高 92vh，且不超过容器（手机端下面已给底栏留出高度，见 @media 里的 padding-bottom）。
    底部按钮行固定在弹窗底边，容器一收窄，按钮就停在导航条上方，导航条仍可见可点。 */
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
+/* 日历导入配色弹窗：桌面端窄一点（手机端下面的媒体查询会改成贴底抽屉）*/
+#icsColorModal .mbox{max-width:400px;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
@@ -615,6 +617,16 @@ tr:hover .acts{opacity:1;}
   #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-20);}
   #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
+  /* 日历导入配色弹窗：同款底部抽屉，随内容高度、贴到屏幕底边、顶部圆角 + 抓手 */
+  #icsColorModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
+  #icsColorModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  #icsColorModal .mbox{
+    width:100%;max-width:100%;height:auto;max-height:min(80vh,100%);
+    border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);
+    transform:translateZ(0);
+  }
+  #icsColorModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #icsColorModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
@@ -3109,7 +3121,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== 日历导入配色 ===== -->
 <div class="moverlay" id="icsColorModal">
-  <div class="mbox" style="max-width:400px" onclick="event.stopPropagation()">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">给日历挑颜色</div>
       <button class="mclose" onclick="closeIcsColor()">✕</button>
