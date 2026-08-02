@@ -1760,8 +1760,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);
   column-gap:var(--sp-2);row-gap:var(--sp-6);}
 /* 日期格与「月度」同一套语言：平时只有数字，记过的那天才出现一个实心正圆。
-   16px 定宽（不再撑满格子），圆与圆之间留出空隙；居中靠 margin auto。 */
-#calViewHeat .hm-cell{width:16px;height:16px;margin:0 auto;border-radius:50%;background:transparent;
+   18px 定宽（不撑满 21.6px 的轨道），圆与圆之间留出空隙；居中靠 margin auto。 */
+#calViewHeat .hm-cell{width:18px;height:18px;margin:0 auto;border-radius:50%;background:transparent;
   display:flex;align-items:center;justify-content:center;font-family:var(--en);
   font-size:var(--fs-foot);line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-cell.on{background:var(--hm-hit);color:rgba(255,255,255,.94);font-weight:600;}
