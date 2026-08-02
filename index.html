@@ -1750,11 +1750,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);
   margin:var(--sp-2) 0 var(--sp-10);}
 #calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
+/* 星期头与第一行日期之间也用 6px，跟下面的行距一致 */
 #calViewHeat .hm-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);
-  margin-bottom:var(--sp-2);}
+  margin-bottom:var(--sp-6);}
 #calViewHeat .hm-wk div{text-align:center;font-size:var(--fs-foot);line-height:1;
   color:var(--text-muted);}
-#calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);}
+/* 行距 6px：圆是 16px 定宽、横向实际空隙 5.56px，竖向给到 6px 才和横向齐平
+   （两个方向都写 2px 的话，竖向真就是 2px，看着行挤列松）*/
+#calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);
+  column-gap:var(--sp-2);row-gap:var(--sp-6);}
 /* 日期格与「月度」同一套语言：平时只有数字，记过的那天才出现一个实心正圆。
    16px 定宽（不再撑满格子），圆与圆之间留出空隙；居中靠 margin auto。 */
 #calViewHeat .hm-cell{width:16px;height:16px;margin:0 auto;border-radius:50%;background:transparent;
