@@ -2353,7 +2353,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       letter-spacing: 1px; margin: 10px 0 6px;
       text-transform: uppercase;}
 #calViewPeriod .info-tags {display: flex; flex-wrap: wrap; gap: 6px;}
-#calViewPeriod .info-tags.collapsed {max-height: 30px; overflow: hidden;}
+/* 折叠成一行：具体高度由 renderDayInfoBar() 按第一行的实际高度写成行内 max-height，
+   这里只负责裁剪。不写死数值——写死的话字体一大就会把标签从中间切一刀。 */
+#calViewPeriod .info-tags.collapsed {overflow: hidden;}
 #calViewPeriod .info-toggle {margin-top: 8px; padding: 0; border: none; background: none;
       color: var(--brand); font-size: var(--fs-footnote); font-weight: 600;
       font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;}
@@ -6797,6 +6799,23 @@ window.PV = (function(){
       sb.innerHTML = rows;
     }
 
+    // 每个标签在最近 60 天里记过多少天 → 供「从已有标签选择」按近期常用度排序。
+    // 只看近期而不是全部历史：早年高频、如今不再记的标签不该一直占着第一行。
+    const SYM_RECENT_DAYS = 60;
+    function symUseCount() {
+      const now = new Date();
+      const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const c = {};
+      Object.keys(SYMPTOMS_DATA).forEach(k => {
+        const p = k.split('-');
+        const t = new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+        const ago = Math.round((today0 - t) / 86400000);   // 0 = 今天
+        if (ago < 0 || ago >= SYM_RECENT_DAYS) return;     // 未来日期与 60 天以前都不计
+        (SYMPTOMS_DATA[k] || []).forEach(n => { c[n] = (c[n] || 0) + 1; });
+      });
+      return c;
+    }
+
     // 渲染放大态下底部的"日期信息栏"
     function renderDayInfoBar() {
       renderDayStatusBar();
@@ -6817,7 +6836,12 @@ window.PV = (function(){
             `<span class="info-tag active" data-name="${escapeAttr(name)}">${escapeHtml(name)}</span>`
           ).join('');
 
-      const notSelected = SYMPTOMS_LIB.filter(n => !today.includes(n));
+      // 「从已有标签选择」按近期用得多少排序：最近 60 天记过的天数多的排前面，
+      // 折叠成一行时露在外面的就是这阵子最常用的几个。天数相同 / 近 60 天没用过的
+      // 保持 SYMPTOMS_LIB 原序（sort 稳定），所以新建的标签仍排在末尾、不会乱跳。
+      const useCount = symUseCount();
+      const notSelected = SYMPTOMS_LIB.filter(n => !today.includes(n))
+        .sort((a, b) => (useCount[b] || 0) - (useCount[a] || 0));
       const libTagsHtml = notSelected.length === 0
         ? '<div class="info-empty">所有标签都已选 ✓</div>'
         : notSelected.map(name =>
@@ -6856,16 +6880,27 @@ window.PV = (function(){
       const libTagsEl = bar.querySelector('#infoLibTags');
       const libToggle = bar.querySelector('#infoLibToggle');
       if (libTagsEl && libToggle) {
-        // 先按折叠态测量,判断标签是否超过一行
-        libTagsEl.classList.add('collapsed');
-        const needsToggle = libTagsEl.scrollHeight - libTagsEl.clientHeight > 1;
-        if (libTagsExpanded) libTagsEl.classList.remove('collapsed');
+        // 折叠高度按「第一行实际有多高」算出来，不能写死：标签高度跟着字号 / 行高 /
+        // 系统字体缩放走，写死的话字体一大就会把整行标签从中间切掉一截。
+        libTagsEl.classList.remove('collapsed');
+        libTagsEl.style.maxHeight = '';
+        // 用 getBoundingClientRect 取带小数的高度（offsetHeight 是取整的，31.19 → 31，
+        // 差的那 0.19px 照样会削掉标签一条边），再向上取整留一点余量。
+        const rects = Array.from(libTagsEl.querySelectorAll('.info-tag'))
+                           .map(c => c.getBoundingClientRect());
+        const top0 = rects.length ? rects[0].top : 0;
+        const oneRow = rects.filter(r => Math.abs(r.top - top0) < 1)
+                            .reduce((h, r) => Math.max(h, r.height), 0);
+        const needsToggle = oneRow > 0 && libTagsEl.scrollHeight - oneRow > 1;
+        if (needsToggle && !libTagsExpanded) {
+          libTagsEl.classList.add('collapsed');
+          libTagsEl.style.maxHeight = Math.ceil(oneRow) + 'px';
+        }
         if (needsToggle) {
           libToggle.style.display = '';
           libToggle.textContent = libTagsExpanded ? '收起 ▲' : '展开全部 ▼';
         } else {
-          libToggle.style.display = 'none';
-          libTagsEl.classList.remove('collapsed'); // 一行内放得下就不裁剪
+          libToggle.style.display = 'none';   // 一行内放得下就不裁剪
         }
         libToggle.onclick = (ev) => {
           ev.stopPropagation();
@@ -7422,7 +7457,7 @@ function getMode(){
 }
 function isDarkMode(){return curMode==='dark';}
 function applyMode(id,save,quiet){
-  const m=MODES.some(x=>x.id===id)?id:'auto';
+  const m=MODES.some(x=>x.id===id)?id:'light';
   curMode=m;
   const dark=isDarkMode();
   if(dark)document.documentElement.setAttribute('data-mode','dark');
