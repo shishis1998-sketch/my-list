@@ -1755,14 +1755,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-wk div{text-align:center;font-size:var(--fs-foot);line-height:1;
   color:var(--text-muted);}
 #calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);}
-/* 日期格与「月度」同一套语言：平时只有数字，记过的那天才出现一个实心正圆
-   （aspect-ratio:1 保证圆不被压扁）*/
-#calViewHeat .hm-cell{aspect-ratio:1;border-radius:50%;background:transparent;
+/* 日期格与「月度」同一套语言：平时只有数字，记过的那天才出现一个实心正圆。
+   16px 定宽（不再撑满格子），圆与圆之间留出空隙；居中靠 margin auto。 */
+#calViewHeat .hm-cell{width:16px;height:16px;margin:0 auto;border-radius:50%;background:transparent;
   display:flex;align-items:center;justify-content:center;font-family:var(--en);
   font-size:var(--fs-foot);line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-cell.on{background:var(--hm-hit);color:rgba(255,255,255,.94);font-weight:600;}
-/* 今天：1px 细圈，与「月度」的今天圈同粗同画法（box-shadow 跟随圆角，落在圆外）*/
-#calViewHeat .hm-cell.today{box-shadow:0 0 0 var(--bd) var(--accent);}
+/* 今天：1px 细圈。画成 inset 落在圆内侧，外径与上面的实心圆严格相等
+   （落在圆外的话外径会大 2px，两种圆看着不一样大）*/
+#calViewHeat .hm-cell.today{box-shadow:inset 0 0 0 var(--bd) var(--accent);}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
 #calViewHeat .hm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:var(--sp-10);padding:var(--sp-40) var(--sp-20);text-align:center;}
