@@ -1731,13 +1731,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   --hm-hit:#164A3B;    /* 记录格（沿用热力图色阶最深一档） */}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与日历页的「‹ 年 月 ›」同款 */
-#calViewHeat .hm-hdr{display:flex;align-items:center;justify-content:space-between;
-  gap:var(--sp-8);padding:var(--sp-6) 0 var(--sp-12);}
+#calViewHeat .hm-hdr{display:flex;align-items:center;padding:var(--sp-6) 0 var(--sp-12);}
 #calViewHeat .hm-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}
 #calViewHeat .hm-titlenav .cal-navbtn{width:26px;}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);
   letter-spacing:.03em;padding:0 var(--sp-2);white-space:nowrap;}
-#calViewHeat .hm-sum{font-size:var(--fs-foot);color:var(--text-muted);white-space:nowrap;}
 /* 标签卡：手机两列，宽屏自动加列 */
 #calViewHeat .hm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:var(--sp-12);align-items:start;}
@@ -3355,7 +3353,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
           <div class="hm-title" id="hmTitle">2026 年 1 月</div>
           <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
         </div>
-        <div class="hm-sum" id="hmSum"></div>
       </div>
       <div id="hmContent"></div>
     </div>
@@ -6987,7 +6984,6 @@ window.PV = (function(){
     if (!box) return;
     if (!heatPos) heatToToday();
     const title = document.getElementById('hmTitle');
-    const sum = document.getElementById('hmSum');
     if (title) title.textContent = `${heatYear} 年 ${heatMonth} 月`;
 
     const lead = (new Date(heatYear, heatMonth - 1, 1).getDay() + 6) % 7;   // 周一起始
@@ -6997,25 +6993,21 @@ window.PV = (function(){
 
     // 按 SYMPTOMS_LIB 原序收集当月记过的标签（顺序与记录面板一致）
     const cards = [];
-    const dayHit = {};
     (SYMPTOMS_LIB || []).forEach(tag => {
       const days = [];
       for (let d = 1; d <= dim; d++) {
         const list = SYMPTOMS_DATA[`${heatYear}-${heatMonth}-${d}`];
-        if (list && list.includes(tag)) { days.push(d); dayHit[d] = 1; }
+        if (list && list.includes(tag)) days.push(d);
       }
       if (days.length) cards.push({ tag, days });
     });
 
     if (!cards.length) {
-      if (sum) sum.textContent = '';
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
         '<p>这个月还没有标签记录</p>' +
         '<small>在「月度」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
       return;
     }
-    if (sum) sum.textContent = `${cards.length} 个标签 · ${Object.keys(dayHit).length} 天`;
-
     const wkHead = HEAT_WK.map(w => `<div>${w}</div>`).join('');
     box.innerHTML = '<div class="hm-cards">' + cards.map(c => {
       let cells = '<div class="hm-cell pad"></div>'.repeat(lead);
