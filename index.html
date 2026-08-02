@@ -1745,7 +1745,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 }
 #calViewHeat .hm-card{background:var(--surface);border:var(--bd) solid var(--border);
   border-radius:var(--rlg);padding:var(--sp-12);}
-#calViewHeat .hm-card-name{display:block;font-size:var(--fs-sub);font-weight:600;
+#calViewHeat .hm-card-name{display:block;font-size:var(--fs-sub);font-weight:700;
   color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);
   margin:var(--sp-2) 0 var(--sp-10);}
@@ -1761,7 +1761,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   display:flex;align-items:center;justify-content:center;font-family:var(--en);
   font-size:var(--fs-foot);line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-cell.on{background:var(--hm-hit);color:rgba(255,255,255,.94);font-weight:600;}
-#calViewHeat .hm-cell.today{outline:2px solid var(--accent);outline-offset:-2px;}
+/* 今天：1px 细圈，与「月度」的今天圈同粗同画法（box-shadow 跟随圆角，落在圆外）*/
+#calViewHeat .hm-cell.today{box-shadow:0 0 0 var(--bd) var(--accent);}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
 #calViewHeat .hm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:var(--sp-10);padding:var(--sp-40) var(--sp-20);text-align:center;}
