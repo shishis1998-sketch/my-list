@@ -134,6 +134,18 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nitem.parent-on{color:var(--accent);font-weight:700;}
 .nitem.parent-on .chev{color:var(--accent);}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* 设置 › 外观：卡片第一行「主题」，右侧圆形图标按钮。白天=太阳，夜间=月亮。
+   整行都是点击区（触摸好点），状态只由这个圆钮表达，整行不染底——否则会和
+   下面主题色的选中行叠成两条。 */
+.nitem-mode .nmode-lbl{color:var(--text-primary);font-weight:500;}
+.nmode-btn{margin-left:auto;flex-shrink:0;width:32px;height:32px;border-radius:50%;
+  background:var(--border-soft);display:flex;align-items:center;justify-content:center;
+  transition:background .2s ease;}
+.nmode-btn svg{width:16px;height:16px;fill:none;stroke:var(--text-secondary);
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s ease;}
+.nitem-mode[aria-checked="true"] .nmode-btn{background:var(--accent);}
+.nitem-mode[aria-checked="true"] .nmode-btn svg{stroke:var(--on-accent);}
+.nitem-mode:active .nmode-btn{transform:scale(.92);}
 /* 设置 › 外观：主题色沿用分类管理那套列表行,选中行本身就是该主题色的预览 */
 .theme-check{margin-left:auto;display:inline-flex;color:currentColor;opacity:0;transition:opacity .15s;}
 .nitem.on .theme-check{opacity:1;}
@@ -2856,7 +2868,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 (function(){try{var t=localStorage.getItem('my_list_theme_v1');
   if(t&&t!=='green')document.documentElement.setAttribute('data-theme',t);
   // 明暗模式也要在首帧之前定下来，否则夜间模式会先闪一下白底
-  var m=localStorage.getItem('my_list_mode_v1')||'auto';
+  // 只有白天/夜间两档；'auto' 是旧版存过的值，按系统偏好落定一次（与 getMode 一致）
+  var m=localStorage.getItem('my_list_mode_v1');
   var dark=(m==='dark')||(m==='auto'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);
   if(dark){document.documentElement.setAttribute('data-mode','dark');
     var mt=document.querySelector('meta[name=theme-color]');if(mt)mt.setAttribute('content','#121214');}
@@ -2909,8 +2922,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   </div>
   <div class="nsec">
     <div class="nlbl">外观</div>
-    <div class="ncard" id="modeRow" role="radiogroup" aria-label="明暗模式"></div>
-    <div class="ncard" id="themeRow" role="radiogroup" aria-label="主题色" style="margin-top:var(--sp-10)"></div>
+    <div class="ncard" id="themeRow" aria-label="外观"></div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
@@ -7398,18 +7410,17 @@ function applyTheme(id,save,quiet){
 // ── 明暗模式（白天 / 夜间 / 跟随系统）────────────────
 // 只切 <html data-mode>，配色全部由 CSS 变量接管，JS 不碰任何具体颜色。
 const MODE_KEY='my_list_mode_v1';
-const MODES=[
-  {id:'light',name:'白天',c:'#FFFFFF'},
-  {id:'dark', name:'夜间',c:'#1C1C1F'},
-  {id:'auto', name:'跟随系统',c:'linear-gradient(90deg,#FFFFFF 50%,#1C1C1F 50%)'},
-];
-let curMode='auto';
+const MODES=[{id:'light',name:'白天'},{id:'dark',name:'夜间'}];
+let curMode='light';
+function prefersDark(){return !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);}
 function getMode(){
   let m=null;try{m=localStorage.getItem(MODE_KEY);}catch(e){}
-  return MODES.some(x=>x.id===m)?m:'auto';
+  if(m==='light'||m==='dark')return m;
+  // 旧版存过 'auto'：按它此刻实际显示的那一档落定，别让用户眼前突然跳一下
+  if(m==='auto')return prefersDark()?'dark':'light';
+  return 'light';
 }
-function prefersDark(){return !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);}
-function isDarkMode(){return curMode==='dark'||(curMode==='auto'&&prefersDark());}
+function isDarkMode(){return curMode==='dark';}
 function applyMode(id,save,quiet){
   const m=MODES.some(x=>x.id===id)?id:'auto';
   curMode=m;
@@ -7423,27 +7434,22 @@ function applyMode(id,save,quiet){
     try{localStorage.setItem(MODE_KEY,m);}catch(e){}
     if(!quiet)toast('已切换到'+(MODES.find(x=>x.id===m)||{}).name);
   }
-  renderModeRow();
-  renderThemeRow();   // 主题色圆点分白天/夜间两档，切模式时一起刷新
+  renderThemeRow();   // 开关和三条主题色同在一张卡片，一起重画
 }
-function renderModeRow(){
-  const row=document.getElementById('modeRow');
-  if(!row)return;
-  const tick='<span class="theme-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"'+
-    ' stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
-    '<polyline points="20 6 9 17 4 12"/></svg></span>';
-  row.innerHTML=MODES.map(m=>
-    `<button type="button" class="nitem${m.id===curMode?' on':''}" data-mode-id="${m.id}"`+
-    ` role="radio" aria-checked="${m.id===curMode}" onclick="applyMode('${m.id}',true)">`+
-    `<span class="dot" style="background:${m.c};box-shadow:inset 0 0 0 1px var(--border)"></span>${m.name}${tick}</button>`).join('');
+const MODE_ICON={
+  sun:'<circle cx="12" cy="12" r="5"/><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5'+
+      'M4.5 4.5l1.8 1.8M17.7 17.7l1.8 1.8M4.5 19.5l1.8-1.8M17.7 6.3l1.8-1.8"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+};
+// 「主题」这一行：和三条主题色同在一张卡片里，由 renderThemeRow 一起画
+function modeRowHTML(){
+  const dark=isDarkMode();
+  return `<button type="button" class="nitem nitem-mode" role="switch" aria-checked="${dark}"`+
+    ` aria-label="主题：${dark?'夜间':'白天'}，点击切换" onclick="toggleMode()">`+
+    `<span class="nmode-lbl">主题</span>`+
+    `<span class="nmode-btn"><svg viewBox="0 0 24 24">${dark?MODE_ICON.moon:MODE_ICON.sun}</svg></span></button>`;
 }
-// 「跟随系统」时，系统切换明暗要即时跟上
-if(window.matchMedia){
-  const mq=window.matchMedia('(prefers-color-scheme:dark)');
-  const onSys=()=>{if(curMode==='auto')applyMode('auto',false);};
-  if(mq.addEventListener)mq.addEventListener('change',onSys);
-  else if(mq.addListener)mq.addListener(onSys);
-}
+function toggleMode(){haptic('tap');applyMode(isDarkMode()?'light':'dark',true);}
 
 function renderThemeRow(){
   const row=document.getElementById('themeRow');
@@ -7452,7 +7458,7 @@ function renderThemeRow(){
   const tick='<span class="theme-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"'+
     ' stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
     '<polyline points="20 6 9 17 4 12"/></svg></span>';
-  row.innerHTML=THEMES.map(t=>
+  row.innerHTML=modeRowHTML()+THEMES.map(t=>
     `<button type="button" class="nitem${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
     ` role="radio" aria-checked="${t.id===cur}" onclick="applyTheme('${t.id}',true)">`+
     `<span class="dot" style="background:${(typeof isDarkMode==='function'&&isDarkMode())?t.cd:t.c}"></span>${t.name}${tick}</button>`).join('');
