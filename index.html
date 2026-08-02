@@ -291,6 +291,8 @@ tr:hover .acts{opacity:1;}
 /* 弹窗最高 92vh，且不超过容器（手机端下面已给底栏留出高度，见 @media 里的 padding-bottom）。
    底部按钮行固定在弹窗底边，容器一收窄，按钮就停在导航条上方，导航条仍可见可点。 */
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
+/* 日历导入配色弹窗：桌面端窄一点（手机端下面的媒体查询会改成贴底抽屉）*/
+#icsColorModal .mbox{max-width:400px;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
@@ -615,6 +617,16 @@ tr:hover .acts{opacity:1;}
   #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-20);}
   #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
+  /* 日历导入配色弹窗：同款底部抽屉，随内容高度、贴到屏幕底边、顶部圆角 + 抓手 */
+  #icsColorModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
+  #icsColorModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  #icsColorModal .mbox{
+    width:100%;max-width:100%;height:auto;max-height:min(80vh,100%);
+    border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);
+    transform:translateZ(0);
+  }
+  #icsColorModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #icsColorModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
@@ -1071,6 +1083,20 @@ body.cal-searching .cal-searchresults{display:flex;}
 .swipe-wrap>.note-card.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
 /* 右滑时同理：卡片左侧改直角，与绿色「编辑」面板拼成整块圆角矩形 */
 .swipe-wrap>.note-card.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
+
+/* ── 日历导入配色弹窗：每本日历一行，一行色块任选 ───── */
+.icsc-row{padding:var(--sp-10) 0;border-bottom:1px solid var(--border-soft);}
+.icsc-row:last-child{border-bottom:none;}
+.icsc-hd{display:flex;align-items:center;gap:var(--sp-8);margin-bottom:var(--sp-8);}
+.icsc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.icsc-name{font-size:var(--fs-body);font-weight:600;color:var(--text-primary);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.icsc-cnt{font-size:var(--fs-foot);color:var(--text-muted);margin-left:auto;flex-shrink:0;}
+.icsc-sw{display:flex;gap:var(--sp-8);flex-wrap:wrap;}
+.icsc-c{width:26px;height:26px;border-radius:50%;border:none;padding:0;cursor:pointer;
+  transition:transform .1s;}
+.icsc-c:active{transform:scale(.9);}
+.icsc-c.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text-primary);}
 
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
@@ -3089,6 +3115,24 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <!-- Emoji 选择面板 -->
     <div class="emoji-panel" id="emojiPanel">
       <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 日历导入配色 ===== -->
+<div class="moverlay" id="icsColorModal">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mtitle">给日历挑颜色</div>
+      <button class="mclose" onclick="closeIcsColor()">✕</button>
+    </div>
+    <div class="mbody">
+      <p style="font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:var(--sp-12)">识别到下面这几本日历。点色块换颜色，颜色会记住，下次导入同一本自动沿用。</p>
+      <div id="icsColorList"></div>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-g" onclick="closeIcsColor()">取消</button>
+      <button class="btn btn-p" onclick="confirmIcsColor()">开始导入</button>
     </div>
   </div>
 </div>
@@ -9085,15 +9129,17 @@ function parseICS(raw){
     if(/^[ \t]/.test(l)&&lines.length) lines[lines.length-1]+=l.replace(/^[ \t]/,'');
     else lines.push(l);
   });
-  // 2) 拆出每个 VEVENT，并取 VCALENDAR 的日历名
-  const events=[];let cur=null,calName='';
+  // 2) 拆出每个 VEVENT，并取 VCALENDAR 的日历名 / 颜色
+  const events=[];let cur=null,calName='',calColor='';
   lines.forEach(l=>{
     if(l==='BEGIN:VEVENT'){cur={};return;}
     if(l==='END:VEVENT'){if(cur)events.push(cur);cur=null;return;}
     const ci=l.indexOf(':');if(ci<0)return;
     const name=l.slice(0,ci).split(';')[0].toUpperCase(), val=l.slice(ci+1);
-    if(!cur){                                       // VCALENDAR 头部：取这本日历的名字
+    if(!cur){                                       // VCALENDAR 头部：取这本日历的名字/颜色
       if(name==='X-WR-CALNAME')calName=unescapeICS(val).trim();
+      // Apple 日历导出带 X-APPLE-CALENDAR-COLOR；RFC 7986 的 COLOR 也认（Google 导出两者都没有）
+      else if(name==='X-APPLE-CALENDAR-COLOR'||name==='COLOR')calColor=val.trim();
       return;
     }
     if(name==='SUMMARY')cur.summary=unescapeICS(val);
@@ -9104,7 +9150,57 @@ function parseICS(raw){
     else if(name==='DTEND')cur.dtend=val.trim();             // 结束日：跨天事件用
     else if(name==='CATEGORIES')cur.cats=unescapeICS(val);   // 事件自带分类
   });
-  return {events,calName};
+  return {events,calName,calColor};
+}
+
+// ── 导入日历的配色 ────────────────────────────────────
+// 8 色调色板（比笔记分类色亮一档，好在小圆点上区分，但仍压得住不跳戏）。
+// 「日历名 → 颜色」记在本地，下次导入同一本日历自动沿用上次挑的色。
+const ICS_PALETTE=[
+  {c:'#B5533C',n:'砖红'},{c:'#C0803A',n:'赭橙'},
+  {c:'#4F7A5B',n:'苔绿'},{c:'#2C6E7F',n:'湖蓝'},
+  {c:'#3E5C99',n:'靛蓝'},{c:'#7A5C99',n:'紫藤'},
+  {c:'#A0568C',n:'玫紫'},{c:'#A09A8E',n:'暖灰'},
+];
+const ICS_COLOR_KEY='my_list_cal_colors_v1';
+let icsColorMap=(()=>{try{return JSON.parse(localStorage.getItem(ICS_COLOR_KEY))||{};}catch{return {};}})();
+function persistIcsColors(){try{localStorage.setItem(ICS_COLOR_KEY,JSON.stringify(icsColorMap));}catch(e){}}
+// '#FF2968' / '#FF2968FF'（Apple 带 alpha）→ '#FF2968'；认不出的返回 ''
+function icsHexNorm(v){const m=/^#?([0-9a-f]{6})/i.exec(String(v||'').trim());return m?('#'+m[1].toUpperCase()):'';}
+// 文件自带的颜色往往很艳，吸附到调色板里最近的一色，保证整体配色不跳
+function icsNearestPalette(hex){
+  const n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  let best=ICS_PALETTE[0].c,bd=Infinity;
+  ICS_PALETTE.forEach(p=>{
+    const m=parseInt(p.c.slice(1),16);
+    const d=Math.pow(((m>>16)&255)-r,2)+Math.pow(((m>>8)&255)-g,2)+Math.pow((m&255)-b,2);
+    if(d<bd){bd=d;best=p.c;}
+  });
+  return best;
+}
+// 预选色：记住的 > 文件自带的（吸附到调色板） > 调色板里还没被占用的下一个。
+// 后两种都要避开本次已经派出去的色，否则两本日历会预选成同一个颜色。
+function icsSuggestColor(key,fileColor,taken){
+  if(icsColorMap[key])return icsColorMap[key];   // 用户上次自己挑的，撞色也照用
+  const used=new Set([...Object.values(icsColorMap),...taken]);
+  const h=icsHexNorm(fileColor);
+  if(h){
+    const snapped=icsNearestPalette(h);
+    if(!used.has(snapped))return snapped;
+  }
+  const free=ICS_PALETTE.find(p=>!used.has(p.c));
+  return free?free.c:ICS_PALETTE[taken.length%ICS_PALETTE.length].c;
+}
+// 日历项取色：导入事件用它所属日历的颜色，其余走分类色
+function calNoteColor(n){
+  if(!n)return noteDotColor('');
+  if(n._icsColor)return n._icsColor;
+  if(n.subCat==='日历'){
+    // 老数据没有 _icsColor：用 _icsCal，再退回「标签里能在配色表里查到的那个」
+    const k=n._icsCal||(n.tags||[]).find(t=>t!=='日历导入'&&icsColorMap[t]);
+    if(k&&icsColorMap[k])return icsColorMap[k];
+  }
+  return noteDotColor(n.subCat);
 }
 function readFileText(file){
   return new Promise((res,rej)=>{
@@ -9114,21 +9210,92 @@ function readFileText(file){
     r.readAsText(file);
   });
 }
-// 支持一次选多个 .ics（多个 Google 日历），逐份合并；按 UID 全局去重
+// 支持一次选多个 .ics（多个 Google 日历），逐份合并；按 UID 全局去重。
+// 分两步：先解析出有哪几本日历 → 弹窗挑颜色 → 再真正写入。
+let icsPending=null;   // {parsed:[{events,key,color}], cals:[{key,name,color,count,remembered}]}
 async function importICS(e){
   const files=Array.from(e.target.files||[]);
   e.target.value='';
   if(!files.length)return;
-  // 去重按「事件+日期」：跨天事件的每天一条；重复导入只补缺失的天
-  const existKeys=new Set(notes.filter(n=>'_ics' in n).map(n=>n._ics+'@'+(n.title||'')));
-  const base=Date.now();
-  let seq=0,added=0,skipped=0,noEvt=0;
+  const parsed=[];let noEvt=0;
   for(const file of files){
     let raw;
     try{raw=await readFileText(file);}catch{noEvt++;continue;}
-    let events,calName;
-    try{({events,calName}=parseICS(raw));}catch{noEvt++;continue;}
+    let events,calName,calColor;
+    try{({events,calName,calColor}=parseICS(raw));}catch{noEvt++;continue;}
     if(!events.length){noEvt++;continue;}
+    // 日历名为空时用文件名兜底，保证每份 .ics 都有个能记住颜色的键
+    const key=calName||file.name.replace(/\.ics$/i,'');
+    parsed.push({events,calName,calColor,key});
+  }
+  if(!parsed.length){toast(noEvt?'没找到日历事件（.ics 里没有 VEVENT）':'没有可导入的内容');return;}
+  // 合并同名日历（一次选了同一本的多份文件），统计条数后弹窗挑色
+  const cals=[],byKey={};
+  parsed.forEach(p=>{
+    if(!byKey[p.key]){
+      byKey[p.key]={key:p.key,name:p.key,color:'',fileColor:p.calColor,count:0,remembered:!!icsColorMap[p.key]};
+      cals.push(byKey[p.key]);
+    }
+    byKey[p.key].count+=p.events.length;
+  });
+  // 分两轮派色：先给「记住的 / 文件自带颜色的」，剩下的再补，
+  // 免得没颜色偏好的日历先占了别人自带的那一色
+  const taken=[];
+  cals.filter(c=>c.remembered||icsHexNorm(c.fileColor)).forEach(c=>{
+    c.color=icsSuggestColor(c.key,c.fileColor,taken);taken.push(c.color);
+  });
+  cals.filter(c=>!c.color).forEach(c=>{
+    c.color=icsSuggestColor(c.key,'',taken);taken.push(c.color);
+  });
+  icsPending={parsed,cals};
+  renderIcsColorList();
+  document.getElementById('icsColorModal').classList.add('open');
+}
+function closeIcsColor(){
+  document.getElementById('icsColorModal').classList.remove('open');
+  icsPending=null;
+}
+function renderIcsColorList(){
+  const el=document.getElementById('icsColorList');
+  if(!el||!icsPending)return;
+  el.innerHTML=icsPending.cals.map((c,i)=>`
+    <div class="icsc-row">
+      <div class="icsc-hd">
+        <span class="icsc-dot" style="background:${c.color}"></span>
+        <span class="icsc-name">${esc(c.name)}</span>
+        <span class="icsc-cnt">${c.count} 条${c.remembered?' · 沿用上次':''}</span>
+      </div>
+      <div class="icsc-sw">${ICS_PALETTE.map(p=>
+        `<button type="button" class="icsc-c${p.c===c.color?' on':''}" style="background:${p.c}" data-i="${i}" data-c="${p.c}" title="${p.n}"></button>`
+      ).join('')}</div>
+    </div>`).join('');
+  el.querySelectorAll('.icsc-c').forEach(b=>{
+    b.onclick=()=>{icsPending.cals[+b.dataset.i].color=b.dataset.c;renderIcsColorList();};
+  });
+}
+function confirmIcsColor(){
+  if(!icsPending)return;
+  const {parsed,cals}=icsPending;
+  const colorOf={};
+  cals.forEach(c=>{colorOf[c.key]=c.color;icsColorMap[c.key]=c.color;});
+  persistIcsColors();
+  document.getElementById('icsColorModal').classList.remove('open');
+  icsPending=null;
+  doImportICS(parsed,colorOf);
+}
+function doImportICS(parsed,colorOf){
+  // 去重按「事件+日期」：跨天事件的每天一条；重复导入只补缺失的天
+  const existKeys=new Set(notes.filter(n=>'_ics' in n).map(n=>n._ics+'@'+(n.title||'')));
+  const base=Date.now();
+  let seq=0,added=0,skipped=0,recolored=0;
+  // 这几本日历里已经导过的事件：补/改颜色，这样只为换色重导一次也能生效
+  notes.forEach(n=>{
+    if(n.subCat!=='日历')return;
+    const k=n._icsCal||(n.tags||[]).find(t=>t!=='日历导入'&&colorOf[t]);
+    if(k&&colorOf[k]&&n._icsColor!==colorOf[k]){n._icsColor=colorOf[k];n._icsCal=k;recolored++;}
+  });
+  for(const {events,calName,key} of parsed){
+    const color=colorOf[key];
     events.forEach(evt=>{
       const span=icsSpanDays(evt.dtstart,evt.dtend);
       if(!span.days.length){skipped++;return;}
@@ -9140,9 +9307,9 @@ async function importICS(e){
       if(calName&&!/@/.test(calName)&&!tags0.includes(calName))tags0.push(calName);
       if(evt.cats)evt.cats.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{if(!tags0.includes(c))tags0.push(c);});
       span.days.forEach((ymd,di)=>{
-        const key=uid+'@'+ymd;
-        if(uid&&existKeys.has(key)){skipped++;return;}
-        if(uid)existKeys.add(key);
+        const dkey=uid+'@'+ymd;
+        if(uid&&existKeys.has(dkey)){skipped++;return;}
+        if(uid)existKeys.add(dkey);
         const meta=[];
         if(di===0&&span.time)meta.push(span.time);        // 时间只标在第一天
         if(multi)meta.push(`第${di+1}/${span.days.length}天`);  // 跨天进度
@@ -9150,20 +9317,23 @@ async function importICS(e){
         let body='**'+summary+'**';
         if(meta.length)body+='\n'+meta.join(' · ');
         if(evt.desc)body+='\n'+evt.desc;
-        notes.push({id:nuid(),title:ymd,subCat:'日历',tags:tags0.slice(),body,createdAt:base+seq,updatedAt:base+seq,_ics:uid});
+        notes.push({id:nuid(),title:ymd,subCat:'日历',tags:tags0.slice(),body,
+          createdAt:base+seq,updatedAt:base+seq,_ics:uid,_icsCal:key,_icsColor:color});
         seq++;added++;
       });
     });
   }
-  if(added)persistNotes();
+  if(added||recolored)persistNotes();
   render();
   if(added){
     const parts=[`+${added} 条`];
     if(skipped)parts.push(`跳过 ${skipped} 条重复/无日期`);
-    if(files.length>1)parts.push(`${files.length} 份日历`);
+    if(parsed.length>1)parts.push(`${parsed.length} 份日历`);
     toast('日历导入完成：'+parts.join('，'));
+  }else if(recolored){
+    toast(`没有新增，已给 ${recolored} 条已导入事件换上新颜色`);
   }else{
-    toast(noEvt?'没找到日历事件（.ics 里没有 VEVENT）':'没有新增（都已存在或无日期）');
+    toast('没有新增（都已存在或无日期）');
   }
 }
 // 一键删除所有从 .ics 导入的日历事件（不动手写的笔记 / 媒体记录），方便重新导入
@@ -9471,7 +9641,7 @@ function calSearchItems(){
     const dm=(n.body||'').match(/第(\d+)\/(\d+)天/);   // 跨天事件正文里的「第X/Y天」
     items.push({date:`${m[1]}-${m[2]}-${m[3]}`,uid:n._ics||'',
       title:calNoteTitle({body:n.body||'',subCat:n.subCat}),dayLabel:dm?`第${dm[1]}天`:'',
-      meta:n.subCat||'笔记',color:noteDotColor(n.subCat),
+      meta:n.subCat||'笔记',color:calNoteColor(n),
       hay:[n.body,(n.tags||[]).join(' ')].join(' ').toLowerCase()});
   });
   return items;
@@ -9574,7 +9744,7 @@ function renderCal(){
     if(!m)return;
     if(!calRecVisible({_isNote:true,subCat:note.subCat}))return;   // 按图例筛选
     items.push({date:`${m[1]}-${m[2]}-${m[3]}`,uid:note._ics||'',
-      title:calNoteTitle({body:note.body||'',subCat:note.subCat}),color:noteDotColor(note.subCat),
+      title:calNoteTitle({body:note.body||'',subCat:note.subCat}),color:calNoteColor(note),
       isCal:note.subCat==='日历'});
   });
   // 归并成 span（同 uid 连续日期 = 一条跨天条）+ 分配泳道
