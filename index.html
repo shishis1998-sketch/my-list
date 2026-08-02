@@ -1888,11 +1888,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-dark:#1E3830;
   --hm-hit:#164A3B;    /* 记录格（沿用热力图色阶最深一档） */}
 #calViewHeat::-webkit-scrollbar{display:none;}
-/* 月份导航：与日历页的「‹ 年 月 ›」同款 */
+/* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色
+   （白天黑、夜间白）。这里的 --accent 是钉死的墨绿，拿来做文字夜间会看不清。 */
 #calViewHeat .hm-hdr{display:flex;align-items:center;padding:var(--sp-6) 0 var(--sp-12);}
 #calViewHeat .hm-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}
-#calViewHeat .hm-titlenav .cal-navbtn{width:26px;}
-#calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);
+#calViewHeat .hm-titlenav .cal-navbtn{width:26px;color:var(--text-primary);}
+#calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
   letter-spacing:.03em;padding:0 var(--sp-2);white-space:nowrap;}
 /* 标签卡：手机两列，宽屏自动加列 */
 #calViewHeat .hm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
@@ -1917,7 +1918,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    （两个方向都写 2px 的话，竖向真就是 2px，看着行挤列松）*/
 #calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);
   column-gap:var(--sp-2);row-gap:var(--sp-6);}
-/* 日期格与「月度」同一套语言：平时只有数字，记过的那天才出现一个实心正圆。
+/* 日期格与「经期」同一套语言：平时只有数字，记过的那天才出现一个实心正圆。
    18px 定宽（不撑满 21.6px 的轨道），圆与圆之间留出空隙；居中靠 margin auto。 */
 #calViewHeat .hm-cell{width:18px;height:18px;margin:0 auto;border-radius:50%;background:transparent;
   display:flex;align-items:center;justify-content:center;font-family:var(--en);
@@ -2832,9 +2833,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   font-family:var(--zh);letter-spacing:.02em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
-/* 翻页按钮：宽 26px、无描边透明、墨绿、字号 16px，与普通日历 .cal-titlenav .cal-navbtn 一致 */
+/* 翻页按钮：宽 26px、无描边透明、字号 16px。颜色跟着旁边的年月标题走（白天黑、夜间白）——
+   经期作用域里的 --accent 被钉死成墨绿，用它的话夜间就是深绿压深底，几乎看不见。 */
 #calViewPeriod .pv-navbtn{width:26px;height:32px;border:none;background:transparent;border-radius:8px;
-  cursor:pointer;font-size:16px;color:var(--accent);display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;
   padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
 /* 筛选按钮：去掉圆形描边和白底，跟普通日历一样朴素 */
 #calViewPeriod .home-filter-btn{width:32px;height:32px;border:none !important;background:transparent !important;
@@ -2892,6 +2894,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 /* ── 经期视图：自带一整套浅色调色板，整体翻到深色 ── */
 :root[data-mode="dark"] #calViewPeriod{
+  /* 这棵子树里的 --accent 被钉死成白天的墨绿，夜间必须提亮（与 #calViewHeat 同一档），
+     否则唯一用到它的筛选按钮就是深绿压深底 */
+  --accent:#6FB394;--accent-light:#1E2C26;--accent-mid:#8CC7AC;
+  --accent-dark:#8ECBB0;--accent-rgb:111,179,148;
   --ink:#EDEDEF;--ink-2:#C9C9D0;--body:#A6A6AD;--muted:#8A8A92;--faint:#6E6E76;--disabled:#3A3A42;
   --surface:#1C1C1F;--surface-2:#26262A;--frost:#1C1C1F;
   --line:#2E2E33;--line-soft:#26262A;
@@ -3484,7 +3490,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
         <span class="cvt-thumb" id="cvtThumb"></span>
         <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
-        <button class="cvt" data-cv="month" onclick="setCalView('month')">月度</button>
+        <button class="cvt" data-cv="month" onclick="setCalView('month')">经期</button>
         <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
         <button class="cvt" data-cv="heat" onclick="setCalView('heat')">标签</button>
       </div>
@@ -7240,7 +7246,7 @@ window.PV = (function(){
   const HEAT_WK = ['一','二','三','四','五','六','日'];
   let heatYear = 0, heatMonth = 0, heatPos = false;
 
-  // 从「月度 / 年度」切进来 → 跟随那边当前停留的年月；
+  // 从「经期 / 年度」切进来 → 跟随那边当前停留的年月；
   // 从「日历」切进来 → 保留自己的位置，本次日历页会话里第一次进入才回到当前月
   function openHeat(prev){
     if (prev === 'month' || prev === 'year') {
@@ -7255,7 +7261,7 @@ window.PV = (function(){
     heatYear = now.getFullYear(); heatMonth = now.getMonth() + 1; heatPos = true;
   }
 
-  // ‹ › 翻月：只动标签视图自己，不回写「月度」的位置
+  // ‹ › 翻月：只动标签视图自己，不回写「经期」的位置
   function heatShift(delta){
     let m = heatMonth + delta;
     if (m < 1) { m = 12; heatYear -= 1; }
@@ -7290,7 +7296,7 @@ window.PV = (function(){
     if (!cards.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
         '<p>这个月还没有标签记录</p>' +
-        '<small>在「月度」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
+        '<small>在「经期」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
       return;
     }
     const wkHead = HEAT_WK.map(w => `<div>${w}</div>`).join('');
@@ -7379,7 +7385,7 @@ function setCalView(v){
   try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
   if(isH&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
-    PV.openHeat(prev);   // 从月度/年度切进来时跟随那边的年月
+    PV.openHeat(prev);   // 从经期/年度切进来时跟随那边的年月
   }
   if(isP&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
