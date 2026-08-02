@@ -18,7 +18,11 @@
   /* 主题色(可在设置里切换,见 THEMES / applyTheme)。四个值一套 + rgb 分量供半透明用 */
   --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-mid:#4A7B68;
   --accent-dark:#1E3830;--accent-rgb:43,77,63;
-  --danger:#9B2020;--danger-bg:#FBEDED;--gold:#6B6B6B;
+  --danger:#9B2020;--danger-fill:#9B2020;--danger-bg:#FBEDED;--danger-bg-hover:#F7C1C1;--gold:#6B6B6B;
+  /* accent 填充块上的前景色：浅色模式是白字，夜间 accent 提亮后改深字 */
+  --on-accent:#fff;--on-accent-soft:rgba(255,255,255,.7);--on-accent-faint:rgba(255,255,255,.45);
+  /* 卡片底部渐隐遮罩的起点：必须是「透明的 surface」，夜间不能留白雾 */
+  --surface-fade:rgba(255,255,255,0);
   /* 极简风：次级浅灰块代替米色衬底 */
   --surface-2:#F2F2F0;
   --gold-soft:#EDEDEB;
@@ -57,6 +61,32 @@
 :root[data-theme="vermilion"]{  /* 朱橘 */
   --accent:#AC451A;--accent-light:#F6EBE6;--accent-mid:#B65B35;
   --accent-dark:#863614;--accent-rgb:172,69,26;
+}
+
+/* === 夜间模式（设置 › 外观）。只换配色变量，版式/间距/圆角一律不动 ===
+   深底上 accent 必须提亮才看得清，所以填充按钮里的文字改用 --on-accent（深色）。
+   --accent-dark 在夜间是「更亮」的那一档，:active 按下去仍有反馈。 */
+:root[data-mode="dark"]{
+  color-scheme:dark;
+  --bg:#121214;--surface:#1C1C1F;--border:#2E2E33;--border-soft:#26262A;
+  --text-primary:#EDEDEF;--text-secondary:#A6A6AD;--text-muted:#77777E;
+  --accent:#6FB394;--accent-light:#1E2C26;--accent-mid:#8CC7AC;
+  --accent-dark:#8ECBB0;--accent-rgb:111,179,148;
+  --on-accent:#10201A;--on-accent-soft:rgba(16,32,26,.55);--on-accent-faint:rgba(16,32,26,.38);
+  --danger:#E58080;--danger-fill:#8E3030;--danger-bg:#2C1A1A;--danger-bg-hover:#3A2020;
+  --gold:#A6A6AD;--surface-2:#26262A;--gold-soft:#26262A;
+  --ink:#33333A;--ink-deep:#EDEDEF;
+  --surface-fade:rgba(28,28,31,0);
+}
+:root[data-mode="dark"][data-theme="azure"]{
+  --accent:#5FA0EA;--accent-light:#16222F;--accent-mid:#83B8F1;
+  --accent-dark:#83B8F1;--accent-rgb:95,160,234;
+  --on-accent:#0B1A2B;--on-accent-soft:rgba(11,26,43,.55);--on-accent-faint:rgba(11,26,43,.38);
+}
+:root[data-mode="dark"][data-theme="vermilion"]{
+  --accent:#E5825A;--accent-light:#2B1D16;--accent-mid:#EF9B79;
+  --accent-dark:#EF9B79;--accent-rgb:229,130,90;
+  --on-accent:#2A1109;--on-accent-soft:rgba(42,17,9,.55);--on-accent-faint:rgba(42,17,9,.38);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 /* 去掉按钮/链接/可点击元素被点击后残留的蓝色聚焦背景（安卓 Chromium）；
@@ -165,7 +195,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .addbtn{
   flex:0 0 auto;
   display:inline-flex;align-items:center;gap:var(--sp-6);
-  background:var(--accent);color:#fff;
+  background:var(--accent);color:var(--on-accent);
   border:none;border-radius:var(--r);
   padding:var(--sp-8) var(--sp-16);font-size:var(--fs-caption);font-weight:700;font-family:var(--zh);
   cursor:pointer;transition:background .15s;
@@ -193,7 +223,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   font-family:var(--zh);transition:all .12s;white-space:nowrap;
 }
 .fchip:hover{border-color:var(--accent-mid);color:var(--accent);}
-.fchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.fchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .fsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
 
 /* --- CONTENT --- */
@@ -243,7 +273,7 @@ td.c-cover-td{padding:var(--sp-10) var(--sp-4) var(--sp-10) var(--sp-12);vertica
 tr:not(.note-expanded) .cnote-wrap .cnote{max-height:66px;}
 tr:not(.note-expanded) .cnote-wrap .cnote::after{
   content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
-  background:linear-gradient(to bottom, rgba(253,252,248,0), var(--surface));
+  background:linear-gradient(to bottom, var(--surface-fade), var(--surface));
   pointer-events:none;
 }
 tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
@@ -331,7 +361,7 @@ tr:hover .acts{opacity:1;}
 .tchip button{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:var(--fs-caption);padding:0;line-height:1;}
 .tinput{-webkit-appearance:none;appearance:none;border:none;outline:none;background:none;font-size:var(--fs-caption);font-family:var(--zh);color:var(--text-primary);flex:1;min-width:70px;padding:var(--sp-2) var(--sp-4);height:28px;}
 .tadd-btn{background:var(--accent-light);color:var(--accent);border:none;border-radius:var(--rchip);width:28px;height:28px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-weight:700;font-family:var(--en);}
-.tadd-btn:hover{background:var(--accent);color:#fff;}
+.tadd-btn:hover{background:var(--accent);color:var(--on-accent);}
 .tadd-btn:active{transform:scale(.95);}
 /* 常用标签区 */
 .tsugg-wrap{margin-top:var(--sp-8);}
@@ -355,12 +385,12 @@ tr:hover .acts{opacity:1;}
 
 .mftr{display:flex;justify-content:flex-end;gap:var(--sp-8);padding:var(--sp-14) var(--sp-24) var(--sp-24);border-top:1px solid var(--border-soft);flex:0 0 auto;}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-6);padding:var(--sp-8) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
-.btn-p{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn-p{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .btn-p:hover{background:var(--accent-dark);}
 .btn-g{background:var(--bg);border-color:var(--border);color:var(--text-secondary);}
 .btn-g:hover{border-color:var(--text-muted);color:var(--text-primary);}
 .btn-d{background:var(--danger-bg);color:var(--danger);}
-.btn-d:hover{background:#F7C1C1;}
+.btn-d:hover{background:var(--danger-bg-hover);}
 
 /* cat manager */
 .cml{display:flex;flex-direction:column;gap:var(--sp-6);margin-bottom:var(--sp-14);}
@@ -386,7 +416,7 @@ tr:hover .acts{opacity:1;}
 .cfbtns{display:flex;gap:var(--sp-8);justify-content:flex-end;}
 
 /* toast */
-.toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:#fff;padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:200;display:flex;align-items:center;gap:var(--sp-6);}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:200;display:flex;align-items:center;gap:var(--sp-6);}
 .toast.show{transform:translateY(0);opacity:1;}
 
 ::-webkit-scrollbar{width:5px;}
@@ -684,7 +714,7 @@ tr:hover .acts{opacity:1;}
     border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);
     font-family:var(--zh);white-space:nowrap;flex-shrink:0;transition:all .12s;
   }
-  .catfrow .nfchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .catfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
   .catfrow .nfchip-dashed{border-style:dashed;color:var(--accent-mid);}
   .catfrow .nfsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
   /* 笔记模式下隐藏分类条(此时显示 nfrow 子分类条) */
@@ -754,12 +784,12 @@ tr:hover .acts{opacity:1;}
     background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);
     cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
   .bb-addbtn{flex:0 0 auto;height:38px;padding:0 var(--sp-16);border-radius:var(--r);
-    background:var(--accent);color:#fff;border:none;cursor:pointer;
+    background:var(--accent);color:var(--on-accent);border:none;cursor:pointer;
     display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-6);
     font-family:var(--zh);font-weight:700;font-size:14px;white-space:nowrap;max-width:50vw;overflow:hidden;}
   .bb-addbtn span{overflow:hidden;text-overflow:ellipsis;}
   .bb-sortbtn:active,.bb-addbtn:active{transform:scale(.96);}
-  .bb-sortbtn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .bb-sortbtn.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
 
   .bb-tabs{display:flex;align-items:stretch;}
   .bb-tab{flex:1;background:none;border:none;cursor:pointer;
@@ -894,7 +924,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
 .cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:3px;max-width:100%;}
 .cal-dot{width:5px;height:5px;border-radius:50%;flex:none;}
-.cal-count{font-size:var(--fs-foot);background:var(--accent);color:#fff;padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
+.cal-count{font-size:var(--fs-foot);background:var(--accent);color:var(--on-accent);padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
 /* —— 类目圆点：当天出现过的每种类目色画一个点（去重），一眼看当天收集了哪些类型 —— */
 .cal-detail{padding:var(--sp-20) var(--sp-4) var(--sp-8);}
 .cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-12);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
@@ -999,7 +1029,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   font-family:var(--zh);transition:all .12s;white-space:nowrap;flex-shrink:0;
 }
 .nfrow .nfchip:hover{border-color:var(--accent-mid);color:var(--accent);}
-.nfrow .nfchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.nfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .nfrow .nfchip-cnt{font-size:var(--fs-foot);opacity:.7;margin-left:var(--sp-4);font-family:var(--en);}
 .nfrow .nfchip.on .nfchip-cnt{opacity:.85;}
 .nfrow .nfsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
@@ -1064,7 +1094,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   display:flex;align-items:center;justify-content:center;
   border:0;margin:0;padding:0;cursor:pointer;
   border-radius:0 var(--rlg) var(--rlg) 0;
-  background:var(--danger);color:#fff;
+  background:var(--danger-fill);color:#fff;
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
 .swipe-del:active{background:#7f1a1a;}
@@ -1074,7 +1104,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   display:flex;align-items:center;justify-content:center;
   border:0;margin:0;padding:0;cursor:pointer;
   border-radius:var(--rlg) 0 0 var(--rlg);
-  background:var(--accent);color:#fff;
+  background:var(--accent);color:var(--on-accent);
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
 .swipe-edit:active{background:var(--accent-dark);}
@@ -1141,7 +1171,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* 折叠时底部渐变遮罩：暗示「下面还有内容」 */
 .note-card.collect:not(.expanded) .note-preview::after{
   content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
-  background:linear-gradient(to bottom, rgba(253,252,248,0), var(--surface));
+  background:linear-gradient(to bottom, var(--surface-fade), var(--surface));
   pointer-events:none;
 }
 .note-card.collect.expanded .note-preview{
@@ -1167,7 +1197,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   font-family:var(--zh);box-sizing:border-box;
   transition:background .12s;
 }
-.tl-btn:hover{background:rgba(0,0,0,0.06);}
+.tl-btn:hover{background:var(--surface-2);}
 .tl-btn[disabled]{opacity:.4;cursor:not-allowed;}
 
 /* 读书笔记时间线弹窗 */
@@ -1185,7 +1215,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   display:flex;align-items:center;justify-content:center;
   border:0;margin:0;padding:0;cursor:pointer;
   border-radius:0 var(--rlg) var(--rlg) 0;
-  background:var(--accent);color:#fff;
+  background:var(--accent);color:var(--on-accent);
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:700;letter-spacing:.05em;
 }
 .tl-swipe-edit:active{background:var(--accent-dark);}
@@ -1209,12 +1239,12 @@ body.cal-searching .cal-searchresults{display:flex;}
   border-radius:calc(var(--rlg) - var(--bd)) calc(var(--rlg) - var(--bd)) 0 0;}
 /* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时在墨绿底带上转为半透明白 */
 .tl-bar{flex-shrink:0;width:3px;border-radius:2px;background:var(--accent-light);transition:background .18s;}
-.tl-item.open .tl-bar{background:rgba(255,255,255,.7);}
+.tl-item.open .tl-bar{background:var(--on-accent-soft);}
 /* 标题 + 折叠时的预览行（首段正文，一行截断，展开后隐藏） */
 .tl-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--text-primary);line-height:var(--lh-normal);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tl-item.open .tl-ch{color:#fff;}
+.tl-item.open .tl-ch{color:var(--on-accent);}
 .tl-peek{margin-top:var(--sp-2);font-size:var(--fs-caption);color:var(--text-muted);
   line-height:var(--lh-normal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-item.open .tl-peek{display:none;}
@@ -1239,8 +1269,8 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlsheet-head{flex-shrink:0;background:var(--accent);padding:7px 16px 12px;cursor:grab;
   touch-action:none;user-select:none;-webkit-user-select:none;}
 .tlsheet-head:active{cursor:grabbing;}
-.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.45);margin:0 auto 10px;}
-.tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:#fff;line-height:1.4;
+.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 10px;}
+.tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
@@ -1282,7 +1312,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   font-weight:600;padding:var(--sp-14) 0;cursor:pointer;transition:transform .12s;
 }
 .tle-btn:active{transform:scale(.96);}
-.tle-save{background:var(--accent);color:#fff;}
+.tle-save{background:var(--accent);color:var(--on-accent);}
 .tle-cancel{background:var(--accent-light);color:var(--accent);}
 @media(max-width:768px){
   #tlEditModal .mhdr{padding:var(--sp-14) var(--sp-16) var(--sp-12);}
@@ -1517,7 +1547,7 @@ textarea.mfsheet-input{min-height:110px;resize:none;white-space:pre-wrap;}
 .mfsheet-bar{display:flex;gap:10px;margin-top:16px;}
 .mfsheet-btn{flex:1;font-family:var(--zh);font-size:15px;font-weight:600;padding:13px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .1s;}
 .mfsheet-btn:active{transform:scale(0.98);}
-.mfsheet-btn.ok{background:var(--accent);border-color:var(--accent);color:#fff;}
+.mfsheet-btn.ok{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
 .mfsheet-btn.cancel{background:var(--bg);color:var(--text-secondary);}
 
 /* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
@@ -1606,14 +1636,14 @@ mark.shl{
   box-shadow:none;
 }
 .fchip:hover{color:var(--text-primary);}
-.fchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.fchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .fchip:active{transform:scale(.95);}
 
 /* —— 侧边栏导航项：选中态（极简：淡墨绿点缀，直角）—— */
 .nitem{border-radius:var(--r);font-family:var(--zh);}
 .nitem.on{background:var(--accent-light);color:var(--accent);}
 .nitem.parent-on{color:var(--accent);background:none;}
-.nitem.on .ncnt{background:#fff;color:var(--accent);}
+.nitem.on .ncnt{background:var(--surface);color:var(--accent);}
 .ncnt{font-family:var(--zh);}
 .sidebar{background:var(--surface);border-right:var(--bd) solid var(--ink);}
 
@@ -1662,7 +1692,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   box-shadow:none;
 }
 .btn:active{transform:scale(.96);}
-.btn-p{background:var(--accent);color:#fff;}
+.btn-p{background:var(--accent);color:var(--on-accent);}
 .btn-p:hover{background:var(--ink-deep);}
 .btn-g{background:var(--surface);color:var(--text-primary);}
 
@@ -1686,7 +1716,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
   border:var(--bd) solid var(--ink);background:var(--surface);color:var(--text-primary);
   box-shadow:none;
 }
-.nfrow .nfchip.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.nfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 
 /* 笔记卡片：圆角 + 描边（无投影）*/
 .note-card{
@@ -2759,11 +2789,78 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod #pvExtras .sym-list{display:block;background:#FFFFFF;border:1px solid var(--border);
   box-shadow:none;border-radius:16px;}
 #calViewPeriod #pvExtras .sym-list{padding:16px 14px;}
+
+/* ═══ 夜间模式补丁：变量管不到的硬编码浅色，在这里按 data-mode 覆盖 ═══
+   放在样式表最后，靠源码顺序压过前面同优先级的规则。 */
+
+/* 备忘「明文上云」警示徽章：浅琥珀在深底上刺眼，换成低饱和暗琥珀 */
+:root[data-mode="dark"] .memo-lock.plain{color:#E8B45C;background:#33270F;}
+
+/* 标签视图把 accent 钉死成墨绿（不跟主题色），夜间要提亮，否则近乎看不见 */
+:root[data-mode="dark"] #calViewHeat{
+  --accent:#6FB394;--accent-light:#1E2C26;--accent-dark:#8ECBB0;--hm-hit:#3E8A6C;
+}
+
+/* ── 经期视图：自带一整套浅色调色板，整体翻到深色 ── */
+:root[data-mode="dark"] #calViewPeriod{
+  --ink:#EDEDEF;--ink-2:#C9C9D0;--body:#A6A6AD;--muted:#8A8A92;--faint:#6E6E76;--disabled:#3A3A42;
+  --surface:#1C1C1F;--surface-2:#26262A;--frost:#1C1C1F;
+  --line:#2E2E33;--line-soft:#26262A;
+  --brand:#DE5F76;--brand-dark:#C24259;--brand-soft:#301A20;--brand-tint:#42222A;
+  --info:#4FB3E8;--danger:#E8617A;--ok:#4ADE80;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.45);
+  --shadow-card:0 8px 8px -8px rgba(0,0,0,.55);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.6);
+  --shadow-nav:0 -2px 12px rgba(0,0,0,.4);
+}
+/* 经期视图里写死的白底卡片/控件，统一换成 surface */
+:root[data-mode="dark"] #calViewPeriod .home-filter-btn,
+:root[data-mode="dark"] #calViewPeriod .home-filter-menu,
+:root[data-mode="dark"] #calViewPeriod .year-picker-sheet,
+:root[data-mode="dark"] #calViewPeriod .stats-modal,
+:root[data-mode="dark"] #calViewPeriod .cyc-nav,
+:root[data-mode="dark"] #calViewPeriod .pv-trend-card,
+:root[data-mode="dark"] #calViewPeriod .month.zoomed,
+:root[data-mode="dark"] #calViewPeriod .bottom-nav,
+:root[data-mode="dark"] #calViewPeriod .hm-nav,
+:root[data-mode="dark"] #calViewPeriod .hm-chip.on,
+:root[data-mode="dark"] #calViewPeriod .hm-viewtoggle,
+:root[data-mode="dark"] #calViewPeriod .home-viewtoggle,
+:root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .month,
+:root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .day-info-bar,
+:root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .day-status-bar,
+:root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .sym-list,
+:root[data-mode="dark"] #calViewPeriod .calendar-container.one-col .month:not(.zoomed) .sym-list,
+:root[data-mode="dark"] #calViewPeriod #pvExtras .sym-list,
+:root[data-mode="dark"] #calViewPeriod .stcard,
+:root[data-mode="dark"] #calViewPeriod .me-tile,
+:root[data-mode="dark"] #calViewPeriod .hm-tile,
+:root[data-mode="dark"] #calViewPeriod .hm-tcard{background:var(--surface);}
+/* 剩下的零散浅色块：淡粉/淡蓝底、浅灰分隔线 */
+:root[data-mode="dark"] #calViewPeriod .year-picker-item:hover{background:var(--surface-2);}
+:root[data-mode="dark"] #calViewPeriod .act-pull{background:#152B38;}
+:root[data-mode="dark"] #calViewPeriod .me-btn.danger{background:#3A1D24;}
+:root[data-mode="dark"] #calViewPeriod .me-btn.danger:active{background:#4A252E;}
+:root[data-mode="dark"] #calViewPeriod .pd-pill{background:#331A22;}
+:root[data-mode="dark"] #calViewPeriod .stats-pred{background:linear-gradient(135deg,#33202A,var(--brand-soft));}
+:root[data-mode="dark"] #calViewPeriod .sym-row + .sym-row{border-top-color:var(--line);}
+:root[data-mode="dark"] #calViewPeriod .hm-dist{border-top-color:var(--line);}
+/* 热力图色阶：浅绿阶在深底上糊成一片，整体压深并把空格改成深灰 */
+:root[data-mode="dark"] #calViewPeriod .heatmap-page{
+  --hm0:#26262A;--hm1:#25443A;--hm2:#356B57;--hm3:#3E8A6C;--hm4:#57AE8B;
+  --hm-accent:#6FB394;--hm-canvas:#161618;
+}
 </style>
 <script>
 // 主题色：尽早写上 data-theme，避免加载时先闪一下墨绿
 (function(){try{var t=localStorage.getItem('my_list_theme_v1');
-  if(t&&t!=='green')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+  if(t&&t!=='green')document.documentElement.setAttribute('data-theme',t);
+  // 明暗模式也要在首帧之前定下来，否则夜间模式会先闪一下白底
+  var m=localStorage.getItem('my_list_mode_v1')||'auto';
+  var dark=(m==='dark')||(m==='auto'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);
+  if(dark){document.documentElement.setAttribute('data-mode','dark');
+    var mt=document.querySelector('meta[name=theme-color]');if(mt)mt.setAttribute('content','#121214');}
+  }catch(e){}})();
 </script>
 </head>
 <body>
@@ -2812,7 +2909,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   </div>
   <div class="nsec">
     <div class="nlbl">外观</div>
-    <div class="ncard" id="themeRow" role="radiogroup" aria-label="主题色"></div>
+    <div class="ncard" id="modeRow" role="radiogroup" aria-label="明暗模式"></div>
+    <div class="ncard" id="themeRow" role="radiogroup" aria-label="主题色" style="margin-top:var(--sp-10)"></div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
@@ -7272,10 +7370,10 @@ function fmtTitle(item){
 // ── 主题色（设置 › 外观）────────────────────────────────
 // 每套只改 5 个 CSS 变量，定义在 :root[data-theme=...]；'green' 是 :root 默认值，不写属性
 const THEME_KEY='my_list_theme_v1';
-const THEMES=[
-  {id:'green',     name:'墨绿', c:'#2B4D3F'},
-  {id:'azure',     name:'晴蓝', c:'#1964C7'},
-  {id:'vermilion', name:'朱橘', c:'#AC451A'},
+const THEMES=[   // c=白天的圆点色，cd=夜间的（与 CSS 里 data-mode=dark 的 --accent 一致）
+  {id:'green',     name:'墨绿', c:'#2B4D3F', cd:'#6FB394'},
+  {id:'azure',     name:'晴蓝', c:'#1964C7', cd:'#5FA0EA'},
+  {id:'vermilion', name:'朱橘', c:'#AC451A', cd:'#E5825A'},
 ];
 let curTheme='green';   // 当前生效的主题；列表的选中态以它为准，不再回读 localStorage
 function getTheme(){
@@ -7297,6 +7395,56 @@ function applyTheme(id,save,quiet){
   }
   renderThemeRow();
 }
+// ── 明暗模式（白天 / 夜间 / 跟随系统）────────────────
+// 只切 <html data-mode>，配色全部由 CSS 变量接管，JS 不碰任何具体颜色。
+const MODE_KEY='my_list_mode_v1';
+const MODES=[
+  {id:'light',name:'白天',c:'#FFFFFF'},
+  {id:'dark', name:'夜间',c:'#1C1C1F'},
+  {id:'auto', name:'跟随系统',c:'linear-gradient(90deg,#FFFFFF 50%,#1C1C1F 50%)'},
+];
+let curMode='auto';
+function getMode(){
+  let m=null;try{m=localStorage.getItem(MODE_KEY);}catch(e){}
+  return MODES.some(x=>x.id===m)?m:'auto';
+}
+function prefersDark(){return !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);}
+function isDarkMode(){return curMode==='dark'||(curMode==='auto'&&prefersDark());}
+function applyMode(id,save,quiet){
+  const m=MODES.some(x=>x.id===id)?id:'auto';
+  curMode=m;
+  const dark=isDarkMode();
+  if(dark)document.documentElement.setAttribute('data-mode','dark');
+  else document.documentElement.removeAttribute('data-mode');
+  // 地址栏/状态栏颜色跟着走，不然深色页面顶上顶着一条浅色
+  const mt=document.querySelector('meta[name=theme-color]');
+  if(mt)mt.setAttribute('content',dark?'#121214':'#F7F7F5');
+  if(save){
+    try{localStorage.setItem(MODE_KEY,m);}catch(e){}
+    if(!quiet)toast('已切换到'+(MODES.find(x=>x.id===m)||{}).name);
+  }
+  renderModeRow();
+  renderThemeRow();   // 主题色圆点分白天/夜间两档，切模式时一起刷新
+}
+function renderModeRow(){
+  const row=document.getElementById('modeRow');
+  if(!row)return;
+  const tick='<span class="theme-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"'+
+    ' stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
+    '<polyline points="20 6 9 17 4 12"/></svg></span>';
+  row.innerHTML=MODES.map(m=>
+    `<button type="button" class="nitem${m.id===curMode?' on':''}" data-mode-id="${m.id}"`+
+    ` role="radio" aria-checked="${m.id===curMode}" onclick="applyMode('${m.id}',true)">`+
+    `<span class="dot" style="background:${m.c};box-shadow:inset 0 0 0 1px var(--border)"></span>${m.name}${tick}</button>`).join('');
+}
+// 「跟随系统」时，系统切换明暗要即时跟上
+if(window.matchMedia){
+  const mq=window.matchMedia('(prefers-color-scheme:dark)');
+  const onSys=()=>{if(curMode==='auto')applyMode('auto',false);};
+  if(mq.addEventListener)mq.addEventListener('change',onSys);
+  else if(mq.addListener)mq.addListener(onSys);
+}
+
 function renderThemeRow(){
   const row=document.getElementById('themeRow');
   if(!row)return;
@@ -7307,11 +7455,12 @@ function renderThemeRow(){
   row.innerHTML=THEMES.map(t=>
     `<button type="button" class="nitem${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
     ` role="radio" aria-checked="${t.id===cur}" onclick="applyTheme('${t.id}',true)">`+
-    `<span class="dot" style="background:${t.c}"></span>${t.name}${tick}</button>`).join('');
+    `<span class="dot" style="background:${(typeof isDarkMode==='function'&&isDarkMode())?t.cd:t.c}"></span>${t.name}${tick}</button>`).join('');
 }
 
 function boot(){
   applyTheme(getTheme(),false);
+  applyMode(getMode(),false);
   loadPeriod();
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
   try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
