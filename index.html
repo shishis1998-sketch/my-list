@@ -7524,6 +7524,10 @@ function applyTheme(id,save,quiet){
     if(!quiet){
       const name=(THEMES.find(x=>x.id===t)||{}).name||'';
       toast('已切换到'+name);
+      // 主题在同步载荷里（payload.theme），不推上去的话云端一直是旧值，
+      // 下次开页面 pullFromGist 会把它按旧值刷回来——刷新后颜色变回去就是这么来的。
+      // quiet=true 是同步拉取自己调进来的，那种情况不能再推，否则来回打架。
+      scheduleSyncPush();
     }
   }
   renderThemeRow();
