@@ -2839,8 +2839,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   cursor:pointer;font-size:16px;color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;
   padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
 /* 筛选按钮：去掉圆形描边和白底，跟普通日历一样朴素 */
+/* 筛选按钮：常态与翻页箭头同色（白天黑、夜间白）；只有真的在筛选时才亮成墨绿，
+   让「有没有在筛」一眼能分辨 */
 #calViewPeriod .home-filter-btn{width:32px;height:32px;border:none !important;background:transparent !important;
-  color:var(--accent);}
+  color:var(--text-primary);}
 #calViewPeriod .home-filter-btn.act{background:transparent !important;color:var(--accent) !important;}
 /* 去掉内层月卡重复卡片样式（外层 pv-cardwrap 已是卡片） */
 #calViewPeriod .calendar-container.month-view .month{background:transparent !important;border:none !important;
