@@ -6687,10 +6687,18 @@ window.PV = (function(){
       sb.innerHTML = rows;
     }
 
-    // 每个标签一共记过多少天 → 供「从已有标签选择」按常用度排序
+    // 每个标签在最近 60 天里记过多少天 → 供「从已有标签选择」按近期常用度排序。
+    // 只看近期而不是全部历史：早年高频、如今不再记的标签不该一直占着第一行。
+    const SYM_RECENT_DAYS = 60;
     function symUseCount() {
+      const now = new Date();
+      const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
       const c = {};
       Object.keys(SYMPTOMS_DATA).forEach(k => {
+        const p = k.split('-');
+        const t = new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+        const ago = Math.round((today0 - t) / 86400000);   // 0 = 今天
+        if (ago < 0 || ago >= SYM_RECENT_DAYS) return;     // 未来日期与 60 天以前都不计
         (SYMPTOMS_DATA[k] || []).forEach(n => { c[n] = (c[n] || 0) + 1; });
       });
       return c;
@@ -6716,9 +6724,9 @@ window.PV = (function(){
             `<span class="info-tag active" data-name="${escapeAttr(name)}">${escapeHtml(name)}</span>`
           ).join('');
 
-      // 「从已有标签选择」按用得多少排序：记过的天数多的排前面，折叠成一行时
-      // 露在外面的就是最常用的几个。天数相同 / 从没用过的保持 SYMPTOMS_LIB 原序
-      // （sort 稳定），所以新建的标签仍排在末尾、不会乱跳。
+      // 「从已有标签选择」按近期用得多少排序：最近 60 天记过的天数多的排前面，
+      // 折叠成一行时露在外面的就是这阵子最常用的几个。天数相同 / 近 60 天没用过的
+      // 保持 SYMPTOMS_LIB 原序（sort 稳定），所以新建的标签仍排在末尾、不会乱跳。
       const useCount = symUseCount();
       const notSelected = SYMPTOMS_LIB.filter(n => !today.includes(n))
         .sort((a, b) => (useCount[b] || 0) - (useCount[a] || 0));
