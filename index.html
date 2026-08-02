@@ -62,6 +62,34 @@
   --accent:#AC451A;--accent-light:#F6EBE6;--accent-mid:#B65B35;
   --accent-dark:#863614;--accent-rgb:172,69,26;
 }
+:root[data-theme="teal"]{      /* 青碧 */
+  --accent:#0E6B6B;--accent-light:#E8F5F5;--accent-mid:#188A8A;
+  --accent-dark:#064545;--accent-rgb:14,107,107;
+}
+:root[data-theme="indigo"]{      /* 靛蓝 */
+  --accent:#3B4A96;--accent-light:#EBECF2;--accent-mid:#4B5BAF;
+  --accent-dark:#2B3878;--accent-rgb:59,74,150;
+}
+:root[data-theme="plum"]{      /* 梅紫 */
+  --accent:#6E3468;--accent-light:#F1EBF1;--accent-mid:#874480;
+  --accent-dark:#50244C;--accent-rgb:110,52,104;
+}
+:root[data-theme="wine"]{      /* 绛红 */
+  --accent:#93293F;--accent-light:#F3EAEC;--accent-mid:#AE3750;
+  --accent-dark:#721C2E;--accent-rgb:147,41,63;
+}
+:root[data-theme="ochre"]{      /* 赭黄 */
+  --accent:#8A5A11;--accent-light:#F5F0E8;--accent-mid:#A8701C;
+  --accent-dark:#654009;--accent-rgb:138,90,17;
+}
+:root[data-theme="slate"]{      /* 黛蓝 */
+  --accent:#43586B;--accent-light:#EDEFF0;--accent-mid:#556D82;
+  --accent-dark:#304150;--accent-rgb:67,88,107;
+}
+:root[data-theme="graphite"]{      /* 墨灰 */
+  --accent:#3D3D42;--accent-light:#EEEEEF;--accent-mid:#515157;
+  --accent-dark:#27272A;--accent-rgb:61,61,66;
+}
 
 /* === 夜间模式（设置 › 外观）。只换配色变量，版式/间距/圆角一律不动 ===
    深底上 accent 必须提亮才看得清，所以填充按钮里的文字改用 --on-accent（深色）。
@@ -87,6 +115,41 @@
   --accent:#E5825A;--accent-light:#2B1D16;--accent-mid:#EF9B79;
   --accent-dark:#EF9B79;--accent-rgb:229,130,90;
   --on-accent:#2A1109;--on-accent-soft:rgba(42,17,9,.55);--on-accent-faint:rgba(42,17,9,.38);
+}
+:root[data-mode="dark"][data-theme="teal"]{
+  --accent:#2DA6A6;--accent-light:#192B2B;--accent-mid:#3DC4C4;
+  --accent-dark:#3DC4C4;--accent-rgb:45,166,166;
+  --on-accent:#0E2525;--on-accent-soft:rgba(14,37,37,.55);--on-accent-faint:rgba(14,37,37,.38);
+}
+:root[data-mode="dark"][data-theme="indigo"]{
+  --accent:#8B95C4;--accent-light:#1C1E29;--accent-mid:#ABB1D2;
+  --accent-dark:#ABB1D2;--accent-rgb:139,149,196;
+  --on-accent:#131520;--on-accent-soft:rgba(19,21,32,.55);--on-accent-faint:rgba(19,21,32,.38);
+}
+:root[data-mode="dark"][data-theme="plum"]{
+  --accent:#BA86B4;--accent-light:#281D27;--accent-mid:#C9A5C5;
+  --accent-dark:#C9A5C5;--accent-rgb:186,134,180;
+  --on-accent:#1F141E;--on-accent-soft:rgba(31,20,30,.55);--on-accent-faint:rgba(31,20,30,.38);
+}
+:root[data-mode="dark"][data-theme="wine"]{
+  --accent:#CD8292;--accent-light:#2B1A1D;--accent-mid:#D8A5B0;
+  --accent-dark:#D8A5B0;--accent-rgb:205,130,146;
+  --on-accent:#221114;--on-accent-soft:rgba(34,17,20,.55);--on-accent-faint:rgba(34,17,20,.38);
+}
+:root[data-mode="dark"][data-theme="ochre"]{
+  --accent:#C58C34;--accent-light:#2B2419;--accent-mid:#CD9F5A;
+  --accent-dark:#CD9F5A;--accent-rgb:197,140,52;
+  --on-accent:#251C0E;--on-accent-soft:rgba(37,28,14,.55);--on-accent-faint:rgba(37,28,14,.38);
+}
+:root[data-mode="dark"][data-theme="slate"]{
+  --accent:#879AAA;--accent-light:#1F2326;--accent-mid:#A3B0BC;
+  --accent-dark:#A3B0BC;--accent-rgb:135,154,170;
+  --on-accent:#161A1D;--on-accent-soft:rgba(22,26,29,.55);--on-accent-faint:rgba(22,26,29,.38);
+}
+:root[data-mode="dark"][data-theme="graphite"]{
+  --accent:#96969C;--accent-light:#222223;--accent-mid:#AEAEB2;
+  --accent-dark:#AEAEB2;--accent-rgb:150,150,156;
+  --on-accent:#19191A;--on-accent-soft:rgba(25,25,26,.55);--on-accent-faint:rgba(25,25,26,.38);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 /* 去掉按钮/链接/可点击元素被点击后残留的蓝色聚焦背景（安卓 Chromium）；
@@ -146,7 +209,19 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nitem-mode[aria-checked="true"] .nmode-btn{background:var(--accent);}
 .nitem-mode[aria-checked="true"] .nmode-btn svg{stroke:var(--on-accent);}
 .nitem-mode:active .nmode-btn{transform:scale(.92);}
-/* 设置 › 外观：主题色沿用分类管理那套列表行,选中行本身就是该主题色的预览 */
+/* 设置 › 外观：主题色是色块网格。十个色再用列表行会把设置页拉得很长，
+   色块本身就是预览，44px 见方也正好是触控下限。 */
+/* auto-fit 的列数按最小值算：给 36px 下限、1fr 上限，窄侧栏能排 4 个、手机能排 7 个，
+   色块再按剩余宽度均分（外层容器宽度有限，不会撑成大方块）。 */
+.theme-sws{display:grid;grid-template-columns:repeat(auto-fit,minmax(36px,1fr));
+  gap:var(--sp-8);padding:var(--sp-4) var(--sp-10) var(--sp-12);}
+.theme-sw{width:100%;aspect-ratio:1;padding:0;border:none;cursor:pointer;border-radius:var(--r);
+  background:var(--sw);color:#FFFFFF;display:flex;align-items:center;justify-content:center;
+  -webkit-appearance:none;transition:transform .12s;}
+:root[data-mode="dark"] .theme-sw{color:#15161A;}   /* 夜间色块偏亮，勾改深色 */
+.theme-sw:active{transform:scale(.94);}
+/* 选中：色块外一圈同色描边，中间隔一圈卡片底色，深浅底上都看得出来 */
+.theme-sw.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--sw);}
 .theme-check{margin-left:auto;display:inline-flex;color:currentColor;opacity:0;transition:opacity .15s;}
 .nitem.on .theme-check{opacity:1;}
 .ncnt{
@@ -7417,10 +7492,17 @@ function fmtTitle(item){
 // ── 主题色（设置 › 外观）────────────────────────────────
 // 每套只改 5 个 CSS 变量，定义在 :root[data-theme=...]；'green' 是 :root 默认值，不写属性
 const THEME_KEY='my_list_theme_v1';
-const THEMES=[   // c=白天的圆点色，cd=夜间的（与 CSS 里 data-mode=dark 的 --accent 一致）
+const THEMES=[   // c=白天的色块色，cd=夜间的（与 CSS 里 data-mode=dark 的 --accent 一致）
   {id:'green',     name:'墨绿', c:'#2B4D3F', cd:'#6FB394'},
+  {id:'teal',      name:'青碧', c:'#0E6B6B', cd:'#2DA6A6'},
   {id:'azure',     name:'晴蓝', c:'#1964C7', cd:'#5FA0EA'},
+  {id:'indigo',    name:'靛蓝', c:'#3B4A96', cd:'#8B95C4'},
+  {id:'plum',      name:'梅紫', c:'#6E3468', cd:'#BA86B4'},
+  {id:'wine',      name:'绛红', c:'#93293F', cd:'#CD8292'},
   {id:'vermilion', name:'朱橘', c:'#AC451A', cd:'#E5825A'},
+  {id:'ochre',     name:'赭黄', c:'#8A5A11', cd:'#C58C34'},
+  {id:'slate',     name:'黛蓝', c:'#43586B', cd:'#879AAA'},
+  {id:'graphite',  name:'墨灰', c:'#3D3D42', cd:'#96969C'},
 ];
 let curTheme='green';   // 当前生效的主题；列表的选中态以它为准，不再回读 localStorage
 function getTheme(){
@@ -7490,13 +7572,18 @@ function renderThemeRow(){
   const row=document.getElementById('themeRow');
   if(!row)return;
   const cur=curTheme;
-  const tick='<span class="theme-check"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"'+
-    ' stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+
-    '<polyline points="20 6 9 17 4 12"/></svg></span>';
-  row.innerHTML=modeRowHTML()+THEMES.map(t=>
-    `<button type="button" class="nitem${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
-    ` role="radio" aria-checked="${t.id===cur}" onclick="applyTheme('${t.id}',true)">`+
-    `<span class="dot" style="background:${(typeof isDarkMode==='function'&&isDarkMode())?t.cd:t.c}"></span>${t.name}${tick}</button>`).join('');
+  const dark=(typeof isDarkMode==='function'&&isDarkMode());
+  const tick='<svg width="18" height="18" viewBox="0 0 24 24" fill="none"'+
+    ' stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+
+    '<polyline points="20 6 9 17 4 12"/></svg>';
+  row.innerHTML=modeRowHTML()+
+    '<div class="theme-sws" role="radiogroup" aria-label="主题色">'+
+    THEMES.map(t=>
+      `<button type="button" class="theme-sw${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
+      ` role="radio" aria-checked="${t.id===cur}" title="${t.name}" aria-label="${t.name}"`+
+      ` style="--sw:${dark?t.cd:t.c}" onclick="applyTheme('${t.id}',true)">`+
+      `${t.id===cur?tick:''}</button>`).join('')+
+    '</div>';
 }
 
 function boot(){
