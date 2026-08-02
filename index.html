@@ -700,8 +700,8 @@ tr:hover .acts{opacity:1;}
   .bottombar{
     display:block;position:fixed;left:0;right:0;bottom:0;z-index:90;
     background:var(--surface);border-top:1px solid var(--border);
-    /* 底栏整体做成带圆角的浮起卡片：顶部两角圆角 */
-    border-radius:var(--rxl) var(--rxl) 0 0;overflow:hidden;
+    /* 底栏是平的：直角、无阴影，只用 1px 上边框和页面分开（圆角会让它看着「浮起来」）*/
+    border-radius:0;overflow:hidden;
     box-shadow:none;
     padding-bottom:env(safe-area-inset-bottom);
     /* 键盘弹起时整条上移到键盘上方（--kb 由 JS 用 visualViewport 计算）*/
