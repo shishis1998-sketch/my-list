@@ -1324,12 +1324,6 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* 方案 D：展开时标题行铺满墨绿底带、内容反白，像给这一章加了个「表头」 */
 .tl-item.open .tl-head{background:var(--accent);
   border-radius:calc(var(--rlg) - var(--bd)) calc(var(--rlg) - var(--bd)) 0 0;}
-/* 章节标题带（展开的章节 + 底部弹窗）上的文字/把手一律白色高亮：
-   夜间模式全局 --on-accent 是深色（填充按钮用），这条带子不跟随，
-   就地把三个变量覆盖成白色，带内所有 var(--on-accent*) 自动继承 */
-.tl-item.open .tl-head,.tlsheet-head{
-  --on-accent:#fff;--on-accent-soft:rgba(255,255,255,.72);--on-accent-faint:rgba(255,255,255,.5);
-}
 /* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时在墨绿底带上转为半透明白 */
 .tl-bar{flex-shrink:0;width:3px;border-radius:2px;background:var(--accent-light);transition:background .18s;}
 .tl-item.open .tl-bar{background:var(--on-accent-soft);}
@@ -1469,7 +1463,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   font-family:var(--en);line-height:1;
 }
 .tl-pbody{
-  font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-secondary);
+  font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-primary);
   white-space:pre-wrap;background:var(--bg);
   border:1px solid var(--border-soft);border-radius:var(--r);
   padding:var(--sp-8) var(--sp-12);
