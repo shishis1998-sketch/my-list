@@ -1356,7 +1356,8 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlsheet-head{flex-shrink:0;background:var(--accent);padding:7px 16px 12px;cursor:grab;
   touch-action:none;user-select:none;-webkit-user-select:none;}
 .tlsheet-head:active{cursor:grabbing;}
-.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 10px;}
+/* 把手与标题的间距 = 标题到底带下沿的间距（12px），标题在把手下方上下对称 */
+.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 12px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
