@@ -1525,7 +1525,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 }
 
 /* 格式工具栏（笔记编辑器） */
-.fmt-bar{display:flex;align-items:center;gap:var(--sp-6);margin-bottom:var(--sp-6);flex-wrap:wrap;}
+.fmt-bar{display:flex;align-items:center;gap:var(--sp-6);margin:var(--sp-6) 0;flex-wrap:wrap;}
 .fmt-btn{
   height:30px;min-width:32px;padding:0 var(--sp-10);line-height:1;
   background:var(--bg);border:1px solid var(--border);
@@ -3634,15 +3634,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     </div>
     <div class="fg" id="nf-body-group">
       <label>正文</label>
+      <div class="nf-body-wrap" id="nf-body-wrap">
+        <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
+        <div class="nf-thumb" id="nf-thumb"></div>
+      </div>
       <div class="fmt-bar">
         <button type="button" class="fmt-btn" onclick="noteFmt('h')" title="标题">H</button>
         <button type="button" class="fmt-btn" onclick="noteFmt('b')" title="粗体"><b>B</b></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
         <span class="fmt-hint">选中文字后点按钮加格式</span>
-      </div>
-      <div class="nf-body-wrap" id="nf-body-wrap">
-        <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
-        <div class="nf-thumb" id="nf-thumb"></div>
       </div>
     </div>
     <!-- 备忘子分类专用：账号 / 密码 / 备注 / 自定义字段 -->
