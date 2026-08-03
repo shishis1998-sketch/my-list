@@ -1353,11 +1353,12 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlsheet.show{transform:translateY(0);}
 .tlsheet.dragging{transition:none;}
 /* 方案 D 墨绿标题带：紧凑、只显章节名 */
-.tlsheet-head{flex-shrink:0;background:var(--accent);padding:7px 16px 12px;cursor:grab;
+/* 标题上下留白按「把手整块」算对称：
+   上 = 6(带顶留白) + 4(把手) + 8(把手到标题) = 18px，下 = 18px */
+.tlsheet-head{flex-shrink:0;background:var(--accent);padding:6px 16px 18px;cursor:grab;
   touch-action:none;user-select:none;-webkit-user-select:none;}
 .tlsheet-head:active{cursor:grabbing;}
-/* 把手与标题的间距 = 标题到底带下沿的间距（12px），标题在把手下方上下对称 */
-.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 12px;}
+.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 8px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
