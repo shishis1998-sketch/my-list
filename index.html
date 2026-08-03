@@ -2404,6 +2404,26 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       box-shadow: 0 0 0 2px white;}
 #calViewPeriod .day.selected-view {outline: 2px solid var(--brand);
       outline-offset: -2px;}
+/* ── 排卵期推算标记 ──────────────────────────────────────────
+   用青绿系，与「经期」的红、「年度」的墨绿都分得开。
+   易孕期＝淡青底；排卵日＝青绿实心；预测的下次经期＝红虚线框。
+   排卵日若正好落在已记录的经期上，改用青绿描边，不盖掉经血量颜色。 */
+#calViewPeriod {--ovu: #3E8E7E;}
+#calViewPeriod .day.fx-fertile {background-color: rgba(62,142,126,.16);}
+#calViewPeriod .day.fx-ovu {background-color: var(--ovu); color: #FFFFFF; font-weight: 700;}
+#calViewPeriod .day.fx-ovu-ring::before,
+#calViewPeriod .day.fx-predp::before {content: ''; position: absolute; inset: 0;
+      border-radius: inherit;   /* 跟着日期格自己的圆角走（月视图是圆、年视图是小圆角）*/
+      pointer-events: none; z-index: 1;}
+#calViewPeriod .day.fx-ovu-ring::before {border: 2px solid var(--ovu);}
+#calViewPeriod .day.fx-predp::before {border: 1.5px dashed var(--brand); opacity: .7;}
+#calViewPeriod .day.fx-predp {color: var(--brand);}
+/* 底部弹窗里的推算说明 */
+.pv-fert-note {margin: 10px 0 2px; padding: 8px 10px;
+      background: rgba(62,142,126,.10); border-radius: 10px;
+      font-size: var(--fs-micro); line-height: 1.55; color: var(--ink-2);}
+.pv-fert-note b {display: block; color: #3E8E7E; font-size: var(--fs-footnote); margin-bottom: 1px;}
+.pv-fert-note span {display: block; margin-top: 3px; color: var(--faint);}
 #calViewPeriod .day-status-bar {margin-top: var(--sp-card);
       padding: 6px 14px;
       border-radius: var(--r-lg);}
@@ -2502,6 +2522,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
 .pv-sheet-status{font-size:11px;font-weight:700;color:var(--brand);
   background:var(--brand-soft);padding:3px 9px;border-radius:20px;white-space:nowrap;}
+/* 排卵/易孕的药丸跟日历格子同一套青绿，别跟经期红混在一起 */
+.pv-sheet-status.fert{color:#3E8E7E;background:rgba(62,142,126,.14);}
 .pv-sheet-close{margin-left:auto;flex:0 0 auto;width:28px;height:28px;border:none;
   background:var(--surface-2);border-radius:50%;color:var(--text-muted);
   font-size:14px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -6292,9 +6314,16 @@ window.PV = (function(){
         const symList = SYMPTOMS_DATA[`${year}-${month}-${day}`] || [];
         const hasSym = symList.length > 0;
         const symHit = homeSymFilter && homeSymFilter !== '全部' && symList.includes(homeSymFilter);
+        // 排卵期标记：已记录经血量的那天优先保留原色，排卵日改用描边、
+        // 易孕期/预测经期则整个让位（记录是事实，预测不该盖在事实上面）
+        const fk = fertKind(year, month, day);
+        const fcls = fk === 'ovu'     ? (lv ? 'fx-ovu-ring' : 'fx-fertile fx-ovu')
+                   : fk === 'fertile' ? (lv ? '' : 'fx-fertile')
+                   : fk === 'predp'   ? (lv ? '' : 'fx-predp')
+                   : '';
         html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
                   `<div data-month="${month}" data-day="${day}"` +
-                  ` class="day ${getLevelClass(lv)} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
+                  ` class="day ${getLevelClass(lv)} ${fcls} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
                   ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
                   `<div class="dot-slot"><span class="rec-dot"></span></div>` +
                 `</div>`;
@@ -6310,6 +6339,7 @@ window.PV = (function(){
 
     function render() {
       closeDaySheet();   // 翻月/切视图/切年 等任何重画都收起底部弹窗
+      buildFert();       // 排卵期现算：改过经期后重画就是最新结果
       const cal = document.getElementById('calendar');
       const yl = document.getElementById('yearLabel');
       if (yl) yl.textContent = year;
@@ -6530,11 +6560,18 @@ window.PV = (function(){
       if (!el || !selectedView) return;
       const { y, m, d } = selectedView;
       const st = getDayStatus(y, m, d);
+      const fk = st.kind === 'none' ? fertKind(y, m, d) : null;
+      // 排卵/易孕用青绿药丸；预计经期仍归经期红
+      el.classList.toggle('fert', fk === 'ovu' || fk === 'fertile');
       if (st.kind === 'period') {
         el.textContent = `经期 · 第 ${st.dayNo} 天`;
         el.style.display = '';
       } else if (st.kind === 'spotting') {
         el.textContent = '点滴 · 不计入经期';
+        el.style.display = '';
+      } else if (fk) {
+        // 没有经期记录时，退而显示这天的排卵期推算结果
+        el.textContent = FERT_LABEL[fk];
         el.style.display = '';
       } else {
         el.style.display = 'none';
@@ -6553,6 +6590,7 @@ window.PV = (function(){
       body.innerHTML =
         `<div class="pv-flow-title">经血量</div>` +
         `<div class="pv-flow" id="pvFlow"></div>` +
+        fertBasisHtml(y, m, d) +
         `<div class="day-info-bar" id="dayInfoBar"></div>`;
       buildFlowSwatches();
       renderDayInfoBar();       // 填充症状标签(内部会尝试渲染 #dayStatusBar，此处不放该元素故自动跳过)
@@ -6623,6 +6661,7 @@ window.PV = (function(){
       if (homeView !== 'month') return;
       const target = document.querySelector('#calendar .month');
       if (!target) return;
+      buildFert();   // 刚改完这天的经血量 → 排卵期要跟着重算
       const tmp = document.createElement('div');
       tmp.innerHTML = generateMonth(viewMonth, true);
       const newDays = tmp.querySelector('.days');
@@ -7140,6 +7179,92 @@ window.PV = (function(){
       return { periods, cycles };
     }
 
+    // ── 排卵期推算（黄体期倒推法）────────────────────────────────
+    // 排卵日 ≈ 下次月经来潮日 − 14 天。黄体期长度个体差异很小(12–16 天)，
+    // 比「周期 ÷ 2」稳得多，对周期不规律的人尤其如此。
+    //   · 历史：用真实发生的下次经期倒推，等于事后校准，最准
+    //   · 未来：用最近若干个周期的平均值外推
+    // 结果不落盘、每次渲染现算，所以改任意一天的经血量后自动跟着变，
+    // 也不会和 Gist 同步的数据打架。
+    const LUTEAL_DAYS    = 14;   // 黄体期长度
+    const FERTILE_BEFORE = 5;    // 易孕窗口：排卵前 5 天（精子存活上限）
+    const FERTILE_AFTER  = 1;    // 排卵后 1 天（卵子存活约 24 小时）
+    const CYCLE_MIN      = 21;   // 合理周期下限，超出视为漏记/补记 → 剔除
+    const CYCLE_MAX      = 40;   // 合理周期上限
+    const CYCLE_SAMPLE   = 6;    // 平均周期取最近几个
+    const CYCLE_FALLBACK = 28;   // 样本全被剔除时的兜底周期
+    const FUTURE_CYCLES  = 3;    // 往后外推几个周期（再远误差已无意义）
+
+    // 返回 { map:{"y-m-d":'fertile'|'ovu'|'predp'}, avg, n, spread, wide, next, ok }
+    function computeFertility() {
+      const { periods, cycles } = computeCycles();
+      const map = {};
+      const out = { map, avg: 0, n: 0, spread: 0, wide: false, next: null, ok: false };
+      if (periods.length < 2) return out;   // 至少两段经期才谈得上「周期」
+
+      const shift = (dt, n) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n);
+      const RANK = { predp: 1, fertile: 2, ovu: 3 };   // 同一天重叠时谁盖谁
+      const mark = (dt, kind) => {
+        const k = `${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`;
+        if (!map[k] || RANK[kind] > RANK[map[k]]) map[k] = kind;
+      };
+      const markOvu = ovu => {
+        for (let i = -FERTILE_BEFORE; i <= FERTILE_AFTER; i++) mark(shift(ovu, i), 'fertile');
+        mark(ovu, 'ovu');
+      };
+
+      // ① 历史：每段经期的开始日往前推 14 天 = 上一个周期的排卵日。
+      //    只处理周期长度合理的相邻两段——中间漏记过的大间隔不瞎标。
+      for (let i = 1; i < periods.length; i++) {
+        const c = cycles[i - 1];
+        if (c < CYCLE_MIN || c > CYCLE_MAX) continue;
+        markOvu(shift(periods[i].start, -LUTEAL_DAYS));
+      }
+
+      // ② 平均周期：只取最近 CYCLE_SAMPLE 个合理周期
+      const recent = cycles.filter(c => c >= CYCLE_MIN && c <= CYCLE_MAX).slice(-CYCLE_SAMPLE);
+      const avg = recent.length
+        ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)
+        : CYCLE_FALLBACK;
+      out.avg = avg;
+      out.n = recent.length;
+      out.spread = recent.length ? Math.max(...recent) - Math.min(...recent) : 0;
+      out.wide = out.spread > 7;            // 波动大 → 预测只能当参考
+
+      // ③ 未来：从最后一段经期起按平均周期外推
+      const last = periods[periods.length - 1].start;
+      const avgLen = Math.max(1, Math.round(
+        periods.reduce((a, p) => a + p.length, 0) / periods.length));
+      for (let n = 1; n <= FUTURE_CYCLES; n++) {
+        const nextStart = shift(last, avg * n);
+        markOvu(shift(nextStart, -LUTEAL_DAYS));
+        for (let i = 0; i < avgLen; i++) mark(shift(nextStart, i), 'predp');
+      }
+      out.next = shift(last, avg);
+      out.ok = true;
+      return out;
+    }
+
+    const FERT_LABEL = { ovu: '排卵日 · 推算', fertile: '易孕期 · 推算', predp: '预计经期' };
+
+    // 底部弹窗里那一行推算依据：只在这天确实被标了才出现，
+    // 说明清楚是按哪几次记录算的，免得标记看着像凭空冒出来的。
+    function fertBasisHtml(y, m, d) {
+      const fk = fertKind(y, m, d);
+      if (!fk) return '';
+      const basis = FERT.n
+        ? `平均周期 ${FERT.avg} 天 · 按最近 ${FERT.n} 次经期推算` +
+          (FERT.wide ? `（周期波动 ${FERT.spread} 天，偏差可能较大）` : '')
+        : `记录偏少，暂按默认 ${FERT.avg} 天周期推算`;
+      return `<div class="pv-fert-note"><b>${FERT_LABEL[fk]}</b>${escapeHtml(basis)}` +
+             `<span>推算结果仅供参考，不能作为避孕或备孕依据</span></div>`;
+    }
+
+    // 整轮渲染共用一份推算结果：年视图一次要画 12 个月，避免重复全量计算
+    let FERT = { map: {}, ok: false };
+    function buildFert() { FERT = computeFertility(); }
+    function fertKind(y, m, d) { return FERT.map[`${y}-${m}-${d}`] || null; }
+
     const PALETTE_ORDER = [4, 1, 2, 3];               // 图例/色板显示顺序
     const LEVEL_CLASS = { 1: 'level-1', 2: 'level-2', 3: 'level-3', 4: 'level-g' };
     const SWATCH_CLASS = { 1: 'swatch-1', 2: 'swatch-2', 3: 'swatch-3', 4: 'swatch-g' };
@@ -7202,7 +7327,10 @@ window.PV = (function(){
       document.querySelectorAll('#calViewPeriod .legend').forEach(leg => {
         leg.innerHTML = PALETTE_ORDER.map(l =>
           `<div><span style="color:${PALETTE[l].color}">●</span> ${escapeHtml(PALETTE[l].name)}</div>`
-        ).join('');
+        ).join('') +
+        // 排卵期推算的两个色标，跟经血量色板并排（色板可改色，这两个固定青绿）
+        '<div><span style="color:rgba(62,142,126,.55)">●</span> 易孕期</div>' +
+        '<div><span style="color:#3E8E7E">●</span> 排卵日</div>';
       });
     }
 
