@@ -1083,10 +1083,11 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-card:last-child{margin-bottom:0;}
 /* 卡片内日期标题（点某天后显示「N 月 N 日」，默认墨绿）*/
 /* 上下都是 12（原来下面只有 4，靠时间线的 6 补，合起来 10，比上面窄一截）。
-   左内边距 = 10 卡内边距 + 半列宽，让标题左缘与下面时间线的记录名同一条左缘，
-   一起压在第一列日期的中心线上；这里 100% 是 .cal-card 的内容宽（330），比时间线
-   那边多 20，所以半列宽写成 (100% - 32px)/14。右边仍是 10，与末列右缘齐平。 */
-.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-10) var(--sp-12) calc((100% - 32px) / 14 + 10px);
+   左内边距 = 10 卡内边距 + 半列宽 - 20 行缩进，让标题左缘与下面时间线的
+   节点/竖线同一条左缘，「8」正好落在那串圆点上方；这里 100% 是 .cal-card 的
+   内容宽（330），比时间线那边多 20，所以半列宽写成 (100% - 32px)/14。
+   右边仍是 10，与末列右缘齐平。 */
+.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-10) var(--sp-12) calc((100% - 32px) / 14 - 10px);
   font-size:var(--fs-sub);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 /* 上留白归零（标题自己的 12 就是那道间距），左右 10 对齐第一张卡：
