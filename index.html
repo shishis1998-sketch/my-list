@@ -2968,16 +2968,20 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-card{background:var(--surface);border:1px solid var(--border);
   border-radius:16px;padding:14px 16px;}
 #calViewPeriod .dc-row{display:flex;align-items:center;gap:10px;}
-#calViewPeriod .dc-main{flex:0 0 auto;font-size:var(--fs-stat);font-weight:700;
+/* 大字 18px：跟上方年月标题 .pv-navlabel 同字号，别比标题还大 */
+#calViewPeriod .dc-main{flex:0 0 auto;font-size:18px;font-weight:700;
   color:var(--brand);line-height:1.2;white-space:nowrap;}
 #calViewPeriod .dc-main.ovu{color:var(--ovu-ink);}
 #calViewPeriod .dc-main.quiet{font-size:var(--fs-body);font-weight:600;color:var(--muted);}
 /* 症状靠右，排不下就换行；收起态由 clampDaySyms 量着只留一行 */
 #calViewPeriod .dc-right{flex:1 1 auto;min-width:0;margin-left:auto;display:flex;
   flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px;overflow:hidden;}
+/* 标签照抄编辑弹窗里的 .info-tag：同样的圆角胶囊、同样的内边距与字号，
+   同一个标签在两处长得一样，不该因为在摘要条里就变成方块 */
 #calViewPeriod .dc-chip{flex:0 1 auto;max-width:100%;min-width:0;
-  font-size:12px;padding:3px 9px;border-radius:6px;background:var(--line-soft);
-  color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  font-size:var(--fs-footnote);padding:5px 10px;border-radius:var(--r-lg);
+  background:var(--line-soft);color:var(--body);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* +N / 收起：卡片里唯一可点的元素，只切换展开态，不改选中日 */
 #calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);border:none;
   font-family:var(--zh);font-size:12px;line-height:inherit;cursor:pointer;
