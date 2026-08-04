@@ -2927,9 +2927,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 去掉 month-view 容器多余的 16px 横向边距（--page-gutter 在经期作用域=16px），
    让星期/日期网格铺满整卡宽度，横向位置与普通日历完全一致（靠卡片 10px 内边距） */
 #calViewPeriod .calendar-container.month-view{margin:0 !important;}
-/* 星期行：加分隔线 + 字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），横向内边距归零 */
-#calViewPeriod .calendar-container.month-view .weekdays{border-bottom:1px solid var(--border);
-  padding:6px 0 14px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
+/* 星期行：字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），横向内边距归零。
+   不画分隔线——星期名本身就是表头，灰字与下面的黑色日期已经分得开；
+   底部留白从 14px 收到 10px：那 4px 原本是给线让的净空，线没了留着就是一段空档。 */
+#calViewPeriod .calendar-container.month-view .weekdays{
+  padding:6px 0 10px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
   letter-spacing:.18em;color:var(--text-secondary);column-gap:0 !important;}
 /* 网格：行高 42px、行距 2px、顶部留白 4px、横向内边距归零，对齐普通日历 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
