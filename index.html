@@ -2958,6 +2958,19 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    .daywrap / .dot-slot 的间距分配）。 */
 #calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
   box-shadow:0 0 0 1px var(--surface), 0 0 0 2.5px var(--brand) !important;}
+/* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
+   不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
+   只在月视图 + 有推算结果时渲染，开关在 render()。 */
+#calViewPeriod .pv-callegend{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;
+  gap:6px 16px;padding:10px 2px 2px;font-size:11px;color:var(--muted);}
+#calViewPeriod .pv-callegend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+#calViewPeriod .pv-callegend i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;box-sizing:border-box;}
+/* 经期用中量色(.level-2)代表整条色阶：淡的那档(--brand-tint)在 9px 上几乎看不出颜色 */
+#calViewPeriod .pv-callegend .lg-period{background:#cf4865;}
+/* 预测经期照抄 .fx-predp 的红虚线圈；空心圈视觉上比实心点小一号，直径补到 10px */
+#calViewPeriod .pv-callegend .lg-predp{width:10px;height:10px;border:1.2px dashed var(--brand);opacity:.75;}
+/* 排卵日用 --ovu-ink 而不是 --ovu：夜间前者提亮过一档，9px 小点用深蓝在深底上看不清 */
+#calViewPeriod .pv-callegend .lg-ovu{background:var(--ovu-ink);}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
@@ -3699,6 +3712,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       </div>
       <div class="pv-cardwrap">
         <div id="calendar" class="calendar-container"></div>
+        <!-- 标记图例：日期网格下方居中，解释格子里的经期色块 / 预测虚线圈 / 排卵实心点。
+             显示与否由 render() 决定（年视图不出、推算关掉也不出）。 -->
+        <div class="pv-callegend" id="pvCalLegend" style="display:none" aria-label="日历标记说明">
+          <span><i class="lg-period"></i>经期</span>
+          <span><i class="lg-predp"></i>预测经期</span>
+          <span><i class="lg-ovu"></i>排卵期</span>
+        </div>
       </div>
       <div id="pvExtras"></div>
       <div id="bottomLegend">
@@ -6449,6 +6469,10 @@ window.PV = (function(){
       // 底部 VOLUMEN 图例只在年视图显示(月视图下方色板已是图例,避免重复)
       const bl = document.getElementById('bottomLegend');
       if (bl) bl.style.display = homeView === 'year' ? '' : 'none';
+      // 卡内标记图例：只在月视图出现（年视图一屏 12 个迷你月，格子小到看不出虚线圈）。
+      // 推算关掉或记录不够两段时 FERT.ok=false，卡里只剩经血量色块，三项里两项无处对应 → 整行不渲染。
+      const cl = document.getElementById('pvCalLegend');
+      if (cl) cl.style.display = (homeView !== 'year' && FERT.ok) ? '' : 'none';
 
       if (homeView === 'year') {
         let html = '';
