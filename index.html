@@ -2935,12 +2935,16 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
   padding:4px 0 0 !important;align-content:start !important;column-gap:2px !important;}
 /* 格子结构/尺寸与普通日历 .cal-day 完全一致：仅把经量颜色贴成数字底下的 24px 圆 */
-#calViewPeriod .calendar-container.month-view .daywrap{padding:6px 2px 4px;min-height:42px;border-radius:8px;
+/* 上内边距由 6px 收到 4px，省下的 2px 挪给下面的 .dot-slot：
+   选中环要外扩 2.5px，原来圆圈到记录点只有 3px 净空、环几乎贴着圆点；
+   这样匀一下净空变 5px，而 6+24+3 与 4+24+5 相等，整格总高仍是 42px，
+   一行都没有变高。 */
+#calViewPeriod .calendar-container.month-view .daywrap{padding:4px 2px 4px;min-height:42px;border-radius:8px;
   flex-direction:column;align-items:center;justify-content:flex-start;}
 #calViewPeriod .calendar-container.month-view .day{width:24px !important;height:24px !important;
   border-radius:50% !important;font-size:13px !important;font-family:var(--en);margin:0 !important;line-height:1;}
 /* 圆点槽对齐 .cal-badges；症状红点对齐 .cal-dot(5px) */
-#calViewPeriod .calendar-container.month-view .dot-slot{height:auto !important;margin-top:3px !important;}
+#calViewPeriod .calendar-container.month-view .dot-slot{height:auto !important;margin-top:5px !important;}
 #calViewPeriod .calendar-container.month-view .rec-dot{width:5px !important;height:5px !important;}
 /* 上/下月补位日期：灰色淡化，与普通日历 .cal-other 一致 */
 #calViewPeriod .calendar-container.month-view .day.cal-otherday{color:var(--text-muted) !important;opacity:.5;
@@ -2948,15 +2952,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 今天：经期红加粗数字 + 经期红细圈，与经期主题(经血量/症状标签)统一 */
 #calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--brand) !important;
   background:transparent !important;color:var(--brand) !important;font-weight:700;}
-/* 选中日：整格铺一块柔和底色，不再给圆圈套环。
-   套环有两个躲不开的问题：日期圆到下方记录点只有 3px 净空，外扩描边正好吃光、
-   下缘压在圆点上；而「今天」本身已经是一圈经期红细圈，再用环表示选中就分不出
-   选没选。改用整格底色两个问题一起解决——.daywrap 本来就有 8px 圆角和内边距，
-   几何一点不用动，圆点也完全不受影响。
-   底色取中性灰而不是 --brand-soft：淡粉块衬在 POCO 的淡粉圆下面几乎看不出边界，
-   中性灰对四档经量、排卵蓝、空白格一视同仁。 */
-#calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;}
-#calViewPeriod .calendar-container.month-view .daywrap.selected-wrap{background:var(--line-soft);}
+/* 选中日：日期圆外面一圈经期红。
+   靠一圈卡片底色把红环和格子填充隔开，深红的 MUCHO 上也一眼可见；
+   总外扩 2.5px，比记录点让出的 5px 净空小，环不会压到圆点上（见下方
+   .daywrap / .dot-slot 的间距分配）。 */
+#calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
+  box-shadow:0 0 0 1px var(--surface), 0 0 0 2.5px var(--brand) !important;}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
@@ -6741,18 +6742,12 @@ window.PV = (function(){
       document.querySelectorAll('.day.selected-view').forEach(el => {
         el.classList.remove('selected-view');
       });
-      document.querySelectorAll('.daywrap.selected-wrap').forEach(el => {
-        el.classList.remove('selected-wrap');
-      });
       if (homeView !== 'month') return;
       const a = cardAnchor();
       if (a.y !== year || a.m !== viewMonth) return;
       const el = document.querySelector(`[data-month="${a.m}"][data-day="${a.d}"]`);
       if (!el) return;
       el.classList.add('selected-view');
-      // 选中块加在整格上（圆圈不动），日期圆和记录点都不受影响
-      const wrap = el.closest('.daywrap');
-      if (wrap) wrap.classList.add('selected-wrap');
     }
 
     // 只把月视图那张卡片里的 .days 内容替换掉，保留色板和信息栏
