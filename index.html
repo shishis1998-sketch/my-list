@@ -2955,12 +2955,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* ── 当天状态卡：日历卡下方，「选中日 ±3 天」的概览 ──────────────
    外部间距全部继承 #pvExtras（页边距 14 / 卡间距 12 / 子元素禁带 margin），
    卡片只管内部；内部尺寸一律取 --sp-* 阶梯上的档位，外壳照抄 .pv-trend-card。
-   七日条只读，不接受点击——选哪天仍然只由上方日历决定，避免同屏两个日期选择器。 */
+   七日条可点：点哪天就把这张卡切到哪天，跨月的日子顺带把上方日历翻过去。 */
 #calViewPeriod .dc-card{background:var(--surface);border:1px solid var(--border);
   border-radius:16px;padding:16px 16px 14px;}
 #calViewPeriod .dc-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
 #calViewPeriod .dc-day{display:flex;flex-direction:column;align-items:center;gap:4px;
-  padding:6px 0;border-radius:10px;}
+  padding:6px 0;border-radius:10px;
+  background:none;border:none;font-family:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:transform .12s;}
+#calViewPeriod .dc-day:active{transform:scale(.94);}
 #calViewPeriod .dc-day.on{background:var(--line-soft);}
 #calViewPeriod .dc-wk{font-size:10px;line-height:1;color:var(--faint);}
 /* 直径与字号跟日历格子（24px / --fs-footnote）完全一致：
@@ -2972,7 +2975,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-mark.dc-out{color:var(--disabled);}   /* 跨月的日子：与日历补位日同一处理 */
 #calViewPeriod .dc-mark.dc-fert{background:var(--ovu-soft);}
 #calViewPeriod .dc-mark.dc-ovu{background:var(--ovu);color:#FFFFFF;font-weight:700;}
-#calViewPeriod .dc-day.on .dc-mark{box-shadow:0 0 0 2px var(--text-primary);font-weight:700;}
+/* 选中日的圈：粗细与颜色跟主日历的 today / selected-view 完全一致（1px 经期红），
+   别用 --text-primary——那是全局变量，这棵子树没重定义，会画出一圈黑边 */
+#calViewPeriod .dc-day.on .dc-mark{box-shadow:0 0 0 1px var(--brand);font-weight:700;}
 #calViewPeriod .dc-sym{width:4px;height:4px;border-radius:50%;background:var(--brand);}
 #calViewPeriod .dc-sym.off{background:transparent;}
 #calViewPeriod .dc-rule{height:1px;background:var(--line-soft);margin-top:14px;}
@@ -2992,8 +2997,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-chip{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:5px;
   font-size:12px;padding:3px 9px;border-radius:6px;background:var(--line-soft);color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-/* +N / 收起：唯一可点的元素。它只切换这张卡自己的展开态，不改选中日，
-   所以不违背「七日条只读」——按钮形态也和日期格子区分得开 */
+/* +N / 收起：只切换这张卡自己的展开态，不改选中日；形态也和上面的日期格子区分得开 */
 #calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);border:none;
   font-family:var(--zh);font-size:12px;line-height:inherit;cursor:pointer;
   -webkit-tap-highlight-color:transparent;transition:transform .12s;}
@@ -6904,8 +6908,8 @@ window.PV = (function(){
     }
 
     // ── 当天状态卡（日历卡下方）──────────────────────────────
-    // 七日条只读：只做「选中日 ±3 天」的上下文预览，不接受点击——选哪天仍然
-    // 只由上方日历决定，免得同屏两个日期选择器让人犹豫该点哪个。
+    // 七日条是「选中日 ±3 天」的上下文预览，并且可以直接点：点哪天这张卡就切到哪天，
+    // 点到跨月的日子顺带把上方日历翻到那个月，两处始终看同一天。
     // 详情分两行：第一行状态／经血量／周期位置，第二行症状全列出来，
     // 只有真的超过一行时才把多出来的收成 +N。
     const DC_FLOW_CN = { 1: '少', 2: '中', 3: '多', 4: '点滴' };
@@ -6961,11 +6965,13 @@ window.PV = (function(){
                   : fk === 'ovu'     ? 'dc-ovu'
                   : fk === 'fertile' ? 'dc-fert'
                   : (m !== a.m || y !== a.y) ? 'dc-out' : '';
-        strip += `<div class="dc-day${i === 0 ? ' on' : ''}">` +
+        strip += `<button type="button" class="dc-day${i === 0 ? ' on' : ''}" ` +
+                   `data-y="${y}" data-m="${m}" data-d="${d}" ` +
+                   `aria-pressed="${i === 0}" aria-label="${m} 月 ${d} 日">` +
                    `<span class="dc-wk">${WEEKDAY_CN[dt.getDay()].slice(1)}</span>` +
                    `<span class="dc-mark ${cls}">${d}</span>` +
                    `<span class="dc-sym${getSym(y, m, d).length ? '' : ' off'}"></span>` +
-                 `</div>`;
+                 `</button>`;
       }
 
       // 详情行：状态药丸 + 经血量 + 症状（截断）+ 右侧周期位置
@@ -6997,7 +7003,26 @@ window.PV = (function(){
       card.className = 'dc-card';
       card.innerHTML = `<div class="dc-week">${strip}</div><div class="dc-rule"></div>` +
                        `<div class="dc-detail">${pill}${flow}${meta}</div>` + symRow;
+      // 委托到整条上，省得给七个格子各挂一个
+      card.querySelector('.dc-week').addEventListener('click', e => {
+        const cell = e.target.closest('.dc-day');
+        if (!cell) return;
+        pickCardDay(+cell.dataset.y, +cell.dataset.m, +cell.dataset.d);
+      });
       return card;
+    }
+
+    // 七日条点某天 → 这张卡切过去。跨月的日子要先把上方日历翻到那个月，
+    // 否则 cardAnchor() 会判定锚点不在视图里，转头把锚点丢回今天。
+    function pickCardDay(y, m, d) {
+      cardDay = { y, m, d };
+      if (y !== year || m !== viewMonth) {
+        year = y;
+        viewMonth = m;
+        render();          // 内部会重建 #pvExtras，状态卡跟着新锚点重画
+        return;
+      }
+      refreshDayCard();
     }
 
     // 「+N / 收起」按钮：只切换这张卡的展开态，不动选中日
