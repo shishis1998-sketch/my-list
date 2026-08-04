@@ -2948,13 +2948,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 今天：经期红加粗数字 + 经期红细圈，与经期主题(经血量/症状标签)统一 */
 #calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--brand) !important;
   background:transparent !important;color:var(--brand) !important;font-weight:700;}
-/* 选中：数字外一圈经期红 */
-/* 选中日：单击改成「只选日」之后，这圈描边就是「状态卡在讲哪天」的唯一指示，
-   得在任何填充色上都看得清——原来 1px 经期红直接压在深红的 MUCHO 格子上几乎看不见。
-   颜色仍用经期红（不碰 --text-primary，那是全局变量、这棵子树没重定义，会画出黑边），
-   改为先垫一圈卡片底色再画红环：底色把红环和格子填充隔开，深红上也一眼可见。 */
-#calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
-  box-shadow:0 0 0 1.5px var(--surface), 0 0 0 3px var(--brand) !important;}
+/* 选中日：整格铺一块柔和底色，不再给圆圈套环。
+   套环有两个躲不开的问题：日期圆到下方记录点只有 3px 净空，外扩描边正好吃光、
+   下缘压在圆点上；而「今天」本身已经是一圈经期红细圈，再用环表示选中就分不出
+   选没选。改用整格底色两个问题一起解决——.daywrap 本来就有 8px 圆角和内边距，
+   几何一点不用动，圆点也完全不受影响。
+   底色取中性灰而不是 --brand-soft：淡粉块衬在 POCO 的淡粉圆下面几乎看不出边界，
+   中性灰对四档经量、排卵蓝、空白格一视同仁。 */
+#calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;}
+#calViewPeriod .calendar-container.month-view .daywrap.selected-wrap{background:var(--line-soft);}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
@@ -6739,11 +6741,18 @@ window.PV = (function(){
       document.querySelectorAll('.day.selected-view').forEach(el => {
         el.classList.remove('selected-view');
       });
+      document.querySelectorAll('.daywrap.selected-wrap').forEach(el => {
+        el.classList.remove('selected-wrap');
+      });
       if (homeView !== 'month') return;
       const a = cardAnchor();
       if (a.y !== year || a.m !== viewMonth) return;
       const el = document.querySelector(`[data-month="${a.m}"][data-day="${a.d}"]`);
-      if (el) el.classList.add('selected-view');
+      if (!el) return;
+      el.classList.add('selected-view');
+      // 选中块加在整格上（圆圈不动），日期圆和记录点都不受影响
+      const wrap = el.closest('.daywrap');
+      if (wrap) wrap.classList.add('selected-wrap');
     }
 
     // 只把月视图那张卡片里的 .days 内容替换掉，保留色板和信息栏
