@@ -2968,7 +2968,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-card{background:var(--surface);border:1px solid var(--border);
   border-radius:16px;padding:14px 16px;}
 #calViewPeriod .dc-row{display:flex;align-items:center;gap:10px;}
-#calViewPeriod .dc-main{flex:0 0 auto;font-size:var(--fs-stat);font-weight:700;
+/* 大字 18px：跟上方年月标题 .pv-navlabel 同字号，别比标题还大 */
+#calViewPeriod .dc-main{flex:0 0 auto;font-size:18px;font-weight:700;
   color:var(--brand);line-height:1.2;white-space:nowrap;}
 #calViewPeriod .dc-main.ovu{color:var(--ovu-ink);}
 #calViewPeriod .dc-main.quiet{font-size:var(--fs-body);font-weight:600;color:var(--muted);}
