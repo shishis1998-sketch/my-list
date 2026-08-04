@@ -209,6 +209,29 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nitem-mode[aria-checked="true"] .nmode-btn{background:var(--accent);}
 .nitem-mode[aria-checked="true"] .nmode-btn svg{stroke:var(--on-accent);}
 .nitem-mode:active .nmode-btn{transform:scale(.92);}
+/* 设置 › 经期：排卵期推算的总开关 + 两个参数。
+   开关用滑块（是/否），参数用分段按钮组（几个固定档位，一眼看全比下拉好点）。
+   关掉总开关时下面两行淡出并禁用——参数还在，只是暂时不起作用。 */
+.novu-sw{margin-left:auto;flex-shrink:0;width:40px;height:24px;border-radius:12px;
+  background:var(--border-soft);position:relative;transition:background .2s ease;}
+.novu-sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;
+  border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.25);
+  transition:transform .2s ease;}
+.nitem-ovu[aria-checked="true"] .novu-sw{background:var(--accent);}
+.nitem-ovu[aria-checked="true"] .novu-sw::after{transform:translateX(16px);}
+.nitem-ovu .novu-lbl{color:var(--text-primary);font-weight:500;}
+.novu-opt{padding:var(--sp-8) var(--sp-10) var(--sp-4);}
+.novu-opt-lbl{font-size:var(--fs-micro);color:var(--text-muted);margin-bottom:5px;}
+.novu-segs{display:flex;gap:4px;}
+.novu-seg{flex:1;min-width:0;padding:6px 2px;border:1px solid var(--border);
+  background:none;border-radius:var(--r);cursor:pointer;font-family:var(--zh);
+  font-size:var(--fs-micro);font-weight:600;color:var(--text-secondary);
+  transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.novu-seg.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+.novu-seg:active{transform:scale(.94);}
+.novu-off{opacity:.4;pointer-events:none;}
+.novu-hint{padding:2px var(--sp-10) var(--sp-8);font-size:var(--fs-micro);
+  color:var(--text-muted);line-height:1.5;}
 /* 设置 › 外观：主题色是色块网格。十个色再用列表行会把设置页拉得很长，
    色块本身就是预览，44px 见方也正好是触控下限。 */
 /* auto-fit 的列数按最小值算：给 36px 下限、1fr 上限，窄侧栏能排 4 个、手机能排 7 个，
@@ -3029,6 +3052,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   <div class="nsec">
     <div class="nlbl">外观</div>
     <div class="ncard" id="themeRow" aria-label="外观"></div>
+  </div>
+  <div class="nsec">
+    <div class="nlbl">经期</div>
+    <div class="ncard" id="ovuRow" aria-label="排卵期推算"></div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
@@ -7189,20 +7216,47 @@ window.PV = (function(){
     //   · 未来：用最近若干个周期的平均值外推
     // 结果不落盘、每次渲染现算，所以改任意一天的经血量后自动跟着变，
     // 也不会和 Gist 同步的数据打架。
-    const LUTEAL_DAYS    = 14;   // 黄体期长度
+    // 固定参数（生理常数 / 数据清洗阈值，不开放给用户改）
     const FERTILE_BEFORE = 5;    // 易孕窗口：排卵前 5 天（精子存活上限）
     const FERTILE_AFTER  = 1;    // 排卵后 1 天（卵子存活约 24 小时）
     const CYCLE_MIN      = 21;   // 合理周期下限，超出视为漏记/补记 → 剔除
     const CYCLE_MAX      = 40;   // 合理周期上限
-    const CYCLE_SAMPLE   = 6;    // 平均周期取最近几个
     const CYCLE_FALLBACK = 28;   // 样本全被剔除时的兜底周期
     const FUTURE_CYCLES  = 3;    // 往后外推几个周期（再远误差已无意义）
+
+    // 可调参数（设置 › 经期）：存本机 localStorage，不进 Gist——
+    // 这是「怎么算」的偏好，不是经期数据本身，没必要跟着同步走。
+    const OVU_KEY = 'my_list_ovu_cfg_v1';
+    const OVU_DEFAULT = { on: true, luteal: 14, sample: 6 };
+    const LUTEAL_CHOICES = [12, 13, 14, 15, 16];   // 黄体期正常范围
+    const SAMPLE_CHOICES = [3, 6, 12];             // 平均周期取最近几次
+    let OVU = Object.assign({}, OVU_DEFAULT);
+
+    function loadOvuCfg() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(OVU_KEY));
+        if (raw && typeof raw === 'object') OVU = Object.assign({}, OVU_DEFAULT, raw);
+      } catch (e) {}
+      // 存过的值也要校验：手改 localStorage 或旧版本残留都不该把推算带偏
+      if (!LUTEAL_CHOICES.includes(OVU.luteal)) OVU.luteal = OVU_DEFAULT.luteal;
+      if (!SAMPLE_CHOICES.includes(OVU.sample)) OVU.sample = OVU_DEFAULT.sample;
+      OVU.on = OVU.on !== false;
+    }
+    function getOvuCfg() { return Object.assign({}, OVU); }
+    function setOvuCfg(patch) {
+      OVU = Object.assign({}, OVU, patch);
+      try { localStorage.setItem(OVU_KEY, JSON.stringify(OVU)); } catch (e) {}
+      if (_inited) render();   // 日历正开着就立刻重画；没开过则下次进入自然生效
+    }
+    // 立刻读一次：设置页在 PV.init 之前就要渲染出正确的开关状态
+    loadOvuCfg();
 
     // 返回 { map:{"y-m-d":'fertile'|'ovu'|'predp'}, avg, n, spread, wide, next, ok }
     function computeFertility() {
       const { periods, cycles } = computeCycles();
       const map = {};
       const out = { map, avg: 0, n: 0, spread: 0, wide: false, next: null, ok: false };
+      if (!OVU.on) return out;              // 设置里关掉了推算 → 一个标记都不出
       if (periods.length < 2) return out;   // 至少两段经期才谈得上「周期」
 
       const shift = (dt, n) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n);
@@ -7221,11 +7275,11 @@ window.PV = (function(){
       for (let i = 1; i < periods.length; i++) {
         const c = cycles[i - 1];
         if (c < CYCLE_MIN || c > CYCLE_MAX) continue;
-        markOvu(shift(periods[i].start, -LUTEAL_DAYS));
+        markOvu(shift(periods[i].start, -OVU.luteal));
       }
 
-      // ② 平均周期：只取最近 CYCLE_SAMPLE 个合理周期
-      const recent = cycles.filter(c => c >= CYCLE_MIN && c <= CYCLE_MAX).slice(-CYCLE_SAMPLE);
+      // ② 平均周期：只取最近 OVU.sample 个合理周期
+      const recent = cycles.filter(c => c >= CYCLE_MIN && c <= CYCLE_MAX).slice(-OVU.sample);
       const avg = recent.length
         ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)
         : CYCLE_FALLBACK;
@@ -7240,7 +7294,7 @@ window.PV = (function(){
         periods.reduce((a, p) => a + p.length, 0) / periods.length));
       for (let n = 1; n <= FUTURE_CYCLES; n++) {
         const nextStart = shift(last, avg * n);
-        markOvu(shift(nextStart, -LUTEAL_DAYS));
+        markOvu(shift(nextStart, -OVU.luteal));
         for (let i = 0; i < avgLen; i++) mark(shift(nextStart, i), 'predp');
       }
       out.next = shift(last, avg);
@@ -7450,7 +7504,9 @@ window.PV = (function(){
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
     navPrev, navNext, heatShift,
-    closeDaySheet, clearDayRecord
+    closeDaySheet, clearDayRecord,
+    // 设置 › 经期：排卵期推算的开关与参数
+    getOvuCfg, setOvuCfg, loadOvuCfg, LUTEAL_CHOICES, SAMPLE_CHOICES
   };
 })();
 
@@ -7725,9 +7781,39 @@ function renderThemeRow(){
     '</div>';
 }
 
+// 设置 › 经期：排卵期推算的开关与两个参数。
+// 「黄体期长度」和「取样次数」是推算里唯二值得个人调整的量：前者决定排卵日
+// 落在哪天(默认 14 天，正常范围 12–16)，后者决定平均周期看多久的历史。
+// 易孕窗口长度、异常周期剔除阈值属于生理常数/数据清洗，不开放，免得越调越偏。
+function renderOvuRow(){
+  const row=document.getElementById('ovuRow');
+  if(!row||!window.PV)return;
+  const c=PV.getOvuCfg();
+  const segs=(name,choices,cur,fmt)=>
+    `<div class="novu-opt${c.on?'':' novu-off'}">`+
+      `<div class="novu-opt-lbl">${name}</div>`+
+      `<div class="novu-segs" role="radiogroup" aria-label="${name}">`+
+      choices.map(v=>
+        `<button type="button" class="novu-seg${v===cur?' on':''}" role="radio"`+
+        ` aria-checked="${v===cur}" onclick="setOvuOpt('${name==='黄体期长度'?'luteal':'sample'}',${v})">`+
+        `${fmt(v)}</button>`).join('')+
+      '</div></div>';
+  row.innerHTML=
+    `<button type="button" class="nitem nitem-ovu" role="switch" aria-checked="${c.on}"`+
+    ` aria-label="排卵期推算，点击${c.on?'关闭':'开启'}" onclick="toggleOvu()">`+
+      `<span class="novu-lbl">排卵期推算</span><span class="novu-sw"></span></button>`+
+    segs('黄体期长度',PV.LUTEAL_CHOICES,c.luteal,v=>`${v} 天`)+
+    segs('平均周期取样',PV.SAMPLE_CHOICES,c.sample,v=>`近 ${v} 次`)+
+    `<div class="novu-hint${c.on?'':' novu-off'}">排卵日 = 下次经期 − 黄体期长度。`+
+    `易孕期取排卵前 5 天到后 1 天，周期在 21–40 天以外的记录不计入平均。</div>`;
+}
+function toggleOvu(){haptic('tap');PV.setOvuCfg({on:!PV.getOvuCfg().on});renderOvuRow();}
+function setOvuOpt(key,val){haptic('tap');PV.setOvuCfg({[key]:val});renderOvuRow();}
+
 function boot(){
   applyTheme(getTheme(),false);
   applyMode(getMode(),false);
+  renderOvuRow();
   loadPeriod();
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
   try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
