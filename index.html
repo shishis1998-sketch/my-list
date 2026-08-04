@@ -209,6 +209,57 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nitem-mode[aria-checked="true"] .nmode-btn{background:var(--accent);}
 .nitem-mode[aria-checked="true"] .nmode-btn svg{stroke:var(--on-accent);}
 .nitem-mode:active .nmode-btn{transform:scale(.92);}
+/* 设置 › 经期：排卵期推算的总开关 + 全部推算参数。
+   开关用滑块（是/否），参数一律用 ± 步进按钮——每项的合理范围跨度都不小
+   （周期 10–90 天、黄体期 8–20 天），几个固定档位盖不住真实情况。
+   到达上下限的那一侧按钮置灰禁用。常用两项常驻，其余收进「高级」折叠区。
+   关掉总开关时整块淡出禁用——参数还在，只是暂时不起作用。 */
+.novu-sw{margin-left:auto;flex-shrink:0;width:40px;height:24px;border-radius:12px;
+  background:var(--border-soft);position:relative;transition:background .2s ease;}
+.novu-sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;
+  border-radius:50%;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,.25);
+  transition:transform .2s ease;}
+.nitem-ovu[aria-checked="true"] .novu-sw{background:var(--accent);}
+.nitem-ovu[aria-checked="true"] .novu-sw::after{transform:translateX(16px);}
+.nitem-ovu .novu-lbl{color:var(--text-primary);font-weight:500;}
+.novu-opt{display:flex;align-items:center;gap:var(--sp-8);
+  padding:5px var(--sp-10);min-height:36px;}
+.novu-opt-lbl{flex:1;min-width:0;font-size:var(--fs-micro);color:var(--text-secondary);}
+.novu-step{flex:0 0 auto;display:flex;align-items:center;gap:2px;}
+.novu-stepbtn{width:26px;height:26px;flex:0 0 auto;border:1px solid var(--border);
+  background:none;border-radius:50%;cursor:pointer;font-family:var(--zh);
+  font-size:14px;line-height:1;color:var(--text-secondary);
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.novu-stepbtn:active{transform:scale(.88);background:var(--accent-light);color:var(--accent);}
+.novu-stepbtn.off{opacity:.3;cursor:default;}
+.novu-stepbtn.off:active{transform:none;background:none;color:var(--text-secondary);}
+.novu-stepval{min-width:62px;text-align:center;font-size:var(--fs-micro);
+  font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums;}
+/* 「有效周期区间」的 自动/手动 二选一，以及自动时显示推算结果的那行小字 */
+.novu-segs{flex:0 0 auto;display:flex;gap:3px;}
+.novu-seg{padding:5px 10px;border:1px solid var(--border);background:none;
+  border-radius:var(--r);cursor:pointer;font-family:var(--zh);
+  font-size:var(--fs-micro);font-weight:600;color:var(--text-secondary);
+  transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.novu-seg.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+.novu-seg:active{transform:scale(.94);}
+.novu-note{padding:0 var(--sp-10) var(--sp-8);margin-top:-3px;
+  font-size:var(--fs-micro);color:var(--text-muted);line-height:1.5;}
+.novu-note b{color:var(--text-primary);}
+.novu-adv{display:flex;align-items:center;gap:4px;width:100%;
+  padding:7px var(--sp-10);border:none;background:none;cursor:pointer;
+  font-family:var(--zh);font-size:var(--fs-micro);font-weight:600;
+  color:var(--text-muted);-webkit-tap-highlight-color:transparent;}
+.novu-chev{font-size:10px;}
+.novu-reset{width:100%;padding:7px 0;border:1px solid var(--border);background:none;
+  border-radius:var(--r);cursor:pointer;font-family:var(--zh);
+  font-size:var(--fs-micro);font-weight:600;color:var(--text-secondary);
+  -webkit-tap-highlight-color:transparent;}
+.novu-reset:active{transform:scale(.97);}
+.novu-off{opacity:.4;pointer-events:none;}
+.novu-hint{padding:2px var(--sp-10) var(--sp-8);font-size:var(--fs-micro);
+  color:var(--text-muted);line-height:1.5;}
 /* 设置 › 外观：主题色是色块网格。十个色再用列表行会把设置页拉得很长，
    色块本身就是预览，44px 见方也正好是触控下限。 */
 /* auto-fit 的列数按最小值算：给 36px 下限、1fr 上限，窄侧栏能排 4 个、手机能排 7 个，
@@ -2404,6 +2455,29 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       box-shadow: 0 0 0 2px white;}
 #calViewPeriod .day.selected-view {outline: 2px solid var(--brand);
       outline-offset: -2px;}
+/* ── 排卵期推算标记 ──────────────────────────────────────────
+   用蓝色系，与「经期」的红、「年度」的墨绿都分得开。
+   易孕期＝淡蓝底；排卵日＝蓝色实心；预测的下次经期＝红虚线框。
+   排卵日若正好落在已记录的经期上，改用蓝色描边，不盖掉经血量颜色。
+   --ovu 是实心块/描边用色（配白字，两种模式通用），
+   --ovu-ink 是浅底上的文字色，夜间需要提亮一档才够清楚。 */
+#calViewPeriod {--ovu: #2E6FCC; --ovu-soft: rgba(46,111,204,.16); --ovu-ink: #2E6FCC;}
+:root[data-mode="dark"] #calViewPeriod {--ovu-soft: rgba(91,155,240,.20); --ovu-ink: #7FB0F5;}
+#calViewPeriod .day.fx-fertile {background-color: var(--ovu-soft);}
+#calViewPeriod .day.fx-ovu {background-color: var(--ovu); color: #FFFFFF; font-weight: 700;}
+#calViewPeriod .day.fx-ovu-ring::before,
+#calViewPeriod .day.fx-predp::before {content: ''; position: absolute; inset: 0;
+      border-radius: inherit;   /* 跟着日期格自己的圆角走（月视图是圆、年视图是小圆角）*/
+      pointer-events: none; z-index: 1;}
+#calViewPeriod .day.fx-ovu-ring::before {border: 2px solid var(--ovu);}
+#calViewPeriod .day.fx-predp::before {border: 1.5px dashed var(--brand); opacity: .7;}
+#calViewPeriod .day.fx-predp {color: var(--brand);}
+/* 底部弹窗里的推算说明 */
+.pv-fert-note {margin: 10px 0 2px; padding: 8px 10px;
+      background: var(--ovu-soft); border-radius: 10px;
+      font-size: var(--fs-micro); line-height: 1.55; color: var(--ink-2);}
+.pv-fert-note b {display: block; color: var(--ovu-ink); font-size: var(--fs-footnote); margin-bottom: 1px;}
+.pv-fert-note span {display: block; margin-top: 3px; color: var(--faint);}
 #calViewPeriod .day-status-bar {margin-top: var(--sp-card);
       padding: 6px 14px;
       border-radius: var(--r-lg);}
@@ -2502,6 +2576,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
 .pv-sheet-status{font-size:11px;font-weight:700;color:var(--brand);
   background:var(--brand-soft);padding:3px 9px;border-radius:20px;white-space:nowrap;}
+/* 排卵/易孕的药丸跟日历格子同一套蓝，别跟经期红混在一起 */
+.pv-sheet-status.fert{color:var(--ovu-ink);background:var(--ovu-soft);}
 .pv-sheet-close{margin-left:auto;flex:0 0 auto;width:28px;height:28px;border:none;
   background:var(--surface-2);border-radius:50%;color:var(--text-muted);
   font-size:14px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -3004,6 +3080,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   <div class="nsec">
     <div class="nlbl">外观</div>
     <div class="ncard" id="themeRow" aria-label="外观"></div>
+  </div>
+  <div class="nsec">
+    <div class="nlbl">经期</div>
+    <div class="ncard" id="ovuRow" aria-label="排卵期推算"></div>
   </div>
   <div class="nsec nsec-view">
     <div class="nlbl nlbl-desktop">视图</div>
@@ -6292,9 +6372,16 @@ window.PV = (function(){
         const symList = SYMPTOMS_DATA[`${year}-${month}-${day}`] || [];
         const hasSym = symList.length > 0;
         const symHit = homeSymFilter && homeSymFilter !== '全部' && symList.includes(homeSymFilter);
+        // 排卵期标记：已记录经血量的那天优先保留原色，排卵日改用描边、
+        // 易孕期/预测经期则整个让位（记录是事实，预测不该盖在事实上面）
+        const fk = fertKind(year, month, day);
+        const fcls = fk === 'ovu'     ? (lv ? 'fx-ovu-ring' : 'fx-fertile fx-ovu')
+                   : fk === 'fertile' ? (lv ? '' : 'fx-fertile')
+                   : fk === 'predp'   ? (lv ? '' : 'fx-predp')
+                   : '';
         html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
                   `<div data-month="${month}" data-day="${day}"` +
-                  ` class="day ${getLevelClass(lv)} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
+                  ` class="day ${getLevelClass(lv)} ${fcls} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
                   ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
                   `<div class="dot-slot"><span class="rec-dot"></span></div>` +
                 `</div>`;
@@ -6310,6 +6397,7 @@ window.PV = (function(){
 
     function render() {
       closeDaySheet();   // 翻月/切视图/切年 等任何重画都收起底部弹窗
+      buildFert();       // 排卵期现算：改过经期后重画就是最新结果
       const cal = document.getElementById('calendar');
       const yl = document.getElementById('yearLabel');
       if (yl) yl.textContent = year;
@@ -6530,11 +6618,18 @@ window.PV = (function(){
       if (!el || !selectedView) return;
       const { y, m, d } = selectedView;
       const st = getDayStatus(y, m, d);
+      const fk = st.kind === 'none' ? fertKind(y, m, d) : null;
+      // 排卵/易孕用青绿药丸；预计经期仍归经期红
+      el.classList.toggle('fert', fk === 'ovu' || fk === 'fertile');
       if (st.kind === 'period') {
         el.textContent = `经期 · 第 ${st.dayNo} 天`;
         el.style.display = '';
       } else if (st.kind === 'spotting') {
         el.textContent = '点滴 · 不计入经期';
+        el.style.display = '';
+      } else if (fk) {
+        // 没有经期记录时，退而显示这天的排卵期推算结果
+        el.textContent = FERT_LABEL[fk];
         el.style.display = '';
       } else {
         el.style.display = 'none';
@@ -6553,6 +6648,7 @@ window.PV = (function(){
       body.innerHTML =
         `<div class="pv-flow-title">经血量</div>` +
         `<div class="pv-flow" id="pvFlow"></div>` +
+        fertBasisHtml(y, m, d) +
         `<div class="day-info-bar" id="dayInfoBar"></div>`;
       buildFlowSwatches();
       renderDayInfoBar();       // 填充症状标签(内部会尝试渲染 #dayStatusBar，此处不放该元素故自动跳过)
@@ -6623,6 +6719,7 @@ window.PV = (function(){
       if (homeView !== 'month') return;
       const target = document.querySelector('#calendar .month');
       if (!target) return;
+      buildFert();   // 刚改完这天的经血量 → 排卵期要跟着重算
       const tmp = document.createElement('div');
       tmp.innerHTML = generateMonth(viewMonth, true);
       const newDays = tmp.querySelector('.days');
@@ -7140,6 +7237,228 @@ window.PV = (function(){
       return { periods, cycles };
     }
 
+    // ── 排卵期推算（黄体期倒推法）────────────────────────────────
+    // 排卵日 ≈ 下次月经来潮日 − 14 天。黄体期长度个体差异很小(12–16 天)，
+    // 比「周期 ÷ 2」稳得多，对周期不规律的人尤其如此。
+    //   · 历史：用真实发生的下次经期倒推，等于事后校准，最准
+    //   · 未来：用最近若干个周期的平均值外推
+    // 结果不落盘、每次渲染现算，所以改任意一天的经血量后自动跟着变，
+    // 也不会和 Gist 同步的数据打架。
+    // 全部参数都可调（设置 › 经期）：存本机 localStorage，不进 Gist——
+    // 这是「怎么算」的偏好，不是经期数据本身，没必要跟着同步走。
+    // 默认值是人群统计上的常见值，不是对每个人都对的值：周期本来就有人 24 天、
+    // 有人 45 天，黄体期也不是人人 14 天，所以一个都不写死。
+    const OVU_KEY = 'my_list_ovu_cfg_v1';
+    const OVU_DEFAULT = {
+      on: true,
+      luteal:     14,   // 黄体期长度：排卵日 = 下次经期 − 这个数
+      sample:      6,   // 平均周期取最近几个
+      fertBefore:  5,   // 易孕窗口：排卵前几天（精子存活上限）
+      fertAfter:   1,   // 易孕窗口：排卵后几天（卵子存活约 24 小时）
+      cycMode: 'auto',  // 有效周期区间：'auto' 从你自己的记录里推 | 'manual' 用下面两个值
+      cycMin:     21,   // 有效周期下限（仅 manual 用），落在范围外视为漏记 → 不计入
+      cycMax:     40,   // 有效周期上限（仅 manual 用）
+      fallback:   28,   // 没有任何有效周期时的兜底周期
+      future:      3    // 往后外推几个周期
+    };
+    // 每项的可调范围。范围本身放宽到覆盖各种真实情况（长周期、短黄体期等），
+    // 只挡住会让推算失去意义的取值（比如上限低于下限）。
+    const OVU_RANGE = {
+      luteal:     { min:  8, max: 20, label: '黄体期长度',       unit: '天' },
+      sample:     { min:  1, max: 24, label: '平均周期取样',     unit: '次', pre: '近' },
+      fertBefore: { min:  0, max: 10, label: '易孕期 · 排卵前',  unit: '天' },
+      fertAfter:  { min:  0, max:  5, label: '易孕期 · 排卵后',  unit: '天' },
+      cycMin:     { min: 10, max: 60, label: '有效周期下限',     unit: '天' },
+      cycMax:     { min: 15, max: 90, label: '有效周期上限',     unit: '天' },
+      fallback:   { min: 15, max: 60, label: '兜底周期',         unit: '天' },
+      future:     { min:  1, max:  6, label: '往后预测',         unit: '个周期' }
+    };
+    let OVU = Object.assign({}, OVU_DEFAULT);
+
+    // 把配置夹回合法区间。手改 localStorage、旧版本残留、跨版本新增字段都走这里。
+    function clampOvu(c) {
+      const out = Object.assign({}, OVU_DEFAULT, c || {});
+      out.on = out.on !== false;
+      if (out.cycMode !== 'manual') out.cycMode = 'auto';
+      Object.keys(OVU_RANGE).forEach(k => {
+        const r = OVU_RANGE[k], raw = out[k];
+        // null / 空串 / 非数字都落回默认值；Number(null) 是 0，不拦住会被夹成下限
+        const v = (raw === null || raw === '' || typeof raw === 'boolean')
+          ? NaN : Math.round(Number(raw));
+        out[k] = Number.isFinite(v) ? Math.min(r.max, Math.max(r.min, v)) : OVU_DEFAULT[k];
+      });
+      // 上限低于下限时整个有效区间为空，所有周期都会被剔掉 → 强制拉开至少 1 天
+      if (out.cycMax <= out.cycMin) {
+        out.cycMax = Math.min(OVU_RANGE.cycMax.max, out.cycMin + 1);
+        if (out.cycMax <= out.cycMin) out.cycMin = out.cycMax - 1;   // 上限已到顶就改压下限
+      }
+      return out;
+    }
+
+    function loadOvuCfg() {
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(OVU_KEY)); } catch (e) {}
+      OVU = clampOvu(raw && typeof raw === 'object' ? raw : null);
+    }
+    function resetOvuCfg() { setOvuCfg(Object.assign({}, OVU_DEFAULT), true); }
+    // ── 有效周期区间：默认从你自己的记录里推，不用手填 ──────────────
+    // 要拦的其实只有一类东西：漏记。漏了一段没记，两次经期之间的间隔就会变成
+    // 真实周期的两倍、三倍，把这种间隔当周期算会把平均值整个带偏。
+    // 关键性质是「漏记只会让间隔变长，不会变短」——所以样本少时用最小值当锚点
+    // 最稳；样本够了改用中位数，免得偶尔一次特别短的周期把锚点带偏。
+    // 容差取锚点的 30%（至少 6 天）：真实波动进得来，二倍跳（≥ 200%）进不来。
+    const ABS_MIN = 10, ABS_MAX = 120;   // 绝对兜底：这之外不可能是一个真实周期
+    function cycleWindow(cycles) {
+      if (OVU.cycMode === 'manual')
+        return { min: OVU.cycMin, max: OVU.cycMax, auto: false, n: 0 };
+      const s = (cycles || []).filter(v => v >= ABS_MIN && v <= ABS_MAX).sort((a, b) => a - b);
+      if (!s.length) return { min: ABS_MIN, max: ABS_MAX, auto: true, n: 0 };
+      const anchor = s.length >= 3 ? s[(s.length - 1) >> 1] : s[0];
+      const tol = Math.max(Math.round(anchor * 0.3), 6);
+      return {
+        min: Math.max(ABS_MIN, anchor - tol),
+        max: Math.min(ABS_MAX, anchor + tol),
+        auto: true, anchor, n: s.length
+      };
+    }
+    // 给设置页看的：当前这套记录会推出什么区间
+    function getCycleInfo() {
+      const { cycles } = computeCycles();
+      const win = cycleWindow(cycles);
+      return { win, total: cycles.length };
+    }
+
+    function getOvuCfg() { return Object.assign({}, OVU); }
+    function getOvuRange() { return JSON.parse(JSON.stringify(OVU_RANGE)); }
+    function getOvuDefault() { return Object.assign({}, OVU_DEFAULT); }
+    // replace=true 时用 patch 整个换掉（恢复默认用），否则按字段合并
+    function setOvuCfg(patch, replace) {
+      OVU = clampOvu(replace ? patch : Object.assign({}, OVU, patch));
+      try { localStorage.setItem(OVU_KEY, JSON.stringify(OVU)); } catch (e) {}
+      if (_inited) render();   // 日历正开着就立刻重画；没开过则下次进入自然生效
+    }
+    // 立刻读一次：设置页在 PV.init 之前就要渲染出正确的开关状态
+    loadOvuCfg();
+
+    // 被有效区间挡下的间隔到底是什么？三种成因，处理和措辞都不该一样：
+    //   · 偏短  → 多半是同一次经期被拆成了两段（中间空了一天以上没记）
+    //   · 接近典型周期的整数倍 → 多半是漏记，中间少记了 k−1 次经期
+    //   · 单纯偏长 → 周期是真的，只是那次可能没有排卵（无排卵周期）
+    // 第三种尤其要说清楚：无排卵周期没有黄体期，那次出血也不是真正的月经，
+    // 「下次经期 − 黄体期」这个倒推对它根本不成立，所以不给它标排卵日是对的，
+    // 但那不是因为「漏记」——这两件事得分开讲。
+    const MULTIPLE_TOL = 0.12;   // 与整数倍的偏差在锚点的 12% 以内才算漏记
+    function classifyDropped(cycles, win) {
+      const out = { short: 0, missed: 0, long: 0 };
+      // 手动模式没有 anchor，用区间内周期的中位数顶上
+      let anchor = win.anchor;
+      if (!anchor) {
+        const inside = cycles.filter(c => c >= win.min && c <= win.max).sort((a, b) => a - b);
+        anchor = inside.length ? inside[(inside.length - 1) >> 1] : 0;
+      }
+      cycles.forEach(c => {
+        if (c >= win.min && c <= win.max) return;
+        if (c < win.min) { out.short++; return; }
+        const k = anchor ? Math.round(c / anchor) : 0;
+        if (k >= 2 && Math.abs(c - k * anchor) / anchor <= MULTIPLE_TOL) out.missed++;
+        else out.long++;
+      });
+      return out;
+    }
+
+    // 返回 { map:{"y-m-d":'fertile'|'ovu'|'predp'}, avg, n, spread, wide, next, ok }
+    function computeFertility() {
+      const { periods, cycles } = computeCycles();
+      const map = {};
+      const out = { map, avg: 0, n: 0, spread: 0, wide: false, dropped: 0,
+                    drop: { short: 0, missed: 0, long: 0 }, win: null, next: null, ok: false };
+      if (!OVU.on) return out;              // 设置里关掉了推算 → 一个标记都不出
+      if (periods.length < 2) return out;   // 至少两段经期才谈得上「周期」
+
+      const win = cycleWindow(cycles);   // 有效周期区间：自动推 or 手动设
+      out.win = win;
+      out.drop = classifyDropped(cycles, win);
+
+      const shift = (dt, n) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n);
+      const RANK = { predp: 1, fertile: 2, ovu: 3 };   // 同一天重叠时谁盖谁
+      const mark = (dt, kind) => {
+        const k = `${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`;
+        if (!map[k] || RANK[kind] > RANK[map[k]]) map[k] = kind;
+      };
+      const markOvu = ovu => {
+        for (let i = -OVU.fertBefore; i <= OVU.fertAfter; i++) mark(shift(ovu, i), 'fertile');
+        mark(ovu, 'ovu');
+      };
+
+      // ① 历史：每段经期的开始日往前推一个黄体期 = 上一个周期的排卵日。
+      //    只处理周期落在有效区间内的相邻两段——中间漏记过的大间隔不瞎标。
+      for (let i = 1; i < periods.length; i++) {
+        const c = cycles[i - 1];
+        if (c < win.min || c > win.max) continue;
+        markOvu(shift(periods[i].start, -OVU.luteal));
+      }
+
+      // ② 平均周期：只取最近 OVU.sample 个有效周期
+      const valid = cycles.filter(c => c >= win.min && c <= win.max);
+      const recent = valid.slice(-OVU.sample);
+      const avg = recent.length
+        ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)
+        : OVU.fallback;
+      out.avg = avg;
+      out.n = recent.length;
+      out.dropped = cycles.length - valid.length;   // 有几个周期被有效区间挡掉了
+      out.spread = recent.length ? Math.max(...recent) - Math.min(...recent) : 0;
+      out.wide = out.spread > 7;            // 波动大 → 预测只能当参考
+
+      // ③ 未来：从最后一段经期起按平均周期外推
+      const last = periods[periods.length - 1].start;
+      const avgLen = Math.max(1, Math.round(
+        periods.reduce((a, p) => a + p.length, 0) / periods.length));
+      for (let n = 1; n <= OVU.future; n++) {
+        const nextStart = shift(last, avg * n);
+        markOvu(shift(nextStart, -OVU.luteal));
+        for (let i = 0; i < avgLen; i++) mark(shift(nextStart, i), 'predp');
+      }
+      out.next = shift(last, avg);
+      out.ok = true;
+      return out;
+    }
+
+    const FERT_LABEL = { ovu: '排卵日 · 推算', fertile: '易孕期 · 推算', predp: '预计经期' };
+
+    // 底部弹窗里那一行推算依据：只在这天确实被标了才出现，
+    // 说明清楚是按哪几次记录算的，免得标记看着像凭空冒出来的。
+    function fertBasisHtml(y, m, d) {
+      const fk = fertKind(y, m, d);
+      if (!fk) return '';
+      const win = FERT.win || { min: 0, max: 0, auto: true };
+      let basis = FERT.n
+        ? `平均周期 ${FERT.avg} 天 · 按最近 ${FERT.n} 次经期推算` +
+          (FERT.wide ? `（周期波动 ${FERT.spread} 天，偏差可能较大）` : '')
+        : `没有落在 ${win.min}–${win.max} 天区间内的周期，暂按兜底的 ${OVU.fallback} 天推算`;
+      // 有间隔被挡掉就说清楚它去哪了，而且按成因分开讲——
+      // 「漏记」和「真实的长周期」是两回事，不该都甩一句漏记了事。
+      const dp = FERT.drop || { short: 0, missed: 0, long: 0 };
+      if (FERT.dropped > 0) {
+        const why = [];
+        if (dp.missed) why.push(`${dp.missed} 次接近周期的整数倍，像是中间漏记了`);
+        if (dp.long)   why.push(`${dp.long} 次明显偏长，可能是没有排卵的周期`);
+        if (dp.short)  why.push(`${dp.short} 次偏短，可能是同一次经期被拆成了两段`);
+        basis += `。另有 ${FERT.dropped} 次间隔不在 ${win.min}–${win.max} 天内未计入平均：` +
+                 why.join('；') +
+                 (win.auto
+                   ? (dp.long ? `。无排卵周期没有黄体期，倒推不成立，所以不给它标排卵日` : '')
+                   : `。要改区间去「设置 › 经期」`);
+      }
+      return `<div class="pv-fert-note"><b>${FERT_LABEL[fk]}</b>${escapeHtml(basis)}` +
+             `<span>推算结果仅供参考，不能作为避孕或备孕依据</span></div>`;
+    }
+
+    // 整轮渲染共用一份推算结果：年视图一次要画 12 个月，避免重复全量计算
+    let FERT = { map: {}, ok: false };
+    function buildFert() { FERT = computeFertility(); }
+    function fertKind(y, m, d) { return FERT.map[`${y}-${m}-${d}`] || null; }
+
     const PALETTE_ORDER = [4, 1, 2, 3];               // 图例/色板显示顺序
     const LEVEL_CLASS = { 1: 'level-1', 2: 'level-2', 3: 'level-3', 4: 'level-g' };
     const SWATCH_CLASS = { 1: 'swatch-1', 2: 'swatch-2', 3: 'swatch-3', 4: 'swatch-g' };
@@ -7202,7 +7521,10 @@ window.PV = (function(){
       document.querySelectorAll('#calViewPeriod .legend').forEach(leg => {
         leg.innerHTML = PALETTE_ORDER.map(l =>
           `<div><span style="color:${PALETTE[l].color}">●</span> ${escapeHtml(PALETTE[l].name)}</div>`
-        ).join('');
+        ).join('') +
+        // 排卵期推算的两个色标，跟经血量色板并排（色板可改色，这两个固定用蓝）
+        '<div><span style="color:var(--ovu-ink);opacity:.5">●</span> 易孕期</div>' +
+        '<div><span style="color:var(--ovu)">●</span> 排卵日</div>';
       });
     }
 
@@ -7319,7 +7641,9 @@ window.PV = (function(){
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
     navPrev, navNext, heatShift,
-    closeDaySheet, clearDayRecord
+    closeDaySheet, clearDayRecord,
+    // 设置 › 经期：排卵期推算的开关与参数
+    getOvuCfg, setOvuCfg, resetOvuCfg, loadOvuCfg, getOvuRange, getOvuDefault, getCycleInfo
   };
 })();
 
@@ -7594,10 +7918,108 @@ function renderThemeRow(){
     '</div>';
 }
 
+// 设置 › 经期：排卵期推算的总开关 + 全部推算参数。
+// 一个都不写死——周期本来就有人 24 天有人 45 天，黄体期也不是人人 14 天，
+// 默认值只是人群常见值。常用的两项常驻，其余收进「高级」，免得设置页太长。
+// 每项用 ± 步进按钮：范围跨度大，几个固定档位盖不住真实情况。
+const OVU_ADV_HEAD=['fertBefore','fertAfter'];
+const OVU_ADV_TAIL=['fallback','future'];
+let ovuAdvOpen=false;
+function ovuStepRow(key,c,R){
+  const r=R[key];
+  const cur=c[key];
+  const txt=`${r.pre?r.pre+' ':''}${cur} ${r.unit}`;
+  const btn=(delta,sym,label)=>{
+    const off=(delta<0&&cur<=r.min)||(delta>0&&cur>=r.max);
+    return `<button type="button" class="novu-stepbtn${off?' off':''}"${off?' disabled':''}`+
+           ` aria-label="${label}${r.label}" onclick="stepOvu('${key}',${delta})">${sym}</button>`;
+  };
+  return `<div class="novu-opt">`+
+    `<span class="novu-opt-lbl">${r.label}</span>`+
+    `<span class="novu-step">${btn(-1,'−','减少')}`+
+    `<span class="novu-stepval">${txt}</span>${btn(1,'+','增加')}</span></div>`;
+}
+// 「有效周期」区间：默认自动——按你自己记录里的周期推，不用手填。
+// 自动时把推出来的区间显示出来，看得见才知道它到底在拦什么。
+function ovuCycWinRows(c,R){
+  const auto=c.cycMode==='auto';
+  const seg=(mode,txt)=>
+    `<button type="button" class="novu-seg${c.cycMode===mode?' on':''}" role="radio"`+
+    ` aria-checked="${c.cycMode===mode}" onclick="setOvuCycMode('${mode}')">${txt}</button>`;
+  let html=
+    `<div class="novu-opt"><span class="novu-opt-lbl">有效周期区间</span>`+
+    `<span class="novu-segs" role="radiogroup" aria-label="有效周期区间">`+
+    seg('auto','自动')+seg('manual','手动')+`</span></div>`;
+  if(auto){
+    const info=PV.getCycleInfo(), w=info.win;
+    html+=`<div class="novu-note">`+
+      (info.total
+        ? `按你的 ${info.total} 次周期记录推出 <b>${w.min}–${w.max} 天</b>`+
+          (info.total>=3?'（以中位数为准）':'（记录还少，以最短的一次为准）')
+        : `还没有足够记录，暂按 ${w.min}–${w.max} 天`)+
+      `</div>`;
+  }else{
+    html+=ovuStepRow('cycMin',c,R)+ovuStepRow('cycMax',c,R);
+  }
+  return html;
+}
+function renderOvuRow(){
+  const row=document.getElementById('ovuRow');
+  if(!row||!window.PV)return;
+  const c=PV.getOvuCfg(), R=PV.getOvuRange(), D=PV.getOvuDefault();
+  const changed=Object.keys(R).some(k=>c[k]!==D[k]);
+  const body=
+    ovuStepRow('luteal',c,R)+
+    ovuStepRow('sample',c,R)+
+    `<button type="button" class="novu-adv" aria-expanded="${ovuAdvOpen}" onclick="toggleOvuAdv()">`+
+      `高级<span class="novu-chev">${ovuAdvOpen?'▾':'▸'}</span></button>`+
+    (ovuAdvOpen
+      ? OVU_ADV_HEAD.map(k=>ovuStepRow(k,c,R)).join('')+
+        ovuCycWinRows(c,R)+
+        OVU_ADV_TAIL.map(k=>ovuStepRow(k,c,R)).join('')+
+        `<div class="novu-hint">排卵日 = 下次经期 − 黄体期长度。`+
+        `落在「有效周期」区间外的间隔视为漏记，不计入平均；`+
+        `一个有效周期都没有时才用兜底周期。`+
+        (changed?`</div><div class="novu-opt"><button type="button" class="novu-reset"`+
+          ` onclick="resetOvu()">恢复默认值</button></div>`:'</div>')
+      : '');
+  row.innerHTML=
+    `<button type="button" class="nitem nitem-ovu" role="switch" aria-checked="${c.on}"`+
+    ` aria-label="排卵期推算，点击${c.on?'关闭':'开启'}" onclick="toggleOvu()">`+
+      `<span class="novu-lbl">排卵期推算</span><span class="novu-sw"></span></button>`+
+    `<div class="novu-body${c.on?'':' novu-off'}">${body}</div>`;
+}
+function toggleOvu(){haptic('tap');PV.setOvuCfg({on:!PV.getOvuCfg().on});renderOvuRow();}
+function toggleOvuAdv(){haptic('tap');ovuAdvOpen=!ovuAdvOpen;renderOvuRow();}
+function setOvuCycMode(mode){
+  haptic('tap');
+  const c=PV.getOvuCfg();
+  if(c.cycMode===mode)return;
+  // 自动 → 手动：把当前自动推出来的区间填进去当起点，
+  // 免得一切过去就跳回 21–40，看着像被重置了
+  const patch={cycMode:mode};
+  if(mode==='manual'){const w=PV.getCycleInfo().win;patch.cycMin=w.min;patch.cycMax=w.max;}
+  PV.setOvuCfg(patch);
+  renderOvuRow();
+}
+function resetOvu(){haptic('tap');PV.resetOvuCfg();renderOvuRow();toast('已恢复默认推算参数');}
+function stepOvu(key,delta){
+  haptic('tap');
+  const c=PV.getOvuCfg(), r=PV.getOvuRange()[key];
+  const v=Math.min(r.max,Math.max(r.min,c[key]+delta));
+  if(v===c[key])return;
+  PV.setOvuCfg({[key]:v});
+  renderOvuRow();
+}
+
 function boot(){
   applyTheme(getTheme(),false);
   applyMode(getMode(),false);
   loadPeriod();
+  // 设置页要显示「按你的记录推出 X–Y 天」，得先让 PV 拿到经期数据——
+  // 否则没进过经期视图时那行只能显示「还没有足够记录」。
+  if(window.PV&&periodData&&!_pvInited){PV.init(periodData);_pvInited=true;}
+  renderOvuRow();
   try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
   try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
   if(!cats||!cats.length) cats=DCATS.map(c=>({...c}));
@@ -8248,7 +8670,7 @@ async function syncPull(silent){
       if(rRev>=lRev){
         periodData=_normPeriod(remote.period);
         try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
-        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();}
+        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
       }else{
         // 本地种子更新 → 保留本地并推上云端，覆盖旧 period
         scheduleSyncPush();
@@ -9356,7 +9778,7 @@ function importJSON(e){
       if(iperiod&&iperiod.ALL_DATA){
         periodData=_normPeriod(iperiod);
         try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
-        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();}
+        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
         scheduleSyncPush();
       }
       // 笔记导入:存在则合并(按 id 去重)
