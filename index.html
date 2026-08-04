@@ -2976,9 +2976,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-sym{width:4px;height:4px;border-radius:50%;background:var(--brand);}
 #calViewPeriod .dc-sym.off{background:transparent;}
 #calViewPeriod .dc-rule{height:1px;background:var(--line-soft);margin-top:14px;}
-/* 详情行不换行：症状最多显示 DC_SYM_MAX 个、多的收成 +N，卡片高度因此恒定 */
+/* 详情分两行：第一行状态／经血量／周期位置（内容固定，不换行），
+   第二行症状全列出来，只有真的超过一行时才把多出来的收成 +N */
 #calViewPeriod .dc-detail{display:flex;align-items:center;gap:8px;
   flex-wrap:nowrap;overflow:hidden;padding-top:12px;}
+#calViewPeriod .dc-syms{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;overflow:hidden;}
+/* 窄屏上单个超长标签可能比整行还宽：允许它收缩到行宽，靠 .dc-chip 自带的
+   text-overflow 出省略号，而不是被 .dc-syms 的 overflow 硬切一半 */
+#calViewPeriod .dc-syms .dc-chip{flex:0 1 auto;max-width:100%;}
 #calViewPeriod .dc-pill{flex:0 0 auto;font-size:11px;font-weight:700;
   padding:3px 9px;border-radius:999px;white-space:nowrap;}
 #calViewPeriod .dc-pill.period{background:var(--brand-soft);color:var(--brand);}
@@ -2987,7 +2992,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-chip{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:5px;
   font-size:12px;padding:3px 9px;border-radius:6px;background:var(--line-soft);color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#calViewPeriod .dc-chip.more{flex:0 0 auto;color:var(--faint);}
+#calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);}
 #calViewPeriod .dc-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
 #calViewPeriod .dc-meta{flex:0 0 auto;margin-left:auto;padding-left:4px;
   font-size:12px;color:var(--muted);white-space:nowrap;}
@@ -6820,7 +6825,7 @@ window.PV = (function(){
       const host = extras || cal;
 
       // 当天状态卡（在「本月状态记录」之上：先看某一天，再看整月）
-      host.appendChild(buildDayCard());
+      mountDayCard(host);
 
       // 本月状态记录(只读汇总)
       const list = buildMonthSymList(viewMonth);
@@ -6896,8 +6901,8 @@ window.PV = (function(){
     // ── 当天状态卡（日历卡下方）──────────────────────────────
     // 七日条只读：只做「选中日 ±3 天」的上下文预览，不接受点击——选哪天仍然
     // 只由上方日历决定，免得同屏两个日期选择器让人犹豫该点哪个。
-    // 详情行不换行：症状最多显示 DC_SYM_MAX 个、多的收成 +N，卡片高度恒定。
-    const DC_SYM_MAX = 2;
+    // 详情分两行：第一行状态／经血量／周期位置，第二行症状全列出来，
+    // 只有真的超过一行时才把多出来的收成 +N。
     const DC_FLOW_CN = { 1: '少', 2: '中', 3: '多', 4: '点滴' };
     let cardDay = null;   // 锚点日：点过日历上的哪天就是哪天，没点过是今天
 
@@ -6924,7 +6929,10 @@ window.PV = (function(){
     // 只替换状态卡本身：整轮 render() 会收起底部弹窗，编辑当天时不能用
     function refreshDayCard() {
       const old = document.querySelector('#pvExtras .dc-card');
-      if (old) old.replaceWith(buildDayCard());
+      if (!old) return;
+      const card = buildDayCard();
+      old.replaceWith(card);
+      clampDaySyms(card);   // 已在 DOM 里，可以量了
     }
 
     function buildDayCard() {
@@ -6964,11 +6972,12 @@ window.PV = (function(){
       const flow = p ? `<span class="dc-chip"><i class="dc-dot" style="background:${p.color || '#ccc'}"></i>` +
                        `${escapeHtml(DC_FLOW_CN[st.lv] || p.name || '')}</span>` : '';
 
+      // 症状全部列出来放第二行；放不下的由 clampDaySyms 在插入 DOM 后量着收
       const syms = getSym(a.y, a.m, a.d);
-      const chips = syms.slice(0, DC_SYM_MAX)
-        .map(n => `<span class="dc-chip">${escapeHtml(n)}</span>`).join('');
-      const more = syms.length > DC_SYM_MAX
-        ? `<span class="dc-chip more">+${syms.length - DC_SYM_MAX}</span>` : '';
+      const symRow = syms.length
+        ? `<div class="dc-syms">` +
+          syms.map(n => `<span class="dc-chip">${escapeHtml(n)}</span>`).join('') +
+          `</div>` : '';
 
       // 经期当天的「周期第 N 天」与药丸上的「第 N 天」恒等，重复一遍是噪音 → 只在非经期日显示
       const cd = st.kind === 'period' ? 0 : cycleDayNo(base);
@@ -6977,7 +6986,40 @@ window.PV = (function(){
       const card = document.createElement('div');
       card.className = 'dc-card';
       card.innerHTML = `<div class="dc-week">${strip}</div><div class="dc-rule"></div>` +
-                       `<div class="dc-detail">${pill}${flow}${chips}${more}${meta}</div>`;
+                       `<div class="dc-detail">${pill}${flow}${meta}</div>` + symRow;
+      return card;
+    }
+
+    // 症状行只保留一行：量出被挤到第二行的 chip，藏起来并补一个 +N。
+    // 必须在节点插入 DOM 之后调用——离屏节点没有布局，offsetTop 全是 0。
+    function clampDaySyms(card) {
+      const row = card && card.querySelector('.dc-syms');
+      if (!row) return;
+      const old = row.querySelector('.dc-more');
+      if (old) old.remove();
+      const chips = Array.from(row.querySelectorAll('.dc-chip'));
+      chips.forEach(c => { c.style.display = ''; });
+      if (!chips.length) return;
+      const top = chips[0].offsetTop;
+      let cut = chips.findIndex(c => c.offsetTop > top);
+      if (cut < 0) return;                 // 一行放得下，不用收
+      const more = document.createElement('span');
+      more.className = 'dc-chip dc-more';
+      row.appendChild(more);
+      // +N 自己也占宽度，可能再挤掉一个；最少留一个 chip，避免整行只剩 +N
+      for (;;) {
+        chips.forEach((c, i) => { c.style.display = i < cut ? '' : 'none'; });
+        more.textContent = `+${chips.length - cut}`;
+        if (more.offsetTop <= top || cut <= 1) break;
+        cut--;
+      }
+    }
+
+    // 建卡 + 插入 + 收症状行，三步必须连着做（收之前得先有布局）
+    function mountDayCard(host) {
+      const card = buildDayCard();
+      host.appendChild(card);
+      clampDaySyms(card);
       return card;
     }
 
