@@ -979,7 +979,9 @@ tr:hover .acts{opacity:1;}
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-8) var(--sp-10);flex-shrink:0;
   background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
-.cal-titlenav{display:flex;align-items:center;gap:0;}
+/* 左移半列减半个箭头按钮：‹ 的图标中心落在第一列（周一）日期的中心线上，
+   与右侧筛选/搜索对齐末列是同一套算法（见下面 .cal-nav） */
+.cal-titlenav{display:flex;align-items:center;gap:0;margin-left:calc((100% - 12px) / 14 - 13px);}
 .cal-titlenav .cal-navbtn{width:26px;}
 /* 筛选/搜索整组左移半列减半个按钮，让搜索图标的中心落在最后一列日期的中心线上。
    100% = 标题行内容宽 = 网格内容宽 310，(310-12)/14 = 半列宽，与屏宽一起变，换机型也对得上。 */
@@ -1080,10 +1082,14 @@ body.cal-searching .cal-searchresults{display:flex;}
   max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
 .cal-card:last-child{margin-bottom:0;}
 /* 卡片内日期标题（点某天后显示「N 月 N 日」，默认墨绿）*/
-.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14) var(--sp-4);
+/* 左右 10：与第一张卡的 .cal-scroll 同一套内边距，标题左缘正好落在周一那列的左缘。
+   上下都是 12（原来下面只有 4，靠时间线的 6 补，合起来 10，比上面窄一截）*/
+.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-10);
   font-size:var(--fs-sub);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
-.cal-tl{padding:var(--sp-6) var(--sp-14) var(--sp-10);overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 滚动改到卡片内部，保住卡片圆角 */
+/* 上留白归零（标题自己的 12 就是那道间距），左右 10 对齐第一张卡：
+   时间线的节点/竖线落在周一那列里，右侧时间文字末端与周日那列的右缘齐平 */
+.cal-tl{padding:0 var(--sp-10) var(--sp-10);overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 滚动改到卡片内部，保住卡片圆角 */
 .cal-tl::-webkit-scrollbar{display:none;}
 .cal-tl-row{position:relative;display:flex;align-items:flex-start;gap:var(--sp-10);padding:var(--sp-8) 0 var(--sp-8) var(--sp-20);cursor:pointer;border-radius:var(--rsm);transition:background .15s;}
 /* 圆点/竖线锚定在「第一行文字」的中心（上内边距 + 半行高），而非整行中点，长事件名换行时圆点仍停在第一行 */
@@ -2913,9 +2919,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .pv-cardwrap{background:var(--surface);border:1px solid var(--border);
   border-top:none;border-radius:0 0 16px 16px;margin:0 14px 12px;padding:2px 10px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{padding:8px 10px 12px;}
-/* 翻页导航整体：与普通日历 .cal-titlenav 一致（箭头按钮左缘距描边 10px，与右侧筛选对称）。
-   margin-left 必须显式写 0——上面 1998 行那条同优先级的规则给了 -6px，不写就还留着。 */
-#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:0;}
+/* 翻页导航整体：与普通日历 .cal-titlenav 一致——左移半列减半个箭头按钮，
+   ‹ 的图标中心落在第一列（周一）日期的中心线上。
+   margin-left 必须显式写，上面 1998 行那条同优先级的规则给了 -6px。 */
+#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:calc((100% - 12px) / 14 - 13px);}
 /* 筛选按钮左移半列减半个按钮，图标中心落在最后一列日期的中心线上（同 .cal-nav） */
 #calViewPeriod .home-header-right{margin-right:calc((100% - 12px) / 14 - 16px);}
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
