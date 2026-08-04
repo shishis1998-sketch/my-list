@@ -1082,16 +1082,21 @@ body.cal-searching .cal-searchresults{display:flex;}
   max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
 .cal-card:last-child{margin-bottom:0;}
 /* 卡片内日期标题（点某天后显示「N 月 N 日」，默认墨绿）*/
-/* 左右 10：与第一张卡的 .cal-scroll 同一套内边距，标题左缘正好落在周一那列的左缘。
-   上下都是 12（原来下面只有 4，靠时间线的 6 补，合起来 10，比上面窄一截）*/
-.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-10);
+/* 上下都是 12（原来下面只有 4，靠时间线的 6 补，合起来 10，比上面窄一截）。
+   左内边距 = 10 卡内边距 + 半列宽，让标题左缘与下面时间线的记录名同一条左缘，
+   一起压在第一列日期的中心线上；这里 100% 是 .cal-card 的内容宽（330），比时间线
+   那边多 20，所以半列宽写成 (100% - 32px)/14。右边仍是 10，与末列右缘齐平。 */
+.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-10) var(--sp-12) calc((100% - 32px) / 14 + 10px);
   font-size:var(--fs-sub);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 /* 上留白归零（标题自己的 12 就是那道间距），左右 10 对齐第一张卡：
    时间线的节点/竖线落在周一那列里，右侧时间文字末端与周日那列的右缘齐平 */
 .cal-tl{padding:0 var(--sp-10) var(--sp-10);overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}   /* 滚动改到卡片内部，保住卡片圆角 */
 .cal-tl::-webkit-scrollbar{display:none;}
-.cal-tl-row{position:relative;display:flex;align-items:flex-start;gap:var(--sp-10);padding:var(--sp-8) 0 var(--sp-8) var(--sp-20);cursor:pointer;border-radius:var(--rsm);transition:background .15s;}
+/* 整行右移半列减一个行缩进：记录名的左缘正好压在第一列（周一）日期的中心线上，
+   节点仍在那一列里（圆心偏左 14）。用 margin 而不是 padding，行的右缘不动，
+   右侧时间文字仍与末列右缘齐平。 */
+.cal-tl-row{position:relative;display:flex;align-items:flex-start;gap:var(--sp-10);margin-left:calc((100% - 12px) / 14 - 20px);padding:var(--sp-8) 0 var(--sp-8) var(--sp-20);cursor:pointer;border-radius:var(--rsm);transition:background .15s;}
 /* 圆点/竖线锚定在「第一行文字」的中心（上内边距 + 半行高），而非整行中点，长事件名换行时圆点仍停在第一行 */
 .cal-tl-row::before{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--border);}   /* 竖线 */
 .cal-tl-row:first-child::before{top:calc(var(--sp-8) + 10px);}                     /* 首行：从第一行圆点处向下 */
