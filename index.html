@@ -2405,11 +2405,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .day.selected-view {outline: 2px solid var(--brand);
       outline-offset: -2px;}
 /* ── 排卵期推算标记 ──────────────────────────────────────────
-   用青绿系，与「经期」的红、「年度」的墨绿都分得开。
-   易孕期＝淡青底；排卵日＝青绿实心；预测的下次经期＝红虚线框。
-   排卵日若正好落在已记录的经期上，改用青绿描边，不盖掉经血量颜色。 */
-#calViewPeriod {--ovu: #3E8E7E;}
-#calViewPeriod .day.fx-fertile {background-color: rgba(62,142,126,.16);}
+   用蓝色系，与「经期」的红、「年度」的墨绿都分得开。
+   易孕期＝淡蓝底；排卵日＝蓝色实心；预测的下次经期＝红虚线框。
+   排卵日若正好落在已记录的经期上，改用蓝色描边，不盖掉经血量颜色。
+   --ovu 是实心块/描边用色（配白字，两种模式通用），
+   --ovu-ink 是浅底上的文字色，夜间需要提亮一档才够清楚。 */
+#calViewPeriod {--ovu: #2E6FCC; --ovu-soft: rgba(46,111,204,.16); --ovu-ink: #2E6FCC;}
+:root[data-mode="dark"] #calViewPeriod {--ovu-soft: rgba(91,155,240,.20); --ovu-ink: #7FB0F5;}
+#calViewPeriod .day.fx-fertile {background-color: var(--ovu-soft);}
 #calViewPeriod .day.fx-ovu {background-color: var(--ovu); color: #FFFFFF; font-weight: 700;}
 #calViewPeriod .day.fx-ovu-ring::before,
 #calViewPeriod .day.fx-predp::before {content: ''; position: absolute; inset: 0;
@@ -2420,9 +2423,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .day.fx-predp {color: var(--brand);}
 /* 底部弹窗里的推算说明 */
 .pv-fert-note {margin: 10px 0 2px; padding: 8px 10px;
-      background: rgba(62,142,126,.10); border-radius: 10px;
+      background: var(--ovu-soft); border-radius: 10px;
       font-size: var(--fs-micro); line-height: 1.55; color: var(--ink-2);}
-.pv-fert-note b {display: block; color: #3E8E7E; font-size: var(--fs-footnote); margin-bottom: 1px;}
+.pv-fert-note b {display: block; color: var(--ovu-ink); font-size: var(--fs-footnote); margin-bottom: 1px;}
 .pv-fert-note span {display: block; margin-top: 3px; color: var(--faint);}
 #calViewPeriod .day-status-bar {margin-top: var(--sp-card);
       padding: 6px 14px;
@@ -2522,8 +2525,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
 .pv-sheet-status{font-size:11px;font-weight:700;color:var(--brand);
   background:var(--brand-soft);padding:3px 9px;border-radius:20px;white-space:nowrap;}
-/* 排卵/易孕的药丸跟日历格子同一套青绿，别跟经期红混在一起 */
-.pv-sheet-status.fert{color:#3E8E7E;background:rgba(62,142,126,.14);}
+/* 排卵/易孕的药丸跟日历格子同一套蓝，别跟经期红混在一起 */
+.pv-sheet-status.fert{color:var(--ovu-ink);background:var(--ovu-soft);}
 .pv-sheet-close{margin-left:auto;flex:0 0 auto;width:28px;height:28px;border:none;
   background:var(--surface-2);border-radius:50%;color:var(--text-muted);
   font-size:14px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -7328,9 +7331,9 @@ window.PV = (function(){
         leg.innerHTML = PALETTE_ORDER.map(l =>
           `<div><span style="color:${PALETTE[l].color}">●</span> ${escapeHtml(PALETTE[l].name)}</div>`
         ).join('') +
-        // 排卵期推算的两个色标，跟经血量色板并排（色板可改色，这两个固定青绿）
-        '<div><span style="color:rgba(62,142,126,.55)">●</span> 易孕期</div>' +
-        '<div><span style="color:#3E8E7E">●</span> 排卵日</div>';
+        // 排卵期推算的两个色标，跟经血量色板并排（色板可改色，这两个固定用蓝）
+        '<div><span style="color:var(--ovu-ink);opacity:.5">●</span> 易孕期</div>' +
+        '<div><span style="color:var(--ovu)">●</span> 排卵日</div>';
       });
     }
 
