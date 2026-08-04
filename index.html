@@ -2992,7 +2992,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .dc-chip{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:5px;
   font-size:12px;padding:3px 9px;border-radius:6px;background:var(--line-soft);color:var(--ink-2);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);}
+/* +N / 收起：唯一可点的元素。它只切换这张卡自己的展开态，不改选中日，
+   所以不违背「七日条只读」——按钮形态也和日期格子区分得开 */
+#calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);border:none;
+  font-family:var(--zh);font-size:12px;line-height:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:transform .12s;}
+#calViewPeriod .dc-more:active{transform:scale(.92);}
 #calViewPeriod .dc-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
 #calViewPeriod .dc-meta{flex:0 0 auto;margin-left:auto;padding-left:4px;
   font-size:12px;color:var(--muted);white-space:nowrap;}
@@ -6904,7 +6909,9 @@ window.PV = (function(){
     // 详情分两行：第一行状态／经血量／周期位置，第二行症状全列出来，
     // 只有真的超过一行时才把多出来的收成 +N。
     const DC_FLOW_CN = { 1: '少', 2: '中', 3: '多', 4: '点滴' };
-    let cardDay = null;   // 锚点日：点过日历上的哪天就是哪天，没点过是今天
+    let cardDay = null;        // 锚点日：点过日历上的哪天就是哪天，没点过是今天
+    let symsExpanded = false;  // 症状行是否展开（换了锚点日就重置）
+    let lastAnchorKey = '';
 
     // 锚点落在当前显示的月份里才作数；翻到别的月份就改锚今天（今天也不在则该月 1 号），
     // 否则七日条会显示一串日历上根本看不到的日子。
@@ -6938,6 +6945,9 @@ window.PV = (function(){
     function buildDayCard() {
       const a = cardAnchor();
       const base = new Date(a.y, a.m - 1, a.d);
+      // 换了一天就收回去：上一天展开着，不该让下一天也顶开
+      const key = `${a.y}-${a.m}-${a.d}`;
+      if (key !== lastAnchorKey) { lastAnchorKey = key; symsExpanded = false; }
 
       // 七日条：锚点前后各三天。跨月的日子照常显示、用淡灰数字区分，不特判
       let strip = '';
@@ -6990,7 +7000,20 @@ window.PV = (function(){
       return card;
     }
 
-    // 症状行只保留一行：量出被挤到第二行的 chip，藏起来并补一个 +N。
+    // 「+N / 收起」按钮：只切换这张卡的展开态，不动选中日
+    function makeMoreBtn(txt, expanded) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dc-chip dc-more';
+      b.textContent = txt;
+      b.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      b.setAttribute('aria-label', expanded ? '收起症状' : '展开全部症状');
+      b.onclick = () => { symsExpanded = !symsExpanded; refreshDayCard(); };
+      return b;
+    }
+
+    // 收起态下症状行只保留一行：量出被挤到第二行的 chip，藏起来并补一个 +N；
+    // 展开态则全部显示、自然换行，末尾给一个「收起」。
     // 必须在节点插入 DOM 之后调用——离屏节点没有布局，offsetTop 全是 0。
     function clampDaySyms(card) {
       const row = card && card.querySelector('.dc-syms');
@@ -7001,16 +7024,24 @@ window.PV = (function(){
       chips.forEach(c => { c.style.display = ''; });
       if (!chips.length) return;
       const top = chips[0].offsetTop;
+
+      if (symsExpanded) {
+        const btn = makeMoreBtn('收起', true);
+        row.appendChild(btn);
+        // 症状被删到一行就放得下了 → 没什么可收的，按钮撤掉并回到收起态
+        if (btn.offsetTop <= top) { btn.remove(); symsExpanded = false; }
+        return;
+      }
+
       let cut = chips.findIndex(c => c.offsetTop > top);
       if (cut < 0) return;                 // 一行放得下，不用收
-      const more = document.createElement('span');
-      more.className = 'dc-chip dc-more';
-      row.appendChild(more);
+      const btn = makeMoreBtn('', false);
+      row.appendChild(btn);
       // +N 自己也占宽度，可能再挤掉一个；最少留一个 chip，避免整行只剩 +N
       for (;;) {
         chips.forEach((c, i) => { c.style.display = i < cut ? '' : 'none'; });
-        more.textContent = `+${chips.length - cut}`;
-        if (more.offsetTop <= top || cut <= 1) break;
+        btn.textContent = `+${chips.length - cut}`;
+        if (btn.offsetTop <= top || cut <= 1) break;
         cut--;
       }
     }
