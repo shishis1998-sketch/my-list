@@ -2343,22 +2343,32 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .st-tile.accent .val {color: var(--brand-dark);}
 #calViewPeriod .st-tile.accent .lab {color: var(--brand-dark); opacity: .8;}
 #calViewPeriod .st-tile.accent .foot {color: var(--brand); opacity: .75;}
-#calViewPeriod .cyc-legend {display: flex; gap: 16px; margin: -2px 0 14px;}
+/* 图例三项（周期/经期/非经期出血）：窄屏排不下时换行，别把卡片撑破 */
+#calViewPeriod .cyc-legend {display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 14px;}
 #calViewPeriod .cyc-legend span {display: flex; align-items: center; gap: 6px; font-size: var(--fs-footnote); color: var(--body);}
 #calViewPeriod .cyc-legend i {width: 10px; height: 10px; border-radius: 3px;}
+/* 点滴色本身很浅（默认 GOTAS 灰），加一圈极淡的内描边才看得出边界 */
+#calViewPeriod .cyc-legend i.s {box-shadow: inset 0 0 0 1px rgba(0,0,0,.07);}
 #calViewPeriod .cyc-plot {height: 150px; display: flex; align-items: flex-end;
       border-bottom: 1.5px solid var(--line); position: relative;}
 #calViewPeriod .cyc-grid {position: absolute; inset: 0; pointer-events: none;}
 #calViewPeriod .cyc-grid i {position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line-soft);}
-#calViewPeriod .cyc-col {flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center;
-      gap: 2px; position: relative;}
-#calViewPeriod .cyc-bar {width: 9px; border-radius: 4px 4px 0 0; position: relative;}
+#calViewPeriod .cyc-col {flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center;
+      gap: 2px; position: relative; padding: 0 1px;}
+/* 一格里要塞三根柱（周期/经期/非经期出血），9px 太宽：改成「最多 7px，格子挤了自己缩」，
+   柱多的年份(13~14 次周期)也不会顶破卡片宽度 */
+#calViewPeriod .cyc-bar {flex: 0 1 7px; width: 7px; min-width: 0;
+      border-radius: 3px 3px 0 0; position: relative;}
 #calViewPeriod .cyc-bar.p {background: var(--brand);}
 #calViewPeriod .cyc-bar.c {background: #1c5a48;}
+/* 非经期出血 = 点滴(GOTAS)，用调色板里那一档的颜色，和日历上的点滴格对得上 */
+#calViewPeriod .cyc-bar.s {background: var(--disabled); box-shadow: inset 0 0 0 1px rgba(0,0,0,.07);}
+#calViewPeriod .cyc-bar.s.zero {background: none; box-shadow: none;}   /* 该周期没出血：留空位保持三柱对齐 */
 #calViewPeriod .cyc-bar .num {position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
       font-size: var(--fs-micro); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;}
 #calViewPeriod .cyc-bar.p .num {color: var(--brand);}
 #calViewPeriod .cyc-bar.c .num {color: var(--ink-2);}
+#calViewPeriod .cyc-bar.s .num {color: var(--muted);}
 #calViewPeriod .cyc-col.empty::before {content: ""; position: absolute; bottom: 0; left: 22%; right: 22%;
       border-top: 2px dashed var(--disabled); border-radius: 2px;}
 #calViewPeriod .cyc-col.hm-track-col {cursor: pointer; -webkit-tap-highlight-color: transparent;}
@@ -6904,10 +6914,19 @@ window.PV = (function(){
         return;
       }
 
+      // 非经期出血 = 点滴(GOTAS, level 4)，computeCycles 把它排除在经期之外，这里单独数一遍：
+      // 落在「这次经期开始 → 下次经期开始」区间里的点滴天数，算作这一次周期的非经期出血。
+      const spotDays = Object.keys(ALL_DATA)
+        .filter(k => ALL_DATA[k] === 4)
+        .map(k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).getTime(); });
+      const countSpot = (from, to) =>
+        spotDays.filter(t => t >= from.getTime() && t < to.getTime()).length;
+
       // 每个周期归入其「结束那段经期」的起始年份
       const all = cycles.map((cyc, i) => ({
         cyc,
         len: periods[i + 1].length,
+        spot: countSpot(periods[i].start, periods[i + 1].start),
         start: periods[i + 1].start,
         y: periods[i + 1].start.getFullYear()
       }));
@@ -6925,12 +6944,16 @@ window.PV = (function(){
       if (cols.length === 0) {
         body = '<div class="cyc-empty">本年暂无完整周期</div>';
       } else {
-        const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len]), 1);
+        const spotColor = (PALETTE[4] && PALETTE[4].color) || '#CBD5E1';
+        const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len, c.spot]), 1);
         const h = v => Math.max(4, Math.round(v / maxV * 82));   // 留 ~18% 顶部空间给数字
         const colsHtml = cols.map(c =>
           '<div class="cyc-col">' +
             `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
             `<div class="cyc-bar p" style="height:${h(c.len)}%"><span class="num">${c.len}</span></div>` +
+            (c.spot
+              ? `<div class="cyc-bar s" style="height:${h(c.spot)}%;background:${spotColor}"><span class="num">${c.spot}</span></div>`
+              : '<div class="cyc-bar s zero"></div>') +
           '</div>').join('');
         // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
         const xHtml = cols.map(c =>
@@ -6939,6 +6962,7 @@ window.PV = (function(){
           '<div class="cyc-legend">' +
             '<span><i style="background:#1c5a48"></i>周期(天)</span>' +
             '<span><i style="background:var(--brand)"></i>经期(天)</span>' +
+            `<span><i class="s" style="background:${spotColor}"></i>非经期出血(天)</span>` +
           '</div>' +
           '<div class="cyc-plot">' +
             '<div class="cyc-grid"><i style="top:25%"></i><i style="top:50%"></i><i style="top:75%"></i></div>' +
