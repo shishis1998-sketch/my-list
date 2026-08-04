@@ -2952,6 +2952,55 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
+/* ── 当天状态卡：日历卡下方，「选中日 ±3 天」的概览 ──────────────
+   外部间距全部继承 #pvExtras（页边距 14 / 卡间距 12 / 子元素禁带 margin），
+   卡片只管内部；内部尺寸一律取 --sp-* 阶梯上的档位，外壳照抄 .pv-trend-card。
+   七日条只读，不接受点击——选哪天仍然只由上方日历决定，避免同屏两个日期选择器。 */
+#calViewPeriod .dc-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:16px 16px 14px;}
+#calViewPeriod .dc-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+#calViewPeriod .dc-day{display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px 0;border-radius:10px;}
+#calViewPeriod .dc-day.on{background:var(--line-soft);}
+#calViewPeriod .dc-wk{font-size:10px;line-height:1;color:var(--faint);}
+/* 直径与字号跟日历格子（24px / --fs-footnote）完全一致：
+   七日条显示的是同一种东西，做大反而会盖过上面的主日历 */
+#calViewPeriod .dc-mark{width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:var(--fs-footnote);line-height:1;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;}
+#calViewPeriod .dc-mark.dc-out{color:var(--disabled);}   /* 跨月的日子：与日历补位日同一处理 */
+#calViewPeriod .dc-mark.dc-fert{background:var(--ovu-soft);}
+#calViewPeriod .dc-mark.dc-ovu{background:var(--ovu);color:#FFFFFF;font-weight:700;}
+#calViewPeriod .dc-day.on .dc-mark{box-shadow:0 0 0 2px var(--text-primary);font-weight:700;}
+#calViewPeriod .dc-sym{width:4px;height:4px;border-radius:50%;background:var(--brand);}
+#calViewPeriod .dc-sym.off{background:transparent;}
+#calViewPeriod .dc-rule{height:1px;background:var(--line-soft);margin-top:14px;}
+/* 详情分两行：第一行状态／经血量／周期位置（内容固定，不换行），
+   第二行症状全列出来，只有真的超过一行时才把多出来的收成 +N */
+#calViewPeriod .dc-detail{display:flex;align-items:center;gap:8px;
+  flex-wrap:nowrap;overflow:hidden;padding-top:12px;}
+#calViewPeriod .dc-syms{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;overflow:hidden;}
+/* 窄屏上单个超长标签可能比整行还宽：允许它收缩到行宽，靠 .dc-chip 自带的
+   text-overflow 出省略号，而不是被 .dc-syms 的 overflow 硬切一半 */
+#calViewPeriod .dc-syms .dc-chip{flex:0 1 auto;max-width:100%;}
+#calViewPeriod .dc-pill{flex:0 0 auto;font-size:11px;font-weight:700;
+  padding:3px 9px;border-radius:999px;white-space:nowrap;}
+#calViewPeriod .dc-pill.period{background:var(--brand-soft);color:var(--brand);}
+#calViewPeriod .dc-pill.fert{background:var(--ovu-soft);color:var(--ovu-ink);}
+#calViewPeriod .dc-pill.none{background:var(--line-soft);color:var(--muted);}
+#calViewPeriod .dc-chip{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;gap:5px;
+  font-size:12px;padding:3px 9px;border-radius:6px;background:var(--line-soft);color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* +N / 收起：唯一可点的元素。它只切换这张卡自己的展开态，不改选中日，
+   所以不违背「七日条只读」——按钮形态也和日期格子区分得开 */
+#calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);border:none;
+  font-family:var(--zh);font-size:12px;line-height:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:transform .12s;}
+#calViewPeriod .dc-more:active{transform:scale(.92);}
+#calViewPeriod .dc-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+#calViewPeriod .dc-meta{flex:0 0 auto;margin-left:auto;padding-left:4px;
+  font-size:12px;color:var(--muted);white-space:nowrap;}
 #calViewPeriod #pvExtras .day-status-bar,
 #calViewPeriod #pvExtras .day-info-bar,
 #calViewPeriod #pvExtras .sym-list{display:block;background:#FFFFFF;border:1px solid var(--border);
@@ -6643,6 +6692,8 @@ window.PV = (function(){
       const dateEl = document.getElementById('pvSheetDate');
       if (!body || !sheet || !scrim) return;
       selectedView = { y, m, d };
+      cardDay = { y, m, d };    // 状态卡跟着点选走（selectedView 会被 closeDaySheet 清掉，这个不会）
+      refreshDayCard();
       if (dateEl) dateEl.textContent = `${m} 月 ${d} 日 · ${WEEKDAY_CN[new Date(y, m - 1, d).getDay()]}`;
       // 弹窗内容：经血量色板 + 复用原有的症状信息栏(#dayInfoBar)
       body.innerHTML =
@@ -6725,6 +6776,7 @@ window.PV = (function(){
       const newDays = tmp.querySelector('.days');
       const oldDays = target.querySelector('.days');
       if (newDays && oldDays) oldDays.replaceWith(newDays);
+      refreshDayCard();   // 排卵期已在上面重算，这里同步状态卡
     }
 
     // ── 放大某个月卡片 ──
@@ -6776,6 +6828,9 @@ window.PV = (function(){
       // 经血量色板 + 症状编辑都改到「点日期弹出的底部弹窗」里(openDaySheet)，
       // 这里不再往日历下方注入常驻色板/状态栏/信息栏。
       const host = extras || cal;
+
+      // 当天状态卡（在「本月状态记录」之上：先看某一天，再看整月）
+      mountDayCard(host);
 
       // 本月状态记录(只读汇总)
       const list = buildMonthSymList(viewMonth);
@@ -6846,6 +6901,157 @@ window.PV = (function(){
       }
 
       host.innerHTML = `<div class="pv-trend-card">${head}${body}</div>`;
+    }
+
+    // ── 当天状态卡（日历卡下方）──────────────────────────────
+    // 七日条只读：只做「选中日 ±3 天」的上下文预览，不接受点击——选哪天仍然
+    // 只由上方日历决定，免得同屏两个日期选择器让人犹豫该点哪个。
+    // 详情分两行：第一行状态／经血量／周期位置，第二行症状全列出来，
+    // 只有真的超过一行时才把多出来的收成 +N。
+    const DC_FLOW_CN = { 1: '少', 2: '中', 3: '多', 4: '点滴' };
+    let cardDay = null;        // 锚点日：点过日历上的哪天就是哪天，没点过是今天
+    let symsExpanded = false;  // 症状行是否展开（换了锚点日就重置）
+    let lastAnchorKey = '';
+
+    // 锚点落在当前显示的月份里才作数；翻到别的月份就改锚今天（今天也不在则该月 1 号），
+    // 否则七日条会显示一串日历上根本看不到的日子。
+    function cardAnchor() {
+      const now = new Date();
+      const inView = (y, m) => y === year && m === viewMonth;
+      if (cardDay && inView(cardDay.y, cardDay.m)) return cardDay;
+      if (inView(now.getFullYear(), now.getMonth() + 1))
+        return { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
+      return { y: year, m: viewMonth, d: 1 };
+    }
+
+    // 这天在本轮周期里是第几天（从它之前最近一段经期的开始日算起）
+    function cycleDayNo(dt) {
+      const { periods } = computeCycles();
+      let last = null;
+      for (const p of periods) if (p.start.getTime() <= dt.getTime()) last = p;
+      if (!last) return 0;
+      return Math.round((dt - last.start) / 86400000) + 1;
+    }
+
+    // 只替换状态卡本身：整轮 render() 会收起底部弹窗，编辑当天时不能用
+    function refreshDayCard() {
+      const old = document.querySelector('#pvExtras .dc-card');
+      if (!old) return;
+      const card = buildDayCard();
+      old.replaceWith(card);
+      clampDaySyms(card);   // 已在 DOM 里，可以量了
+    }
+
+    function buildDayCard() {
+      const a = cardAnchor();
+      const base = new Date(a.y, a.m - 1, a.d);
+      // 换了一天就收回去：上一天展开着，不该让下一天也顶开
+      const key = `${a.y}-${a.m}-${a.d}`;
+      if (key !== lastAnchorKey) { lastAnchorKey = key; symsExpanded = false; }
+
+      // 七日条：锚点前后各三天。跨月的日子照常显示、用淡灰数字区分，不特判
+      let strip = '';
+      for (let i = -3; i <= 3; i++) {
+        const dt = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+        const y = dt.getFullYear(), m = dt.getMonth() + 1, d = dt.getDate();
+        const lv = getLevel(y, m, d);
+        const fk = fertKind(y, m, d);
+        // 经血量优先（记录是事实），其次排卵推算，再次跨月淡显
+        const cls = lv ? getLevelClass(lv)
+                  : fk === 'ovu'     ? 'dc-ovu'
+                  : fk === 'fertile' ? 'dc-fert'
+                  : (m !== a.m || y !== a.y) ? 'dc-out' : '';
+        strip += `<div class="dc-day${i === 0 ? ' on' : ''}">` +
+                   `<span class="dc-wk">${WEEKDAY_CN[dt.getDay()].slice(1)}</span>` +
+                   `<span class="dc-mark ${cls}">${d}</span>` +
+                   `<span class="dc-sym${getSym(y, m, d).length ? '' : ' off'}"></span>` +
+                 `</div>`;
+      }
+
+      // 详情行：状态药丸 + 经血量 + 症状（截断）+ 右侧周期位置
+      const st = getDayStatus(a.y, a.m, a.d);
+      const fk = fertKind(a.y, a.m, a.d);
+      let pill;
+      if (st.kind === 'period')        pill = `<span class="dc-pill period">经期 · 第 ${st.dayNo} 天</span>`;
+      else if (st.kind === 'spotting') pill = `<span class="dc-pill period">点滴</span>`;
+      else if (fk === 'predp')         pill = `<span class="dc-pill period">${FERT_LABEL[fk]}</span>`;
+      else if (fk)                     pill = `<span class="dc-pill fert">${FERT_LABEL[fk]}</span>`;
+      else                             pill = `<span class="dc-pill none">没有记录</span>`;
+
+      const p = st.lv ? PALETTE[st.lv] : null;
+      const flow = p ? `<span class="dc-chip"><i class="dc-dot" style="background:${p.color || '#ccc'}"></i>` +
+                       `${escapeHtml(DC_FLOW_CN[st.lv] || p.name || '')}</span>` : '';
+
+      // 症状全部列出来放第二行；放不下的由 clampDaySyms 在插入 DOM 后量着收
+      const syms = getSym(a.y, a.m, a.d);
+      const symRow = syms.length
+        ? `<div class="dc-syms">` +
+          syms.map(n => `<span class="dc-chip">${escapeHtml(n)}</span>`).join('') +
+          `</div>` : '';
+
+      // 经期当天的「周期第 N 天」与药丸上的「第 N 天」恒等，重复一遍是噪音 → 只在非经期日显示
+      const cd = st.kind === 'period' ? 0 : cycleDayNo(base);
+      const meta = cd ? `<span class="dc-meta">周期第 ${cd} 天</span>` : '';
+
+      const card = document.createElement('div');
+      card.className = 'dc-card';
+      card.innerHTML = `<div class="dc-week">${strip}</div><div class="dc-rule"></div>` +
+                       `<div class="dc-detail">${pill}${flow}${meta}</div>` + symRow;
+      return card;
+    }
+
+    // 「+N / 收起」按钮：只切换这张卡的展开态，不动选中日
+    function makeMoreBtn(txt, expanded) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dc-chip dc-more';
+      b.textContent = txt;
+      b.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      b.setAttribute('aria-label', expanded ? '收起症状' : '展开全部症状');
+      b.onclick = () => { symsExpanded = !symsExpanded; refreshDayCard(); };
+      return b;
+    }
+
+    // 收起态下症状行只保留一行：量出被挤到第二行的 chip，藏起来并补一个 +N；
+    // 展开态则全部显示、自然换行，末尾给一个「收起」。
+    // 必须在节点插入 DOM 之后调用——离屏节点没有布局，offsetTop 全是 0。
+    function clampDaySyms(card) {
+      const row = card && card.querySelector('.dc-syms');
+      if (!row) return;
+      const old = row.querySelector('.dc-more');
+      if (old) old.remove();
+      const chips = Array.from(row.querySelectorAll('.dc-chip'));
+      chips.forEach(c => { c.style.display = ''; });
+      if (!chips.length) return;
+      const top = chips[0].offsetTop;
+
+      if (symsExpanded) {
+        const btn = makeMoreBtn('收起', true);
+        row.appendChild(btn);
+        // 症状被删到一行就放得下了 → 没什么可收的，按钮撤掉并回到收起态
+        if (btn.offsetTop <= top) { btn.remove(); symsExpanded = false; }
+        return;
+      }
+
+      let cut = chips.findIndex(c => c.offsetTop > top);
+      if (cut < 0) return;                 // 一行放得下，不用收
+      const btn = makeMoreBtn('', false);
+      row.appendChild(btn);
+      // +N 自己也占宽度，可能再挤掉一个；最少留一个 chip，避免整行只剩 +N
+      for (;;) {
+        chips.forEach((c, i) => { c.style.display = i < cut ? '' : 'none'; });
+        btn.textContent = `+${chips.length - cut}`;
+        if (btn.offsetTop <= top || cut <= 1) break;
+        cut--;
+      }
+    }
+
+    // 建卡 + 插入 + 收症状行，三步必须连着做（收之前得先有布局）
+    function mountDayCard(host) {
+      const card = buildDayCard();
+      host.appendChild(card);
+      clampDaySyms(card);
+      return card;
     }
 
     // 把升序日期数组压成区间文本: [23,24,25,26,27]->"23-27日"; [4,13]->"4日、13日"
@@ -6927,6 +7133,7 @@ window.PV = (function(){
       if (!list || list.length === 0) delete SYMPTOMS_DATA[key];
       else SYMPTOMS_DATA[key] = list;
       markUnsaved();
+      refreshDayCard();
     }
 
     function markUnsaved() { persist(); }
