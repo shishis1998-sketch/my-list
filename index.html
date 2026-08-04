@@ -2950,10 +2950,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:transparent !important;color:var(--brand) !important;font-weight:700;}
 /* 选中：数字外一圈经期红 */
 /* 选中日：单击改成「只选日」之后，这圈描边就是「状态卡在讲哪天」的唯一指示，
-   得在任何填充色上都看得清——1px 品牌红压在深红的 MUCHO 格子上几乎看不见。
-   改用正文色（白天黑、夜间白）2px，外面再垫一圈卡片底色把它和相邻格子隔开。 */
+   得在任何填充色上都看得清——原来 1px 经期红直接压在深红的 MUCHO 格子上几乎看不见。
+   颜色仍用经期红（不碰 --text-primary，那是全局变量、这棵子树没重定义，会画出黑边），
+   改为先垫一圈卡片底色再画红环：底色把红环和格子填充隔开，深红上也一眼可见。 */
 #calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
-  box-shadow:0 0 0 2px var(--text-primary), 0 0 0 3.5px var(--surface) !important;}
+  box-shadow:0 0 0 1.5px var(--surface), 0 0 0 3px var(--brand) !important;}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
