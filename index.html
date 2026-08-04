@@ -821,9 +821,11 @@ tr:hover .acts{opacity:1;}
   .cal-modal{max-height:none;height:100%;border-radius:0;}
   .cal-overlay{align-items:stretch;justify-content:stretch;padding:0;}
   /* 手机端 cal-modal 的进入动效已由顶层规则统一为 mboxPopIn（同 desktop）*/
-  .cal-hdr{padding:var(--sp-14) var(--sp-14) var(--sp-10);padding-top:calc(14px + env(safe-area-inset-top));background:var(--surface);}
+  /* 内边距不在这里写：下方基础规则 .cal-hdr / .cal-scroll 写在样式表更后面、优先级相同，
+     这里写多少都会被它盖掉（曾经写过一版，量出来从未生效）。要调间距去改那两条。 */
+  .cal-hdr{background:var(--surface);}
   /* 月份标题＝独立页的页面标题，用 Title 18px 做锚点（手机端同 18，不再降到正文）*/
-  .cal-scroll{padding:0 var(--sp-14) var(--sp-4);display:flex;flex-direction:column;}
+  .cal-scroll{display:flex;flex-direction:column;}
   /* 上半区日历行高/格子样式统一由 base .cal-grid / .cal-day 控制（含固定 44px 行高）*/
   .cal-daynum{font-size:var(--fs-caption);}
   .cal-dot{width:5px;height:5px;}
@@ -972,12 +974,16 @@ tr:hover .acts{opacity:1;}
 .cal-overlay.open .cal-modal{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
 .cal-modal{background:var(--bg);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
 /* 标题栏 = 日历卡的顶部（无色白底，与下方网格拼成一张卡）*/
-.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-10) var(--sp-10) var(--sp-8) var(--sp-14);flex-shrink:0;
+/* 左右内边距都是 10：与下方网格卡 .cal-scroll 的 10px 对齐，两者内容区同宽（310），
+   下面 .cal-nav 的半列偏移才能直接用百分比算。上下各 8 → 行高 8+32+8+1描边 = 49 */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-8) var(--sp-10);flex-shrink:0;
   background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
-.cal-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}       /* 年月标题两侧夹翻页箭头，负边距让箭头贴近左缘、标题缩进与下方明细大致对齐 */
+.cal-titlenav{display:flex;align-items:center;gap:0;}
 .cal-titlenav .cal-navbtn{width:26px;}
-.cal-nav{display:flex;gap:var(--sp-6);align-items:center;}
+/* 筛选/搜索整组左移半列减半个按钮，让搜索图标的中心落在最后一列日期的中心线上。
+   100% = 标题行内容宽 = 网格内容宽 310，(310-12)/14 = 半列宽，与屏宽一起变，换机型也对得上。 */
+.cal-nav{display:flex;gap:var(--sp-6);align-items:center;margin-right:calc((100% - 12px) / 14 - 16px);}
 .cal-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--accent);transition:background .15s;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
@@ -1027,8 +1033,10 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;margin-left:14px;}
 .cal-sr-t mark.shl{background:linear-gradient(transparent 78%, var(--hl, rgba(255,106,74,.45)) 78%);}
 .cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
-.cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);padding:0 0 var(--sp-8);position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
-.cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);padding:var(--sp-6) 0;letter-spacing:.18em;}
+/* 行高钉死 36（含 1px 分隔线），星期名靠 align-items 居中——上下留白由浏览器均分，
+   字号以后再改也不会一边宽一边窄。column-gap 与日期网格同为 2px，两行的列心才重合。 */
+.cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);height:36px;align-items:center;padding:0;position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
+.cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);letter-spacing:.18em;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);grid-auto-rows:42px;}
 /* —— 拖动把手收起：网格裁剪容器 + 底部把手 —— */
 /* --p：收起进度 0=整月 1=只留焦点周那一行；--cal-rows 行数、--cal-focus 焦点周下标由 renderCal 写入 */
@@ -2896,7 +2904,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .color-palette {margin-left: 4px; margin-right: 4px;}
 /* ── 经期月视图：完全对齐普通日历的卡片 / 按钮 / 字号 / 间距（用 my-list 数值，避免经期 token 数值差异）── */
 /* 标题栏（白色，含筛选）——完全复刻普通日历 .cal-hdr：白底、上+左右描边、上圆角、无下边框 */
-#calViewPeriod .home-header{position:static;margin:6px 14px 0;padding:10px 12px 8px 14px;background:transparent;
+#calViewPeriod .home-header{position:static;margin:6px 14px 0;padding:8px 10px;background:transparent;
   display:flex;flex-direction:row;justify-content:space-between;align-items:center;}
 #calViewPeriod .home-header{background:var(--surface);border:1px solid var(--border);
   border-bottom:none;border-radius:16px 16px 0 0;}
@@ -2905,8 +2913,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .pv-cardwrap{background:var(--surface);border:1px solid var(--border);
   border-top:none;border-radius:0 0 16px 16px;margin:0 14px 12px;padding:2px 10px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{padding:8px 10px 12px;}
-/* 翻页导航整体：与普通日历 .cal-titlenav 一致（margin-left:-10px 让箭头贴左缘、标题缩进对齐） */
-#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-10px;}
+/* 翻页导航整体：与普通日历 .cal-titlenav 一致（箭头按钮左缘距描边 10px，与右侧筛选对称）。
+   margin-left 必须显式写 0——上面 1998 行那条同优先级的规则给了 -6px，不写就还留着。 */
+#calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:0;}
+/* 筛选按钮左移半列减半个按钮，图标中心落在最后一列日期的中心线上（同 .cal-nav） */
+#calViewPeriod .home-header-right{margin-right:calc((100% - 12px) / 14 - 16px);}
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   font-family:var(--zh);letter-spacing:.02em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
@@ -2927,12 +2938,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 去掉 month-view 容器多余的 16px 横向边距（--page-gutter 在经期作用域=16px），
    让星期/日期网格铺满整卡宽度，横向位置与普通日历完全一致（靠卡片 10px 内边距） */
 #calViewPeriod .calendar-container.month-view{margin:0 !important;}
-/* 星期行：字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），横向内边距归零。
-   不画分隔线——星期名本身就是表头，灰字与下面的黑色日期已经分得开；
-   底部留白从 14px 收到 10px：那 4px 原本是给线让的净空，线没了留着就是一段空档。 */
+/* 星期行：字号/颜色/字距对齐普通日历（11px / 墨绿次级 / .18em），行高钉死 36、星期名居中。
+   不画分隔线——星期名本身就是表头，灰字与下面的黑色日期已经分得开。
+   column-gap 与下面的日期网格同为 2px，两行的列心才重合。 */
 #calViewPeriod .calendar-container.month-view .weekdays{
-  padding:6px 0 10px !important;margin-bottom:0 !important;font-size:11px !important;font-weight:600;
-  letter-spacing:.18em;color:var(--text-secondary);column-gap:0 !important;}
+  height:36px !important;align-items:center;padding:0 !important;margin-bottom:0 !important;
+  font-size:11px !important;font-weight:600;
+  letter-spacing:.18em;color:var(--text-secondary);column-gap:2px !important;}
 /* 网格：行高 42px、行距 2px、顶部留白 4px、横向内边距归零，对齐普通日历 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
   padding:4px 0 0 !important;align-content:start !important;column-gap:2px !important;}
