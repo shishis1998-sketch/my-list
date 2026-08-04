@@ -7340,16 +7340,44 @@ window.PV = (function(){
     // 立刻读一次：设置页在 PV.init 之前就要渲染出正确的开关状态
     loadOvuCfg();
 
+    // 被有效区间挡下的间隔到底是什么？三种成因，处理和措辞都不该一样：
+    //   · 偏短  → 多半是同一次经期被拆成了两段（中间空了一天以上没记）
+    //   · 接近典型周期的整数倍 → 多半是漏记，中间少记了 k−1 次经期
+    //   · 单纯偏长 → 周期是真的，只是那次可能没有排卵（无排卵周期）
+    // 第三种尤其要说清楚：无排卵周期没有黄体期，那次出血也不是真正的月经，
+    // 「下次经期 − 黄体期」这个倒推对它根本不成立，所以不给它标排卵日是对的，
+    // 但那不是因为「漏记」——这两件事得分开讲。
+    const MULTIPLE_TOL = 0.12;   // 与整数倍的偏差在锚点的 12% 以内才算漏记
+    function classifyDropped(cycles, win) {
+      const out = { short: 0, missed: 0, long: 0 };
+      // 手动模式没有 anchor，用区间内周期的中位数顶上
+      let anchor = win.anchor;
+      if (!anchor) {
+        const inside = cycles.filter(c => c >= win.min && c <= win.max).sort((a, b) => a - b);
+        anchor = inside.length ? inside[(inside.length - 1) >> 1] : 0;
+      }
+      cycles.forEach(c => {
+        if (c >= win.min && c <= win.max) return;
+        if (c < win.min) { out.short++; return; }
+        const k = anchor ? Math.round(c / anchor) : 0;
+        if (k >= 2 && Math.abs(c - k * anchor) / anchor <= MULTIPLE_TOL) out.missed++;
+        else out.long++;
+      });
+      return out;
+    }
+
     // 返回 { map:{"y-m-d":'fertile'|'ovu'|'predp'}, avg, n, spread, wide, next, ok }
     function computeFertility() {
       const { periods, cycles } = computeCycles();
       const map = {};
-      const out = { map, avg: 0, n: 0, spread: 0, wide: false, dropped: 0, win: null, next: null, ok: false };
+      const out = { map, avg: 0, n: 0, spread: 0, wide: false, dropped: 0,
+                    drop: { short: 0, missed: 0, long: 0 }, win: null, next: null, ok: false };
       if (!OVU.on) return out;              // 设置里关掉了推算 → 一个标记都不出
       if (periods.length < 2) return out;   // 至少两段经期才谈得上「周期」
 
       const win = cycleWindow(cycles);   // 有效周期区间：自动推 or 手动设
       out.win = win;
+      out.drop = classifyDropped(cycles, win);
 
       const shift = (dt, n) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n);
       const RANK = { predp: 1, fertile: 2, ovu: 3 };   // 同一天重叠时谁盖谁
@@ -7408,14 +7436,20 @@ window.PV = (function(){
         ? `平均周期 ${FERT.avg} 天 · 按最近 ${FERT.n} 次经期推算` +
           (FERT.wide ? `（周期波动 ${FERT.spread} 天，偏差可能较大）` : '')
         : `没有落在 ${win.min}–${win.max} 天区间内的周期，暂按兜底的 ${OVU.fallback} 天推算`;
-      // 有间隔被挡掉就说清楚它去哪了。自动模式下区间是按你自己的记录推的，
-      // 挡掉的基本就是漏记；手动模式才需要提示你回去调区间。
-      if (FERT.dropped > 0)
-        basis += win.auto
-          ? `。另有 ${FERT.dropped} 次间隔明显偏离你平时的周期（有效区间 ${win.min}–${win.max} 天），` +
-            `已当作漏记不计入`
-          : `。有 ${FERT.dropped} 次周期不在你设定的 ${win.min}–${win.max} 天区间内未计入，` +
-            `如果那是真实周期，去「设置 › 经期」放宽区间`;
+      // 有间隔被挡掉就说清楚它去哪了，而且按成因分开讲——
+      // 「漏记」和「真实的长周期」是两回事，不该都甩一句漏记了事。
+      const dp = FERT.drop || { short: 0, missed: 0, long: 0 };
+      if (FERT.dropped > 0) {
+        const why = [];
+        if (dp.missed) why.push(`${dp.missed} 次接近周期的整数倍，像是中间漏记了`);
+        if (dp.long)   why.push(`${dp.long} 次明显偏长，可能是没有排卵的周期`);
+        if (dp.short)  why.push(`${dp.short} 次偏短，可能是同一次经期被拆成了两段`);
+        basis += `。另有 ${FERT.dropped} 次间隔不在 ${win.min}–${win.max} 天内未计入平均：` +
+                 why.join('；') +
+                 (win.auto
+                   ? (dp.long ? `。无排卵周期没有黄体期，倒推不成立，所以不给它标排卵日` : '')
+                   : `。要改区间去「设置 › 经期」`);
+      }
       return `<div class="pv-fert-note"><b>${FERT_LABEL[fk]}</b>${escapeHtml(basis)}` +
              `<span>推算结果仅供参考，不能作为避孕或备孕依据</span></div>`;
     }
