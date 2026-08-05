@@ -2941,8 +2941,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       row-gap: 4px; column-gap: 4px; padding: 0 2px;}
 #calViewPeriod .calendar-container.month-view .day {width: 100%; height: 38px; border-radius: 10px; font-size: var(--fs-body);}
 #calViewPeriod .calendar-container.year-view .month {cursor: pointer;}
+/* 年视图网格：左右缩进从 16 收到 4（日历离卡边 27 → 15，日格能宽一点）；
+   行间从 18 收到 10（列间仍是 18） */
+#calViewPeriod .calendar-container.year-view {margin: 0 4px; row-gap: 10px;}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
-#calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 28px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
+#calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 26px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
 #calViewPeriod .calendar-container.year-view .day {width: 20px; height: 20px; aspect-ratio: auto; border-radius: 50%; font-size: var(--fs-footnote); line-height: 1;}  /* 固定小圆点(20px≈列宽，留少量间距)；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
@@ -2965,7 +2968,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 年视图也套同一张卡（与日历/月度统一）；顶部多留 4px 让迷你月不贴边 */
 #calViewPeriod .pv-cardwrap{background:var(--surface);border:1px solid var(--border);
   border-top:none;border-radius:0 0 16px 16px;margin:0 14px 12px;padding:2px 10px 10px;}
-#calViewPeriod.pv-year .pv-cardwrap{padding:8px 10px 12px;}
+#calViewPeriod.pv-year .pv-cardwrap{padding:2px 10px 12px;}
 /* 翻页导航整体：与普通日历 .cal-titlenav 一致——左移半列减半个箭头按钮，
    ‹ 的图标中心落在第一列（周一）日期的中心线上。
    margin-left 必须显式写，上面 1998 行那条同优先级的规则给了 -6px。 */
