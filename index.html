@@ -3922,7 +3922,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     </div>
     </div><!-- /mbody -->
     <div class="mftr">
-      <button class="btn btn-d" onclick="askDelNote()" id="nm-del-btn" style="display:none;margin-right:auto">删除</button>
+      <!-- 「删除」由 syncNoteDelBtn() 直接从 DOM 里增删：新建笔记、以及读书笔记(卡片列表里已有删除)都不出现 -->
+      <button class="btn btn-d" onclick="askDelNote()" id="nm-del-btn" style="margin-right:auto">删除</button>
       <button class="btn btn-g" onclick="closeNoteModal()">取消</button>
       <button class="btn btn-p" onclick="saveNote()">保存</button>
     </div>
@@ -11921,6 +11922,23 @@ function applyMemoEditorMode(){
   const ta=document.getElementById('nf-body');
   ta.classList.toggle('is-book',isBook);
   setupNfThumb(isBook);
+  syncNoteDelBtn();
+}
+
+// 编辑弹窗底部的「删除」：新建笔记时没得删；读书笔记的卡片列表里已经有删除按钮，
+// 弹窗里不再重复给一个。这里是把按钮从 DOM 里摘掉/装回去，不是 display:none。
+let nmDelBtn=null;   // 摘下来时暂存按钮节点，装回去时复用（事件绑在 onclick 上，节点原样可用）
+function syncNoteDelBtn(){
+  const ftr=document.querySelector('#noteModal .mftr');
+  if(!ftr)return;
+  const want=!!editNoteId&&document.getElementById('nf-sub').value!=='读书笔记';
+  const cur=document.getElementById('nm-del-btn');
+  if(want){
+    if(!cur&&nmDelBtn)ftr.insertBefore(nmDelBtn,ftr.firstChild);
+  }else if(cur){
+    nmDelBtn=cur;
+    cur.remove();
+  }
 }
 
 // ── 读书笔记正文框自画滚动条 ────────────────────────────────
@@ -12106,7 +12124,6 @@ function openNoteEdit(id){
   renderNoteSubSelect();
   document.getElementById('nf-sub').value=n.subCat||noteSubs[0]||'灵感';
   document.getElementById('ntinput').value='';
-  document.getElementById('nm-del-btn').style.display='';
   // 备忘字段加载
   const f=n.fields||{};
   document.getElementById('mf-username').value=f.username||'';
@@ -12131,7 +12148,6 @@ function openNoteNew(){
   renderNoteSubSelect();
   document.getElementById('nf-sub').value=(curNoteSub!=='all'&&noteSubs.includes(curNoteSub))?curNoteSub:(noteSubs[0]||'灵感');
   document.getElementById('ntinput').value='';
-  document.getElementById('nm-del-btn').style.display='none';
   // 备忘字段清空
   document.getElementById('mf-username').value='';
   document.getElementById('mf-password').value='';
