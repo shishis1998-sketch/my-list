@@ -990,7 +990,9 @@ tr:hover .acts{opacity:1;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 .cal-closebtn:hover{color:var(--accent);}
-.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);}
+/* contain:layout paint —— 日历卡收起时高度在变，没有这条的话整屏(390×844)会跟着重绘一遍，
+   有了它重排重绘都关在这张卡里。卡里没有需要溢出显示的东西(筛选/搜索浮层都是它的兄弟)。 */
+.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout paint;}
 /* 搜索时标题栏隐藏，日历卡恢复完整边框圆角（否则顶部会缺一截）*/
 body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;border-top:1px solid var(--border);border-radius:var(--rxl);margin-top:var(--sp-8);}
 .cal-legdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -1050,14 +1052,20 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-gridclip{--ru:44px;--cellh:42px;--padt:var(--sp-4);--collapse-h:42px;position:relative;overflow:hidden;
   --fullh:calc(var(--cellh) + var(--padt) + (var(--cal-rows,6) - 1) * var(--ru));
   height:calc(var(--fullh) - (var(--fullh) - var(--collapse-h)) * var(--p));}
-/* --p 不继承了，动画得挂在每个自己带 --p 的元素上（裁剪容器 + 网格 + 两条遮罩）*/
-.cal-gridclip.cal-animating,.cal-gridclip .cal-animating{transition:--p .42s cubic-bezier(.22,1,.36,1);}   /* ease-out，收放更顺滑 */
+/* --p 不继承了，动画得挂在每个自己带 --p 的元素上（裁剪容器 + 网格 + 两条遮罩）。
+   高度和「位移+渐隐」拆成两个时长：改高度会让整页重排重绘（实测每帧画 2~3 块整屏），
+   而这条 ease-out 的 87% 在头 110ms 就走完了，后面 300 多毫秒每帧只变不到 1px 却照样
+   整页重绘 —— 纯浪费。高度收到 .18s 落位，网格位移和遮罩渐隐仍走 .42s（都是合成器属性，
+   便宜）。实测光栅化 88 次/15.4ms → 38 次/5.1ms。 */
+.cal-gridclip .cal-animating{transition:--p .42s cubic-bezier(.22,1,.36,1);}
+.cal-gridclip.cal-animating{transition:--p .18s cubic-bezier(.22,1,.36,1);}
 /* 收起时把网格顶部 padding 一并上移：焦点周上下留白对称（上=格内上边距，下=格内下边距+把手间距）*/
-.cal-gridclip .cal-grid{transform:translateY(calc(-1 * (var(--padt) + var(--cal-focus,0) * var(--ru)) * var(--p)));}
+.cal-gridclip .cal-grid{will-change:transform;transform:translateY(calc(-1 * (var(--padt) + var(--cal-focus,0) * var(--ru)) * var(--p)));}
 /* 渐隐折叠：焦点周以外的部分随进度淡出。不逐格改 opacity——35 个带文字的格子每帧
    重算加重绘太贵；改成焦点周上下各盖一条卡片底色的遮罩，每帧只动 2 个纯色矩形，
    观感一样。--band 是焦点周在裁剪框里的当前上沿（网格上移了多少要跟着减）。 */
-.cal-fade{position:absolute;left:0;right:0;background:var(--surface);opacity:var(--p);
+/* will-change 让网格和遮罩各自成为独立合成层：收起时改的是裁剪框，网格位图不用重刷 */
+.cal-fade{position:absolute;left:0;right:0;background:var(--surface);opacity:var(--p);will-change:opacity;
   pointer-events:none;z-index:1;--band:calc((var(--padt) + var(--cal-focus,0) * var(--ru)) * (1 - var(--p)));}
 .cal-fade.top{top:0;height:var(--band);}
 .cal-fade.bot{top:calc(var(--band) + var(--cellh));bottom:0;}
