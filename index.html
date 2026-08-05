@@ -2221,7 +2221,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .day.ext-l {box-shadow: -3px 0 0 0 var(--c);}
 #calViewPeriod .day.ext-r {box-shadow:  3px 0 0 0 var(--c);}
 #calViewPeriod .day.ext-l.ext-r {box-shadow: -3px 0 0 0 var(--c), 3px 0 0 0 var(--c);}
-#calViewPeriod .today {color: var(--brand) !important; font-weight: 700;}
+/* 今天：红字加粗。但记了经血量的那天要保留自己的字色（深红/白），
+   否则经期红压在 MUCHO 的深色底上几乎读不出来 */
+#calViewPeriod .today {font-weight: 700;}
+#calViewPeriod .today:not(.level-1):not(.level-2):not(.level-3):not(.level-g) {color: var(--brand) !important;}
 #calViewPeriod .calendar-container.sym-on .day:not(.sym-hit) {opacity: .28;}
 #calViewPeriod .day.sym-hit {outline: 2px solid var(--brand); outline-offset: -2px; z-index: 3;}
 #calViewPeriod .sync-bar {display: flex; justify-content: center; gap: 10px;
@@ -2990,9 +2993,21 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 上/下月补位日期：灰色淡化，与普通日历 .cal-other 一致 */
 #calViewPeriod .calendar-container.month-view .day.cal-otherday{color:var(--text-muted) !important;opacity:.5;
   background:transparent !important;box-shadow:none !important;font-weight:400 !important;}
-/* 今天：经期红加粗数字 + 经期红细圈，与经期主题(经血量/症状标签)统一 */
+/* 今天：经期红加粗数字 + 经期红细圈，与经期主题(经血量/症状标签)统一。
+   透明底 + 红字只给「今天没记经血量」的情况——记录是事实，「今天」这个标记不该盖掉它，
+   和上面排卵期让位给记录是同一条原则。 */
 #calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--brand) !important;
-  background:transparent !important;color:var(--brand) !important;font-weight:700;}
+  font-weight:700;}
+#calViewPeriod .calendar-container.month-view .day.today:not(.level-1):not(.level-2):not(.level-3):not(.level-g){
+  background:transparent !important;color:var(--brand) !important;}
+/* 今天又有经血量：填充色留着，红细圈往外让 1px 卡片底色，免得细圈糊在填充色边上
+   （和下面选中日一个做法，总外扩 2px）。选中日自己那圈更外(2.5px)，
+   别被这条压小，所以排除 .selected-view。 */
+#calViewPeriod .calendar-container.month-view .day.today.level-1:not(.selected-view),
+#calViewPeriod .calendar-container.month-view .day.today.level-2:not(.selected-view),
+#calViewPeriod .calendar-container.month-view .day.today.level-3:not(.selected-view),
+#calViewPeriod .calendar-container.month-view .day.today.level-g:not(.selected-view){
+  box-shadow:0 0 0 1px var(--surface),0 0 0 2px var(--brand) !important;}
 /* 选中日：日期圆外面一圈经期红。
    靠一圈卡片底色把红环和格子填充隔开，深红的 MUCHO 上也一眼可见；
    总外扩 2.5px，比记录点让出的 5px 净空小，环不会压到圆点上（见下方
