@@ -1042,15 +1042,25 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);grid-auto-rows:42px;}
 /* —— 拖动把手收起：网格裁剪容器 + 底部把手 —— */
 /* --p：收起进度 0=整月 1=只留焦点周那一行；--cal-rows 行数、--cal-focus 焦点周下标由 renderCal 写入 */
-@property --p{syntax:"<number>";inherits:true;initial-value:0;}
+/* inherits 必须是 false：可继承的自定义属性一变，整棵子树的样式全部重算——哪怕子树里
+   没人用它。这棵子树是整个网格(42 个格子 + 里面的数字/圆点)，收起动画每帧全量重算一次，
+   实测样式重算 37.7ms/次；改成不继承后 9.8ms。代价是 --p 不会自己传下去，
+   需要它的元素(网格、两条遮罩)由 calGridDrag 的 writeP 逐个写。 */
+@property --p{syntax:"<number>";inherits:false;initial-value:0;}
 .cal-gridclip{--ru:44px;--cellh:42px;--padt:var(--sp-4);--collapse-h:42px;position:relative;overflow:hidden;
   --fullh:calc(var(--cellh) + var(--padt) + (var(--cal-rows,6) - 1) * var(--ru));
   height:calc(var(--fullh) - (var(--fullh) - var(--collapse-h)) * var(--p));}
-.cal-gridclip.cal-animating{transition:--p .42s cubic-bezier(.22,1,.36,1);}   /* ease-out，收放更顺滑 */
+/* --p 不继承了，动画得挂在每个自己带 --p 的元素上（裁剪容器 + 网格 + 两条遮罩）*/
+.cal-gridclip.cal-animating,.cal-gridclip .cal-animating{transition:--p .42s cubic-bezier(.22,1,.36,1);}   /* ease-out，收放更顺滑 */
 /* 收起时把网格顶部 padding 一并上移：焦点周上下留白对称（上=格内上边距，下=格内下边距+把手间距）*/
 .cal-gridclip .cal-grid{transform:translateY(calc(-1 * (var(--padt) + var(--cal-focus,0) * var(--ru)) * var(--p)));}
-/* 渐隐折叠：收起时非焦点周随进度淡出（opacity 走合成层，便宜且顺滑）；焦点周始终不透明 */
-.cal-gridclip .cal-day:not(.cal-focusrow){opacity:calc(1 - var(--p));}
+/* 渐隐折叠：焦点周以外的部分随进度淡出。不逐格改 opacity——35 个带文字的格子每帧
+   重算加重绘太贵；改成焦点周上下各盖一条卡片底色的遮罩，每帧只动 2 个纯色矩形，
+   观感一样。--band 是焦点周在裁剪框里的当前上沿（网格上移了多少要跟着减）。 */
+.cal-fade{position:absolute;left:0;right:0;background:var(--surface);opacity:var(--p);
+  pointer-events:none;z-index:1;--band:calc((var(--padt) + var(--cal-focus,0) * var(--ru)) * (1 - var(--p)));}
+.cal-fade.top{top:0;height:var(--band);}
+.cal-fade.bot{top:calc(var(--band) + var(--cellh));bottom:0;}
 .cal-grabrow{display:flex;align-items:center;justify-content:center;height:22px;margin-top:var(--sp-2);
   cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;border-top:1px solid var(--border-soft);}
 .cal-grabrow:active{cursor:grabbing;}
@@ -3737,7 +3747,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <div class="cal-weekcell">六</div>
         <div class="cal-weekcell">日</div>
       </div>
-      <div class="cal-gridclip" id="calGridClip"><div class="cal-grid" id="calGrid"></div></div>
+      <div class="cal-gridclip" id="calGridClip"><div class="cal-grid" id="calGrid"></div><i class="cal-fade top" id="calFadeTop"></i><i class="cal-fade bot" id="calFadeBot"></i></div>
       <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
       <div class="cal-searchresults" id="calSearchResults"></div>
     </div>
@@ -10397,7 +10407,11 @@ function openCalendar(){
   renderCalLegend();
   renderCal();
   const _clip=document.getElementById('calGridClip');   // 每次打开都从「整月展开」开始
-  if(_clip){_clip.classList.remove('cal-animating');_clip.style.setProperty('--p','0');}
+  // --p 不继承，网格和两条遮罩各自带一份，重开时要一起归零，否则会出现
+  // 「高度是整月、网格却还上移着 / 遮罩还盖着」的错位
+  if(_clip){_clip.classList.remove('cal-animating');_clip.style.setProperty('--p','0');
+    _clip.querySelectorAll('.cal-grid,.cal-fade').forEach(el=>{
+      el.classList.remove('cal-animating');el.style.setProperty('--p','0');});}
   const _grab=document.getElementById('calGrabRow');if(_grab)_grab.classList.remove('cal-grab-on');
   renderCalDetail();               // 内嵌下半区：直接填入今天的记录
   closeCalSearch();                // 确保搜索收起
@@ -10503,19 +10517,28 @@ function closeCalSheet(){
   let pendingP=null,rafId=0;
   const curP=()=>parseFloat(clip.style.getPropertyValue('--p'))||0;
   const maxD=()=>Math.max(1,calCollapseTravel);   // 全程距离：整月高 − 收起高（跟手）
-  const writeP=p=>{p=Math.max(0,Math.min(1,p));clip.style.setProperty('--p',p);grab.classList.toggle('cal-grab-on',p>0.98);};
+  // --p 不继承，得挨个写：网格(位移) + 两条遮罩(渐隐)。四个元素，比让它继承下去
+  // 逼整棵网格每帧重算便宜得多
+  const kids=[clip.querySelector('.cal-grid'),document.getElementById('calFadeTop'),
+              document.getElementById('calFadeBot')].filter(Boolean);
+  const writeP=p=>{p=Math.max(0,Math.min(1,p));clip.style.setProperty('--p',p);
+    for(const el of kids)el.style.setProperty('--p',p);
+    grab.classList.toggle('cal-grab-on',p>0.98);};
   // 拖动按帧节流：一帧只写一次 --p，避免同一帧多次改高度反复回流（卡顿主因）
   const schedule=p=>{pendingP=p;if(!rafId)rafId=requestAnimationFrame(()=>{rafId=0;if(pendingP!=null){writeP(pendingP);pendingP=null;}});};
   function snap(to){
     if(rafId){cancelAnimationFrame(rafId);rafId=0;pendingP=null;}
-    clip.classList.add('cal-animating');writeP(to);
-    clearTimeout(animT);animT=setTimeout(()=>{clip.classList.remove('cal-animating');clip.style.willChange='';},460);
+    clip.classList.add('cal-animating');for(const el of kids)el.classList.add('cal-animating');
+    writeP(to);
+    clearTimeout(animT);animT=setTimeout(()=>{clip.classList.remove('cal-animating');
+      for(const el of kids)el.classList.remove('cal-animating');clip.style.willChange='';},460);
     try{haptic('tap');}catch(e){}
   }
   function down(e){
     dragging=true;moved=false;startY=e.clientY;startP=curP();
     lastY=e.clientY;lastT=performance.now();vel=0;
-    clip.classList.remove('cal-animating');clearTimeout(animT);
+    clip.classList.remove('cal-animating');for(const el of kids)el.classList.remove('cal-animating');
+    clearTimeout(animT);
     clip.style.willChange='height';               // 提示浏览器，收起时走更省的路径
     try{grab.setPointerCapture(e.pointerId);}catch(_){}
   }
