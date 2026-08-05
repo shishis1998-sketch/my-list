@@ -7035,8 +7035,9 @@ window.PV = (function(){
           ? `<div class="cyc-bar ${cls}" style="height:${h(v)}%${cls === 's' ? `;background:${spotColor}` : ''}">` +
             `<span class="num">${v}</span></div>`
           : `<div class="cyc-bar ${cls} zero"></div>`;
+        // 只有灰柱的月份不加任何底纹：虚线会横跨整格、被灰柱截成两截，看着像两根没数字的小柱子
         const colsHtml = cols.map(c =>
-          `<div class="cyc-col${c.spotOnly ? ' empty' : ''}">` +
+          '<div class="cyc-col">' +
             bar('c', c.cyc) + bar('p', c.len) + bar('s', c.spot) +
           '</div>').join('');
         // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
