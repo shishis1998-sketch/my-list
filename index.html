@@ -989,7 +989,7 @@ tr:hover .acts{opacity:1;}
 .cal-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--accent);transition:background .15s;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
-.cal-closebtn:hover{color:var(--accent);}
+@media (hover:hover){.cal-closebtn:hover{color:var(--accent);}}
 /* contain:layout paint —— 日历卡收起时高度在变，没有这条的话整屏(390×844)会跟着重绘一遍，
    有了它重排重绘都关在这张卡里。卡里没有需要溢出显示的东西(筛选/搜索浮层都是它的兄弟)。 */
 .cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout paint;}
@@ -1009,7 +1009,7 @@ body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:au
 .cal-filterpop-hd{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;padding:var(--sp-6) var(--sp-8) var(--sp-8);}
 .cal-filter-row{display:flex;align-items:center;gap:var(--sp-10);width:100%;border:none;background:transparent;cursor:pointer;
   font-family:var(--zh);font-size:var(--fs-sub);color:var(--text-primary);padding:var(--sp-8);border-radius:var(--r);transition:opacity .15s,background .15s;}
-.cal-filter-row:hover{background:var(--accent-light);}
+@media (hover:hover){.cal-filter-row:hover{background:var(--accent-light);}}
 .cal-filter-row.off{opacity:.42;}
 .cal-filter-name{flex:1;text-align:left;}
 .cal-filter-chk{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2.4;flex-shrink:0;}
@@ -1030,7 +1030,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cal-sr-hint{padding:var(--sp-24) var(--sp-4);color:var(--text-muted);font-size:var(--fs-caption);text-align:center;}
 .cal-sr-count{padding:var(--sp-8) var(--sp-4);color:var(--text-muted);font-size:var(--fs-foot);letter-spacing:.02em;}
 .cal-sr{display:flex;align-items:center;gap:var(--sp-12);padding:var(--sp-12) var(--sp-4);border-top:1px solid var(--border-soft);cursor:pointer;transition:background .15s;}
-.cal-sr:hover{background:var(--accent-light);}
+@media (hover:hover){.cal-sr:hover{background:var(--accent-light);}}
 .cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .cal-sr-body{flex:1;min-width:0;}
 .cal-sr-t{font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1078,11 +1078,13 @@ body.cal-searching .cal-searchresults{display:flex;}
 @media (hover:hover){.cal-grabrow:hover .cal-grab-bar{background:var(--accent-mid);width:44px;}}
 @media (prefers-reduced-motion:reduce){.cal-gridclip.cal-animating{transition:none;}}
 .cal-day{background:transparent;min-height:42px;padding:var(--sp-6) var(--sp-2) var(--sp-4);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s,box-shadow .15s;}
-.cal-day:hover{background:var(--accent-light);}
+/* hover 一律关在 @media (hover:hover) 里：手机上点一下 :hover 会一直粘着不掉，
+   日期格又是整块底色，看起来就像这天被莫名其妙标记了 */
+@media (hover:hover){.cal-day:hover{background:var(--accent-light);}}
 .cal-day.cal-other{color:var(--text-muted);}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
 .cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
-.cal-day.cal-other:hover{background:var(--bg);}
+@media (hover:hover){.cal-day.cal-other:hover{background:var(--bg);}}
 .cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}                    /* 今天：墨绿加粗数字，不加圆圈 */
 .cal-day.cal-selected{background:transparent;}
 .cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;border-radius:50%;box-shadow:0 0 0 1px var(--accent-mid);}   /* 选中：数字外一圈 26px、1px 墨绿正圆（单层描边） */
