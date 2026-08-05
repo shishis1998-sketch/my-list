@@ -6566,12 +6566,19 @@ window.PV = (function(){
     }
 
     // 顶部标签:切换 月视图 / 年视图
+    // 顶上那条「日历 / 经期 / 年度 / 标签」由外壳维护，它不知道 PV 内部换了层级。
+    // PV 自己从年视图钻进月视图时不吱声的话，控件就会停在「年度」那一段。
+    function notifyHomeView() {
+      if (typeof window.onPvHomeViewChange === 'function') window.onPvHomeViewChange(homeView);
+    }
+
     function setHomeView(v) {
       if (homeView === v) return;
       homeSwapDir = (v === 'year') ? 'fwd' : 'back';   // 年度从右滑入,月度从左滑入
       homeView = v;
       selectedView = null;
       render();
+      notifyHomeView();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -6581,6 +6588,7 @@ window.PV = (function(){
       homeView = 'month';
       selectedView = null;
       render();
+      notifyHomeView();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -7945,6 +7953,22 @@ function refreshCalPeriodView(){
   if(calView==='month'||calView==='year')PV.render();
   else if(calView==='heat')PV.renderHeat();
 }
+// 四段控件的高亮 + 滑块位置 + 记住的档位；setCalView 和 PV 内部换层级时都走这里，
+// 免得两处各写一遍走偏
+function syncCalToggle(v){
+  document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
+  const thumb=document.getElementById('cvtThumb');
+  if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
+            thumb.classList.toggle('h',v==='heat');}
+  try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
+}
+// PV 自己切了月↔年（年视图里点某个月）→ 把控件挪到对应那一段。
+// setCalView 调 PV.setHomeView 时 calView 已经是 v 了，这里直接返回，不会来回打转。
+window.onPvHomeViewChange=function(v){
+  if((v!=='month'&&v!=='year')||calView===v)return;
+  calView=v;
+  syncCalToggle(v);
+};
 function setCalView(v){
   // v: 'cal'（日历） | 'month'（经期·月） | 'year'（经期·年） | 'heat'（标签）——合并成一个四段控件
   if(v!=='cal'&&v!=='month'&&v!=='year'&&v!=='heat')v='cal';
@@ -7958,12 +7982,8 @@ function setCalView(v){
   if(pv)pv.style.display=isP?'':'none';
   if(hv)hv.style.display=isH?'':'none';
   document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
-  document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
-  const thumb=document.getElementById('cvtThumb');
-  if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
-            thumb.classList.toggle('h',isH);}
+  syncCalToggle(v);
   const title=document.getElementById('calViewTitle');if(title)title.textContent=(isP||isH)?'经期':'日历';
-  try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
   if(isH&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
     PV.openHeat(prev);   // 从经期/年度切进来时跟随那边的年月
