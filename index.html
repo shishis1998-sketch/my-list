@@ -2387,8 +2387,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 非经期出血 = 点滴(GOTAS)，用调色板里那一档的颜色，和日历上的点滴格对得上 */
 #calViewPeriod .cyc-bar.s {background: var(--disabled); box-shadow: inset 0 0 0 1px rgba(0,0,0,.07);}
 #calViewPeriod .cyc-bar.s.zero {background: none; box-shadow: none;}   /* 该周期没出血：留空位保持三柱对齐 */
-/* 只有点滴、没有周期的月份(那个月没来经期)：周期/经期两根柱同样留空位，保持三柱对齐 */
-#calViewPeriod .cyc-bar.c.zero, #calViewPeriod .cyc-bar.p.zero {background: none;}
 /* 三根柱挤一格，数字比 --fs-micro(10px) 再小一档：8px，两位数宽度 11.1px → 8.9px */
 #calViewPeriod .cyc-bar .num {position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
       font-size: 8px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;}
@@ -7035,10 +7033,10 @@ window.PV = (function(){
           ? `<div class="cyc-bar ${cls}" style="height:${h(v)}%${cls === 's' ? `;background:${spotColor}` : ''}">` +
             `<span class="num">${v}</span></div>`
           : `<div class="cyc-bar ${cls} zero"></div>`;
-        // 只有灰柱的月份不加任何底纹：虚线会横跨整格、被灰柱截成两截，看着像两根没数字的小柱子
+        // 只有灰柱的月份：不铺周期/经期的空位，只画一根灰柱，靠 .cyc-col 的 center 居中在月份正中
         const colsHtml = cols.map(c =>
           '<div class="cyc-col">' +
-            bar('c', c.cyc) + bar('p', c.len) + bar('s', c.spot) +
+            (c.spotOnly ? bar('s', c.spot) : bar('c', c.cyc) + bar('p', c.len) + bar('s', c.spot)) +
           '</div>').join('');
         // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
         const xHtml = cols.map(c =>
