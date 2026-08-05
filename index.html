@@ -2387,6 +2387,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 非经期出血 = 点滴(GOTAS)，用调色板里那一档的颜色，和日历上的点滴格对得上 */
 #calViewPeriod .cyc-bar.s {background: var(--disabled); box-shadow: inset 0 0 0 1px rgba(0,0,0,.07);}
 #calViewPeriod .cyc-bar.s.zero {background: none; box-shadow: none;}   /* 该周期没出血：留空位保持三柱对齐 */
+/* 只有点滴、没有周期的月份(那个月没来经期)：周期/经期两根柱同样留空位，保持三柱对齐 */
+#calViewPeriod .cyc-bar.c.zero, #calViewPeriod .cyc-bar.p.zero {background: none;}
 /* 三根柱挤一格，数字比 --fs-micro(10px) 再小一档：8px，两位数宽度 11.1px → 8.9px */
 #calViewPeriod .cyc-bar .num {position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
       font-size: 8px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;}
@@ -6990,17 +6992,34 @@ window.PV = (function(){
       const all = cycles.map((cyc, i) => ({
         cyc,
         len: periods[i + 1].length,
-        spot: countSpot(periods[i + 1].start),   // 柱子所在自然月的点滴天数
         start: periods[i + 1].start,
         y: periods[i + 1].start.getFullYear()
       }));
       const cols = all.filter(c => c.y === year);   // 跟随日历卡当前年份
-      const avg = cols.length
-        ? Math.round(cols.reduce((a, c) => a + c.cyc, 0) / cols.length) : 0;
+
+      // 灰柱按自然月挂：一个月只挂一根（同月有两次周期时挂在靠前那根上，避免同一批灰点数两遍）
+      const usedMonths = new Set();
+      cols.forEach(c => {
+        const mk = `${c.start.getFullYear()}-${c.start.getMonth() + 1}`;
+        c.spot = usedMonths.has(mk) ? 0 : countSpot(c.start);
+        usedMonths.add(mk);
+      });
+      // 那个月有点滴、却没有周期柱(当月没来经期) → 补一根只有灰柱的列，
+      // 保证「日历上哪个月有灰格，图里那个月就有灰柱」
+      Object.keys(spotByMonth).forEach(mk => {
+        const [y, m] = mk.split('-').map(Number);
+        if (y !== year || usedMonths.has(mk)) return;
+        cols.push({ cyc: 0, len: 0, spot: spotByMonth[mk], start: new Date(y, m - 1, 1), y, spotOnly: true });
+      });
+      cols.sort((a, b) => a.start - b.start);
+
+      const cycCols = cols.filter(c => !c.spotOnly);   // 平均值只看真正的周期柱
+      const avg = cycCols.length
+        ? Math.round(cycCols.reduce((a, c) => a + c.cyc, 0) / cycCols.length) : 0;
 
       const head =
         '<div class="cyc-head">' +
-          `<div class="stcard-title">周期趋势${cols.length ? `<span class="sub">平均 ${avg} 天</span>` : ''}</div>` +
+          `<div class="stcard-title">周期趋势${cycCols.length ? `<span class="sub">平均 ${avg} 天</span>` : ''}</div>` +
           `<span class="cyc-year">${year}</span>` +
         '</div>';
 
@@ -7011,13 +7030,14 @@ window.PV = (function(){
         const spotColor = (PALETTE[4] && PALETTE[4].color) || '#CBD5E1';
         const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len, c.spot]), 1);
         const h = v => Math.max(4, Math.round(v / maxV * 82));   // 留 ~18% 顶部空间给数字
+        // 值为 0 的柱子(没出血 / 该月没周期)只留空位，保持三柱对齐
+        const bar = (cls, v) => v
+          ? `<div class="cyc-bar ${cls}" style="height:${h(v)}%${cls === 's' ? `;background:${spotColor}` : ''}">` +
+            `<span class="num">${v}</span></div>`
+          : `<div class="cyc-bar ${cls} zero"></div>`;
         const colsHtml = cols.map(c =>
-          '<div class="cyc-col">' +
-            `<div class="cyc-bar c" style="height:${h(c.cyc)}%"><span class="num">${c.cyc}</span></div>` +
-            `<div class="cyc-bar p" style="height:${h(c.len)}%"><span class="num">${c.len}</span></div>` +
-            (c.spot
-              ? `<div class="cyc-bar s" style="height:${h(c.spot)}%;background:${spotColor}"><span class="num">${c.spot}</span></div>`
-              : '<div class="cyc-bar s zero"></div>') +
+          `<div class="cyc-col${c.spotOnly ? ' empty' : ''}">` +
+            bar('c', c.cyc) + bar('p', c.len) + bar('s', c.spot) +
           '</div>').join('');
         // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
         const xHtml = cols.map(c =>
