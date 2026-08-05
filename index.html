@@ -6975,18 +6975,22 @@ window.PV = (function(){
       }
 
       // 非经期出血 = 点滴(GOTAS, level 4)，computeCycles 把它排除在经期之外，这里单独数一遍：
-      // 落在「这次经期开始 → 下次经期开始」区间里的点滴天数，算作这一次周期的非经期出血。
-      const spotDays = Object.keys(ALL_DATA)
-        .filter(k => ALL_DATA[k] === 4)
-        .map(k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d).getTime(); });
-      const countSpot = (from, to) =>
-        spotDays.filter(t => t >= from.getTime() && t < to.getTime()).length;
+      // 按自然月归集 —— 柱子 X 轴标的是几月，灰柱就是那个月日历里的点滴天数，跟日历一眼对得上；
+      // 不跟着周期区间走(周期常跨月，会出现「8 月柱显示 7 月的灰点」这种对不上号的情况)。
+      const spotByMonth = {};
+      Object.keys(ALL_DATA).forEach(k => {
+        if (ALL_DATA[k] !== 4) return;
+        const [y, m] = k.split('-').map(Number);
+        const mk = `${y}-${m}`;
+        spotByMonth[mk] = (spotByMonth[mk] || 0) + 1;
+      });
+      const countSpot = d => spotByMonth[`${d.getFullYear()}-${d.getMonth() + 1}`] || 0;
 
       // 每个周期归入其「结束那段经期」的起始年份
       const all = cycles.map((cyc, i) => ({
         cyc,
         len: periods[i + 1].length,
-        spot: countSpot(periods[i].start, periods[i + 1].start),
+        spot: countSpot(periods[i + 1].start),   // 柱子所在自然月的点滴天数
         start: periods[i + 1].start,
         y: periods[i + 1].start.getFullYear()
       }));
@@ -7022,7 +7026,7 @@ window.PV = (function(){
           '<div class="cyc-legend">' +
             '<span><i style="background:#1c5a48"></i>周期(天)</span>' +
             '<span><i style="background:var(--brand)"></i>经期(天)</span>' +
-            `<span><i class="s" style="background:${spotColor}"></i>非经期出血(天)</span>` +
+            `<span><i class="s" style="background:${spotColor}"></i>非经期出血(当月·天)</span>` +
           '</div>' +
           `<div class="cyc-plot${cols.length >= 16 ? ' dense' : ''}">` +
             '<div class="cyc-grid"><i style="top:25%"></i><i style="top:50%"></i><i style="top:75%"></i></div>' +
