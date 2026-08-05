@@ -3021,12 +3021,24 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   gap:6px 16px;padding:10px 2px 2px;font-size:11px;color:var(--muted);}
 #calViewPeriod .pv-callegend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
 #calViewPeriod .pv-callegend i{flex:0 0 auto;width:9px;height:9px;border-radius:50%;box-sizing:border-box;}
-/* 经期用中量色(.level-2)代表整条色阶：淡的那档(--brand-tint)在 9px 上几乎看不出颜色 */
-#calViewPeriod .pv-callegend .lg-period{background:#cf4865;}
+/* 经期是一条三档色阶(少/中/多)，用一个中量色的点代表整条会和日历对不上：
+   浅粉和深红两档在图例里没有归属。改成同一个标签下并排三个点，按深浅排序；
+   灰的点滴、两种蓝的排卵期同理 —— 日历上出现的每种填充都能在这行里找到对应。
+   颜色跟着调色板走，实际值由 applyPalette() 覆写，这里只是缺省值。 */
+#calViewPeriod .pv-callegend .lg-dots{display:inline-flex;align-items:center;gap:3px;}
+#calViewPeriod .pv-callegend .lg-f1{background:var(--brand-tint);}
+#calViewPeriod .pv-callegend .lg-f2{background:#cf4865;}
+#calViewPeriod .pv-callegend .lg-f3{background:#834047;}
+#calViewPeriod .pv-callegend .lg-gotas{background:var(--disabled);}
+/* 浅粉/灰/浅蓝在白底上没有边界，一圈极淡内描边把它们框出来；深色那几档看不出这圈 */
+#calViewPeriod .pv-callegend .lg-f1,#calViewPeriod .pv-callegend .lg-f2,
+#calViewPeriod .pv-callegend .lg-f3,#calViewPeriod .pv-callegend .lg-gotas,
+#calViewPeriod .pv-callegend .lg-fert{box-shadow:inset 0 0 0 1px rgba(0,0,0,.10);}
 /* 预测经期照抄 .fx-predp 的红虚线圈；空心圈视觉上比实心点小一号，直径补到 10px */
 #calViewPeriod .pv-callegend .lg-predp{width:10px;height:10px;border:1.2px dashed var(--brand);opacity:.75;}
 /* 排卵日用 --ovu-ink 而不是 --ovu：夜间前者提亮过一档，9px 小点用深蓝在深底上看不清 */
 #calViewPeriod .pv-callegend .lg-ovu{background:var(--ovu-ink);}
+#calViewPeriod .pv-callegend .lg-fert{background:var(--ovu-soft);}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
@@ -3771,9 +3783,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <!-- 标记图例：日期网格下方居中，解释格子里的经期色块 / 预测虚线圈 / 排卵实心点。
              显示与否由 render() 决定（年视图不出、推算关掉也不出）。 -->
         <div class="pv-callegend" id="pvCalLegend" style="display:none" aria-label="日历标记说明">
-          <span><i class="lg-period"></i>经期</span>
+          <span><span class="lg-dots"><i class="lg-f1"></i><i class="lg-f2"></i><i class="lg-f3"></i></span>经期</span>
+          <span><i class="lg-gotas"></i>点滴</span>
           <span><i class="lg-predp"></i>预测经期</span>
-          <span><i class="lg-ovu"></i>排卵期</span>
+          <span><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
         </div>
       </div>
       <div id="pvExtras"></div>
@@ -7729,6 +7742,7 @@ window.PV = (function(){
     const PALETTE_ORDER = [4, 1, 2, 3];               // 图例/色板显示顺序
     const LEVEL_CLASS = { 1: 'level-1', 2: 'level-2', 3: 'level-3', 4: 'level-g' };
     const SWATCH_CLASS = { 1: 'swatch-1', 2: 'swatch-2', 3: 'swatch-3', 4: 'swatch-g' };
+    const LEGEND_CLASS = { 1: 'lg-f1', 2: 'lg-f2', 3: 'lg-f3', 4: 'lg-gotas' };   // 卡内标记图例的小色点
     const LEVEL_SUFFIX = { 1: '(少)', 2: '(中)', 3: '(多)', 4: '(点滴)' };
     // 颜色一律用 #RRGGBB 十六进制(不能用 var()，否则 <input type="color"> 会回退成黑色)
     const DEFAULT_PALETTE = {
@@ -7776,6 +7790,7 @@ window.PV = (function(){
         const c = PALETTE[l].color;
         css += `#calViewPeriod .${LEVEL_CLASS[l]}{background-color:${c};color:${textOn(c)};--c:${c};}`;
         css += `#calViewPeriod .${SWATCH_CLASS[l]} .swatch-dot{background:${c};}`;
+        css += `#calViewPeriod .pv-callegend .${LEGEND_CLASS[l]}{background:${c};}`;
       });
       let style = document.getElementById('paletteOverride');
       if (!style) {
