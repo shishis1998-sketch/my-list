@@ -7049,8 +7049,8 @@ window.PV = (function(){
           `<span${c.spotOnly ? ' class="solo"' : ''}>${c.start.getMonth() + 1}</span>`).join('');
         body =
           '<div class="cyc-legend">' +
-            '<span><i style="background:#1c5a48"></i>周期(天)</span>' +
-            '<span><i style="background:var(--brand)"></i>经期(天)</span>' +
+            '<span><i style="background:#1c5a48"></i>周期</span>' +
+            '<span><i style="background:var(--brand)"></i>经期</span>' +
             `<span><i class="s" style="background:${spotColor}"></i>点滴</span>` +   // 和日历图例同名，不再写「非经期出血」那一长串
           '</div>' +
           `<div class="cyc-plot${cols.length >= 16 ? ' dense' : ''}">` +
