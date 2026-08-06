@@ -817,9 +817,8 @@ tr:hover .acts{opacity:1;}
   /* toast */
   .toast{left:14px;right:14px;bottom:14px;justify-content:center;}
 
-  /* 日历手机端 - 全屏 */
-  .cal-modal{max-height:none;height:100%;border-radius:0;}
-  .cal-overlay{align-items:stretch;justify-content:stretch;padding:0;}
+  /* 日历手机端 - 占满 .main 剩余高度（.main 有 min-height:100vh，flex 子项自然撑满）*/
+  .cal-modal{max-height:none;border-radius:0;}
   /* 手机端 cal-modal 的进入动效已由顶层规则统一为 mboxPopIn（同 desktop）*/
   /* 内边距不在这里写：下方基础规则 .cal-hdr / .cal-scroll 写在样式表更后面、优先级相同，
      这里写多少都会被它盖掉（曾经写过一版，量出来从未生效）。要调间距去改那两条。 */
@@ -986,12 +985,25 @@ tr:hover .acts{opacity:1;}
   .bb-sortopt.on .ck{opacity:1;}
 }
 
-/* ===== CALENDAR（独立整页，非弹窗）===== */
-.cal-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:110;padding:0;}
-.cal-overlay.open{display:block;}
-/* 外层 bg 瞬间铺满（挡住下方列表页），只让内层 cal-modal 淡入渐起 */
-.cal-overlay.open .cal-modal{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
-.cal-modal{background:var(--bg);width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+/* ===== CALENDAR：与 .content 平级的同级视图 =====
+   曾经是 position:fixed 的整屏浮层，盖在还活着的列表页上面。那样下面那层
+   照样占文档高度、照样能滚，手势会穿过去滚到背景，安卓上还会漏出重绘残影。
+   现在它就是 .main 里的一个块：日历显示时 .content 直接不渲染，
+   没有第二层可滚，也没有第二层可漏。 */
+.cal-view{display:none;}
+/* height 而不是只靠 flex 撑：.main 在手机端是 height:auto，没有确定高度，
+   内层 #calViewPeriod 那些 overflow-y:auto 就永远不生效，整页会跟着长高、
+   视图切换条也会被滚走。以前靠 position:fixed;inset:0 天然被视口框住，
+   现在显式给一个视口高度把这个约束还回来 */
+.cal-view.open{display:flex;flex-direction:column;height:100vh;min-height:0;background:var(--bg);}
+.cal-view.open .cal-modal{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
+.cal-modal{background:var(--bg);width:100%;flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+/* 日历视图激活时，列表页那一套整体让位（同级切换，不是叠加）*/
+body.cal-open .topbar,
+body.cal-open .frow,
+body.cal-open .catfrow,
+body.cal-open .nfrow,
+body.cal-open .content{display:none!important;}
 /* 标题栏 = 日历卡的顶部（无色白底，与下方网格拼成一张卡）*/
 /* 左右内边距都是 10：与下方网格卡 .cal-scroll 的 10px 对齐，两者内容区同宽（310），
    下面 .cal-nav 的半列偏移才能直接用百分比算。上下各 8 → 行高 8+32+8+1描边 = 49 */
@@ -1177,6 +1189,10 @@ body.cal-searching .cal-searchresults{display:flex;}
   body.cal-open .bb-actions{display:none;}         /* 日历页不需要搜索/排序/添加行 */
   body.cal-open .bb-tabs{max-height:64px;opacity:1;}
   body.cal-open .cal-modal{padding-bottom:var(--calbbh,0px);}  /* 网格给底栏留位 */
+  /* body 那 110px 是列表页给固定底栏留的位；日历页由上面的 --calbbh 在 .cal-modal
+     内部自己留，两份叠加会让文档比视口高 110px —— 于是日历页又变得能滚，
+     正是这条把「同级视图」重新变回「有背景可滚的一层」。这里去掉，只保留键盘高度 */
+  body.cal-open{padding-bottom:var(--kb,0px);}
   body.cal-open .cal-grid{border-bottom:none;}     /* 去掉网格自身底线 → 全屏只剩底栏一条分界 */
   body.cal-open .cal-scroll{scrollbar-width:none;overflow:hidden;overscroll-behavior:none;} /* 日历页固定不滚动 */
   body.cal-open .cal-scroll::-webkit-scrollbar{display:none;}
@@ -3400,6 +3416,150 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <p>点击右上角「添加」开始记录想法</p>
     </div>
   </div>
+
+  <!-- ===== CALENDAR VIEW：与 .content 平级的同级视图，不是浮层 ===== -->
+  <div class="cal-view" id="calRoot">
+    <div class="cal-modal">
+      <div class="cal-viewbar">
+        <div class="cal-viewtitle" id="calViewTitle">日历</div>
+        <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
+          <span class="cvt-thumb" id="cvtThumb"></span>
+          <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
+          <button class="cvt" data-cv="month" onclick="setCalView('month')">经期</button>
+          <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
+          <button class="cvt" data-cv="heat" onclick="setCalView('heat')">标签</button>
+        </div>
+      </div>
+      <div id="calViewCalendar" class="cal-view">
+      <div class="cal-hdr">
+        <div class="cal-titlenav">
+          <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月">‹</button>
+          <div class="cal-title" id="calTitle" onclick="triggerCalMonthPick()" style="cursor:pointer;user-select:none">2026 年 1 月</div>
+          <button class="cal-navbtn" onclick="calNext()" aria-label="下一月">›</button>
+        </div>
+        <input type="month" id="calMonthPicker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
+        <div class="cal-nav">
+          <button class="cal-navbtn cal-filterbtn" id="calFilterBtn" onclick="toggleCalFilter()" aria-label="筛选分类">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
+            <span class="cal-filter-ind" id="calFilterInd"></span>
+          </button>
+          <button class="cal-navbtn cal-searchbtn" id="calSearchBtn" onclick="toggleCalSearch()" aria-label="搜索">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="cal-searchwrap" id="calSearchWrap">
+        <div class="cal-sfield">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+          <input type="text" id="calSearchInput" placeholder="搜索日历里的记录" oninput="runCalSearch()"
+                 autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <button class="cal-scancel" onclick="closeCalSearch()">取消</button>
+      </div>
+      <div class="cal-filter-scrim" id="calFilterScrim" onclick="closeCalFilter()"></div>
+      <div class="cal-filterpop" id="calFilterPop">
+        <div class="cal-filterpop-hd">显示分类</div>
+        <div id="calLegend"></div>
+      </div>
+      <div class="cal-scroll">
+        <div class="cal-weekrow">
+          <div class="cal-weekcell">一</div>
+          <div class="cal-weekcell">二</div>
+          <div class="cal-weekcell">三</div>
+          <div class="cal-weekcell">四</div>
+          <div class="cal-weekcell">五</div>
+          <div class="cal-weekcell">六</div>
+          <div class="cal-weekcell">日</div>
+        </div>
+        <div class="cal-gridclip" id="calGridClip"><div class="cal-grid" id="calGrid"></div><i class="cal-fade top" id="calFadeTop"></i><i class="cal-fade bot" id="calFadeBot"></i></div>
+        <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
+        <div class="cal-searchresults" id="calSearchResults"></div>
+      </div>
+      <!-- 点击某天从底部滑出的详情抽屉 -->
+      <div class="cal-sheet-scrim" id="calSheetScrim" onclick="closeCalSheet()"></div>
+      <div class="cal-sheet" id="calSheet" role="dialog" aria-label="当天记录">
+        <div class="cal-sheet-grab" id="calSheetGrab"></div>
+        <div class="cal-detail-hdr">
+          <span id="calDetailTitle">5 月 17 日</span>
+          <span class="cal-detail-count" id="calDetailCount"></span>
+          <button class="cal-sheet-close" onclick="closeCalSheet()" aria-label="关闭">✕</button>
+        </div>
+        <div id="calDetailList"></div>
+      </div>
+      </div><!-- /#calViewCalendar -->
+      <div id="calViewPeriod" style="display:none">
+        <div class="year-picker-overlay" id="yearPickerOverlay" onclick="PV.closeYearPicker(event)">
+          <div class="year-picker-sheet">
+            <div class="year-picker-title">选择年份</div>
+            <div class="year-picker-list" id="yearPickerList"></div>
+          </div>
+        </div>
+        <!-- 周期趋势柱状图：仅年度视图显示，且放在最上方；由 renderCycleTrend() 填充 -->
+        <div id="pvTrend"></div>
+        <!-- 标题条在卡片外（与普通日历 .cal-hdr 一致）；卡片只含星期行+网格（与 .cal-scroll 一致） -->
+        <div class="home-header">
+          <div class="pv-nav">
+            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页">‹</button>
+            <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
+            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页">›</button>
+          </div>
+          <div class="home-header-right">
+            <div class="home-filter" id="homeFilter">
+              <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选症状">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+              </button>
+              <div class="home-filter-menu" id="homeFilterMenu"></div>
+            </div>
+          </div>
+        </div>
+        <div class="pv-cardwrap">
+          <div id="calendar" class="calendar-container"></div>
+          <!-- 标记图例：日期网格下方居中，解释格子里的经期色块 / 预测虚线圈 / 排卵实心点。
+               显示与否由 render() 决定（年视图不出、推算关掉也不出）。 -->
+          <div class="pv-callegend" id="pvCalLegend" style="display:none" aria-label="日历标记说明">
+            <span><span class="lg-dots"><i class="lg-f1"></i><i class="lg-f2"></i><i class="lg-f3"></i></span>经期</span>
+            <span><i class="lg-gotas"></i>点滴</span>
+            <span><i class="lg-predp"></i>预测经期</span>
+            <span><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
+          </div>
+        </div>
+        <div id="pvExtras"></div>
+        <div id="bottomLegend">
+          <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
+          <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
+        </div>
+
+        <!-- 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）-->
+        <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.closeDaySheet()"></div>
+        <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
+          <div class="pv-sheet-grab"></div>
+          <div class="pv-sheet-head">
+            <span class="pv-sheet-date" id="pvSheetDate"></span>
+            <span class="pv-sheet-status" id="pvSheetStatus" style="display:none"></span>
+            <button class="pv-sheet-close" onclick="PV.closeDaySheet()" aria-label="关闭">✕</button>
+          </div>
+          <div class="pv-sheet-body" id="pvSheetBody"></div>
+          <div class="pv-sheet-actions">
+            <button class="pv-btn pv-btn-clear" onclick="PV.clearDayRecord()">清除记录</button>
+            <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
+          </div>
+        </div>
+      </div><!-- /#calViewPeriod -->
+
+      <!-- 标签视图：当月记过的每个症状标签一张卡（移植自经期 App 热力图的「月」视图）-->
+      <div id="calViewHeat" style="display:none">
+        <div class="hm-hdr">
+          <div class="hm-titlenav">
+            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月">‹</button>
+            <div class="hm-title" id="hmTitle">2026 年 1 月</div>
+            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
+          </div>
+        </div>
+        <div id="hmContent"></div>
+      </div>
+
+    </div>
+  </div>
 </div><!-- /main -->
 </div><!-- /app -->
 
@@ -3738,149 +3898,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   </div>
 </div>
 
-<!-- ===== CALENDAR MODAL ===== -->
-<div class="cal-overlay" id="calOverlay" onclick="if(event.target===this)closeCalendar()">
-  <div class="cal-modal">
-    <div class="cal-viewbar">
-      <div class="cal-viewtitle" id="calViewTitle">日历</div>
-      <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
-        <span class="cvt-thumb" id="cvtThumb"></span>
-        <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
-        <button class="cvt" data-cv="month" onclick="setCalView('month')">经期</button>
-        <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
-        <button class="cvt" data-cv="heat" onclick="setCalView('heat')">标签</button>
-      </div>
-    </div>
-    <div id="calViewCalendar" class="cal-view">
-    <div class="cal-hdr">
-      <div class="cal-titlenav">
-        <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月">‹</button>
-        <div class="cal-title" id="calTitle" onclick="triggerCalMonthPick()" style="cursor:pointer;user-select:none">2026 年 1 月</div>
-        <button class="cal-navbtn" onclick="calNext()" aria-label="下一月">›</button>
-      </div>
-      <input type="month" id="calMonthPicker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
-      <div class="cal-nav">
-        <button class="cal-navbtn cal-filterbtn" id="calFilterBtn" onclick="toggleCalFilter()" aria-label="筛选分类">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
-          <span class="cal-filter-ind" id="calFilterInd"></span>
-        </button>
-        <button class="cal-navbtn cal-searchbtn" id="calSearchBtn" onclick="toggleCalSearch()" aria-label="搜索">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        </button>
-      </div>
-    </div>
-    <div class="cal-searchwrap" id="calSearchWrap">
-      <div class="cal-sfield">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input type="text" id="calSearchInput" placeholder="搜索日历里的记录" oninput="runCalSearch()"
-               autocomplete="off" autocapitalize="off" spellcheck="false">
-      </div>
-      <button class="cal-scancel" onclick="closeCalSearch()">取消</button>
-    </div>
-    <div class="cal-filter-scrim" id="calFilterScrim" onclick="closeCalFilter()"></div>
-    <div class="cal-filterpop" id="calFilterPop">
-      <div class="cal-filterpop-hd">显示分类</div>
-      <div id="calLegend"></div>
-    </div>
-    <div class="cal-scroll">
-      <div class="cal-weekrow">
-        <div class="cal-weekcell">一</div>
-        <div class="cal-weekcell">二</div>
-        <div class="cal-weekcell">三</div>
-        <div class="cal-weekcell">四</div>
-        <div class="cal-weekcell">五</div>
-        <div class="cal-weekcell">六</div>
-        <div class="cal-weekcell">日</div>
-      </div>
-      <div class="cal-gridclip" id="calGridClip"><div class="cal-grid" id="calGrid"></div><i class="cal-fade top" id="calFadeTop"></i><i class="cal-fade bot" id="calFadeBot"></i></div>
-      <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
-      <div class="cal-searchresults" id="calSearchResults"></div>
-    </div>
-    <!-- 点击某天从底部滑出的详情抽屉 -->
-    <div class="cal-sheet-scrim" id="calSheetScrim" onclick="closeCalSheet()"></div>
-    <div class="cal-sheet" id="calSheet" role="dialog" aria-label="当天记录">
-      <div class="cal-sheet-grab" id="calSheetGrab"></div>
-      <div class="cal-detail-hdr">
-        <span id="calDetailTitle">5 月 17 日</span>
-        <span class="cal-detail-count" id="calDetailCount"></span>
-        <button class="cal-sheet-close" onclick="closeCalSheet()" aria-label="关闭">✕</button>
-      </div>
-      <div id="calDetailList"></div>
-    </div>
-    </div><!-- /#calViewCalendar -->
-    <div id="calViewPeriod" style="display:none">
-      <div class="year-picker-overlay" id="yearPickerOverlay" onclick="PV.closeYearPicker(event)">
-        <div class="year-picker-sheet">
-          <div class="year-picker-title">选择年份</div>
-          <div class="year-picker-list" id="yearPickerList"></div>
-        </div>
-      </div>
-      <!-- 周期趋势柱状图：仅年度视图显示，且放在最上方；由 renderCycleTrend() 填充 -->
-      <div id="pvTrend"></div>
-      <!-- 标题条在卡片外（与普通日历 .cal-hdr 一致）；卡片只含星期行+网格（与 .cal-scroll 一致） -->
-      <div class="home-header">
-        <div class="pv-nav">
-          <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页">‹</button>
-          <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
-          <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页">›</button>
-        </div>
-        <div class="home-header-right">
-          <div class="home-filter" id="homeFilter">
-            <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选症状">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
-            </button>
-            <div class="home-filter-menu" id="homeFilterMenu"></div>
-          </div>
-        </div>
-      </div>
-      <div class="pv-cardwrap">
-        <div id="calendar" class="calendar-container"></div>
-        <!-- 标记图例：日期网格下方居中，解释格子里的经期色块 / 预测虚线圈 / 排卵实心点。
-             显示与否由 render() 决定（年视图不出、推算关掉也不出）。 -->
-        <div class="pv-callegend" id="pvCalLegend" style="display:none" aria-label="日历标记说明">
-          <span><span class="lg-dots"><i class="lg-f1"></i><i class="lg-f2"></i><i class="lg-f3"></i></span>经期</span>
-          <span><i class="lg-gotas"></i>点滴</span>
-          <span><i class="lg-predp"></i>预测经期</span>
-          <span><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
-        </div>
-      </div>
-      <div id="pvExtras"></div>
-      <div id="bottomLegend">
-        <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
-        <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
-      </div>
-
-      <!-- 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）-->
-      <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.closeDaySheet()"></div>
-      <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
-        <div class="pv-sheet-grab"></div>
-        <div class="pv-sheet-head">
-          <span class="pv-sheet-date" id="pvSheetDate"></span>
-          <span class="pv-sheet-status" id="pvSheetStatus" style="display:none"></span>
-          <button class="pv-sheet-close" onclick="PV.closeDaySheet()" aria-label="关闭">✕</button>
-        </div>
-        <div class="pv-sheet-body" id="pvSheetBody"></div>
-        <div class="pv-sheet-actions">
-          <button class="pv-btn pv-btn-clear" onclick="PV.clearDayRecord()">清除记录</button>
-          <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
-        </div>
-      </div>
-    </div><!-- /#calViewPeriod -->
-
-    <!-- 标签视图：当月记过的每个症状标签一张卡（移植自经期 App 热力图的「月」视图）-->
-    <div id="calViewHeat" style="display:none">
-      <div class="hm-hdr">
-        <div class="hm-titlenav">
-          <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月">‹</button>
-          <div class="hm-title" id="hmTitle">2026 年 1 月</div>
-          <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
-        </div>
-      </div>
-      <div id="hmContent"></div>
-    </div>
-
-  </div>
-</div>
 
 <!-- ===== NOTE EDITOR MODAL ===== -->
 <div class="moverlay" id="noteModal">
@@ -10484,7 +10501,7 @@ let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起�
 
 function openCalendar(){
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
-  document.getElementById('calOverlay').classList.add('open');
+  document.getElementById('calRoot').classList.add('open');
   const today=new Date();
   calYear=today.getFullYear();calMonth=today.getMonth();
   calSelDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;  // 默认选中今天，下半区常驻显示
@@ -10510,7 +10527,7 @@ function openCalendar(){
   setCalView(_lv);   // 恢复上次视图（日历 / 经期月 / 经期年）
 }
 function closeCalendar(){
-  document.getElementById('calOverlay').classList.remove('open');
+  document.getElementById('calRoot').classList.remove('open');
   document.body.classList.remove('cal-open');
   document.body.classList.remove('cal-view-period');
   closeCalSearch();                // 退出日历时收起搜索
