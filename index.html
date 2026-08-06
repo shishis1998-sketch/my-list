@@ -902,11 +902,14 @@ tr:hover .acts{opacity:1;}
   .bb-tabs{overflow:hidden;max-height:64px;opacity:1;
     transition:max-height .26s ease, opacity .2s ease;}
   body.tabs-hidden .bb-tabs{max-height:0;opacity:0;}
-  .bb-actions{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-8) var(--sp-12) var(--sp-8);border-bottom:1px solid var(--border-soft);}
+  /* 不用 gap：右侧按钮聚焦时要收成 0 宽，gap 留下的 3 道缝隙没法跟着收，
+     搜索框就吃不满整行。改成按钮各自带 margin-left，收起时一起归零 */
+  .bb-actions{display:flex;align-items:center;padding:var(--sp-8) var(--sp-12) var(--sp-8);border-bottom:1px solid var(--border-soft);}
   .bb-sbox{position:relative;flex:1 1 0;min-width:0;}
   .bb-sbox input{width:100%;height:38px;background:var(--bg);border:1px solid var(--border);
     border-radius:var(--r);padding:0 34px 0 34px;font-size:var(--fs-headline);font-family:var(--zh);
-    color:var(--text-primary);outline:none;box-sizing:border-box;}
+    color:var(--text-primary);outline:none;box-sizing:border-box;
+    transition:border-radius .22s ease,border-color .15s,background .15s;}
   .bb-sbox input:focus{border-color:var(--accent-mid);background:var(--surface);}
   /* 搜索无结果：边框变红 */
   .bb-sbox input.no-result,
@@ -920,16 +923,35 @@ tr:hover .acts{opacity:1;}
     border:none;background:none;cursor:pointer;color:var(--text-muted);border-radius:50%;padding:0;
     display:inline-flex;align-items:center;justify-content:center;}
   .bb-sclear:active{transform:translateY(-50%) scale(.9);color:var(--accent);}
-  .bb-sortbtn{flex:0 0 auto;width:42px;height:38px;border-radius:var(--r);
+  .bb-sortbtn{flex:0 0 auto;width:42px;height:38px;border-radius:var(--r);margin-left:var(--sp-8);
     background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);
     cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
-  .bb-addbtn{flex:0 0 auto;height:38px;padding:0 var(--sp-16);border-radius:var(--r);
+  .bb-addbtn{flex:0 0 auto;height:38px;padding:0 var(--sp-16);border-radius:var(--r);margin-left:var(--sp-8);
     background:var(--accent);color:var(--on-accent);border:none;cursor:pointer;
     display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-6);
     font-family:var(--zh);font-weight:700;font-size:14px;white-space:nowrap;max-width:50vw;overflow:hidden;}
   .bb-addbtn span{overflow:hidden;text-overflow:ellipsis;}
   .bb-sortbtn:active,.bb-addbtn:active{transform:scale(.96);}
   .bb-sortbtn.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+
+  /* —— 点搜索框 → 右侧三个按钮收起，搜索框伸展到整行 ——
+     用 :focus-within 而不是监听 blur：点右侧「清空 ×」时焦点仍在 .bb-actions 内，
+     不会先塌回去再弹开。max-width 是为了让收起有过渡（display:none 动不了）；
+     高度保持 38px 不变，底栏总高不动，键盘跟随的 --bbty 测量就不会抖 */
+  .bb-actions .bb-sortbtn,
+  .bb-actions .bb-addbtn{
+    max-width:120px;overflow:hidden;
+    transition:max-width .22s ease,padding .22s ease,margin .22s ease,
+               border-width .22s ease,opacity .14s ease;
+  }
+  .bb-actions:focus-within .bb-sortbtn,
+  .bb-actions:focus-within .bb-addbtn{
+    max-width:0;width:0;min-width:0;
+    padding-left:0;padding-right:0;margin-left:0;border-width:0;
+    opacity:0;pointer-events:none;
+  }
+  /* 展开后收成胶囊，强化「变了个形态」的观感（38px 高，999 会被夹到 19px）*/
+  .bb-actions:focus-within .bb-sbox input{border-radius:999px;}
 
   .bb-tabs{display:flex;align-items:stretch;}
   .bb-tab{flex:1;background:none;border:none;cursor:pointer;
