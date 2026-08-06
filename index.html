@@ -573,8 +573,8 @@ tr:hover .acts{opacity:1;}
 }
 .sb-overlay.open{display:block;}
 
-/* ===== 手机端: ≤ 768px ===== */
-@media (max-width: 768px){
+/* ===== 手机端 + 平板竖屏: ≤ 1024px ===== */
+@media (max-width: 1024px){
   :root{--fs-body:15px;}  /* 手机端正文基准升半档;--fs-headline 16px 防缩放不动 */
   body{font-size:var(--fs-body);-webkit-text-size-adjust:100%;}
 
@@ -1171,7 +1171,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 
 
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
-@media (max-width:768px){
+@media (max-width:1024px){
   /* 日历页：底栏去圆角去阴影、只留 1px 细线（高于日历页 110，始终可点）*/
   body.cal-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
   body.cal-open .bb-actions{display:none;}         /* 日历页不需要搜索/排序/添加行 */
@@ -1456,7 +1456,10 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlsheet-mask.show{opacity:1;pointer-events:auto;}
 .tlsheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:540px;z-index:1501;max-height:88vh;
   background:var(--surface);border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;
-  transform:translateY(101%);transition:transform var(--nav-dur) var(--nav-ease);
+  /* 收起位移必须是固定像素、且大于阴影往上够到的距离（8+30=38px）。
+     用百分比不行：101% 是「自身高度的 101%」，抽屉矮的时候（空列表 72px）只往下挪
+     0.7px，向上的阴影整条留在屏幕底部，桌面布局下没有底栏遮挡就很明显 */
+  transform:translateY(calc(100% + 44px));transition:transform var(--nav-dur) var(--nav-ease);
   box-shadow:0 -8px 30px -10px rgba(0,0,0,.32);}
 .tlsheet.show{transform:translateY(0);}
 .tlsheet.dragging{transition:none;}
@@ -1511,7 +1514,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tle-btn:active{transform:scale(.96);}
 .tle-save{background:var(--accent);color:var(--on-accent);}
 .tle-cancel{background:var(--accent-light);color:var(--accent);}
-@media(max-width:768px){
+@media(max-width:1024px){
   #tlEditModal .mhdr{padding:var(--sp-14) var(--sp-16) var(--sp-12);}
   #tlEditModal .tle-body{padding:var(--sp-6) var(--sp-16) 0;}
   .tle-ftr{padding:var(--sp-14) var(--sp-16);padding-bottom:calc(14px + env(safe-area-inset-bottom));}
@@ -1550,7 +1553,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   padding:var(--sp-8) var(--sp-24) var(--sp-24) var(--sp-24);
   -webkit-overflow-scrolling:touch;
 }
-@media(max-width:768px){
+@media(max-width:1024px){
   #tlModal .mhdr{padding:var(--sp-14) var(--sp-16) var(--sp-12);}
   #tlModal #tl-body{padding:var(--sp-8) var(--sp-16) var(--sp-20) var(--sp-16);}
 }
@@ -1667,7 +1670,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cmi-note .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
 
 /* 手机端笔记适配 */
-@media (max-width: 768px){
+@media (max-width: 1024px){
   .nfrow{
     padding:var(--sp-8) var(--sp-14);flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -1733,7 +1736,8 @@ body.cal-searching .cal-searchresults{display:flex;}
 .mfsheet-mask.show{opacity:1;pointer-events:auto;}
 .mfsheet{position:fixed;left:0;right:0;bottom:0;z-index:1401;background:var(--surface);border-top:1px solid var(--border);
   padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
-  transform:translateY(110%);transition:transform var(--nav-dur) var(--nav-ease);box-shadow:0 -8px 30px rgba(0,0,0,.12);}
+  /* 同 .tlsheet：固定像素收起，避免向上的阴影漏回屏幕底部 */
+  transform:translateY(calc(100% + 44px));transition:transform var(--nav-dur) var(--nav-ease);box-shadow:0 -8px 30px rgba(0,0,0,.12);}
 .mfsheet.show{transform:translateY(0);}
 .mfsheet-grip{width:38px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 14px;}
 .mfsheet-label{font-size:var(--fs-foot);font-weight:600;color:var(--accent-mid);margin-bottom:8px;letter-spacing:.02em;}
@@ -1852,7 +1856,7 @@ mark.shl{
 .snum{color:var(--text-primary);}
 
 /* —— 表格容器：圆角 + 描边（电脑端双栏）—— */
-@media(min-width:769px){
+@media(min-width:1025px){
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
 }
 thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);font-family:var(--zh);}
@@ -1863,7 +1867,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 
 
 /* —— 弹窗：圆角 + 描边（无投影；桌面端；手机端全屏不加）—— */
-@media(min-width:769px){
+@media(min-width:1025px){
   .mbox{
     border:var(--bd) solid var(--ink);border-radius:var(--rxl);
     background:var(--surface);box-shadow:none;
@@ -2006,7 +2010,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:var(--sp-12);align-items:start;}
 /* 桌面端卡片放大一档：手机固定两列，宽屏按 200px 起排，别摊成一排小格子 */
-@media(min-width:769px){
+@media(min-width:1025px){
   #calViewHeat .hm-cards{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
 }
 #calViewHeat .hm-card{background:var(--surface);border:var(--bd) solid var(--border);
@@ -2701,7 +2705,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   .pv-sheet-scrim{transition:opacity .2s ease;}
 }
 /* 手机端底部 tab 栏(.bottombar z-index:115)会盖住弹窗底部按钮，弹窗打开时先隐藏它 */
-@media (max-width:768px){ body.pv-sheet-open .bottombar{display:none;} }
+@media (max-width:1024px){ body.pv-sheet-open .bottombar{display:none;} }
 #calViewPeriod .bottom-nav {position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
       display: flex; align-items: center; gap: 6px;
       
@@ -3399,7 +3403,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 </div><!-- /main -->
 </div><!-- /app -->
 
-<!-- ===== 手机端底部栏（仅 ≤768px 显示）===== -->
+<!-- ===== 手机端底部栏（仅 ≤1024px 显示）===== -->
 <div class="bottombar" id="bottombar">
   <!-- 操作行：搜索 + 排序 + 添加 -->
   <div class="bb-actions">
@@ -9569,7 +9573,7 @@ function filterCat(cat){
   render();
   playCatStagger();
   // 手机端点完分类自动关闭抽屉
-  if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
+  if(window.matchMedia('(max-width: 1024px)').matches) toggleSidebar(false);
 }
 
 // 切换分类时给可见列表的卡片/行做「上滑错落」入场
@@ -9685,7 +9689,7 @@ function scrollResultsTop(){
   // 否则搜索后结果保留旧滚动位置，第一条和「全部笔记 N 条」标题被顶到屏幕外
   const c=document.querySelector('.content');
   if(c) c.scrollTop=0;
-  if(window.matchMedia('(max-width: 768px)').matches){
+  if(window.matchMedia('(max-width: 1024px)').matches){
     // 用 rAF 等本次 render 后的新高度落定，再把整页拉回顶部
     requestAnimationFrame(()=>window.scrollTo(0,0));
   }
@@ -10499,7 +10503,7 @@ function openCalendar(){
   setCalTabActive(true);           // 高亮底部「日历」tab
   window.scrollTo(0,0);            // 回到顶部，保证下拉刷新可从顶部触发
   // 手机端打开日历时关闭侧边栏抽屉
-  if(window.matchMedia('(max-width: 768px)').matches) toggleSidebar(false);
+  if(window.matchMedia('(max-width: 1024px)').matches) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
   if(window.PV&&PV.resetPos)PV.resetPos();   // 重新打开日历页：经期视图也回到当前年月（与上面日历重置到今天一致）
   let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
@@ -12464,7 +12468,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   function update(){
     scheduled=false;
     // 仅手机端生效
-    if(!window.matchMedia('(max-width: 768px)').matches){
+    if(!window.matchMedia('(max-width: 1024px)').matches){
       root.style.setProperty('--kb','0px');
       document.body.classList.remove('kb-open');
       document.body.classList.remove('vv-track');
@@ -12533,7 +12537,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   const THRESH = 6;
   function apply(){
     ticking = false;
-    if(!window.matchMedia('(max-width: 768px)').matches){
+    if(!window.matchMedia('(max-width: 1024px)').matches){
       document.body.classList.remove('tabs-hidden'); return;
     }
     if(document.body.classList.contains('modal-open') ||
