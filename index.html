@@ -578,28 +578,30 @@ tr:hover .acts{opacity:1;}
   :root{--fs-body:15px;}  /* 手机端正文基准升半档;--fs-headline 16px 防缩放不动 */
   body{font-size:var(--fs-body);-webkit-text-size-adjust:100%;}
 
-  /* 「设置」从左侧抽屉改为整屏页面:默认滑出屏幕右侧,加 .open 从右滑入 */
+  /* 「设置」= 与 .content 平级的同级视图（与日历同一套路子）。
+     原本是 position:fixed 的整屏层压在 .app 上面，下面的 .main 一直在渲染、
+     照样占文档高度、照样能滚 —— 手势滑到侧栏内部滚动的尽头就会链到背景，
+     和日历那个「背景还停留在媒体那边滑动」是同一个病。
+     现在改成：设置激活时 .main 整体不渲染，侧栏回到正常文档流里占位。 */
   .sidebar{
-    position:fixed;top:0;left:0;right:0;
+    display:none;
     width:100%;max-width:none;min-width:0;
-    height:100vh;height:100dvh;
-    overflow-y:auto;-webkit-overflow-scrolling:touch;
-    /* 隐藏原生滚动条：部分安卓浏览器会画一条灰色经典滚动条，露在页面右侧（与全站无滚动条风格一致）*/
-    scrollbar-width:none;-ms-overflow-style:none;
-    /* 底部给常驻的 tab 底栏留位（与日历页一致，内容不被底栏遮挡）*/
-    padding:0 0 calc(76px + env(safe-area-inset-bottom));
-    border-right:none;
-    /* 方案 B · 淡入渐起:淡入 + 上移(替代原横向滑入,与全站转场统一) */
-    transform:translateY(var(--nav-rise));opacity:0;visibility:hidden;pointer-events:none;
-    transition:transform var(--nav-dur) var(--nav-ease),opacity var(--nav-dur) var(--nav-ease),visibility 0s linear var(--nav-dur);
-    /* 覆盖底栏(z-index:90)与顶栏,成为独立整屏页面 */
-    z-index:100;box-shadow:none;
+    position:static;height:auto;min-height:100vh;
+    overflow:visible;                      /* 内容长就把页面顶长，由 body 统一滚 */
+    padding:0 0 calc(76px + env(safe-area-inset-bottom));  /* 末尾给常驻底栏留位 */
+    border-right:none;z-index:auto;box-shadow:none;
   }
-  .sidebar::-webkit-scrollbar{display:none;}
   /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
   .sidebar .nsec{flex-shrink:0;}
-  .sidebar.open{transform:translateY(0);opacity:1;visibility:visible;pointer-events:auto;
-    transition:transform var(--nav-dur) var(--nav-ease),opacity var(--nav-dur) var(--nav-ease),visibility 0s;}
+  /* 关着时 display:none（在流里不能靠 visibility 藏，否则照样占位），
+     所以进场用 animation 而不是 transition —— 复用全站统一的淡入渐起 */
+  .sidebar.open{display:flex;animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
+  /* 设置激活时列表页整体让位；不透明遮罩也不需要了 */
+  body.sb-open .main{display:none;}
+  body.sb-open .sb-overlay{display:none;}
+  /* 同 cal-open：body 那 110px 是列表页给固定底栏留的位，设置页由上面
+     侧栏自己的 padding-bottom 留，两份叠加会让文档凭空高出 110px */
+  body.sb-open{padding-bottom:var(--kb,0px);}
   /* 整屏「设置」页:用页头替代 logo，去掉分类区上多余留白 */
   .sidebar .logo{display:none;}
   .sidebar .nsec-cats{margin-top:var(--sp-24);}
@@ -9564,7 +9566,10 @@ function toggleSidebar(open){
   ov.classList.toggle('open',open);
   document.body.classList.toggle('sb-open',open);  // 设置页：底栏浮于其上、只留 tab（与日历一致）
   setMenuTabActive(open);                           // 高亮底部「设置」tab
-  document.body.style.overflow=open?'hidden':'';
+  // 这里原本有 document.body.style.overflow=open?'hidden':''，想锁背景滚动。
+  // 实测无效（隔离测试里加不加它都照样能滚），本仓库的弹窗锁也是因此才用
+  // position:fixed 而非 overflow。现在设置页激活时 .main 根本不渲染，
+  // 没有背景可滚，不需要任何锁。
 }
 // 底部 tab 高亮：设置页时点亮「设置」，退出时交还给 syncBottomTabs（与 setCalTabActive 对称）
 function setMenuTabActive(on){
