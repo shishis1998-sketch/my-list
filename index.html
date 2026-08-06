@@ -991,13 +991,14 @@ tr:hover .acts{opacity:1;}
    现在它就是 .main 里的一个块：日历显示时 .content 直接不渲染，
    没有第二层可滚，也没有第二层可漏。 */
 .cal-view{display:none;}
-/* height 而不是只靠 flex 撑：.main 在手机端是 height:auto，没有确定高度，
-   内层 #calViewPeriod 那些 overflow-y:auto 就永远不生效，整页会跟着长高、
-   视图切换条也会被滚走。以前靠 position:fixed;inset:0 天然被视口框住，
-   现在显式给一个视口高度把这个约束还回来 */
-.cal-view.open{display:flex;flex-direction:column;height:100vh;min-height:0;background:var(--bg);}
+/* 至少一屏，内容更长就把页面顶长、由 body 统一滚（不做内部滚动容器）。
+   以前是浮层，必须钉死在视口里、各视图自己开滚动条，否则背景会露出来；
+   现在 .content 在日历激活时根本不渲染，没有第二层可漏，整页滚是安全的。
+   配套：.cal-modal / #calView* / .cal-scroll 的 overflow 都改成 visible，
+   contain 也去掉了 paint —— 它们原本是配合固定高度裁剪的，留着会切掉内容 */
+.cal-view.open{display:flex;flex-direction:column;min-height:100vh;background:var(--bg);}
 .cal-view.open .cal-modal{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
-.cal-modal{background:var(--bg);width:100%;flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+.cal-modal{background:var(--bg);width:100%;flex:1 1 auto;overflow:visible;display:flex;flex-direction:column;position:relative;}
 /* 日历视图激活时，列表页那一套整体让位（同级切换，不是叠加）*/
 body.cal-open .topbar,
 body.cal-open .frow,
@@ -1023,7 +1024,7 @@ body.cal-open .content{display:none!important;}
 @media (hover:hover){.cal-closebtn:hover{color:var(--accent);}}
 /* contain:layout paint —— 日历卡收起时高度在变，没有这条的话整屏(390×844)会跟着重绘一遍，
    有了它重排重绘都关在这张卡里。卡里没有需要溢出显示的东西(筛选/搜索浮层都是它的兄弟)。 */
-.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout paint;}
+.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout;}
 /* 搜索时标题栏隐藏，日历卡恢复完整边框圆角（否则顶部会缺一截）*/
 body.cal-open.cal-searching .cal-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;border-top:1px solid var(--border);border-radius:var(--rxl);margin-top:var(--sp-8);}
 .cal-legdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
@@ -1194,7 +1195,7 @@ body.cal-searching .cal-searchresults{display:flex;}
      正是这条把「同级视图」重新变回「有背景可滚的一层」。这里去掉，只保留键盘高度 */
   body.cal-open{padding-bottom:var(--kb,0px);}
   body.cal-open .cal-grid{border-bottom:none;}     /* 去掉网格自身底线 → 全屏只剩底栏一条分界 */
-  body.cal-open .cal-scroll{scrollbar-width:none;overflow:hidden;overscroll-behavior:none;} /* 日历页固定不滚动 */
+  body.cal-open .cal-scroll{scrollbar-width:none;overflow:visible;} /* 记录直接长出去，由页面统一滚 */
   body.cal-open .cal-scroll::-webkit-scrollbar{display:none;}
   /* 「设置」页与日历同一套导航：底栏浮于其上、只留 tab 行，靠点其它 tab 切走，无需关闭按钮 */
   body.sb-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
@@ -1978,7 +1979,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .cal-viewtitle{display:none;}  /* 「日历/经期」标题去掉，下方年月标题已足够，避免重复 */
 /* 经期视图：不再把视图切换条钉在顶部——让整块 modal 一起滚动，切换条随内容向上滑走
    （月份导航 .home-sticky 仍 sticky 吸顶，滚动时可继续翻月）。日历视图不受影响。 */
-body.cal-view-period .cal-modal{overflow-y:auto;-webkit-overflow-scrolling:touch;
+body.cal-view-period .cal-modal{overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
 body.cal-view-period .cal-modal::-webkit-scrollbar{display:none;}
 body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;padding-top:0;}   /* 顶部间距改由首卡 margin 提供，使「视图切换→首卡」与卡片间距一致 */
@@ -2002,8 +2003,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle.cvt3 .cvt,
 .cal-vtoggle.cvt4 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}   /* 等分满宽 + 高度压低到约 30px */
 .cal-vtoggle .cvt.on{color:var(--text-primary);}
-#calViewCalendar{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-#calViewPeriod{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+#calViewCalendar{flex:1 1 auto;display:flex;flex-direction:column;overflow:visible;}
+#calViewPeriod{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
 /* 隐藏纵向滚动条：选中日期后下方状态/信息卡展开会撑出滚动条，若占宽会把居中的日历网格整体挤向左侧（“向左偏”）。
    与本 App 其余滚动区一致隐藏滚动条，保证内容宽度恒定、与普通日历像素对齐。 */
@@ -2013,7 +2014,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 移植自经期 App 热力图的「月」视图（renderTagCards）。字号/间距/圆角按 design.md
    落到 token：原 9px 的星期头与格内日期一律提到 --fs-foot 11px，卡片 --rlg，日期格取正圆。
    accent 不再钉死：这一屏跟随设置里的主题色（经期/年度那两屏仍是固定墨绿）。 */
-#calViewHeat{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+#calViewHeat{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--sp-14) var(--sp-20);}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
