@@ -2766,13 +2766,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-row.danger{color:var(--danger);justify-content:center;}
 .pv-dot{width:14px;height:14px;border-radius:50%;flex:none;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
-.pv-chk{color:var(--brand);font-weight:700;flex:none;}
-/* 症状勾选圈：没选 = 空心描边，选了 = 品牌色实心 + 白勾 */
-.pv-tick{width:22px;height:22px;border-radius:50%;flex:none;position:relative;
+/* 勾选圈：没选 = 空心描边，选了 = 品牌色实心 + 白勾。
+   勾用 SVG 而不是「旋转 45° 的 L 形边框」那套老写法——那个形状的外框中心
+   不等于墨迹中心，靠调 left/top 对，量出来仍偏心 1.2px。这里 viewBox 就是
+   圆本身的 22×22 坐标系，落笔时把墨迹包围盒算准在 (11,11)，天然居中。 */
+.pv-tick{width:22px;height:22px;border-radius:50%;flex:none;
   box-shadow:inset 0 0 0 1.5px var(--line);transition:background .15s,box-shadow .15s;}
-.pv-row.on .pv-tick{background:var(--brand);box-shadow:none;}
-.pv-row.on .pv-tick::after{content:"";position:absolute;left:8px;top:5px;width:5px;height:9px;
-  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg);}
+.pv-row.on .pv-tick{box-shadow:none;
+  background:var(--brand) center/100% 100% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6.6 11.25L9.6 14.25L15.4 7.75' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
 /* 「新建症状」展开出来的输入行 */
 .pv-inprow{display:flex;align-items:center;gap:8px;padding:8px 12px;
   border-top:1px solid var(--line-soft);}
@@ -7050,20 +7052,25 @@ window.PV = (function(){
           `<span class="pv-row-v">${lv ? (FLOW_CN[lv] || '') : '未记录'}</span>` +
           `<span class="pv-row-ar">›</span>` +
         `</button>`;
+      // 四档与症状用同一种勾选圈。两者语义不同——症状可多选，经血量只能选一个——
+      // 但「选中 = 实心勾、没选 = 空心圈」在一屏里只该有一种长相；单选这件事由
+      // 「点另一档，上一档自己灭掉」讲清楚，多一套控件反而要多认一次。
       if (flowOpen) {
         g1 += PALETTE_ORDER.map(v => {
           const pl = PALETTE[v] || {};
-          return `<button type="button" class="pv-row sub" data-lv="${v}">` +
+          return `<button type="button" class="pv-row sub${lv === v ? ' on' : ''}" data-lv="${v}" ` +
+                   `aria-pressed="${lv === v}">` +
                    `<span class="pv-dot" style="background:${pl.color || '#ccc'}"></span>` +
                    `<span class="pv-row-l">${FLOW_CN[v] || ''}` +
                      (v === 4 ? `<span class="pv-row-v"> · 不计入经期</span>` : '') +
                    `</span>` +
-                   (lv === v ? `<span class="pv-chk">✓</span>` : '') +
+                   `<span class="pv-tick"></span>` +
                  `</button>`;
         }).join('') +
-        `<button type="button" class="pv-row sub" data-lv="0">` +
+        `<button type="button" class="pv-row sub${lv === 0 ? ' on' : ''}" data-lv="0" ` +
+          `aria-pressed="${lv === 0}">` +
           `<span class="pv-row-l" style="color:var(--muted)">未记录</span>` +
-          (lv === 0 ? `<span class="pv-chk">✓</span>` : '') +
+          `<span class="pv-tick"></span>` +
         `</button>`;
       }
 
