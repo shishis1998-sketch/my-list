@@ -2679,9 +2679,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    易孕期＝淡蓝底；排卵日＝蓝色实心；预测的下次经期＝红虚线框。
    排卵日若正好落在已记录的经期上，改用蓝色描边，不盖掉经血量颜色。
    --ovu 是实心块/描边用色（配白字，两种模式通用），
-   --ovu-ink 是浅底上的文字色，夜间需要提亮一档才够清楚。 */
-#calViewPeriod {--ovu: #2E6FCC; --ovu-soft: rgba(46,111,204,.16); --ovu-ink: #2E6FCC;}
-:root[data-mode="dark"] #calViewPeriod {--ovu-soft: rgba(91,155,240,.20); --ovu-ink: #7FB0F5;}
+   --ovu-ink 是浅底上的文字色，夜间需要提亮一档才够清楚。
+   --ovu-on-soft 专给「压在 --ovu-soft 上的小字」：白底上 --ovu-soft 混出来的底
+   已经不是纯白了，--ovu-ink 压上去只有 4.0:1，12px 字不够；压深一档拿到 6.2:1。
+   夜间 --ovu-soft 是深底，--ovu-ink 本来就够亮，跟着它走即可。 */
+#calViewPeriod {--ovu: #2E6FCC; --ovu-soft: rgba(46,111,204,.16); --ovu-ink: #2E6FCC; --ovu-on-soft: #215399;}
+:root[data-mode="dark"] #calViewPeriod {--ovu-soft: rgba(91,155,240,.20); --ovu-ink: #7FB0F5; --ovu-on-soft: #7FB0F5;}
 #calViewPeriod .day.fx-fertile {background-color: var(--ovu-soft);}
 #calViewPeriod .day.fx-ovu {background-color: var(--ovu); color: #FFFFFF; font-weight: 700;}
 #calViewPeriod .day.fx-ovu-ring::before,
@@ -3243,8 +3246,19 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
      min-height 对得上，正文行高以后怎么调都不会把卡片顶高 */
   line-height:20px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* 标签跟着左边大字的色系走：经期/点滴日粉红，排卵/易孕期淡蓝，没记录的日子保持灰。
+   一张卡里因此只会出现一个色系——红标签配蓝的「排卵日」会直接打架。
+   经期档用的就是「本月状态记录」里 .sym-tag 的那两个变量：同一个标签名在两处
+   长得一样，这次改动本质是把状态卡并回既有样式，不是新加一种胶囊。
+   饱和度压在大字之下：18px/700 的状态是主角，标签是次要信息，不该抢。
+   只换 background/color、不加 border：胶囊高度按 20+5+5=30 算死，要和 .dc-row
+   的 min-height 对齐，多一圈 1px 边框就会把卡片顶高 2px。 */
+#calViewPeriod .dc-chip.is-period{background:var(--brand-soft);color:var(--brand-dark);}
+#calViewPeriod .dc-chip.is-ovu{background:var(--ovu-soft);color:var(--ovu-on-soft);}
 /* +N / 收起：卡片里唯一可点的元素，只切换展开态，不改选中日。
-   字号/行高交给 .dc-chip，免得按钮比旁边的标签矮一点点 */
+   字号/行高交给 .dc-chip，免得按钮比旁边的标签矮一点点。
+   不带 is-period / is-ovu，因此始终是灰的：它是控件不是标签，
+   跟着染色反而会被当成又一个症状名。 */
 #calViewPeriod .dc-more{flex:0 0 auto;color:var(--faint);border:none;
   font-family:var(--zh);cursor:pointer;
   -webkit-tap-highlight-color:transparent;transition:transform .12s;}
@@ -3307,6 +3321,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 :root[data-mode="dark"] #calViewPeriod .stats-pred{background:linear-gradient(135deg,#33202A,var(--brand-soft));}
 :root[data-mode="dark"] #calViewPeriod .sym-row + .sym-row{border-top-color:var(--line);}
 :root[data-mode="dark"] #calViewPeriod .hm-dist{border-top-color:var(--line);}
+/* 状态卡的经期标签：夜间 --brand-dark(#C24259) 压在 --brand-soft(#301A20) 上只有
+   3.3:1，12px 字看不清；提一档到 --brand(#DE5F76) 拿到 4.6:1。
+   白天两者是 6.2:1，不用动。 */
+:root[data-mode="dark"] #calViewPeriod .dc-chip.is-period{color:var(--brand);}
 /* 热力图色阶：浅绿阶在深底上糊成一片，整体压深并把空格改成深灰 */
 :root[data-mode="dark"] #calViewPeriod .heatmap-page{
   --hm0:#26262A;--hm1:#25443A;--hm2:#356B57;--hm3:#3E8A6C;--hm4:#57AE8B;
@@ -7470,9 +7488,13 @@ window.PV = (function(){
       else if (fk === 'fertile')       { main = '易孕期';   cls = ' ovu'; }
       else                             { main = '这天没有记录'; cls = ' quiet'; }
 
-      // 右边：当天症状。排不下的由 clampDaySyms 在插入 DOM 后量着收
+      // 右边：当天症状。排不下的由 clampDaySyms 在插入 DOM 后量着收。
+      // 胶囊配色跟着左边大字走，所以直接由 cls 推：空 = 大字是品牌红
+      //（经期 / 点滴 / 预计经期三档），' ovu' = 蓝，' quiet' = 灰不加类。
+      // 用 cls 而不是重新判 st.kind，是为了让两者永远不可能对不上
+      const chipCls = cls === '' ? ' is-period' : cls === ' ovu' ? ' is-ovu' : '';
       const chips = getSym(a.y, a.m, a.d)
-        .map(n => `<span class="dc-chip">${escapeHtml(n)}</span>`).join('');
+        .map(n => `<span class="dc-chip${chipCls}">${escapeHtml(n)}</span>`).join('');
 
       const card = document.createElement('div');
       card.className = 'dc-card';
