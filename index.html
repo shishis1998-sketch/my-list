@@ -300,12 +300,15 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .novu-hint{padding:2px var(--sp-10) var(--sp-8);font-size:var(--fs-micro);
   color:var(--text-muted);line-height:1.5;}
 /* 设置 › 外观：主题色是色块网格。十个色再用列表行会把设置页拉得很长，
-   色块本身就是预览，44px 见方也正好是触控下限。 */
-/* auto-fit 的列数按最小值算：给 36px 下限、1fr 上限，窄侧栏能排 4 个、手机能排 7 个，
-   色块再按剩余宽度均分（外层容器宽度有限，不会撑成大方块）。 */
-.theme-sws{display:grid;grid-template-columns:repeat(auto-fit,minmax(36px,1fr));
+   色块本身就是预览。 */
+/* 固定 32px 见方 + flex 换行，不再用 auto-fit 的 1fr 均分。
+   原来是 repeat(auto-fit,minmax(36px,1fr))：auto-fit 会把空轨道折叠掉，
+   十个色块于是摊开占满整行——容器一宽就跟着涨，实测平板竖屏 70px、
+   横屏 106px，一排大方块。定死尺寸后各设备一致，宽容器只是一行排得下更多。
+   32px + 8px 间距 = 40px 触控节距，设置页里的色块够点。 */
+.theme-sws{display:flex;flex-wrap:wrap;
   gap:var(--sp-8);padding:var(--sp-4) var(--sp-10) var(--sp-12);}
-.theme-sw{width:100%;aspect-ratio:1;padding:0;border:none;cursor:pointer;border-radius:var(--r);
+.theme-sw{width:32px;height:32px;flex:0 0 auto;padding:0;border:none;cursor:pointer;border-radius:var(--r);
   background:var(--sw);color:#FFFFFF;display:flex;align-items:center;justify-content:center;
   -webkit-appearance:none;transition:transform .12s;}
 :root[data-mode="dark"] .theme-sw{color:#15161A;}   /* 夜间色块偏亮，勾改深色 */
@@ -654,15 +657,18 @@ tr:hover .acts{opacity:1;}
   }
   /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
   .sidebar .nsec{flex-shrink:0;}
-  /* 设置页里把「数据」「同步」提到最上面——这两组用得最多，
-     不该每次都滑过分类管理/外观/经期才够得着。
+  /* 设置页的分组次序：数据 → 同步 → 外观 → 分类管理 → 经期。
+     前三组用得最多，不该每次都滑过分类管理/经期才够得着。
      用 order 换序而不是改 DOM 顺序：桌面端侧栏顶部是分类导航（主导航），
      那边必须保持原样，动了 DOM 两边就得各打一次补丁。
-     .sb-mhdr 得给个更小的 order，否则负 order 的两组会翻到「设置」页头上面去。
+     order 只能是整数，所以往负数方向连号排（-4/-3/-2），中间要再插一组时
+     直接整体重编，别指望在两个相邻值之间塞。
+     .sb-mhdr 得给个更小的 order，否则负 order 的几组会翻到「设置」页头上面去。
      其余分组不写 order，默认 0，照书写顺序排在后面。 */
   .sidebar .sb-mhdr{order:-10;}
-  .sidebar .nsec-data{order:-2;}
-  .sidebar .nsec-sync{order:-1;}
+  .sidebar .nsec-data{order:-4;}
+  .sidebar .nsec-sync{order:-3;}
+  .sidebar .nsec-look{order:-2;}
   /* 关着时 display:none（在流里不能靠 visibility 藏，否则照样占位），
      所以进场用 animation 而不是 transition —— 复用全站统一的淡入渐起 */
   .sidebar.open{display:flex;animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
@@ -3486,7 +3492,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <!-- 手机端:分类管理列表(点=编辑,由 JS 渲染) -->
     <div class="ncard ncard-cats-mobile" id="mcatmgr"></div>
   </div>
-  <div class="nsec">
+  <div class="nsec nsec-look">
     <div class="nlbl">外观</div>
     <div class="ncard" id="themeRow" aria-label="外观"></div>
   </div>
