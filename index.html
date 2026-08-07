@@ -8555,6 +8555,26 @@ function scheduleSyncPush(){
   syncTimer=setTimeout(()=>syncPush(false),1500);
 }
 
+// ── 云端 payload 的两种形态 ──────────────────────────────────────
+//   v1 明文    {version:1, data, categories, notes, noteSubs, period, theme}
+//   v2 整体加密 {version:2, enc:'all', encAll:{salt,iv,ct}}  ← 解开才是上面那些字段
+// 设了主密码就写 v2，没设则继续写 v1；读的时候两种都认。
+// ⚠️ 解不开时必须抛错，绝不能返回一份「缺字段」的对象——调用方会把它当成
+//    「云端是空的」，转手用本机数据覆盖上去，那就是不可逆的数据损毁。
+async function openPayload(raw){
+  if(!raw||typeof raw!=='object')throw new Error('云端数据格式异常');
+  if(!raw.encAll)return raw;                       // 老格式：明文，原样返回
+  if(!cryptoOk())throw new Error('云端数据已整体加密，当前环境无法解密（请用 https 打开网页）');
+  const pw=getMasterPw();
+  if(!pw)throw new Error('云端数据已整体加密，请在「云同步」设置里填入主密码');
+  let innerData;
+  try{innerData=await decryptJSON(raw.encAll,pw);}
+  catch(e){throw new Error('主密码不对，无法解开云端数据');}
+  return {...raw,...innerData};
+}
+// 云端解不开 = 这台设备手上没有真相，一律不准写云端（见 syncPush 开头的闸门）
+let _cloudEncLocked=false;
+
 // 本会话是否已经成功从云端读过一次。推送是「整份覆盖」，一台拿着旧数据的设备
 // 只要推一次，云端就会被它的旧内容顶掉——这正是「另一台手机只看了看笔记」也能
 // 让几十条备忘从云端消失的原因：那台设备手上根本没有这些备忘。
@@ -8569,6 +8589,14 @@ async function syncPush(allowCreate){
   const token=getToken();if(!token)return false;
   // 只读模式是硬闸：不管从哪条路径调进来，这台设备一律不写云端
   if(isReadOnly()){console.warn('[Sync push blocked] 只读模式');return false;}
+  // 云端是加密的、而这台设备解不开 → 硬闸。它手上要么是空的、要么是本地旧数据，
+  // 推上去等于用「解不开就当没有」的结果覆盖真数据。
+  if(_cloudEncLocked){
+    lastSyncErr='云端已加密且本机解不开（主密码不对或没填），已停止上传以免覆盖';
+    isSyncing=false;updateSyncBadge();
+    console.warn('[Sync push blocked] 云端密文解不开');
+    return false;
+  }
   // 有 token 没 Gist ID，又不是用户明确在配置里新建 → 什么都不做
   if(!getGistId()&&!allowCreate){
     lastSyncErr='缺少 Gist ID，已跳过上传（不会自动新建云端备份）';
@@ -8607,14 +8635,18 @@ async function syncPush(allowCreate){
       rest.encData=await encryptJSON({fields:fields||{},customFields:customFields||[]},pw,pre);
       return rest;
     }));
-    const payload={
-      version:1,
-      updatedAt:new Date().toISOString(),
+    const inner={
       data, categories:cats,
       notes:notesToSync, noteSubs,
       period: periodData,
       theme: getTheme()
     };
+    // 有主密码 → 整份加密上云，Gist 里只剩一团密文（媒体、笔记、经期一并盖住）；
+    // 没有主密码 → 维持老的明文格式，功能不受影响。
+    // 复用备忘那一批的 pre（同一把密钥、每次调用各自随机 IV），不额外做 310000 轮 PBKDF2。
+    const payload=(pw&&cryptoOk())
+      ? {version:2,enc:'all',updatedAt:new Date().toISOString(),encAll:await encryptJSON(inner,pw,pre)}
+      : {version:1,updatedAt:new Date().toISOString(),...inner};
     const body={
       description:'My Media Tracker Data (auto-synced)',
       files:{[GIST_FILE]:{content:JSON.stringify(payload,null,2)}}
@@ -8815,7 +8847,8 @@ async function openRecover(){
         const rj=await r.json();
         const f=rj.files&&rj.files[GIST_FILE];
         if(f&&f.content){
-          const snap=JSON.parse(f.content);
+          // 历史版本同样可能是整份密文，走一样的解封（解不开就落到 catch 计入 failed）
+          const snap=await openPayload(JSON.parse(f.content));
           // 所有子分类一起扫：读书笔记、灵感、收集…丢失机制完全一样，没道理只保备忘
           const all=(Array.isArray(snap.notes)?snap.notes:[]).filter(n=>n&&n.id);
           const bySub={};
@@ -8950,7 +8983,20 @@ async function syncPull(silent){
     const j=await res.json();
     const f=j.files&&j.files[GIST_FILE];
     if(!f){isSyncing=false;updateSyncBadge();if(!silent)toast('云端无数据,首次保存后会自动创建');return false;}
-    const remote=JSON.parse(f.content);
+    // 先解封：v2 是整份密文，解不开就地终止——本机数据一个字都不动，
+    // 同时把 _cloudEncLocked 立起来挡住后续推送。这类错误再静默也要出声，
+    // 否则用户只会看到一个空页面，还以为数据丢了。
+    let remote;
+    try{
+      remote=await openPayload(JSON.parse(f.content));
+      _cloudEncLocked=false;
+    }catch(e){
+      _cloudEncLocked=true;
+      isSyncing=false;lastSyncErr=e.message||String(e);updateSyncBadge();
+      toast('🔒 '+lastSyncErr);
+      console.error('[Sync pull blocked]',e);
+      return false;
+    }
     if(!remote||!Array.isArray(remote.data)){throw new Error('云端数据格式异常');}
     // 覆盖前的安全网：若云端数据明显比本机少（可能扫错方向 / 云端被顶掉），先自动备份本机，可一键还原
     const rTotal=(Array.isArray(remote.data)?remote.data.length:0)+(Array.isArray(remote.notes)?remote.notes.length:0);
@@ -9069,7 +9115,12 @@ function openSyncCfg(){
   }else if(lastSyncErr){
     sb.innerHTML='<b style="color:var(--danger)">最近一次同步失败</b><br><span style="font-size:var(--fs-foot)">'+esc(lastSyncErr)+'</span>';
   }else{
-    sb.innerHTML='<b style="color:#14532D">✓ 同步已启用</b><br>Gist ID: <code style="font-size:var(--fs-foot)">'+esc(getGistId()||'(待创建)')+'</code>';
+    // 让人一眼看出云端到底是明文还是密文——这决定了 Gist 链接万一泄漏的后果
+    const encOn=!!(getMasterPw()&&cryptoOk());
+    const encLine=encOn
+      ? '<br><span style="color:#14532D">🔒 云端整份加密</span><span style="font-size:var(--fs-foot);color:var(--text-muted)">：媒体、笔记、经期在 Gist 里都是密文</span>'
+      : '<br><span style="color:var(--danger)">⚠️ 云端明文存储</span><span style="font-size:var(--fs-foot);color:var(--text-muted)">：填一个主密码即可整份加密</span>';
+    sb.innerHTML='<b style="color:#14532D">✓ 同步已启用</b><br>Gist ID: <code style="font-size:var(--fs-foot)">'+esc(getGistId()||'(待创建)')+'</code>'+encLine;
   }
   // 有覆盖前备份时,显示「一键还原」入口
   const rr=document.getElementById('sync-restore-row');
@@ -9102,8 +9153,10 @@ async function saveSyncCfg(){
   //    这么重的动作绝不能静默执行，必须让人明确确认。
   if(!p&&hadPw){
     const n=notes.filter(x=>x.subCat==='备忘'&&!x.localOnly).length;
-    if(!confirm('主密码框是空的。\n\n继续保存会清除主密码，并把 '+n+' 条上云备忘从云端全部撤下（改为仅本机）。'
-      +'\n其它设备下次同步时，会照着这份「没有备忘」的数据把本机备忘删掉。\n\n'
+    if(!confirm('主密码框是空的。\n\n继续保存会清除主密码，后果有两个：\n\n'
+      +'1. '+n+' 条上云备忘会从云端全部撤下（改为仅本机）。'
+      +'其它设备下次同步时，会照着这份「没有备忘」的数据把本机备忘删掉。\n\n'
+      +'2. 云端将退回明文存储——媒体、笔记、经期数据会以明文写进 Gist，不再整份加密。\n\n'
       +'如果你只是想改 token 或 Gist ID，请点「取消」，把主密码重新填回去再保存。\n\n确定要清除主密码吗？')){
       return;
     }
