@@ -607,6 +607,7 @@ tr:hover .acts{opacity:1;}
    整条被压在抽屉底下，根本看不见。 */
 .toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:1600;display:flex;align-items:center;gap:var(--sp-6);}
 .toast.show{transform:translateY(0);opacity:1;}
+.toast>svg{flex-shrink:0;}   /* 长句换行时对勾不被挤扁 */
 
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -879,8 +880,18 @@ tr:hover .acts{opacity:1;}
   /* toast */
   /* 提示条抬到底栏之上，别压住导航标签。--toast-lift 由 toast() 每次弹之前
      现量一次底栏（见那边的注释），量不到就退回 14px。电脑端没有底栏，仍旧是
-     右下角那条规则，不吃这里。 */
-  .toast{left:14px;right:14px;bottom:var(--toast-lift,14px);justify-content:center;}
+     右下角那条规则，不吃这里。
+     宽度按文字收：原来 left/right 各 14px 拉通整行，「已保存」三个字也顶着
+     一条大横幅、压住两张卡。left/right:0 + margin:auto + fit-content 让它
+     自己居中并收到内容宽——不动 transform，收起动效仍旧是 .show 那条 translateY，
+     换成 translateX(-50%) 居中就得把两处 transform 都改写，容易打架。
+     长句仍能换行：max-width 封在屏宽减两侧 14px。 */
+  .toast{
+    left:0;right:0;margin:0 auto;
+    width:fit-content;max-width:calc(100% - 28px);
+    bottom:var(--toast-lift,14px);
+    justify-content:center;text-align:center;
+  }
 
   /* 日历手机端 - 占满 .main 剩余高度（.main 有 min-height:100vh，flex 子项自然撑满）*/
   .cal-modal{max-height:none;border-radius:0;}
