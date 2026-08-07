@@ -461,10 +461,15 @@ tr:hover .acts{opacity:1;}
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
 /* 日历导入配色弹窗：桌面端窄一点（手机端下面的媒体查询会改成贴底抽屉）*/
 #icsColorModal .mbox{max-width:400px;}
-/* 这三个窄弹窗原来把宽度写在标签的 style="" 上，行内样式压过一切，
-   断点想按屏幕调宽度就调不动了（平板上只能保持一条手机宽的窄条）。挪到这里。 */
+/* 各弹窗的桌面宽度。原来都写在标签的 style="" 上，行内样式压过一切，
+   断点想按屏幕调宽度就调不动了（平板上只能一直钉着这条手机宽的窄条）。挪到这里。 */
 #catmodal .mbox,#nsubModal .mbox{max-width:400px;}
+#recoverModal .mbox,#tagMgrModal .mbox{max-width:420px;}
 #syncModal .mbox{max-width:480px;}
+#calNotePreviewModal .mbox{max-width:500px;}
+/* 二维码 / 扫码取景框：内容就那么大，任何屏幕上都刻意保持小 */
+#qrModal .mbox{max-width:340px;}
+#scanModal .mbox{max-width:360px;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
@@ -3250,6 +3255,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   .mftr{padding:var(--sp-14) var(--sp-24) var(--sp-20);}
   /* 屏幕够宽了，弹窗里的双栏表单行不必再压成单栏 */
   .frow2{grid-template-columns:1fr 1fr;gap:var(--sp-12);}
+  /* 上面那些各自钉着一个桌面宽度的弹窗，平板上一并跟着屏幕放开。
+     只有 #qrModal（二维码）和 #scanModal（取景框）不在列——内容就那么大，
+     放宽了只是两边空着。 */
+  #catmodal .mbox,#nsubModal .mbox,#recoverModal .mbox,#tagMgrModal .mbox,
+  #syncModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox{
+    max-width:var(--pop-w);
+  }
 
   /* 2) 底部抽屉（编辑笔记 / 日历事件预览 / 日历配色）：仍旧贴底升起，
         只把宽度放开并居中，上圆角照旧 */
@@ -3920,7 +3932,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== MEMO RECOVERY MODAL ===== -->
 <div class="moverlay" id="recoverModal" onclick="if(event.target===this)closeRecover()">
-  <div class="mbox" onclick="event.stopPropagation()" style="max-width:420px">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">从云端历史版本找回笔记</div>
       <button class="mclose" onclick="closeRecover()">✕</button>
@@ -3935,7 +3947,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== SYNC QR SHOW MODAL ===== -->
 <div class="moverlay" id="qrModal" onclick="if(event.target===this)closeSyncQR()">
-  <div class="mbox" onclick="event.stopPropagation()" style="max-width:340px">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">配置二维码</div>
       <button class="mclose" onclick="closeSyncQR()">✕</button>
@@ -3951,7 +3963,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== SYNC SCAN MODAL ===== -->
 <div class="moverlay" id="scanModal" onclick="if(event.target===this)closeSyncScan()">
-  <div class="mbox" onclick="event.stopPropagation()" style="max-width:360px">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">扫码导入配置</div>
       <button class="mclose" onclick="closeSyncScan()">✕</button>
@@ -4123,7 +4135,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== TAG MANAGER MODAL ===== -->
 <div class="moverlay" id="tagMgrModal" onclick="if(event.target===this)closeTagMgr()">
-  <div class="mbox" style="max-width:420px" onclick="event.stopPropagation()">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle" id="tagMgrTitle">管理标签</div>
       <button class="mclose" onclick="closeTagMgr()">✕</button>
@@ -4142,7 +4154,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== CAL NOTE PREVIEW MODAL ===== -->
 <div class="moverlay" id="calNotePreviewModal" onclick="if(event.target===this)closeCalNotePreview()" style="z-index:115">
-  <div class="mbox" onclick="event.stopPropagation()" style="max-width:500px">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle" id="cnp-title"></div>
       <button class="mclose" onclick="closeCalNotePreview()">×</button>
