@@ -582,8 +582,15 @@ tr:hover .acts{opacity:1;}
 }
 .sb-overlay.open{display:block;}
 
-/* ===== 手机端 + 平板竖屏: ≤ 1024px ===== */
-@media (max-width: 1024px){
+/* ===== 手机版式（底栏 + 抽屉侧栏）：窄屏，或任何触摸设备 =====
+   判定条件是「≤1024px 或 粗指针」，两支是或的关系：
+   - ≤1024px  —— 手机、平板竖屏
+   - pointer:coarse —— 平板横屏。它宽度超过 1024，但手指点不了常驻侧栏那种密度，
+     所以照样走底栏。常驻侧栏只留给电脑（pointer:fine）。
+   触摸屏笔记本不会误伤：pointer 指的是「主输入设备」，有触控板/鼠标就报 fine。
+   下面另外五处 (max-width…), (pointer: coarse) 与这里是同一条判定，
+   JS 侧的 isMobileLayout() 也必须跟着一字不差，改一处就得改全部。 */
+@media (max-width: 1024px), (pointer: coarse){
   :root{--fs-body:15px;}  /* 手机端正文基准升半档;--fs-headline 16px 防缩放不动 */
   body{font-size:var(--fs-body);-webkit-text-size-adjust:100%;}
 
@@ -1195,7 +1202,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 
 
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
-@media (max-width:1024px){
+@media (max-width:1024px), (pointer: coarse){
   /* 日历页：底栏去圆角去阴影、只留 1px 细线（高于日历页 110，始终可点）*/
   body.cal-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
   body.cal-open .bb-actions{display:none;}         /* 日历页不需要搜索/排序/添加行 */
@@ -1542,7 +1549,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tle-btn:active{transform:scale(.96);}
 .tle-save{background:var(--accent);color:var(--on-accent);}
 .tle-cancel{background:var(--accent-light);color:var(--accent);}
-@media(max-width:1024px){
+@media(max-width:1024px), (pointer: coarse){
   #tlEditModal .mhdr{padding:var(--sp-14) var(--sp-16) var(--sp-12);}
   #tlEditModal .tle-body{padding:var(--sp-6) var(--sp-16) 0;}
   .tle-ftr{padding:var(--sp-14) var(--sp-16);padding-bottom:calc(14px + env(safe-area-inset-bottom));}
@@ -1581,7 +1588,7 @@ body.cal-searching .cal-searchresults{display:flex;}
   padding:var(--sp-8) var(--sp-24) var(--sp-24) var(--sp-24);
   -webkit-overflow-scrolling:touch;
 }
-@media(max-width:1024px){
+@media(max-width:1024px), (pointer: coarse){
   #tlModal .mhdr{padding:var(--sp-14) var(--sp-16) var(--sp-12);}
   #tlModal #tl-body{padding:var(--sp-8) var(--sp-16) var(--sp-20) var(--sp-16);}
 }
@@ -1698,7 +1705,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .cmi-note .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
 
 /* 手机端笔记适配 */
-@media (max-width: 1024px){
+@media (max-width: 1024px), (pointer: coarse){
   .nfrow{
     padding:var(--sp-8) var(--sp-14);flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -1884,7 +1891,7 @@ mark.shl{
 .snum{color:var(--text-primary);}
 
 /* —— 表格容器：圆角 + 描边（电脑端双栏）—— */
-@media(min-width:1025px){
+@media(min-width:1025px) and (pointer:fine){
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
 }
 thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);font-family:var(--zh);}
@@ -1895,7 +1902,7 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 
 
 /* —— 弹窗：圆角 + 描边（无投影；桌面端；手机端全屏不加）—— */
-@media(min-width:1025px){
+@media(min-width:1025px) and (pointer:fine){
   .mbox{
     border:var(--bd) solid var(--ink);border-radius:var(--rxl);
     background:var(--surface);box-shadow:none;
@@ -2733,7 +2740,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   .pv-sheet-scrim{transition:opacity .2s ease;}
 }
 /* 手机端底部 tab 栏(.bottombar z-index:115)会盖住弹窗底部按钮，弹窗打开时先隐藏它 */
-@media (max-width:1024px){ body.pv-sheet-open .bottombar{display:none;} }
+@media (max-width:1024px), (pointer: coarse){ body.pv-sheet-open .bottombar{display:none;} }
 #calViewPeriod .bottom-nav {position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
       display: flex; align-items: center; gap: 6px;
       
@@ -3227,13 +3234,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 }
 
 /* ═══ 平板：弹窗按屏幕自适应，不再照搬手机尺寸 ═══════════════════════
-   平板竖屏宽度落在 ≤1024px 里，整套手机版式照单全收：通用弹窗整屏铺满、
-   底部抽屉卡死在 540px（就是手机的宽度），屏幕再大也一样。这一段只管弹窗，
-   页面骨架（底栏、侧栏、列表）仍旧沿用手机版式。
+   平板走的是手机版式，弹窗尺寸也照单全收：通用弹窗整屏铺满、底部抽屉卡死在
+   540px（就是手机的宽度），屏幕再大也一样。这一段只管弹窗，页面骨架（底栏、
+   抽屉侧栏、卡片列表）仍旧沿用手机版式。
    写在样式表最末尾：靠书写顺序压过前面同优先级的手机规则，不用 !important。
+   两支条件分别对应平板的竖屏（≤1024px）和横屏（宽度超了，靠粗指针认出来）。
    min-height:600px 是为了把「大屏手机横过来」挡在外面——那种屏幕高度不够，
    居中对话框反而更挤。 */
-@media (min-width:700px) and (max-width:1024px) and (min-height:600px){
+@media (min-width:700px) and (min-height:600px) and (max-width:1024px),
+       (min-width:700px) and (min-height:600px) and (pointer:coarse){
   /* 一条宽度贯穿所有弹窗：对话框、底部抽屉、章节抽屉都用它，看起来是一套 */
   :root{--pop-w:min(86vw,660px);}
 
@@ -3249,6 +3258,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     width:100%;max-width:var(--pop-w);
     height:auto;max-height:min(88vh,100%);
     border-radius:var(--rxl);
+    /* 全站弹窗的样子是「圆角 + 墨绿描边、无投影」，原先只给电脑端——因为手机上
+       弹窗是整屏铺满的，描边会沿着屏幕四边画一圈。平板这里已经是居中对话框，
+       该有的描边补回来（--shadowlg 是 none，没有描边就只剩一块浮着的白）。 */
+    border:var(--bd) solid var(--ink);
   }
   .mhdr{padding:var(--sp-20) var(--sp-24) var(--sp-14);}
   .mbody{padding:var(--sp-20) var(--sp-24);}
@@ -3268,6 +3281,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   #noteModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox{
     max-width:var(--pop-w);
     border-radius:var(--rxl) var(--rxl) 0 0;
+    /* 抽屉压着屏幕下沿，描边只会在底边留一道，索性不加（同 .tlsheet） */
+    border:none;
   }
   #noteModal .mbox{max-height:min(76vh,100%);min-height:50vh;}
   /* 底栏「排序/筛选」抽屉同理 */
@@ -8333,6 +8348,12 @@ const MODE_KEY='my_list_mode_v1';
 const MODES=[{id:'light',name:'白天'},{id:'dark',name:'夜间'}];
 let curMode='light';
 function prefersDark(){return !!(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches);}
+
+// 当前是不是手机版式（底栏 + 抽屉侧栏）。这串条件必须和样式表里那六处
+// 「(max-width: 1024px), (pointer: coarse)」一字不差，否则 CSS 已经切到底栏、
+// JS 还以为是电脑（点完分类不关抽屉、滚动不归零、键盘避让不生效）。
+const MOBILE_LAYOUT_MQ='(max-width: 1024px), (pointer: coarse)';
+function isMobileLayout(){return !!(window.matchMedia&&window.matchMedia(MOBILE_LAYOUT_MQ).matches);}
 function getMode(){
   let m=null;try{m=localStorage.getItem(MODE_KEY);}catch(e){}
   if(m==='light'||m==='dark')return m;
@@ -9675,7 +9696,7 @@ function filterCat(cat){
   render();
   playCatStagger();
   // 手机端点完分类自动关闭抽屉
-  if(window.matchMedia('(max-width: 1024px)').matches) toggleSidebar(false);
+  if(isMobileLayout()) toggleSidebar(false);
 }
 
 // 切换分类时给可见列表的卡片/行做「上滑错落」入场
@@ -9791,7 +9812,7 @@ function scrollResultsTop(){
   // 否则搜索后结果保留旧滚动位置，第一条和「全部笔记 N 条」标题被顶到屏幕外
   const c=document.querySelector('.content');
   if(c) c.scrollTop=0;
-  if(window.matchMedia('(max-width: 1024px)').matches){
+  if(isMobileLayout()){
     // 用 rAF 等本次 render 后的新高度落定，再把整页拉回顶部
     requestAnimationFrame(()=>window.scrollTo(0,0));
   }
@@ -10605,7 +10626,7 @@ function openCalendar(){
   setCalTabActive(true);           // 高亮底部「日历」tab
   window.scrollTo(0,0);            // 回到顶部，保证下拉刷新可从顶部触发
   // 手机端打开日历时关闭侧边栏抽屉
-  if(window.matchMedia('(max-width: 1024px)').matches) toggleSidebar(false);
+  if(isMobileLayout()) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
   if(window.PV&&PV.resetPos)PV.resetPos();   // 重新打开日历页：经期视图也回到当前年月（与上面日历重置到今天一致）
   let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
@@ -12591,7 +12612,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   function update(){
     scheduled=false;
     // 仅手机端生效
-    if(!window.matchMedia('(max-width: 1024px)').matches){
+    if(!isMobileLayout()){
       root.style.setProperty('--kb','0px');
       document.body.classList.remove('kb-open');
       document.body.classList.remove('vv-track');
@@ -12660,7 +12681,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   const THRESH = 6;
   function apply(){
     ticking = false;
-    if(!window.matchMedia('(max-width: 1024px)').matches){
+    if(!isMobileLayout()){
       document.body.classList.remove('tabs-hidden'); return;
     }
     if(document.body.classList.contains('modal-open') ||
