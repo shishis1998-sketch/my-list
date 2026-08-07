@@ -2783,7 +2783,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:var(--surface);color:var(--text-primary);
   border-radius:20px 20px 0 0;
   box-shadow:0 -12px 34px -14px rgba(60,20,35,.30);
-  transform:translateY(102%);transition:transform .34s cubic-bezier(.22,.9,.32,1);
+  /* 收起位移必须是固定像素、且大于阴影往上够到的距离（12+34-14=32px）。
+     用百分比不行：102% 是「自身高度的 102%」，抽屉只往下挪自身高度的 2%，
+     这条红调阴影会整条留在屏幕底部、压在底栏上。与 .tlsheet / .mfsheet 同因。 */
+  transform:translateY(calc(100% + 44px));transition:transform .34s cubic-bezier(.22,.9,.32,1);
   padding:8px 16px calc(16px + env(safe-area-inset-bottom));
   max-height:86vh;display:flex;flex-direction:column;
   font-family:var(--zh);}
@@ -3128,7 +3131,21 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 年视图也套同一张卡（与日历/月度统一）；顶部多留 4px 让迷你月不贴边 */
 #calViewPeriod .pv-cardwrap{background:var(--surface);border:1px solid var(--border);
   border-top:none;border-radius:0 0 16px 16px;margin:0 14px 12px;padding:2px 10px 10px;}
-#calViewPeriod.pv-year .pv-cardwrap{padding:2px 10px 12px;}
+/* ── 年视图：12 个月拆成 12 张小卡（原本全挤在一张 pv-cardwrap 大白卡里，
+      靠 border-top 画通长横线分隔，糊成一整片）──
+   标题栏与外层卡壳都退成透明，让每个月自己成卡，参照标签页的卡片语言。
+   选择器带 .pv-year 且比上面那些年视图规则更靠后，才压得住 3109 行那条
+   nth-child 分割线（两者特异性相同，靠源码顺序决胜）。 */
+#calViewPeriod.pv-year .home-header{background:transparent;border:none;border-radius:0;
+  margin:6px 14px 2px;padding:8px 10px;}
+#calViewPeriod.pv-year .pv-cardwrap{background:transparent;border:none;border-radius:0;
+  margin:0 14px 12px;padding:0;}
+#calViewPeriod.pv-year .calendar-container.year-view{margin:0;column-gap:8px;row-gap:8px;}
+#calViewPeriod.pv-year .calendar-container.year-view .month{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:10px 8px 12px;border-top:1px solid var(--border);}
+/* 首行原本要贴着标题栏、所以上内边距被收成 4px；现在每月自成一卡，四张卡内边距要一致 */
+#calViewPeriod.pv-year .calendar-container.year-view .month:nth-child(-n+2){padding-top:10px;}
 /* 翻页导航整体：与普通日历 .cal-titlenav 一致——左移半列减半个箭头按钮，
    ‹ 的图标中心落在第一列（周一）日期的中心线上。
    margin-left 必须显式写，上面 1998 行那条同优先级的规则给了 -6px。 */
