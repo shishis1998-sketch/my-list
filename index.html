@@ -2783,7 +2783,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:var(--surface);color:var(--text-primary);
   border-radius:20px 20px 0 0;
   box-shadow:0 -12px 34px -14px rgba(60,20,35,.30);
-  transform:translateY(102%);transition:transform .34s cubic-bezier(.22,.9,.32,1);
+  /* 收起位移必须是固定像素、且大于阴影往上够到的距离（12+34-14=32px）。
+     用百分比不行：102% 是「自身高度的 102%」，抽屉只往下挪自身高度的 2%，
+     这条红调阴影会整条留在屏幕底部、压在底栏上。与 .tlsheet / .mfsheet 同因。 */
+  transform:translateY(calc(100% + 44px));transition:transform .34s cubic-bezier(.22,.9,.32,1);
   padding:8px 16px calc(16px + env(safe-area-inset-bottom));
   max-height:86vh;display:flex;flex-direction:column;
   font-family:var(--zh);}
