@@ -2152,7 +2152,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-card-hd{display:flex;align-items:baseline;gap:var(--sp-8);margin-bottom:var(--sp-6);}
 #calViewHeat .hm-card-name{font-size:var(--fs-sub);font-weight:700;color:var(--text-primary);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);flex:0 0 auto;}
+/* 天数推到行尾，与标签名分列两端 */
+#calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);flex:0 0 auto;margin-left:auto;}
 #calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
 /* 色带：当月天数列等分整宽。列数用 --dim 传进来，28~31 天都能自适应 */
 #calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);gap:2px;}
@@ -3146,6 +3147,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   padding:10px 8px 12px;border-top:1px solid var(--border);}
 /* 首行原本要贴着标题栏、所以上内边距被收成 4px；现在每月自成一卡，四张卡内边距要一致 */
 #calViewPeriod.pv-year .calendar-container.year-view .month:nth-child(-n+2){padding-top:10px;}
+/* 月份名靠左（只改年视图；月视图那个 .month-title 是另一处，不动）。
+   左边多给 2px，让「1 月」的左沿与第一列日期圆点的左沿对齐，
+   而不是贴死在卡片内容框边上 */
+#calViewPeriod.pv-year .calendar-container.year-view .month-title{text-align:left;padding-left:2px;}
 /* 翻页导航整体：与普通日历 .cal-titlenav 一致——左移半列减半个箭头按钮，
    ‹ 的图标中心落在第一列（周一）日期的中心线上。
    margin-left 必须显式写，上面 1998 行那条同优先级的规则给了 -6px。 */
