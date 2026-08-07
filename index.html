@@ -3246,6 +3246,24 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   /* 一条宽度贯穿所有弹窗：对话框、底部抽屉、章节抽屉都用它，看起来是一套 */
   :root{--pop-w:min(86vw,660px);}
 
+  /* 0) 字号整梯上抬一档。平板拿在手里比手机远、屏幕又大，同一个 px 看着就偏小。
+        八级阶梯整条一起抬，级与级的比例不变，版式关系跟着原样放大；
+        单独调某一级会把阶梯踩乱。手机、电脑都不吃这一段，字号一点没动。
+        --fs-headline 抬到 17 仍旧 ≥16px，iOS 聚焦输入框不会自动放大页面。 */
+  :root{
+    --fs-heading:24px;   /* 手机 22 */
+    --fs-title:20px;     /* 手机 18 */
+    --fs-headline:17px;  /* 手机 16 */
+    --fs-sub:15px;       /* 手机 14 */
+    --fs-body:16px;      /* 手机 15 */
+    --fs-caption:14px;   /* 手机 13 */
+    --fs-foot:12px;      /* 手机 11 */
+  }
+  /* 徽章/标签/小按钮是「固定高度 + line-height:1」的胶囊，字大了要跟着长高一点，
+     否则字塞满整颗胶囊、上下没了呼吸 */
+  .cbadge,.ctag{height:26px;}
+  .tl-btn{height:24px;}
+
   /* 1) 通用弹窗：从「整屏铺满」回到居中对话框，宽度跟着屏幕走 */
   .moverlay{
     padding:var(--sp-24);
