@@ -461,6 +461,10 @@ tr:hover .acts{opacity:1;}
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
 /* 日历导入配色弹窗：桌面端窄一点（手机端下面的媒体查询会改成贴底抽屉）*/
 #icsColorModal .mbox{max-width:400px;}
+/* 这三个窄弹窗原来把宽度写在标签的 style="" 上，行内样式压过一切，
+   断点想按屏幕调宽度就调不动了（平板上只能保持一条手机宽的窄条）。挪到这里。 */
+#catmodal .mbox,#nsubModal .mbox{max-width:400px;}
+#syncModal .mbox{max-width:480px;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-24) var(--sp-24) var(--sp-14);border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
@@ -3216,6 +3220,69 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   --hm0:#26262A;--hm1:#25443A;--hm2:#356B57;--hm3:#3E8A6C;--hm4:#57AE8B;
   --hm-accent:#6FB394;--hm-canvas:#161618;
 }
+
+/* ═══ 平板：弹窗按屏幕自适应，不再照搬手机尺寸 ═══════════════════════
+   平板竖屏宽度落在 ≤1024px 里，整套手机版式照单全收：通用弹窗整屏铺满、
+   底部抽屉卡死在 540px（就是手机的宽度），屏幕再大也一样。这一段只管弹窗，
+   页面骨架（底栏、侧栏、列表）仍旧沿用手机版式。
+   写在样式表最末尾：靠书写顺序压过前面同优先级的手机规则，不用 !important。
+   min-height:600px 是为了把「大屏手机横过来」挡在外面——那种屏幕高度不够，
+   居中对话框反而更挤。 */
+@media (min-width:700px) and (max-width:1024px) and (min-height:600px){
+  /* 一条宽度贯穿所有弹窗：对话框、底部抽屉、章节抽屉都用它，看起来是一套 */
+  :root{--pop-w:min(86vw,660px);}
+
+  /* 1) 通用弹窗：从「整屏铺满」回到居中对话框，宽度跟着屏幕走 */
+  .moverlay{
+    padding:var(--sp-24);
+    /* 底部仍给底栏留 64px（同手机端），导航条依旧露在弹窗外面可见可点 */
+    padding-bottom:calc(24px + 64px + env(safe-area-inset-bottom));
+    align-items:center;justify-content:center;
+  }
+  .moverlay.open .mbox{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
+  .mbox{
+    width:100%;max-width:var(--pop-w);
+    height:auto;max-height:min(88vh,100%);
+    border-radius:var(--rxl);
+  }
+  .mhdr{padding:var(--sp-20) var(--sp-24) var(--sp-14);}
+  .mbody{padding:var(--sp-20) var(--sp-24);}
+  .mftr{padding:var(--sp-14) var(--sp-24) var(--sp-20);}
+  /* 屏幕够宽了，弹窗里的双栏表单行不必再压成单栏 */
+  .frow2{grid-template-columns:1fr 1fr;gap:var(--sp-12);}
+
+  /* 2) 底部抽屉（编辑笔记 / 日历事件预览 / 日历配色）：仍旧贴底升起，
+        只把宽度放开并居中，上圆角照旧 */
+  #noteModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox{
+    max-width:var(--pop-w);
+    border-radius:var(--rxl) var(--rxl) 0 0;
+  }
+  #noteModal .mbox{max-height:min(76vh,100%);min-height:50vh;}
+  /* 底栏「排序/筛选」抽屉同理 */
+  .bb-sortpanel{max-width:var(--pop-w);margin:0 auto;border-radius:var(--rxl) var(--rxl) 0 0;}
+  /* 从底部升起的独立抽屉：540px 就是手机的宽度，这里一并跟着屏幕放大
+     （章节抽屉、经期记录抽屉、备忘单字段抽屉）*/
+  .tlsheet,.pv-sheet,.mfsheet{max-width:var(--pop-w);}
+
+  /* 3) 读书时间线（章节列表）：屏幕宽了就多排一列章节 */
+  #tlModal.moverlay{padding-bottom:calc(24px + 64px + env(safe-area-inset-bottom));}
+  #tlModal .mbox{max-height:min(90vh,100%);}
+  #tlModal .mhdr{padding:var(--sp-20) var(--sp-24) var(--sp-14);}
+  #tlModal #tl-body{padding:var(--sp-8) var(--sp-24) var(--sp-24);}
+  .tl{grid-template-columns:repeat(3,minmax(0,1fr));}
+
+  /* 4) 云同步：手机上它是「一整页自然滚动」（内容太长）；平板高度够了，
+        收回成一个居中对话框，框内自己滚，底下不再拖一大截空白 */
+  #syncModal{
+    align-items:center;padding:var(--sp-24);
+    padding-bottom:calc(24px + 64px + env(safe-area-inset-bottom));
+  }
+  #syncModal .mbox{
+    max-width:var(--pop-w);height:auto;max-height:min(88vh,100%);
+    border-radius:var(--rxl);box-shadow:var(--shadowlg);
+  }
+  #syncModal .mftr{padding-bottom:var(--sp-20);}
+}
 </style>
 <script>
 // 主题色：尽早写上 data-theme，避免加载时先闪一下墨绿
@@ -3707,7 +3774,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== CAT MANAGER ===== -->
 <div class="moverlay" id="catmodal">
-  <div class="mbox" style="max-width:400px;position:relative" onclick="event.stopPropagation()">
+  <div class="mbox" style="position:relative" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">管理分类</div>
       <button class="mclose" onclick="closeCatMgr()">✕</button>
@@ -3764,7 +3831,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== SYNC CONFIG MODAL ===== -->
 <div class="moverlay" id="syncModal">
-  <div class="mbox" onclick="event.stopPropagation()" style="max-width:480px">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">☁ 云同步设置</div>
       <button class="mclose" onclick="closeSyncCfg()">✕</button>
@@ -4023,7 +4090,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 </div>
 
 <!-- ===== 章节底部弹窗（点章节打开，直接可编辑，关闭即保存） ===== -->
-<div class="tlsheet-mask" id="tlSheetMask" onclick="closeChapterSheet()"></div>
+<div class="tlsheet-mask" id="tlSheetMask" onclick="onTlSheetMaskTap(event)"></div>
 <div class="tlsheet" id="tlSheet" role="dialog" aria-modal="true">
   <div class="tlsheet-head" id="tlSheetHead">
     <div class="tlsheet-grip"></div>
@@ -4034,7 +4101,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
 <!-- ===== NOTE SUBCATS MANAGER ===== -->
 <div class="moverlay" id="nsubModal">
-  <div class="mbox" style="max-width:400px" onclick="event.stopPropagation()">
+  <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle">管理笔记子分类</div>
       <button class="mclose" onclick="closeNoteSubMgr()">✕</button>
@@ -11593,26 +11660,47 @@ function commitTlSeg(ta){
   renderChapterSheet();
 }
 
-function closeChapterSheet(){
+// 把本章的改动落盘（关闭、换章前都要先走一遍），不动抽屉的显示状态
+function commitChapterSheet(){
   // 先提交正在编辑的段
   const ta=document.querySelector('#tlSheetBody .tlseg-edit');
   if(ta){ const i=+ta.dataset.edit; if(tlSheetSegs[i]!=null) tlSheetSegs[i].text=ta.value.trim(); ta.blur(); }
-  if(tlSheetIdx!=null){
-    const newRaw=buildChapterRaw(tlSheetSegs);   // 保留段间空行地拼回本章
-    if(newRaw!==tlSheetOrigRaw){
-      const n=(notes||[]).find(x=>x.id===tlCurId);
-      if(n){
-        n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
-        n.updatedAt=Date.now();
-        persistNotes();
-        renderTimelineBody(tlCurId);
-        toast('已保存');
-      }
-    }
-  }
+  if(tlSheetIdx==null) return;
+  const newRaw=buildChapterRaw(tlSheetSegs);   // 保留段间空行地拼回本章
+  if(newRaw===tlSheetOrigRaw) return;
+  const n=(notes||[]).find(x=>x.id===tlCurId);
+  if(!n) return;
+  n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
+  n.updatedAt=Date.now();
+  persistNotes();
+  renderTimelineBody(tlCurId);
+  toast('已保存');
+}
+
+function closeChapterSheet(){
+  commitChapterSheet();
   document.getElementById('tlSheetMask').classList.remove('show');
   document.getElementById('tlSheet').classList.remove('show');
   tlSheetIdx=null; tlSheetEdit=-1;
+}
+
+// 点遮罩：遮罩是铺满全屏的，章节列表整片压在它下面。抽屉只占屏幕下半截，
+// 平板上列表大半还露在外面，顺手点下一章的那一下会被遮罩吃掉（只是关掉抽屉），
+// 于是「要点两次才出弹窗」。这里认出遮罩底下的那张章节卡，一次点按直接换章；
+// 点在别处仍然是关闭。
+function onTlSheetMaskTap(e){
+  let idx=null;
+  const mask=document.getElementById('tlSheetMask');
+  if(e&&mask&&typeof e.clientX==='number'){
+    mask.style.pointerEvents='none';                        // 让 elementFromPoint 穿过遮罩
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    mask.style.pointerEvents='';
+    const item=under&&under.closest?under.closest('#tl-body .tl-item'):null;
+    if(item&&item.dataset.idx!=null) idx=+item.dataset.idx;
+  }
+  if(idx==null||idx===tlSheetIdx){ closeChapterSheet(); return; }
+  commitChapterSheet();     // 存下当前章，但抽屉不收起
+  openChapterSheet(idx);    // 就地换成新的一章（已经是 show 态，内容直接替换，不再来回滑）
 }
 // 下拉弹窗头关闭（松手超过阈值即关，含自动保存）
 function initTlSheetDrag(){
