@@ -2733,8 +2733,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:var(--surface-2);border-radius:50%;color:var(--text-muted);
   font-size:14px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .pv-sheet-close:active{transform:scale(.9);}
-.pv-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;-ms-overflow-style:none;}
+/* overscroll-behavior:contain —— 列表滑到头之后不把滚动接力给背后的日历页
+   （与 .tlsheet-body 同一处理） */
+.pv-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .pv-sheet-body::-webkit-scrollbar{display:none;}
 /* ── 抽屉内容 = 分组列表：一行一件事，左名称右状态 ──
    间距写死在 4px 网格上（design.md 的 12 级阶梯），这里不能用 --sp-*：
@@ -12836,7 +12838,9 @@ checkIncomingSyncLink();
   }
 
   // 注册所有现有弹窗（日历是不透明整页、非浮层，不锁背景，以保留原生下拉刷新）
-  document.querySelectorAll('.moverlay, .bb-sortsheet').forEach(watchOverlay);
+  // 经期记录抽屉的遮罩也在内：它是浮在日历页之上的浮层，不锁的话抽屉开着
+  // 也能把背后的日历滑走。
+  document.querySelectorAll('.moverlay, .bb-sortsheet, .pv-sheet-scrim').forEach(watchOverlay);
 
   // 触摸穿透兜底:只有触摸点在弹窗"内容盒子"(.mbox/.cal-modal)内才放行
   // 触摸点在暗色遮罩上 → 拦截,避免穿透到背景
@@ -12844,8 +12848,14 @@ checkIncomingSyncLink();
     if(!document.body.classList.contains('modal-open')) return;
     let node = e.target;
     while(node && node !== document.body){
-      if(node.classList && (node.classList.contains('mbox') || node.classList.contains('cal-modal') || node.classList.contains('bb-sortpanel') || node.classList.contains('tlsheet'))){
-        return; // 触摸点在内容盒子内,放行内部滚动
+      if(node.classList){
+        // 经期抽屉要先判：它和它的遮罩都嵌在 .cal-modal 里，交给下面那条
+        // 通用规则的话，遮罩会被当成「内容盒子」一并放行。
+        if(node.classList.contains('pv-sheet-scrim')) break;   // 遮罩上滑 → 拦截
+        if(node.classList.contains('pv-sheet')) return;        // 抽屉自身 → 放行内部滚动
+        if(node.classList.contains('mbox') || node.classList.contains('cal-modal') || node.classList.contains('bb-sortpanel') || node.classList.contains('tlsheet')){
+          return; // 触摸点在内容盒子内,放行内部滚动
+        }
       }
       node = node.parentNode;
     }
