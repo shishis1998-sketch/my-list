@@ -602,7 +602,10 @@ tr:hover .acts{opacity:1;}
 .cfbtns{display:flex;gap:var(--sp-8);justify-content:flex-end;}
 
 /* toast */
-.toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:200;display:flex;align-items:center;gap:var(--sp-6);}
+/* z-index 要压过全站最高的那层浮层（章节抽屉 1501）。原先是 200，比章节抽屉
+   1501、备忘单字段抽屉 1401、经期抽屉 201 都低——抽屉开着时弹的「已保存」
+   整条被压在抽屉底下，根本看不见。 */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:1600;display:flex;align-items:center;gap:var(--sp-6);}
 .toast.show{transform:translateY(0);opacity:1;}
 
 ::-webkit-scrollbar{width:5px;}
@@ -874,7 +877,10 @@ tr:hover .acts{opacity:1;}
   .cfbox{width:calc(100vw - 32px);max-width:340px;}
 
   /* toast */
-  .toast{left:14px;right:14px;bottom:14px;justify-content:center;}
+  /* 提示条抬到底栏之上，别压住导航标签。--toast-lift 由 toast() 每次弹之前
+     现量一次底栏（见那边的注释），量不到就退回 14px。电脑端没有底栏，仍旧是
+     右下角那条规则，不吃这里。 */
+  .toast{left:14px;right:14px;bottom:var(--toast-lift,14px);justify-content:center;}
 
   /* 日历手机端 - 占满 .main 剩余高度（.main 有 min-height:100vh，flex 子项自然撑满）*/
   .cal-modal{max-height:none;border-radius:0;}
@@ -2525,6 +2531,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .stcard .stats-row {padding: 9px 0; border-bottom: 1px solid var(--line-soft);}
 #calViewPeriod .stcard .stats-row:last-of-type {border-bottom: 0;}
 #calViewPeriod .stcard .stats-hint {border-top: 0; margin-top: 12px; padding-top: 2px;}
+/* 注：全站只有 #toast 一个 .toast 元素，且挂在文档根上，不在 #calViewPeriod 里，
+   所以这条选择器永远匹配不上——经期页从独立页面并进来时留下的死规则。
+   留着不动（删它不属于本次改动范围），别照它改样式，改了也不会生效。 */
 #calViewPeriod .toast {position: fixed; top: max(16px, env(safe-area-inset-top)); left: 50%;
       transform: translateX(-50%); background: rgba(0,0,0,0.8);
       color: white; padding: 8px 18px; border-radius: var(--r-lg);
@@ -10689,9 +10698,25 @@ function haptic(type){
 // 开关：setHaptic(false) 关闭全部震动并记住；setHaptic(true) 重新开启
 function setHaptic(on){hapticOn=!!on;localStorage.setItem('hapticOff',on?'0':'1');if(on)haptic('tap');}
 
+// 提示条要停在底栏上方。底栏的实际高度不是个常数：滚动时标签行会收起
+// (body.tabs-hidden)，键盘弹起时整条会被 transform 顶到键盘上方，日历/设置页
+// 还会改它的层级。所以不在启动时量一遍写死，而是每次弹之前现量——
+// 用「可视区底部 − 底栏顶边」算净高，底栏被 transform 移动过时也准。
+// 底栏自己的 padding-bottom 已经含 env(safe-area-inset-bottom)，这里不能再加一遍。
+function syncToastLift(el){
+  let lift=14;
+  const bb=document.querySelector('.bottombar');
+  if(bb&&getComputedStyle(bb).display!=='none'){
+    const top=bb.getBoundingClientRect().top;
+    const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    if(top<vh) lift=Math.round(vh-top)+14;
+  }
+  el.style.setProperty('--toast-lift',lift+'px');
+}
 function toast(msg,hap='tap'){
   const el=document.getElementById('toast');
   document.getElementById('tmsg').textContent=msg;
+  syncToastLift(el);
   el.classList.add('show'); clearTimeout(tt);
   tt=setTimeout(()=>el.classList.remove('show'),2600);
   haptic(hap);
