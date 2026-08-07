@@ -2697,82 +2697,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       font-size: var(--fs-micro); line-height: 1.55; color: var(--ink-2);}
 .pv-fert-note b {display: block; color: var(--ovu-ink); font-size: var(--fs-footnote); margin-bottom: 1px;}
 .pv-fert-note span {display: block; margin-top: 3px; color: var(--faint);}
-#calViewPeriod .day-status-bar {margin-top: var(--sp-card);
-      padding: 6px 14px;
-      border-radius: var(--r-lg);}
-#calViewPeriod .ds-row {display: flex; justify-content: space-between; align-items: baseline;
-      gap: 12px; padding: 11px 0;
-      border-bottom: 1px solid var(--line-soft);}
-#calViewPeriod .ds-row:last-child {border-bottom: none;}
-#calViewPeriod .ds-k {font-size: var(--fs-footnote); color: var(--faint);
-      flex: 0 0 auto;}
-#calViewPeriod .ds-v {font-size: var(--fs-caption); color: var(--ink); font-weight: 400;
-      text-align: right;}
-#calViewPeriod .ds-v.ds-hl {color: var(--brand-dark);}
-#calViewPeriod .day-info-bar {margin-top: var(--sp-card);
-      padding: 16px 14px;
-      border-radius: var(--r-lg);}
-#calViewPeriod .info-date {font-size: var(--fs-callout); font-weight: bold;
-      color: var(--ink); margin-bottom: 6px;
-      text-align: center;}
-#calViewPeriod .info-empty {text-align: center; font-size: var(--fs-footnote);
-      color: var(--faint); padding: 6px 0;}
-#calViewPeriod .info-section-title {font-size: var(--fs-footnote); color: var(--faint);
-      letter-spacing: 1px; margin: 10px 0 6px;
-      text-transform: uppercase;}
-#calViewPeriod .info-tags {display: flex; flex-wrap: wrap; gap: 6px;}
-/* 折叠成一行：具体高度由 renderDayInfoBar() 按第一行的实际高度写成行内 max-height，
-   这里只负责裁剪。不写死数值——写死的话字体一大就会把标签从中间切一刀。 */
-#calViewPeriod .info-tags.collapsed {overflow: hidden;}
-#calViewPeriod .info-toggle {margin-top: 8px; padding: 0; border: none; background: none;
-      color: var(--brand); font-size: var(--fs-footnote); font-weight: 600;
-      font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;}
-#calViewPeriod .info-toggle:active {opacity: 0.6;}
-#calViewPeriod .info-tag {display: inline-flex; align-items: center;
-      padding: 5px 10px; border-radius: var(--r-lg);
-      background: var(--line-soft); color: var(--body);
-      font-size: var(--fs-footnote); cursor: pointer;
-      border: 1.5px solid transparent;
-      transition: all 0.15s;
-      user-select: none;
-      -webkit-user-select: none;}
-#calViewPeriod .info-tag.active {background: var(--brand-soft);
-      color: var(--brand-dark);
-      border-color: var(--brand);
-      font-weight: 600;}
-#calViewPeriod .info-tag .del {margin-left: 5px;
-      color: var(--disabled);
-      font-size: var(--fs-caption);
-      line-height: 1;}
-#calViewPeriod .info-tag .del:hover {color: #ef4444;}
-#calViewPeriod .info-add-row {display: flex; gap: 6px; margin-top: 8px;
-      position: relative;}
-#calViewPeriod .info-input {flex: 1; padding: 7px 10px;
-      border: 1px solid var(--line); border-radius: var(--r-sm);
-      font-size: var(--fs-caption); font-family: inherit;
-      outline: none;
-      -webkit-appearance: none;
-      min-width: 0;}
-#calViewPeriod .info-input:focus {border-color: var(--brand);}
-#calViewPeriod .info-add-btn {padding: 7px 14px; border: none; border-radius: var(--r-sm);
-      background: var(--brand); color: white;
-      font-size: var(--fs-footnote); cursor: pointer; font-weight: 600;
-      white-space: nowrap;}
-#calViewPeriod .add-flash {position: absolute;
-      right: 60px; top: 50%;
-      transform: translateY(-50%);
-      background: #10b981; color: white;
-      padding: 4px 10px; border-radius: var(--r-md);
-      font-size: var(--fs-footnote); font-weight: 600;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.25s;}
-#calViewPeriod .add-flash.show {opacity: 1;
-      animation: flashPop 0.25s ease-out;}
-@keyframes flashPop {
-      0%   { transform: translateY(-50%) scale(0.7); }
-      60%  { transform: translateY(-50%) scale(1.1); }
-      100% { transform: translateY(-50%) scale(1); }
-    }
+/* 「当天状态栏 .day-status-bar / 症状标签云 .info-*」随「点日期改成分组列表」一并移除：
+   它们的宿主元素(#dayStatusBar / #dayInfoBar)已经不再渲染，规则全是死的。
+   列表本身的样式见下方 .pv-group / .pv-row 一组。 */
 #calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}
 
 /* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */
@@ -2789,7 +2716,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
      这条红调阴影会整条留在屏幕底部、压在底栏上。与 .tlsheet / .mfsheet 同因。 */
   transform:translateY(calc(100% + 44px));transition:transform .34s cubic-bezier(.22,.9,.32,1);
   padding:8px 16px calc(16px + env(safe-area-inset-bottom));
-  max-height:86vh;display:flex;flex-direction:column;
+  /* 列表式内容比原先的色块+标签云高（症状一行一条），92vh 让 5 条症状 + 两组
+     基本信息一屏排得下，再多才需要滑 */
+  max-height:92vh;display:flex;flex-direction:column;
   font-family:var(--zh);}
 .pv-sheet.open{transform:translateY(0);}
 .pv-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);
@@ -2807,33 +2736,64 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
 .pv-sheet-body::-webkit-scrollbar{display:none;}
-/* 「经血量」小标题与症状区小标题(.info-section-title)保持同一套外观 */
-.pv-flow-title{font-size:var(--fs-footnote);color:var(--faint);letter-spacing:1px;
-  text-transform:uppercase;margin:0 0 6px;}
-.pv-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
-.pv-sw{border:1px solid var(--border);background:var(--surface);border-radius:12px;
-  padding:10px 4px 8px;font-family:var(--zh);cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  transition:border-color .15s,background .15s,transform .1s;
-  -webkit-tap-highlight-color:transparent;}
-.pv-sw:active{transform:scale(.94);}
-.pv-sw-dot{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);}
-.pv-sw-name{font-size:11px;font-weight:700;color:var(--text-secondary);
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.3px;}
-.pv-sw-cn{font-size:10px;color:var(--text-muted);}
-.pv-sw.on{border-color:var(--brand);background:var(--brand-soft);}
-.pv-sw.on .pv-sw-name{color:var(--brand);}
-.pv-sheet-actions{flex:0 0 auto;display:flex;gap:10px;padding-top:12px;
+/* ── 抽屉内容 = 分组列表：一行一件事，左名称右状态 ──
+   间距写死在 4px 网格上（design.md 的 12 级阶梯），这里不能用 --sp-*：
+   #calViewPeriod 作用域把 --sp-2 重定义成了 8px，跟全局阶梯不是一套值。 */
+.pv-group{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;}
+.pv-ghd{font-size:var(--fs-footnote);color:var(--faint);padding:20px 4px 6px;}
+.pv-sheet-body>.pv-ghd:first-child{padding-top:0;}
+.pv-gfoot{font-size:var(--fs-footnote);color:var(--faint);line-height:1.5;padding:6px 4px 0;}
+.pv-row{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;
+  padding:10px 12px;background:none;border:none;border-radius:0;
+  font-family:var(--zh);font-size:var(--fs-callout);color:var(--ink);
+  text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:background .15s;}
+.pv-row+.pv-row{border-top:1px solid var(--line-soft);}
+.pv-row:active{background:var(--line-soft);}
+.pv-row-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pv-row-v{color:var(--muted);white-space:nowrap;}
+.pv-row-ar{color:var(--disabled);font-size:var(--fs-caption);flex:none;
+  transition:transform .2s ease;}
+.pv-row.open .pv-row-ar{transform:rotate(90deg);}
+/* 展开出来的子项：只靠内缩表示归属，底色跟其余行一样。
+   给它单独铺一层灰会读成「这几行被禁用了」，可它们恰恰是此刻要点的。 */
+.pv-row.sub{padding-left:28px;}
+/* 只报信息、点了没反应的行（日期）：别给它按钮的手感 */
+.pv-row.static{cursor:default;}
+.pv-row.static:active{background:none;}
+.pv-row.link{color:var(--brand);}
+.pv-row.danger{color:var(--danger);justify-content:center;}
+.pv-dot{width:14px;height:14px;border-radius:50%;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+/* 勾选圈：没选 = 空心描边，选了 = 品牌色实心 + 白勾。
+   勾用 SVG 而不是「旋转 45° 的 L 形边框」那套老写法——那个形状的外框中心
+   不等于墨迹中心，靠调 left/top 对，量出来仍偏心 1.2px。这里 viewBox 就是
+   圆本身的 22×22 坐标系，落笔时把墨迹包围盒算准在 (11,11)，天然居中。 */
+.pv-tick{width:22px;height:22px;border-radius:50%;flex:none;
+  box-shadow:inset 0 0 0 1.5px var(--line);transition:background .15s,box-shadow .15s;}
+.pv-row.on .pv-tick{box-shadow:none;
+  background:var(--brand) center/100% 100% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6.6 11.25L9.6 14.25L15.4 7.75' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
+/* 「新建症状」展开出来的输入行 */
+.pv-inprow{display:flex;align-items:center;gap:8px;padding:8px 12px;
+  border-top:1px solid var(--line-soft);}
+.pv-inp{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;font-family:var(--zh);font-size:16px;   /* 16px：iOS 聚焦时不放大整页 */
+  color:var(--ink);background:var(--surface);}
+.pv-inp:focus{outline:2px solid var(--brand);outline-offset:-1px;}
+.pv-inp-btn{flex:none;border:none;border-radius:8px;padding:9px 14px;
+  background:var(--brand);color:#fff;font-family:var(--zh);font-size:var(--fs-callout);
+  font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.pv-inp-btn:active{transform:scale(.97);}
+.pv-sheet-actions{flex:0 0 auto;display:flex;gap:8px;padding-top:12px;
   border-top:1px solid var(--border-soft);margin-top:4px;}
 .pv-btn{border:none;border-radius:12px;padding:12px 0;font-size:14px;font-weight:700;
   font-family:var(--zh);cursor:pointer;transition:transform .1s,opacity .15s;
   -webkit-tap-highlight-color:transparent;}
 .pv-btn:active{transform:scale(.98);}
-.pv-btn-done{flex:2;background:var(--brand);color:#fff;}
-.pv-btn-clear{flex:1;background:var(--surface);color:var(--text-muted);border:1px solid var(--border);}
-/* 弹窗内复用 .day-info-bar 时去掉其外层卡片留白，避免与弹窗自身内边距叠加 */
-#calViewPeriod .pv-sheet-body .day-info-bar{margin-top:0;padding:0;background:transparent;}
-#calViewPeriod .pv-sheet-body .info-section-title:first-child{margin-top:0;}
+/* 改动即存，所以只留一个「完成」——「清除记录」下沉成列表最后一行 */
+.pv-btn-done{flex:1;background:var(--brand);color:#fff;}
 /* 即便系统开启「减弱动态效果」，也保留一段克制、更短的滑入/淡入，
    让弹窗仍有可见的动态反馈(而非瞬间弹出) */
 @media (prefers-reduced-motion: reduce){
@@ -3085,7 +3045,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.year-view {display: grid; grid-template-columns: repeat(2, 1fr);}
 #calViewPeriod .calendar-container.month-view .month {background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
       padding: 6px 12px 16px;}
-#calViewPeriod .calendar-container.month-view .month, #calViewPeriod .calendar-container.month-view .day-info-bar, #calViewPeriod .calendar-container.month-view .day-status-bar, #calViewPeriod .stcard, #calViewPeriod .me-tile, #calViewPeriod .hm-tile, #calViewPeriod .hm-tcard {background: #FFFFFF;
+#calViewPeriod .calendar-container.month-view .month, #calViewPeriod .stcard, #calViewPeriod .me-tile, #calViewPeriod .hm-tile, #calViewPeriod .hm-tcard {background: #FFFFFF;
       border: 1px solid var(--line);
       box-shadow: none;}
 #calViewPeriod .mv-head {display: flex; align-items: center; margin: 8px 0 12px;}
@@ -3284,8 +3244,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   font-family:var(--zh);cursor:pointer;
   -webkit-tap-highlight-color:transparent;transition:transform .12s;}
 #calViewPeriod .dc-more:active{transform:scale(.92);}
-#calViewPeriod #pvExtras .day-status-bar,
-#calViewPeriod #pvExtras .day-info-bar,
 #calViewPeriod #pvExtras .sym-list{display:block;background:#FFFFFF;border:1px solid var(--border);
   box-shadow:none;border-radius:16px;}
 #calViewPeriod #pvExtras .sym-list{padding:16px 14px;}
@@ -3328,8 +3286,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 :root[data-mode="dark"] #calViewPeriod .hm-viewtoggle,
 :root[data-mode="dark"] #calViewPeriod .home-viewtoggle,
 :root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .month,
-:root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .day-info-bar,
-:root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .day-status-bar,
 :root[data-mode="dark"] #calViewPeriod .calendar-container.month-view .sym-list,
 :root[data-mode="dark"] #calViewPeriod .calendar-container.one-col .month:not(.zoomed) .sym-list,
 :root[data-mode="dark"] #calViewPeriod #pvExtras .sym-list,
@@ -3772,13 +3728,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
           <div class="pv-sheet-grab"></div>
           <div class="pv-sheet-head">
-            <span class="pv-sheet-date" id="pvSheetDate"></span>
-            <span class="pv-sheet-status" id="pvSheetStatus" style="display:none"></span>
+            <span class="pv-sheet-date">记录经期</span>
             <button class="pv-sheet-close" onclick="PV.closeDaySheet()" aria-label="关闭">✕</button>
           </div>
           <div class="pv-sheet-body" id="pvSheetBody"></div>
           <div class="pv-sheet-actions">
-            <button class="pv-btn pv-btn-clear" onclick="PV.clearDayRecord()">清除记录</button>
+            <!-- 改动即存，所以只有「完成」这一个按钮；清除记录在列表最后一行 -->
             <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
           </div>
         </div>
@@ -7029,70 +6984,210 @@ window.PV = (function(){
     // ── 底部弹窗：点日期弹出，一次编辑「经血量 + 症状」──
     const WEEKDAY_CN = ['周日','周一','周二','周三','周四','周五','周六'];
 
-    // 弹窗里的经血量色板(4 个色块，点选/取消)
-    function buildFlowSwatches() {
-      const flow = document.getElementById('pvFlow');
-      if (!flow || !selectedView) return;
-      const { y, m, d } = selectedView;
-      const cur = getLevel(y, m, d);
-      const cn = { 4: '点滴', 1: '少', 2: '中', 3: '多' };
-      flow.innerHTML = PALETTE_ORDER.map(lv => {
-        const p = PALETTE[lv] || {};
-        const on = cur === lv ? ' on' : '';
-        return `<button type="button" class="pv-sw${on}" data-lv="${lv}">` +
-                 `<span class="pv-sw-dot" style="background:${p.color || '#ccc'}"></span>` +
-                 `<span class="pv-sw-name">${escapeHtml(p.name || '')}</span>` +
-                 `<span class="pv-sw-cn">${cn[lv] || ''}</span>` +
-               `</button>`;
-      }).join('');
-      flow.querySelectorAll('.pv-sw').forEach(b => {
-        b.onclick = () => applySelectedColor(+b.dataset.lv);
-      });
+    const FLOW_CN = { 4: '点滴', 1: '少', 2: '中', 3: '多' };
+
+    // 抽屉内各行的展开状态。每次重新打开都收回去：上一天展开着，
+    // 不该让下一天也顶开（与状态卡的做法一致）。
+    let flowOpen = false;      // 「经血量」四档是否就地展开
+    let symAllOpen = false;    // 「全部症状」是否展开
+    let symAddOpen = false;    // 「新建症状」输入行是否展开
+    let symAddFocus = false;   // 这一次重画要不要把焦点送进输入框（只在刚展开/刚添加完时）
+    let symRows = [];          // 这一次打开要列出的症状（打开时定好，之后不再重排）
+
+    // 这一屏列哪 5 条症状：已记的一定露出来，其余按最近 60 天用得多少补齐。
+    // 只在打开抽屉/新建标签时算一次——勾一下就重排的话，取消勾选会让那一行
+    // 从手指底下跑掉，下一次点就点到别人了。
+    function pickSymRows(y, m, d) {
+      const use = symUseCount();
+      const ranked = SYMPTOMS_LIB.slice()
+        .sort((a, b) => (use[b] || 0) - (use[a] || 0));   // sort 稳定：同频次保持库内原序
+      const sel = getSym(y, m, d);
+      const out = ranked.filter(n => sel.includes(n));
+      for (const n of ranked) {
+        if (out.length >= SYM_ROW_MAX) break;
+        if (!out.includes(n)) out.push(n);
+      }
+      return out;
     }
 
-    // 弹窗顶部的经期状态药丸(经期第几天 / 点滴 / 无)
-    function updateDaySheetStatus() {
-      const el = document.getElementById('pvSheetStatus');
-      if (!el || !selectedView) return;
-      const { y, m, d } = selectedView;
+    // 这天的一句话状态。只讲「记录」这一侧——排卵/易孕交给下面那张推算说明卡，
+    // 它头一行本来就是同一句 FERT_LABEL，两处都印就成了复读。
+    function daySheetStatusText(y, m, d) {
       const st = getDayStatus(y, m, d);
-      const fk = st.kind === 'none' ? fertKind(y, m, d) : null;
-      // 排卵/易孕用青绿药丸；预计经期仍归经期红
-      el.classList.toggle('fert', fk === 'ovu' || fk === 'fertile');
-      if (st.kind === 'period') {
-        el.textContent = `经期 · 第 ${st.dayNo} 天`;
-        el.style.display = '';
-      } else if (st.kind === 'spotting') {
-        el.textContent = '点滴 · 不计入经期';
-        el.style.display = '';
-      } else if (fk) {
-        // 没有经期记录时，退而显示这天的排卵期推算结果
-        el.textContent = FERT_LABEL[fk];
-        el.style.display = '';
-      } else {
-        el.style.display = 'none';
+      if (st.kind === 'period')   return `经期 · 第 ${st.dayNo} 天`;
+      if (st.kind === 'spotting') return '点滴 · 不计入经期';
+      return '';
+    }
+
+    function symRow(name, on) {
+      return `<button type="button" class="pv-row${on ? ' on' : ''}" data-sym="${escapeAttr(name)}" ` +
+               `aria-pressed="${on}">` +
+               `<span class="pv-row-l">${escapeHtml(name)}</span>` +
+               `<span class="pv-tick"></span>` +
+             `</button>`;
+    }
+
+    // ── 抽屉正文：一张分组列表（日期 / 经血量 · 症状 · 清除）──
+    function renderDaySheetBody() {
+      const body = document.getElementById('pvSheetBody');
+      if (!body || !selectedView) return;
+      const { y, m, d } = selectedView;
+      const lv = getLevel(y, m, d);
+      const sel = getSym(y, m, d);
+      const status = daySheetStatusText(y, m, d);
+
+      // ── 组一：日期 + 经血量 ──
+      // 日期这行只报「在改哪天」，不可点：本来就是点日历上的某一天才走到这儿的，
+      // 再给一个日期选择器等于同一件事有两个入口。
+      let g1 =
+        `<div class="pv-row static">` +
+          `<span class="pv-row-l">日期</span>` +
+          `<span class="pv-row-v">${y} 年 ${m} 月 ${d} 日 · ${WEEKDAY_CN[new Date(y, m - 1, d).getDay()]}</span>` +
+        `</div>`;
+      const p = PALETTE[lv] || {};
+      g1 +=
+        `<button type="button" class="pv-row${flowOpen ? ' open' : ''}" data-act="flow">` +
+          `<span class="pv-row-l">经血量</span>` +
+          (lv ? `<span class="pv-dot" style="background:${p.color || '#ccc'}"></span>` : '') +
+          `<span class="pv-row-v">${lv ? (FLOW_CN[lv] || '') : '未记录'}</span>` +
+          `<span class="pv-row-ar">›</span>` +
+        `</button>`;
+      // 四档与症状用同一种勾选圈。两者语义不同——症状可多选，经血量只能选一个——
+      // 但「选中 = 实心勾、没选 = 空心圈」在一屏里只该有一种长相；单选这件事由
+      // 「点另一档，上一档自己灭掉」讲清楚，多一套控件反而要多认一次。
+      if (flowOpen) {
+        g1 += PALETTE_ORDER.map(v => {
+          const pl = PALETTE[v] || {};
+          return `<button type="button" class="pv-row sub${lv === v ? ' on' : ''}" data-lv="${v}" ` +
+                   `aria-pressed="${lv === v}">` +
+                   `<span class="pv-dot" style="background:${pl.color || '#ccc'}"></span>` +
+                   `<span class="pv-row-l">${FLOW_CN[v] || ''}` +
+                     (v === 4 ? `<span class="pv-row-v"> · 不计入经期</span>` : '') +
+                   `</span>` +
+                   `<span class="pv-tick"></span>` +
+                 `</button>`;
+        }).join('') +
+        `<button type="button" class="pv-row sub${lv === 0 ? ' on' : ''}" data-lv="0" ` +
+          `aria-pressed="${lv === 0}">` +
+          `<span class="pv-row-l" style="color:var(--muted)">未记录</span>` +
+          `<span class="pv-tick"></span>` +
+        `</button>`;
       }
+
+      // ── 组二：症状（5 条常用 + 全部 + 新建）──
+      const shown = symRows.slice();
+      const rest = SYMPTOMS_LIB.filter(n => !shown.includes(n));
+      let g2 = shown.map(n => symRow(n, sel.includes(n))).join('');
+      if (symAllOpen) g2 += rest.map(n => symRow(n, sel.includes(n))).join('');
+      // 「全部症状」是普通导航行，不染成品牌红：这一屏红色只留给「新建」和「清除」，
+      // 三行都红的话，那行「清除本日记录」就不再是一眼能认出的危险动作了
+      if (rest.length) {
+        g2 += `<button type="button" class="pv-row${symAllOpen ? ' open' : ''}" data-act="all">` +
+                `<span class="pv-row-l">${symAllOpen ? '收起' : '全部症状'}</span>` +
+                (symAllOpen ? '' : `<span class="pv-row-v">还有 ${rest.length} 条</span>`) +
+                `<span class="pv-row-ar">›</span>` +
+              `</button>`;
+      }
+      g2 += `<button type="button" class="pv-row link${symAddOpen ? ' open' : ''}" data-act="add">` +
+              `<span class="pv-row-l">＋ 新建症状</span>` +
+            `</button>`;
+      if (symAddOpen) {
+        g2 += `<div class="pv-inprow">` +
+                `<input type="text" class="pv-inp" id="pvNewSym" placeholder="例如：头痛、腰酸、情绪低落" maxlength="20">` +
+                `<button type="button" class="pv-inp-btn" data-act="addok">添加</button>` +
+              `</div>`;
+      }
+
+      const hasRecord = lv !== 0 || sel.length > 0;
+
+      body.innerHTML =
+        `<div class="pv-group">${g1}</div>` +
+        (status ? `<div class="pv-gfoot">${escapeHtml(status)}</div>` : '') +
+        fertBasisHtml(y, m, d) +
+        `<div class="pv-ghd">症状${sel.length ? `（已记 ${sel.length} 条）` : ''}</div>` +
+        `<div class="pv-group">${g2}</div>` +
+        `<div class="pv-gfoot">按最近 ${SYM_RECENT_DAYS} 天用得多少排序，长按可删除标签</div>` +
+        (hasRecord
+          ? `<div class="pv-group" style="margin-top:20px">` +
+              `<button type="button" class="pv-row danger" data-act="clear">清除本日记录</button>` +
+            `</div>`
+          : '');
+
+      bindDaySheetRows(body);
+    }
+
+    function bindDaySheetRows(body) {
+      body.querySelectorAll('[data-act]').forEach(el => {
+        el.onclick = (ev) => { ev.stopPropagation(); daySheetAction(el.dataset.act); };
+      });
+      body.querySelectorAll('[data-lv]').forEach(el => {
+        el.onclick = (ev) => {
+          ev.stopPropagation();
+          flowOpen = false;                 // 选完就收起四档
+          applySelectedColor(+el.dataset.lv, true);
+        };
+      });
+      // 症状：点整行切换；长按删标签（原先是胶囊右上角那个 × ，太容易误触）
+      body.querySelectorAll('[data-sym]').forEach(el => {
+        let timer = 0, longPressed = false;
+        const start = () => {
+          longPressed = false;
+          timer = setTimeout(() => { longPressed = true; deleteFromLib(el.dataset.sym); }, 600);
+        };
+        const cancel = () => clearTimeout(timer);
+        el.addEventListener('touchstart', start, { passive: true });
+        el.addEventListener('touchend', cancel);
+        el.addEventListener('touchmove', cancel);
+        el.addEventListener('mousedown', start);
+        el.addEventListener('mouseup', cancel);
+        el.addEventListener('mouseleave', cancel);
+        el.onclick = (ev) => {
+          ev.stopPropagation();
+          if (longPressed) { longPressed = false; return; }
+          toggleSym(el.dataset.sym);
+        };
+      });
+      const symInp = body.querySelector('#pvNewSym');
+      if (symInp) {
+        symInp.onclick = (ev) => ev.stopPropagation();
+        symInp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); addNewSymptom(); }
+        });
+        // 只在刚展开输入行 / 刚添加完时抢焦点。每次重画都 focus 的话，
+        // 输入行开着时勾一个症状，键盘会毫无道理地弹上来。
+        if (symAddFocus) { symAddFocus = false; symInp.focus(); }
+      }
+    }
+
+    function daySheetAction(act) {
+      if (act === 'flow') {
+        flowOpen = !flowOpen;
+      } else if (act === 'all') {
+        symAllOpen = !symAllOpen;
+      } else if (act === 'add') {
+        symAddOpen = !symAddOpen;
+        symAddFocus = symAddOpen;
+      } else if (act === 'addok') {
+        addNewSymptom();
+        return;
+      } else if (act === 'clear') {
+        clearDayRecord();
+        return;
+      }
+      renderDaySheetBody();
     }
 
     function openDaySheet(y, m, d) {
       const body = document.getElementById('pvSheetBody');
       const sheet = document.getElementById('pvSheet');
       const scrim = document.getElementById('pvSheetScrim');
-      const dateEl = document.getElementById('pvSheetDate');
       if (!body || !sheet || !scrim) return;
       selectedView = { y, m, d };
       cardDay = { y, m, d };    // 状态卡跟着点选走（selectedView 会被 closeDaySheet 清掉，这个不会）
       refreshDayCard();
-      if (dateEl) dateEl.textContent = `${m} 月 ${d} 日 · ${WEEKDAY_CN[new Date(y, m - 1, d).getDay()]}`;
-      // 弹窗内容：经血量色板 + 复用原有的症状信息栏(#dayInfoBar)
-      body.innerHTML =
-        `<div class="pv-flow-title">经血量</div>` +
-        `<div class="pv-flow" id="pvFlow"></div>` +
-        fertBasisHtml(y, m, d) +
-        `<div class="day-info-bar" id="dayInfoBar"></div>`;
-      buildFlowSwatches();
-      renderDayInfoBar();       // 填充症状标签(内部会尝试渲染 #dayStatusBar，此处不放该元素故自动跳过)
-      updateDaySheetStatus();
+      flowOpen = false; symAllOpen = false; symAddOpen = false; symAddFocus = false;
+      symRows = pickSymRows(y, m, d);
+      renderDaySheetBody();
       updateSelectedHighlight();
       document.body.classList.add('pv-sheet-open');
       scrim.classList.add('open');
@@ -7109,38 +7204,36 @@ window.PV = (function(){
       updateSelectedHighlight();
     }
 
-    // 弹窗底部「清除记录」：一键抹掉这天的经血量 + 症状
+    // 列表最后一行「清除本日记录」：一键抹掉这天的经血量 + 症状。
+    // 抽屉是改动即存的，没有「取消」可退，所以这一步要问一句。
     function clearDayRecord() {
       if (!selectedView) return;
       const { y, m, d } = selectedView;
+      if (!confirm(`清除 ${y} 年 ${m} 月 ${d} 日的经血量和症状记录？`)) return;
       setLevel(y, m, d, 0);
       setSym(y, m, d, []);
       rerenderZoomedMonth();
       updateSelectedHighlight();
       updateSymDot(y, m, d);
-      buildFlowSwatches();
-      renderDayInfoBar();
-      updateDaySheetStatus();
+      renderDaySheetBody();
       showToast('已清除');
     }
 
-    // 给当前选中的日期上色(从底部色卡点击触发)
-    function applySelectedColor(lv) {
+    // 给当前选中的日期上色。
+    // direct=true 是从抽屉里那份四档列表点进来的：那份列表自带「未记录」一行，
+    // 再点同一档应当保持不变，不能像色块时代那样点一下就取消。
+    function applySelectedColor(lv, direct) {
       if (!selectedView) {
         showToast('请先点击日历选择一天');
         return;
       }
       const { y, m, d } = selectedView;
       const cur = getLevel(y, m, d);
-      // 同色再点 = 取消
-      setLevel(y, m, d, cur === lv ? 0 : lv);
+      setLevel(y, m, d, (!direct && cur === lv) ? 0 : lv);
       rerenderZoomedMonth();
       // 重画后 selected-view 类会丢,需要补回去
       updateSelectedHighlight();
-      renderDayInfoBar();
-      // 同步弹窗里的色块选中态与顶部状态药丸
-      buildFlowSwatches();
-      updateDaySheetStatus();
+      renderDaySheetBody();
     }
 
     // 高亮跟着状态卡的锚点日走：卡片在讲哪天，日历上就圈哪天。
@@ -7174,7 +7267,6 @@ window.PV = (function(){
     // ── 放大某个月卡片 ──
     let zoomedMonth = null;   // 旧「弹窗放大」已废弃,保留变量恒为 null 以兼容历史判断
     let selectedView = null;  // {y, m, d} - 当前在信息栏查看/编辑的日期
-    let libTagsExpanded = false; // 「从已有标签选择」是否展开(默认只显示一行)
 
     // 旧「放大某月」→ 现在等价于切到该月的月视图
     function zoomMonth(month) {
@@ -7547,36 +7639,10 @@ window.PV = (function(){
       return { kind: 'period', lv, dayNo: 1, total: 1 };
     }
 
-    // 渲染「当天状态」卡片(经期第几天等)
-    function renderDayStatusBar() {
-      const sb = document.getElementById('dayStatusBar');
-      if (!sb) return;
-      if (!selectedView) { sb.style.display = 'none'; return; }
-      sb.style.display = '';
-      const { y, m, d } = selectedView;
-      const st = getDayStatus(y, m, d);
-      const row = (k, v, hl) =>
-        `<div class="ds-row"><span class="ds-k">${k}</span><span class="ds-v${hl ? ' ds-hl' : ''}">${v}</span></div>`;
-      let rows;
-      if (st.kind === 'period') {
-        const flow = PALETTE[st.lv] ? `${PALETTE[st.lv].name} ${LEVEL_SUFFIX[st.lv] || ''}`.trim() : '';
-        rows =
-          row('经期状态', `经期 · 第 ${st.dayNo} 天`, true) +
-          row('出血量', escapeHtml(flow));
-      } else if (st.kind === 'spotting') {
-        const nm = PALETTE[4] ? PALETTE[4].name : 'GOTAS';
-        rows =
-          row('经期状态', `点滴 · ${escapeHtml(nm)}`) +
-          row('说明', '少量出血，不计入经期');
-      } else {
-        rows = row('经期状态', '无经期记录');
-      }
-      sb.innerHTML = rows;
-    }
-
-    // 每个标签在最近 60 天里记过多少天 → 供「从已有标签选择」按近期常用度排序。
-    // 只看近期而不是全部历史：早年高频、如今不再记的标签不该一直占着第一行。
+    // 每个标签在最近 60 天里记过多少天 → 供抽屉里的症状列表按近期常用度排序。
+    // 只看近期而不是全部历史：早年高频、如今不再记的标签不该一直占着前几行。
     const SYM_RECENT_DAYS = 60;
+    const SYM_ROW_MAX = 5;   // 抽屉里直接列出的症状条数，其余收进「全部症状」
     function symUseCount() {
       const now = new Date();
       const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -7591,108 +7657,6 @@ window.PV = (function(){
       return c;
     }
 
-    // 渲染放大态下底部的"日期信息栏"
-    function renderDayInfoBar() {
-      renderDayStatusBar();
-      const bar = document.getElementById('dayInfoBar');
-      if (!bar) return; // 没在放大态
-
-      if (!selectedView) {
-        bar.innerHTML = '<div class="info-empty">👆 点击上方任一日期查看 / 编辑</div>';
-        return;
-      }
-
-      const { y, m, d } = selectedView;
-      const today = getSym(y, m, d);
-
-      const todayTagsHtml = today.length === 0
-        ? '<div class="info-empty">还没有记录 — 从下方选择或新建</div>'
-        : today.map(name =>
-            `<span class="info-tag active" data-name="${escapeAttr(name)}">${escapeHtml(name)}</span>`
-          ).join('');
-
-      // 「从已有标签选择」按近期用得多少排序：最近 60 天记过的天数多的排前面，
-      // 折叠成一行时露在外面的就是这阵子最常用的几个。天数相同 / 近 60 天没用过的
-      // 保持 SYMPTOMS_LIB 原序（sort 稳定），所以新建的标签仍排在末尾、不会乱跳。
-      const useCount = symUseCount();
-      const notSelected = SYMPTOMS_LIB.filter(n => !today.includes(n))
-        .sort((a, b) => (useCount[b] || 0) - (useCount[a] || 0));
-      const libTagsHtml = notSelected.length === 0
-        ? '<div class="info-empty">所有标签都已选 ✓</div>'
-        : notSelected.map(name =>
-            `<span class="info-tag" data-name="${escapeAttr(name)}">${escapeHtml(name)}<span class="del" data-action="del-from-lib">×</span></span>`
-          ).join('');
-
-      bar.innerHTML = `
-        <div class="info-section-title">当天症状</div>
-        <div class="info-tags" id="infoTodayTags">${todayTagsHtml}</div>
-        <div class="info-section-title">从已有标签选择</div>
-        <div class="info-tags${libTagsExpanded ? '' : ' collapsed'}" id="infoLibTags">${libTagsHtml}</div>
-        <button type="button" class="info-toggle" id="infoLibToggle" style="display:none"></button>
-        <div class="info-section-title">新建标签</div>
-        <div class="info-add-row">
-          <input type="text" class="info-input" id="infoInput" placeholder="例如:头痛、腰酸、情绪低落" maxlength="20">
-          <button class="info-add-btn" id="infoAddBtn">添加</button>
-          <span class="add-flash" id="addFlash">✓ 已添加</span>
-        </div>
-      `;
-
-      // 绑定事件
-      bar.querySelector('#infoTodayTags').querySelectorAll('.info-tag').forEach(el => {
-        el.onclick = (ev) => { ev.stopPropagation(); toggleSym(el.dataset.name); };
-      });
-      bar.querySelector('#infoLibTags').querySelectorAll('.info-tag').forEach(el => {
-        el.onclick = (ev) => {
-          ev.stopPropagation();
-          if (ev.target.dataset.action === 'del-from-lib') {
-            deleteFromLib(el.dataset.name);
-          } else {
-            toggleSym(el.dataset.name);
-          }
-        };
-      });
-      // 「从已有标签选择」默认只显示一行,超出时给出展开/收起按钮
-      const libTagsEl = bar.querySelector('#infoLibTags');
-      const libToggle = bar.querySelector('#infoLibToggle');
-      if (libTagsEl && libToggle) {
-        // 折叠高度按「第一行实际有多高」算出来，不能写死：标签高度跟着字号 / 行高 /
-        // 系统字体缩放走，写死的话字体一大就会把整行标签从中间切掉一截。
-        libTagsEl.classList.remove('collapsed');
-        libTagsEl.style.maxHeight = '';
-        // 用 getBoundingClientRect 取带小数的高度（offsetHeight 是取整的，31.19 → 31，
-        // 差的那 0.19px 照样会削掉标签一条边），再向上取整留一点余量。
-        const rects = Array.from(libTagsEl.querySelectorAll('.info-tag'))
-                           .map(c => c.getBoundingClientRect());
-        const top0 = rects.length ? rects[0].top : 0;
-        const oneRow = rects.filter(r => Math.abs(r.top - top0) < 1)
-                            .reduce((h, r) => Math.max(h, r.height), 0);
-        const needsToggle = oneRow > 0 && libTagsEl.scrollHeight - oneRow > 1;
-        if (needsToggle && !libTagsExpanded) {
-          libTagsEl.classList.add('collapsed');
-          libTagsEl.style.maxHeight = Math.ceil(oneRow) + 'px';
-        }
-        if (needsToggle) {
-          libToggle.style.display = '';
-          libToggle.textContent = libTagsExpanded ? '收起 ▲' : '展开全部 ▼';
-        } else {
-          libToggle.style.display = 'none';   // 一行内放得下就不裁剪
-        }
-        libToggle.onclick = (ev) => {
-          ev.stopPropagation();
-          libTagsExpanded = !libTagsExpanded;
-          renderDayInfoBar();
-        };
-      }
-      bar.querySelector('#infoAddBtn').onclick = (ev) => {
-        ev.stopPropagation();
-        addNewSymptom();
-      };
-      bar.querySelector('#infoInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); addNewSymptom(); }
-      });
-      bar.querySelector('#infoInput').addEventListener('click', e => e.stopPropagation());
-    }
-
     function toggleSym(name) {
       if (!selectedView) return;
       const { y, m, d } = selectedView;
@@ -7701,14 +7665,15 @@ window.PV = (function(){
       if (idx >= 0) cur.splice(idx, 1);
       else cur.push(name);
       setSym(y, m, d, cur);
-      renderDayInfoBar();
+      renderDaySheetBody();
       // 更新月历上小圆点指示器
       updateSymDot(y, m, d);
     }
 
     function addNewSymptom() {
       if (!selectedView) return;
-      const input = document.getElementById('infoInput');
+      const input = document.getElementById('pvNewSym');
+      if (!input) return;
       const name = (input.value || '').trim();
       if (!name) return;
       if (name.length > 20) { showToast('标签太长(最多 20 字)'); return; }
@@ -7724,21 +7689,14 @@ window.PV = (function(){
         cur.push(name);
         setSym(y, m, d, cur);
       }
+      // 新建的直接列进这一屏(不受 5 条上限约束)，否则刚建的标签会掉进「全部症状」里
+      if (!symRows.includes(name)) symRows.push(name);
       input.value = '';
-      // 显示"已添加"闪烁,保持焦点便于继续输入
-      flashAdded();
-      renderDayInfoBar();
-      // 重画后输入框是新的,把焦点放回去
-      const newInput = document.getElementById('infoInput');
-      if (newInput) newInput.focus();
+      // 输入行保持展开：连着记两三个症状是常态，重画后把焦点送回输入框
+      symAddFocus = true;
+      renderDaySheetBody();
       updateSymDot(y, m, d);
-    }
-
-    function flashAdded() {
-      const f = document.getElementById('addFlash');
-      if (!f) return;
-      f.classList.add('show');
-      setTimeout(() => f.classList.remove('show'), 1200);
+      showToast('已添加');
     }
 
     function deleteFromLib(name) {
@@ -7754,7 +7712,8 @@ window.PV = (function(){
         else SYMPTOMS_DATA[key] = filtered;
       });
       markUnsaved();
-      renderDayInfoBar();
+      symRows = symRows.filter(n => n !== name);   // 这一屏也别再留着那一行
+      renderDaySheetBody();
       // 整月重画一下,刷新所有小圆点
       rerenderZoomedMonth();
       updateSelectedHighlight();
