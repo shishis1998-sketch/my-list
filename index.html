@@ -11298,21 +11298,29 @@ function renderCalDetail(){
   const noteRecs=notes.filter(n=>n.title===titleDate).map(toCalNoteRec).filter(calRecVisible);
   const recs=[...mediaRecs,...noteRecs];
 
-  // ② 往年今日：同月同日、不同年，按年份分组——同样按图例筛选
-  const pastByYear={};
+  // ② 别的年份的这一天：同月同日、不同年，按年份分组——同样按图例筛选。
+  //    注意不只是「往年」：记录可以填未来日期（到期日、保质期之类），这里一并收进来。
+  const otherByYear={};
   if(calCatVisible('media'))data.forEach(r=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))return;
     const [ry,rm,rd]=r.watchDate.split('-');
-    if(rm===cm&&rd===cd&&ry!==cy)(pastByYear[ry]=pastByYear[ry]||[]).push(r);
+    if(rm===cm&&rd===cd&&ry!==cy)(otherByYear[ry]=otherByYear[ry]||[]).push(r);
   });
   notes.forEach(n=>{
     const mm=(n.title||'').match(_nre);if(!mm)return;
     if(!calRecVisible({_isNote:true,subCat:n.subCat}))return;
     const[,ry,rm,rd]=mm;
-    if(rm===cm&&rd===cd&&ry!==cy)(pastByYear[ry]=pastByYear[ry]||[]).push(toCalNoteRec(n));
+    if(rm===cm&&rd===cd&&ry!==cy)(otherByYear[ry]=otherByYear[ry]||[]).push(toCalNoteRec(n));
   });
-  const pastYears=Object.keys(pastByYear).sort((a,b)=>b-a);
-  const pastTotal=pastYears.reduce((a,y)=>a+pastByYear[y].length,0);
+  // 排序：先过去、后未来，两段各自「离这一天由近到远」。
+  // 原来是单纯按年份倒序(b-a)——只考虑了往年，倒序恰好等于「由近到远」；
+  // 可未来年份也落在这个表里，倒序就成了由远到近，于是「2 年后」排在「1 年后」前面。
+  const otherYears=Object.keys(otherByYear).sort((a,b)=>{
+    const da=a-cy, db=b-cy;                       // >0 未来，<0 过去
+    if((da>0)!==(db>0)) return da>0?1:-1;         // 过去那一段整体排在未来前面
+    return Math.abs(da)-Math.abs(db);             // 段内按距离由近到远
+  });
+  const otherTotal=otherYears.reduce((a,y)=>a+otherByYear[y].length,0);
 
   document.getElementById('calDetailTitle').textContent=`${parseInt(cm)} 月 ${parseInt(cd)} 日`;
   document.getElementById('calDetailCount').textContent='';   // 本年计数去掉，只保留「往年今日」的计数
@@ -11326,7 +11334,7 @@ function renderCalDetail(){
   const dhd=document.createElement('div');dhd.className='cal-card-date';
   dhd.innerHTML=`<span>${parseInt(cm)} 月 ${parseInt(cd)} 日</span>`;
   card.appendChild(dhd);
-  if(!recs.length && !pastTotal){
+  if(!recs.length && !otherTotal){
     const e=document.createElement('div');e.className='cal-empty';
     e.textContent='这一天没有记录';
     card.appendChild(e);
@@ -11337,10 +11345,10 @@ function renderCalDetail(){
     }else{
       tl.appendChild(makeCalTlEmpty('今天还没有新记录'));   // 当天无记录时的占位节点
     }
-    pastYears.forEach(y=>{
+    otherYears.forEach(y=>{
       const ago=parseInt(cy)-parseInt(y);
       const agoTxt=ago>0?`${ago} 年前`:(ago<0?`${-ago} 年后`:'今天');
-      pastByYear[y].forEach(r=>tl.appendChild(makeCalTlRow(r,agoTxt,false)));
+      otherByYear[y].forEach(r=>tl.appendChild(makeCalTlRow(r,agoTxt,false)));
     });
     card.appendChild(tl);
   }
