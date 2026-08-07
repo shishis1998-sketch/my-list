@@ -509,6 +509,12 @@ tr:hover .acts{opacity:1;}
 #tagMgrModal .mbox{max-width:420px;}
 #syncModal .mbox{max-width:480px;}
 #calNotePreviewModal .mbox{max-width:500px;}
+/* 日历里点开日记的预览：标题与正文统一 16px。这是个纯阅读界面，
+   两者同号读起来最顺，不跟随 --fs-headline / --fs-body 那两级的设备差异
+   （手机 16/15、平板 17/16、电脑 16/14）。仍乘 --fs-scale，
+   设置 › 外观 › 字号的小/中/大三档照常生效，中档即 16。 */
+#calNotePreviewModal .mtitle,
+#calNotePreviewModal .cnp-text{font-size:calc(16px * var(--fs-scale));}
 /* 二维码 / 扫码取景框：内容就那么大，任何屏幕上都刻意保持小 */
 #qrModal .mbox{max-width:340px;}
 #scanModal .mbox{max-width:360px;}
@@ -11050,7 +11056,7 @@ function showCalNotePreview(id){
   const tagsHtml=(note.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
   document.getElementById('cnp-title').textContent=note.title||'';
   document.getElementById('cnp-body').innerHTML=
-    `<div style="font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>`+
+    `<div class="cnp-text" style="color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>`+
     (tagsHtml?`<div style="display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-14)">${tagsHtml}</div>`:'');
   document.getElementById('calNotePreviewModal').classList.add('open');
 }
