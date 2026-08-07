@@ -654,6 +654,15 @@ tr:hover .acts{opacity:1;}
   }
   /* flex 列布局下各节不被压缩，保证底部内容能被滚到 */
   .sidebar .nsec{flex-shrink:0;}
+  /* 设置页里把「数据」「同步」提到最上面——这两组用得最多，
+     不该每次都滑过分类管理/外观/经期才够得着。
+     用 order 换序而不是改 DOM 顺序：桌面端侧栏顶部是分类导航（主导航），
+     那边必须保持原样，动了 DOM 两边就得各打一次补丁。
+     .sb-mhdr 得给个更小的 order，否则负 order 的两组会翻到「设置」页头上面去。
+     其余分组不写 order，默认 0，照书写顺序排在后面。 */
+  .sidebar .sb-mhdr{order:-10;}
+  .sidebar .nsec-data{order:-2;}
+  .sidebar .nsec-sync{order:-1;}
   /* 关着时 display:none（在流里不能靠 visibility 藏，否则照样占位），
      所以进场用 animation 而不是 transition —— 复用全站统一的淡入渐起 */
   .sidebar.open{display:flex;animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
@@ -663,9 +672,8 @@ tr:hover .acts{opacity:1;}
   /* 同 cal-open：body 那 110px 是列表页给固定底栏留的位，设置页由上面
      侧栏自己的 padding-bottom 留，两份叠加会让文档凭空高出 110px */
   body.sb-open{padding-bottom:var(--kb,0px);}
-  /* 整屏「设置」页:用页头替代 logo，去掉分类区上多余留白 */
+  /* 整屏「设置」页:用页头替代 logo */
   .sidebar .logo{display:none;}
-  .sidebar .nsec-cats{margin-top:var(--sp-24);}
   .sb-mhdr{
     display:flex;align-items:center;justify-content:space-between;
     position:sticky;top:0;z-index:2;
@@ -679,7 +687,10 @@ tr:hover .acts{opacity:1;}
   /* 整屏页:分组区留白 + 分组标题放大到 16px */
   .sidebar .page,.sidebar .nsec{padding:0 var(--sp-14);}
   .sidebar .nsec{margin-bottom:var(--sp-24);}
-  .sidebar .nsec-cats{margin-top:var(--sp-24);}
+  /* 这 24px 顶留白是给「屏幕上的第一节」在设置页头底下留口气的。
+     换序后第一节是「数据」，不再是分类——留在 .nsec-cats 上就会在页面中间
+     多出一道 48px 的缝（其余节间距都是 24px）。 */
+  .sidebar .nsec-data{margin-top:var(--sp-24);}
   .sidebar .nlbl{
     padding:0 var(--sp-8) var(--sp-10);margin-bottom:0;
     font-size:var(--fs-headline);font-weight:600;letter-spacing:.01em;
@@ -3491,7 +3502,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       </button>
     </div>
   </div>
-  <div class="nsec">
+  <div class="nsec nsec-data">
     <div class="nlbl">数据</div>
     <div class="ncard">
       <button class="nitem" onclick="exportJSON()">
@@ -3513,7 +3524,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
     <input type="file" id="icsimp" accept=".ics,text/calendar" multiple style="display:none" onchange="importICS(event)">
   </div>
-  <div class="nsec">
+  <div class="nsec nsec-sync">
     <div class="nlbl">同步</div>
     <div class="ncard">
       <button class="nitem" onclick="openSyncCfg()" id="sync-btn">
