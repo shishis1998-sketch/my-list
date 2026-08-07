@@ -1026,8 +1026,13 @@ tr:hover .acts{opacity:1;}
   .bb-sortbtn.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
 
   /* —— 点搜索框 → 右侧三个按钮收起，搜索框伸展到整行 ——
-     用 :focus-within 而不是监听 blur：点右侧「清空 ×」时焦点仍在 .bb-actions 内，
-     不会先塌回去再弹开。max-width 是为了让收起有过渡（display:none 动不了）；
+     触发条件必须是「焦点在搜索框内」，不能是 .bb-actions:focus-within。
+     后者会把按钮自己也算进去：按下「添加」时按钮先获得焦点 → 规则立刻成立 →
+     按钮当场 max-width:0 / pointer-events:none 消失 → 抬起时点击落到 .bb-actions，
+     onclick 永远不触发。三个按钮会一起变成点不动（见下面的兄弟选择器写法）。
+     用 .bb-sbox:focus-within ~ 既覆盖输入框，也覆盖框内的「清空 ×」
+     （× 在 .bb-sbox 内，点它不会让按钮弹回来），又不含三个按钮自身。
+     max-width 是为了让收起有过渡（display:none 动不了）；
      高度保持 38px 不变，底栏总高不动，键盘跟随的 --bbty 测量就不会抖 */
   .bb-actions .bb-sortbtn,
   .bb-actions .bb-addbtn{
@@ -1035,8 +1040,8 @@ tr:hover .acts{opacity:1;}
     transition:max-width .22s ease,padding .22s ease,margin .22s ease,
                border-width .22s ease,opacity .14s ease;
   }
-  .bb-actions:focus-within .bb-sortbtn,
-  .bb-actions:focus-within .bb-addbtn{
+  .bb-sbox:focus-within ~ .bb-sortbtn,
+  .bb-sbox:focus-within ~ .bb-addbtn{
     max-width:0;width:0;min-width:0;
     padding-left:0;padding-right:0;margin-left:0;border-width:0;
     opacity:0;pointer-events:none;
