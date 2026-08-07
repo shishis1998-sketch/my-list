@@ -2763,7 +2763,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-row.static{cursor:default;}
 .pv-row.static:active{background:none;}
 .pv-row.link{color:var(--brand);}
-.pv-row.danger{color:var(--danger);justify-content:center;}
 .pv-dot{width:14px;height:14px;border-radius:50%;flex:none;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
 /* 勾选圈：没选 = 空心描边，选了 = 品牌色实心 + 白勾。
@@ -2786,14 +2785,18 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:var(--brand);color:#fff;font-family:var(--zh);font-size:var(--fs-callout);
   font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .pv-inp-btn:active{transform:scale(.97);}
-.pv-sheet-actions{flex:0 0 auto;display:flex;gap:8px;padding-top:12px;
-  border-top:1px solid var(--border-soft);margin-top:4px;}
+/* 不画上边框：列表最后一组与按钮之间本来就隔着 16px，再来一条横线是多的 */
+.pv-sheet-actions{flex:0 0 auto;display:flex;gap:8px;padding-top:16px;}
 .pv-btn{border:none;border-radius:12px;padding:12px 0;font-size:14px;font-weight:700;
   font-family:var(--zh);cursor:pointer;transition:transform .1s,opacity .15s;
   -webkit-tap-highlight-color:transparent;}
 .pv-btn:active{transform:scale(.98);}
-/* 改动即存，所以只留一个「完成」——「清除记录」下沉成列表最后一行 */
-.pv-btn-done{flex:1;background:var(--brand);color:#fff;}
+.pv-btn:disabled{opacity:.4;cursor:default;}
+.pv-btn:disabled:active{transform:none;}
+.pv-btn-done{flex:2;background:var(--brand);color:#fff;}
+/* 清除占窄的一格：它是收尾动作，不该跟「完成」抢同样的份量 */
+.pv-btn-clear{flex:1;background:var(--surface);color:var(--danger);
+  box-shadow:inset 0 0 0 1px var(--line);}
 /* 即便系统开启「减弱动态效果」，也保留一段克制、更短的滑入/淡入，
    让弹窗仍有可见的动态反馈(而非瞬间弹出) */
 @media (prefers-reduced-motion: reduce){
@@ -3733,7 +3736,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
           </div>
           <div class="pv-sheet-body" id="pvSheetBody"></div>
           <div class="pv-sheet-actions">
-            <!-- 改动即存，所以只有「完成」这一个按钮；清除记录在列表最后一行 -->
+            <!-- 「清除」这天没记录时置灰而不是抽走：按钮位置钉死，手指不用重新找 -->
+            <button class="pv-btn pv-btn-clear" id="pvBtnClear" onclick="PV.clearDayRecord()">清除</button>
             <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
           </div>
         </div>
@@ -7098,20 +7102,17 @@ window.PV = (function(){
               `</div>`;
       }
 
-      const hasRecord = lv !== 0 || sel.length > 0;
-
       body.innerHTML =
         `<div class="pv-group">${g1}</div>` +
         (status ? `<div class="pv-gfoot">${escapeHtml(status)}</div>` : '') +
         fertBasisHtml(y, m, d) +
         `<div class="pv-ghd">症状${sel.length ? `（已记 ${sel.length} 条）` : ''}</div>` +
-        `<div class="pv-group">${g2}</div>` +
-        `<div class="pv-gfoot">按最近 ${SYM_RECENT_DAYS} 天用得多少排序，长按可删除标签</div>` +
-        (hasRecord
-          ? `<div class="pv-group" style="margin-top:20px">` +
-              `<button type="button" class="pv-row danger" data-act="clear">清除本日记录</button>` +
-            `</div>`
-          : '');
+        `<div class="pv-group">${g2}</div>`;
+
+      // 「清除」改回底部按钮（与「完成」并排）。这天什么都没记就置灰，
+      // 别让人点开一个确认框只为了清一份空记录。
+      const clearBtn = document.getElementById('pvBtnClear');
+      if (clearBtn) clearBtn.disabled = (lv === 0 && sel.length === 0);
 
       bindDaySheetRows(body);
     }
@@ -7169,9 +7170,6 @@ window.PV = (function(){
         symAddFocus = symAddOpen;
       } else if (act === 'addok') {
         addNewSymptom();
-        return;
-      } else if (act === 'clear') {
-        clearDayRecord();
         return;
       }
       renderDaySheetBody();
