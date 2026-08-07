@@ -8661,6 +8661,7 @@ function boot(){
   if(!noteSubs||!noteSubs.length) noteSubs=DEFAULT_NOTE_SUBS.slice();
   // 「日历」不再作为笔记子分类：导入事件只进日历页、不进笔记列表
   if(noteSubs.includes('日历')){noteSubs=noteSubs.filter(s=>s!=='日历');localStorage.setItem(NSUBK,JSON.stringify(noteSubs));}
+  restoreLastCat();   // 分类得赶在首次 render 之前定下来
   migrateWatchDate();
   // 启动后尝试从云端拉取最新数据(若已配置)。
   // 「日记」迁移：配了同步就等 pull 后按云端状态执行（syncPull 里会调），避免被云端覆盖；
@@ -9673,6 +9674,7 @@ function toggleSidebar(open){
   // 实测无效（隔离测试里加不加它都照样能滚），本仓库的弹窗锁也是因此才用
   // position:fixed 而非 overflow。现在设置页激活时 .main 根本不渲染，
   // 没有背景可滚，不需要任何锁。
+  saveLastView();
 }
 // 底部 tab 高亮：设置页时点亮「设置」，退出时交还给 syncBottomTabs（与 setCalTabActive 对称）
 function setMenuTabActive(on){
@@ -9700,6 +9702,50 @@ function filterCat(cat){
   playCatStagger();
   // 手机端点完分类自动关闭抽屉
   if(isMobileLayout()) toggleSidebar(false);
+  saveLastView();
+}
+
+// ── 记住上次停留的页面 ──────────────────────────────────────────
+// 存两样：当前在哪一页，以及列表页停在哪个分类。
+// 「在哪一页」是从真实状态推出来的，不是各处分别写死——openCalendar 与
+// toggleSidebar 互相调用（开设置会先关日历、开日历会先收侧栏），各写各的
+// 很容易后一次调用把前一次的正确值覆盖成错的。
+const VIEW_KEY='my_list_last_view_v1';
+function currentView(){
+  if(document.body.classList.contains('cal-open')) return 'cal';
+  // 「设置」只有在手机版式里才是独立一页；电脑端侧栏常驻，没有这一页
+  if(isMobileLayout()&&document.body.classList.contains('sb-open')) return 'settings';
+  return 'list';
+}
+function saveLastView(){
+  try{localStorage.setItem(VIEW_KEY,JSON.stringify({page:currentView(),cat:curCat}));}catch(e){}
+}
+function readLastView(){
+  try{const v=JSON.parse(localStorage.getItem(VIEW_KEY));return v&&typeof v==='object'?v:null;}catch(e){return null;}
+}
+// 存下来的分类可能已经被删掉/改名（换台设备同步下来也一样），认不出就退回默认
+function validCat(c){
+  if(typeof c!=='string'||!c) return null;
+  if(c==='all') return c;
+  if(c.startsWith('notes:')){
+    const sub=c.slice(6);
+    return (sub==='all'||(noteSubs||[]).includes(sub))?c:'notes:all';
+  }
+  return (cats||[]).some(x=>x.id===c)?c:null;
+}
+// 分类要赶在首次 render 之前定下来，所以在 boot() 里调
+function restoreLastCat(){
+  const v=readLastView();
+  const c=v&&validCat(v.cat);
+  if(c) curCat=c;
+}
+// 页面本身等首次 render 之后再切：日历/设置都要在列表渲染好之后才叠上去
+function restoreLastPage(){
+  const v=readLastView();
+  if(!v) return;
+  if(v.page==='cal') openCalendar();
+  // 电脑端没有独立的「设置」页（侧栏常驻），落回列表
+  else if(v.page==='settings'&&isMobileLayout()) toggleSidebar(true);
 }
 
 // 切换分类时给可见列表的卡片/行做「上滑错落」入场
@@ -10650,6 +10696,7 @@ function openCalendar(){
   if(window.PV&&PV.resetPos)PV.resetPos();   // 重新打开日历页：经期视图也回到当前年月（与上面日历重置到今天一致）
   let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
   setCalView(_lv);   // 恢复上次视图（日历 / 经期月 / 经期年）
+  saveLastView();
 }
 function closeCalendar(){
   document.getElementById('calRoot').classList.remove('open');
@@ -10659,6 +10706,7 @@ function closeCalendar(){
   closeCalFilter();                // 退出日历时收起筛选
   hideCalSheet();
   setCalTabActive(false);          // 恢复原本的 tab 高亮
+  saveLastView();
 }
 // 底部 tab 高亮：日历页时点亮「日历」，退出时交还给 syncBottomTabs
 function setCalTabActive(on){
@@ -12768,7 +12816,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 })();
 
 // ── Init ─────────────────────────────────────────────────────────
-boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger();
+boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger(); restoreLastPage();
 checkIncomingSyncLink();
 
 // ── 弹窗背景滚动锁（iOS/Android 通用）──────────────────────────
