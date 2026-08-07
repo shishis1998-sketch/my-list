@@ -503,7 +503,7 @@ tr:hover .acts{opacity:1;}
 /* 各弹窗的桌面宽度。原来都写在标签的 style="" 上，行内样式压过一切，
    断点想按屏幕调宽度就调不动了（平板上只能一直钉着这条手机宽的窄条）。挪到这里。 */
 #catmodal .mbox,#nsubModal .mbox{max-width:400px;}
-#recoverModal .mbox,#tagMgrModal .mbox{max-width:420px;}
+#tagMgrModal .mbox{max-width:420px;}
 #syncModal .mbox{max-width:480px;}
 #calNotePreviewModal .mbox{max-width:500px;}
 /* 二维码 / 扫码取景框：内容就那么大，任何屏幕上都刻意保持小 */
@@ -3364,7 +3364,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   /* 上面那些各自钉着一个桌面宽度的弹窗，平板上一并跟着屏幕放开。
      只有 #qrModal（二维码）和 #scanModal（取景框）不在列——内容就那么大，
      放宽了只是两边空着。 */
-  #catmodal .mbox,#nsubModal .mbox,#recoverModal .mbox,#tagMgrModal .mbox,
+  #catmodal .mbox,#nsubModal .mbox,#tagMgrModal .mbox,
   #syncModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox{
     max-width:var(--pop-w);
   }
@@ -4002,12 +4002,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       </div>
     </div>
 
-    <div style="margin-bottom:var(--sp-14)">
-      <button class="btn btn-d" style="width:100%" onclick="openRecover()">🕘 从云端历史版本找回笔记</button>
-      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)">
-        Gist 保存每一次同步的历史版本。逐个翻查，把本机已经没有的笔记捞回来（备忘、读书笔记、灵感…全都扫）。
-      </div>
-    </div>
 
     <div class="fg">
       <label>GitHub Personal Access Token</label>
@@ -4042,20 +4036,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   </div>
 </div>
 
-<!-- ===== MEMO RECOVERY MODAL ===== -->
-<div class="moverlay" id="recoverModal" onclick="if(event.target===this)closeRecover()">
-  <div class="mbox" onclick="event.stopPropagation()">
-    <div class="mhdr">
-      <div class="mtitle">从云端历史版本找回笔记</div>
-      <button class="mclose" onclick="closeRecover()">✕</button>
-    </div>
-    <div class="mbody" id="recoverBody"></div>
-    <div class="mftr" style="justify-content:space-between;flex-wrap:wrap;gap:var(--sp-8)">
-      <button class="btn btn-d" onclick="closeRecover()">关闭</button>
-      <button class="btn btn-p" id="recoverGoBtn" style="display:none" onclick="doRecoverMemos()">全部找回</button>
-    </div>
-  </div>
-</div>
 
 <!-- ===== SYNC QR SHOW MODAL ===== -->
 <div class="moverlay" id="qrModal" onclick="if(event.target===this)closeSyncQR()">
@@ -9012,8 +8992,8 @@ function restoreBackup(){
 }
 
 // ── 批量把「仅本机」备忘加密上云 ───────────────────────────────────
-// 从历史版本找回的备忘都是「仅本机」状态：只活在这个浏览器的 localStorage 里，
-// 清一次缓存就没了。一条条点锁按钮会触发几十次推送，这里合并成一次。
+// 「仅本机」的备忘只活在这个浏览器的 localStorage 里，清一次缓存就没了。
+// 一条条点锁按钮会触发几十次推送，这里合并成一次。
 async function uploadAllLocalMemos(){
   const targets=notes.filter(n=>n.subCat==='备忘'&&n.localOnly);
   if(!targets.length){toast('没有「仅本机」的备忘');return;}
@@ -9055,197 +9035,6 @@ function refreshUploadLocalRow(){
     '这 '+n+' 条只存在本机，清掉浏览器数据就没了。上云后云端只存密文。';
 }
 
-// ── 从 Gist 历史版本找回备忘 ──────────────────────────────────────
-// Gist 每次 PATCH 都会留一个 revision，内容永久保留。只要备忘曾经成功上过一次云，
-// 哪怕后来被某次推送顶掉，也还躺在历史版本里。这里把所有版本翻一遍，
-// 把「本机现在没有的备忘」按 id 收集起来，同一条取最近一次出现的版本。
-let _recoverFound=[],_recDropHtml='',_recTimeline=[];
-function closeRecover(){document.getElementById('recoverModal').classList.remove('open');}
-// 云端备忘条数随时间的变化，让「哪一次同步删的」肉眼可见
-function _recTimelineHtml(){
-  if(!_recTimeline.length)return '';
-  const max=Math.max(1,..._recTimeline.map(t=>t.n));
-  const rows=[..._recTimeline].reverse().map(t=>{
-    const w=Math.round(t.n/max*100);
-    return '<div style="display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-4) 0">'
-      +'<div style="width:120px;flex:none;font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t.ts?new Date(t.ts).toLocaleString():'')+'</div>'
-      +'<div style="flex:1;height:10px;background:var(--bg);border-radius:5px;overflow:hidden">'
-      +'<div style="width:'+w+'%;height:100%;background:var(--accent)"></div></div>'
-      +'<div style="width:34px;flex:none;text-align:right;font-size:var(--fs-foot)">'+t.n+'</div></div>';
-  }).join('');
-  return '<details style="margin-top:var(--sp-12)"><summary style="cursor:pointer;font-size:var(--fs-foot);color:var(--text-muted)">'
-    +'查看云端笔记条数的完整变化（'+_recTimeline.length+' 个版本）</summary><div style="margin-top:var(--sp-8)">'+rows+'</div></details>';
-}
-function _recSay(html){document.getElementById('recoverBody').innerHTML=html;}
-
-async function openRecover(){
-  const token=getToken(),gistId=getGistId();
-  document.getElementById('recoverGoBtn').style.display='none';
-  _recoverFound=[];
-  document.getElementById('recoverModal').classList.add('open');
-  if(!token||!gistId){_recSay('<div style="color:var(--danger)">需要先配置 token 和 Gist ID 才能翻历史版本。</div>');return;}
-  _recSay('<div style="color:var(--text-muted)">正在读取历史版本列表…</div>');
-  try{
-    const res=await fetch('https://api.github.com/gists/'+gistId,{
-      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
-    });
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const j=await res.json();
-    // ⚠️ GET /gists/{id} 里的 history 字段最多只给 30 个版本——丢失如果发生在更早，
-    //    只翻这 30 个就会得出「什么都没少」的错误结论。
-    //    /gists/{id}/commits 是分页的，能拿到完整历史，所以优先走它。
-    let hist=[];
-    for(let page=1;page<=10;page++){
-      _recSay('<div style="color:var(--text-muted)">正在读取历史版本列表…（第 '+page+' 页，已 '+hist.length+' 个）</div>');
-      const r=await fetch('https://api.github.com/gists/'+gistId+'/commits?per_page=100&page='+page,{
-        headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
-      });
-      if(!r.ok)break;
-      const arr=await r.json();
-      if(!Array.isArray(arr)||!arr.length)break;
-      hist=hist.concat(arr);
-      if(arr.length<100)break;
-    }
-    if(!hist.length)hist=Array.isArray(j.history)?j.history:[];   // 兜底：退回只有 30 个的字段
-    if(!hist.length){_recSay('<div>这个 Gist 没有历史版本。</div>');return;}
-    const have=new Set(notes.map(n=>n.id));
-    const cur=new Map(notes.map(n=>[n.id,n]));
-    const byId=new Map();          // id → {note, ts}
-    const timeline=[];             // 每个版本的备忘条数，用来定位「是哪一次同步删的」
-    let scanned=0,failed=0;
-    for(const h of hist){
-      _recSay('<div style="color:var(--text-muted)">正在翻查第 '+(scanned+1)+' / '+hist.length+' 个版本…</div>');
-      try{
-        const r=await fetch('https://api.github.com/gists/'+gistId+'/'+h.version,{
-          headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
-        });
-        if(!r.ok)throw new Error('HTTP '+r.status);
-        const rj=await r.json();
-        const f=rj.files&&rj.files[GIST_FILE];
-        if(f&&f.content){
-          // 历史版本同样可能是整份密文，走一样的解封（解不开就落到 catch 计入 failed）
-          const snap=await openPayload(JSON.parse(f.content));
-          // 所有子分类一起扫：读书笔记、灵感、收集…丢失机制完全一样，没道理只保备忘
-          const all=(Array.isArray(snap.notes)?snap.notes:[]).filter(n=>n&&n.id);
-          const bySub={};
-          all.forEach(n=>{const k=n.subCat||'（未分类）';bySub[k]=(bySub[k]||0)+1;});
-          timeline.push({ts:h.committed_at||'',n:all.length,sub:bySub,ok:true});
-          all.forEach(n=>{
-            if(have.has(n.id))return;            // 本机还在，不用捞
-            if(byId.has(n.id))return;            // 历史是从新到旧，先到的更新
-            byId.set(n.id,{note:n,ts:h.committed_at||''});
-          });
-        }else{
-          timeline.push({ts:h.committed_at||'',n:0,sub:{},ok:true});
-        }
-      }catch(e){failed++;timeline.push({ts:h.committed_at||'',n:-1,sub:{},ok:false});}
-      scanned++;
-    }
-    // 历史是从新到旧，反过来按时间顺序找「条数骤降」的那一次推送
-    const chrono=[...timeline].reverse().filter(t=>t.ok);
-    let drop=null;
-    for(let i=1;i<chrono.length;i++){
-      const d=chrono[i-1].n-chrono[i].n;
-      if(d>0&&(!drop||d>drop.d))drop={d,from:chrono[i-1].n,to:chrono[i].n,ts:chrono[i].ts};
-    }
-    _recDropHtml='';
-    if(drop&&drop.d>1){
-      // 按子分类算这次少了哪些，直接点名「读书笔记 −7」这种
-      const i=chrono.findIndex(t=>t.ts===drop.ts);
-      const before=(i>0?chrono[i-1].sub:{})||{}, after=(chrono[i]&&chrono[i].sub)||{};
-      const lost=Object.keys(before).filter(k=>(before[k]||0)>(after[k]||0))
-        .map(k=>esc(k)+' <b>'+(before[k]||0)+' → '+(after[k]||0)+'</b>').join('、');
-      _recDropHtml='<div style="background:var(--danger-bg);color:var(--danger);padding:var(--sp-10) var(--sp-12);'
-        +'border-radius:var(--r);margin-bottom:var(--sp-10);line-height:var(--lh-normal)">'
-        +'<b>找到了：'+esc(new Date(drop.ts).toLocaleString())+'</b> 那次同步，'
-        +'云端笔记从 <b>'+drop.from+'</b> 条被推成了 <b>'+drop.to+'</b> 条。'
-        +(lost?'<div style="margin-top:var(--sp-6)">受影响的分类：'+lost+'</div>':'')
-        +'<div style="font-size:var(--fs-foot);margin-top:var(--sp-6)">这一次推送覆盖了云端。之后每台设备启动时拉取，都会照着这份少掉的数据把本机的笔记删掉。</div></div>';
-    }
-    _recTimeline=chrono;
-    // 解密（能解就解，解不开保留密文，卡片上会显示 🔒）
-    const pw=getMasterPw();
-    let locked=0;
-    for(const v of byId.values()){
-      const n=v.note;
-      if(!n.encData)continue;
-      if(pw&&cryptoOk()){
-        try{
-          const dec=await decryptJSON(n.encData,pw);
-          n.fields=dec.fields||{};n.customFields=dec.customFields||[];delete n.encData;
-          continue;
-        }catch(e){/* 主密码不对 */}
-      }
-      locked++;
-    }
-    _recoverFound=[...byId.values()];
-    if(!_recoverFound.length){
-      _recSay(_recDropHtml+'<div>翻遍了 '+scanned+' 个历史版本，没有发现本机缺失的笔记。'
-        +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
-        +'<br><br><span style="color:var(--text-muted)">说明丢失的内容从来没有成功上传过云端，历史版本里也就没有它们。这种情况只能靠本机的「还原到覆盖前的备份」，或你自己导出的 JSON。</span></div>'
-        +_recTimelineHtml());
-      return;
-    }
-    // 按子分类分组列出，一眼看清哪类丢了多少。
-    // 小分类排前面：537 条日历排在前头的话，后面几条读书笔记根本滚不到。
-    const groups={};
-    _recoverFound.forEach(v=>{const k=v.note.subCat||'（未分类）';(groups[k]=groups[k]||[]).push(v);});
-    const gkeys=Object.keys(groups).sort((a,b)=>groups[a].length-groups[b].length);
-    const summary='<div style="margin-bottom:var(--sp-10);padding:var(--sp-8) var(--sp-10);background:var(--bg);border-radius:var(--r)">'
-      +'<b>各分类缺失条数</b><div style="margin-top:var(--sp-4)">'
-      +gkeys.map(k=>esc(k)+' <b>'+groups[k].length+'</b> 条').join('　·　')+'</div></div>';
-    const rows=summary+gkeys.map(k=>{
-      const items=groups[k].map(v=>{
-        const n=v.note;
-        const t=v.ts?new Date(v.ts).toLocaleString():'';
-        const lk=n.encData?' <span style="color:var(--danger)">🔒需主密码</span>':'';
-        const preview=(n.subCat!=='备忘'&&n.body)?('<div style="font-size:var(--fs-foot);color:var(--text-muted);white-space:pre-wrap;'
-          +'max-height:3.4em;overflow:hidden">'+esc(String(n.body).slice(0,120))+'</div>'):'';
-        return '<div style="padding:var(--sp-8) 0;border-bottom:1px solid var(--line)">'
-          +'<b>'+esc(n.title||'（无标题）')+'</b>'+lk+preview
-          +'<div style="font-size:var(--fs-foot);color:var(--text-muted)">'+esc(t)+'</div></div>';
-      }).join('');
-      const hdr=esc(k)+' <span style="color:var(--text-muted);font-weight:400">'+groups[k].length+' 条</span>';
-      // 超过 20 条就折叠，默认收起，避免把小分类挤到几百条之后
-      if(groups[k].length>20){
-        return '<details style="margin-top:var(--sp-10)"><summary style="cursor:pointer;font-weight:600">'
-          +hdr+'（点击展开）</summary>'+items+'</details>';
-      }
-      return '<div style="margin-top:var(--sp-10)"><div style="font-weight:600">'+hdr+'</div>'+items+'</div>';
-    }).join('');
-    _recSay(_recDropHtml
-      +'<div style="margin-bottom:var(--sp-10)">翻查了 '+scanned+' 个历史版本，找到 <b>'+_recoverFound.length+'</b> 条本机已经没有的笔记'
-      +(locked?'（其中 '+locked+' 条备忘需要正确的主密码才能看到内容，但可以先捞回来）':'')+'：'
-      +(failed?'<br><span style="color:var(--danger)">有 '+failed+' 个版本读取失败，可以关掉重试一次。</span>':'')
-      +'</div>'+rows
-      +'<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal)">找回的内容不会覆盖现有任何数据。备忘以「仅本机」加入，核对后再改成加密上云；其它笔记会照常参与同步。</div>'
-      +_recTimelineHtml());
-    document.getElementById('recoverGoBtn').style.display='';
-  }catch(e){
-    _recSay('<div style="color:var(--danger)">读取失败：'+esc(e.message||String(e))+'</div>');
-  }
-}
-
-function doRecoverMemos(){
-  if(!_recoverFound.length)return;
-  backupLocal('before-recover');
-  const have=new Set(notes.map(n=>n.id));
-  let added=0;
-  _recoverFound.forEach(v=>{
-    if(have.has(v.note.id))return;
-    const {pendingCloud,...rest}=v.note;
-    // 备忘以「仅本机」加入：里面是账号密码，先让人核对，别立刻参与同步。
-    // 其它笔记没有这层概念，照常加入并同步回云端。
-    if(rest.subCat==='备忘')notes.unshift({...rest,localOnly:true});
-    else{delete rest.localOnly;notes.unshift(rest);}
-    added++;
-  });
-  localStorage.setItem(NSK,JSON.stringify(notes));
-  _recoverFound=[];
-  closeRecover();closeSyncCfg();
-  render();
-  toast('✓ 已找回 '+added+' 条笔记');
-}
 
 async function syncPull(silent){
   const token=getToken(),gistId=getGistId();
