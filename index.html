@@ -2756,9 +2756,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-row-ar{color:var(--disabled);font-size:var(--fs-caption);flex:none;
   transition:transform .2s ease;}
 .pv-row.open .pv-row-ar{transform:rotate(90deg);}
-/* 展开出来的子项：内缩 + 淡底，一眼看出归属于上面那行 */
-.pv-row.sub{padding-left:28px;background:var(--surface-2);}
-.pv-row.sub:active{background:var(--line-soft);}
+/* 展开出来的子项：只靠内缩表示归属，底色跟其余行一样。
+   给它单独铺一层灰会读成「这几行被禁用了」，可它们恰恰是此刻要点的。 */
+.pv-row.sub{padding-left:28px;}
+/* 只报信息、点了没反应的行（日期）：别给它按钮的手感 */
+.pv-row.static{cursor:default;}
+.pv-row.static:active{background:none;}
 .pv-row.link{color:var(--brand);}
 .pv-row.danger{color:var(--danger);justify-content:center;}
 .pv-dot{width:14px;height:14px;border-radius:50%;flex:none;
@@ -2770,9 +2773,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-row.on .pv-tick{background:var(--brand);box-shadow:none;}
 .pv-row.on .pv-tick::after{content:"";position:absolute;left:8px;top:5px;width:5px;height:9px;
   border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg);}
-/* 「新建症状」「日期」展开出来的输入行 */
+/* 「新建症状」展开出来的输入行 */
 .pv-inprow{display:flex;align-items:center;gap:8px;padding:8px 12px;
-  background:var(--surface-2);border-top:1px solid var(--line-soft);}
+  border-top:1px solid var(--line-soft);}
 .pv-inp{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;
   padding:8px 10px;font-family:var(--zh);font-size:16px;   /* 16px：iOS 聚焦时不放大整页 */
   color:var(--ink);background:var(--surface);}
@@ -6983,7 +6986,7 @@ window.PV = (function(){
 
     // 抽屉内各行的展开状态。每次重新打开都收回去：上一天展开着，
     // 不该让下一天也顶开（与状态卡的做法一致）。
-    let sheetOpenRow = null;   // null | 'date' | 'flow' —— 一次只展开一行
+    let flowOpen = false;      // 「经血量」四档是否就地展开
     let symAllOpen = false;    // 「全部症状」是否展开
     let symAddOpen = false;    // 「新建症状」输入行是否展开
     let symAddFocus = false;   // 这一次重画要不要把焦点送进输入框（只在刚展开/刚添加完时）
@@ -7029,21 +7032,16 @@ window.PV = (function(){
       const { y, m, d } = selectedView;
       const lv = getLevel(y, m, d);
       const sel = getSym(y, m, d);
-      const iso = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const status = daySheetStatusText(y, m, d);
 
       // ── 组一：日期 + 经血量 ──
-      const dateOpen = sheetOpenRow === 'date';
-      const flowOpen = sheetOpenRow === 'flow';
+      // 日期这行只报「在改哪天」，不可点：本来就是点日历上的某一天才走到这儿的，
+      // 再给一个日期选择器等于同一件事有两个入口。
       let g1 =
-        `<button type="button" class="pv-row${dateOpen ? ' open' : ''}" data-act="date">` +
+        `<div class="pv-row static">` +
           `<span class="pv-row-l">日期</span>` +
           `<span class="pv-row-v">${y} 年 ${m} 月 ${d} 日 · ${WEEKDAY_CN[new Date(y, m - 1, d).getDay()]}</span>` +
-          `<span class="pv-row-ar">›</span>` +
-        `</button>`;
-      if (dateOpen) {
-        g1 += `<div class="pv-inprow"><input type="date" class="pv-inp" id="pvDateInp" value="${iso}"></div>`;
-      }
+        `</div>`;
       const p = PALETTE[lv] || {};
       g1 +=
         `<button type="button" class="pv-row${flowOpen ? ' open' : ''}" data-act="flow">` +
@@ -7118,7 +7116,7 @@ window.PV = (function(){
       body.querySelectorAll('[data-lv]').forEach(el => {
         el.onclick = (ev) => {
           ev.stopPropagation();
-          sheetOpenRow = null;              // 选完就收起四档
+          flowOpen = false;                 // 选完就收起四档
           applySelectedColor(+el.dataset.lv, true);
         };
       });
@@ -7142,17 +7140,6 @@ window.PV = (function(){
           toggleSym(el.dataset.sym);
         };
       });
-      const dateInp = body.querySelector('#pvDateInp');
-      if (dateInp) {
-        dateInp.onclick = (ev) => ev.stopPropagation();
-        dateInp.onchange = () => {
-          const v = dateInp.value;
-          if (!v) return;
-          const [ny, nm, nd] = v.split('-').map(Number);
-          if (!ny || !nm || !nd) return;
-          jumpDaySheetTo(ny, nm, nd);
-        };
-      }
       const symInp = body.querySelector('#pvNewSym');
       if (symInp) {
         symInp.onclick = (ev) => ev.stopPropagation();
@@ -7166,8 +7153,8 @@ window.PV = (function(){
     }
 
     function daySheetAction(act) {
-      if (act === 'date' || act === 'flow') {
-        sheetOpenRow = sheetOpenRow === act ? null : act;   // 一次只开一行
+      if (act === 'flow') {
+        flowOpen = !flowOpen;
       } else if (act === 'all') {
         symAllOpen = !symAllOpen;
       } else if (act === 'add') {
@@ -7183,16 +7170,6 @@ window.PV = (function(){
       renderDaySheetBody();
     }
 
-    // 在抽屉里改日期：跨月/跨年要把日历也翻过去（render 会顺手收起抽屉，之后再开回来）
-    function jumpDaySheetTo(y, m, d) {
-      if (y !== year || m !== viewMonth) {
-        year = y; viewMonth = m; homeView = 'month';
-        render();
-        notifyHomeView();
-      }
-      openDaySheet(y, m, d);
-    }
-
     function openDaySheet(y, m, d) {
       const body = document.getElementById('pvSheetBody');
       const sheet = document.getElementById('pvSheet');
@@ -7201,7 +7178,7 @@ window.PV = (function(){
       selectedView = { y, m, d };
       cardDay = { y, m, d };    // 状态卡跟着点选走（selectedView 会被 closeDaySheet 清掉，这个不会）
       refreshDayCard();
-      sheetOpenRow = null; symAllOpen = false; symAddOpen = false; symAddFocus = false;
+      flowOpen = false; symAllOpen = false; symAddOpen = false; symAddFocus = false;
       symRows = pickSymRows(y, m, d);
       renderDaySheetBody();
       updateSelectedHighlight();
