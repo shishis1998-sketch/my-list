@@ -2141,40 +2141,34 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-titlenav .cal-navbtn{width:26px;color:var(--text-primary);}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
   letter-spacing:.03em;padding:0 var(--sp-2);white-space:nowrap;}
-/* 标签卡：手机两列，宽屏自动加列 */
-#calViewHeat .hm-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:var(--sp-12);align-items:start;}
-/* 桌面端卡片放大一档：手机固定两列，宽屏按 200px 起排，别摊成一排小格子 */
-@media(min-width:1025px){
-  #calViewHeat .hm-cards{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
-}
+/* 标签行：一个标签一条长条月历带。
+   原本是「一标签一张整月网格卡」，每个标签一个月通常只记 1~3 天，
+   用 31 格的七列网格去显示 2 个点，六个标签要滑三屏。改成单行色带后
+   同样六个标签约 490px，一屏看完，而且「哪几天、挨不挨着」反而更直观。 */
+#calViewHeat .hm-cards{display:flex;flex-direction:column;gap:var(--sp-8);}
 #calViewHeat .hm-card{background:var(--surface);border:var(--bd) solid var(--border);
-  border-radius:var(--rlg);padding:var(--sp-12);}
-#calViewHeat .hm-card-name{display:block;font-size:var(--fs-sub);font-weight:700;
-  color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);
-  margin:var(--sp-2) 0 var(--sp-10);}
+  border-radius:var(--rlg);padding:var(--sp-10) var(--sp-12);}
+/* 名字和天数同行，省一行高度 */
+#calViewHeat .hm-card-hd{display:flex;align-items:baseline;gap:var(--sp-8);margin-bottom:var(--sp-6);}
+#calViewHeat .hm-card-name{font-size:var(--fs-sub);font-weight:700;color:var(--text-primary);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);flex:0 0 auto;}
 #calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
-/* 星期头与第一行日期之间也用 6px，跟下面的行距一致 */
-#calViewHeat .hm-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);
-  margin-bottom:var(--sp-6);}
-#calViewHeat .hm-wk div{text-align:center;font-size:var(--fs-foot);line-height:1;
-  color:var(--text-muted);}
-/* 行距 6px：圆是 16px 定宽、横向实际空隙 5.56px，竖向给到 6px 才和横向齐平
-   （两个方向都写 2px 的话，竖向真就是 2px，看着行挤列松）*/
-#calViewHeat .hm-dd{display:grid;grid-template-columns:repeat(7,1fr);
-  column-gap:var(--sp-2);row-gap:var(--sp-6);}
-/* 日期格与「经期」同一套语言：平时只有数字，记过的那天才出现一个实心正圆。
-   18px 定宽（不撑满 21.6px 的轨道），圆与圆之间留出空隙；居中靠 margin auto。 */
-#calViewHeat .hm-cell{width:18px;height:18px;margin:0 auto;border-radius:50%;background:transparent;
-  display:flex;align-items:center;justify-content:center;font-family:var(--en);
-  font-size:var(--fs-foot);line-height:1;color:var(--text-muted);}
-#calViewHeat .hm-cell.on{background:var(--accent);color:#FFFFFF;font-weight:600;}
-/* 夜间 accent 是提亮版，圆里的字得反过来用深色 */
-:root[data-mode="dark"] #calViewHeat .hm-cell.on{color:var(--on-accent);}
-/* 今天：1px 细圈。画成 inset 落在圆内侧，外径与上面的实心圆严格相等
-   （落在圆外的话外径会大 2px，两种圆看着不一样大）*/
-#calViewHeat .hm-cell.today{box-shadow:inset 0 0 0 var(--bd) var(--accent);}
+/* 色带：当月天数列等分整宽。列数用 --dim 传进来，28~31 天都能自适应 */
+#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);gap:2px;}
+#calViewHeat .hm-cell{height:16px;border-radius:3px;background:var(--surface-2);}
+#calViewHeat .hm-cell.on{background:var(--accent);}
+/* 今天：描边空心格，与实心格外径一致（inset 落在格内侧）*/
+#calViewHeat .hm-cell.today{box-shadow:inset 0 0 0 var(--bd) var(--accent);background:var(--surface);}
+/* 今天恰好也是记录日：实心格上再压一道浅色内描边。
+   旧的网格版每格里有数字，填实了也能读出「7」；长条没有数字，
+   两者重合时如果不加这道边，今天就彻底失去参照了 */
+#calViewHeat .hm-cell.on.today{background:var(--accent);
+  box-shadow:inset 0 0 0 var(--bd) var(--surface);}
+/* 刻度尺：每 3 天一个数字（1、4、7…），列宽与色带严格对齐 */
+#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);
+  margin-top:var(--sp-4);font-family:var(--en);font-size:9px;line-height:1;color:var(--text-muted);}
+#calViewHeat .hm-ruler span{text-align:center;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
 #calViewHeat .hm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:var(--sp-10);padding:var(--sp-40) var(--sp-20);text-align:center;}
@@ -8146,9 +8140,8 @@ window.PV = (function(){
   function hasPos(){ return posKept; }
 
   // ── 标签视图（切换条第四段）───────────────────────────────────
-  // 当月记过的每个症状标签一张卡，卡内是整月网格，记过的那天填深绿。
+  // 当月记过的每个症状标签一条长条月历带，记过的那天填深色。
   // 移植自经期 App 热力图的「月」视图（renderTagCards），只读 SYMPTOMS_*，不写数据。
-  const HEAT_WK = ['一','二','三','四','五','六','日'];
   let heatYear = 0, heatMonth = 0, heatPos = false;
 
   // 从「经期 / 年度」切进来 → 跟随那边当前停留的年月；
@@ -8182,7 +8175,6 @@ window.PV = (function(){
     const title = document.getElementById('hmTitle');
     if (title) title.textContent = `${heatYear} 年 ${heatMonth} 月`;
 
-    const lead = (new Date(heatYear, heatMonth - 1, 1).getDay() + 6) % 7;   // 周一起始
     const dim = new Date(heatYear, heatMonth, 0).getDate();
     const now = new Date();
     const todayD = (now.getFullYear() === heatYear && now.getMonth() + 1 === heatMonth) ? now.getDate() : 0;
@@ -8204,18 +8196,26 @@ window.PV = (function(){
         '<small>在「经期」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
       return;
     }
-    const wkHead = HEAT_WK.map(w => `<div>${w}</div>`).join('');
+    // 刻度：每 3 天一个数字，从 1 号起（1、4、7…），末尾那格若不落在节拍上也补一个，
+    // 这样两端都有参照，中间不会出现「最后 2 格没刻度」的悬空感
+    let ruler = '';
+    for (let d = 1; d <= dim; d++) {
+      const show = (d - 1) % 3 === 0 || d === dim;
+      ruler += `<span>${show ? d : ''}</span>`;
+    }
     box.innerHTML = '<div class="hm-cards">' + cards.map(c => {
-      let cells = '<div class="hm-cell pad"></div>'.repeat(lead);
+      let cells = '';
       for (let d = 1; d <= dim; d++) {
         const on = c.days.includes(d) ? ' on' : '';
         const today = d === todayD ? ' today' : '';
-        cells += `<div class="hm-cell${on}${today}">${d}</div>`;
+        cells += `<div class="hm-cell${on}${today}"></div>`;
       }
-      return '<div class="hm-card">' +
-        `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
-        `<div class="hm-card-meta">本月 <b>${c.days.length}</b> 天</div>` +
-        `<div class="hm-wk">${wkHead}</div><div class="hm-dd">${cells}</div></div>`;
+      return `<div class="hm-card" style="--dim:${dim}">` +
+        '<div class="hm-card-hd">' +
+          `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
+          `<span class="hm-card-meta">本月 <b>${c.days.length}</b> 天</span>` +
+        '</div>' +
+        `<div class="hm-strip">${cells}</div><div class="hm-ruler">${ruler}</div></div>`;
     }).join('') + '</div>';
   }
 
