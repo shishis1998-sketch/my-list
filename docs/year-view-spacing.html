@@ -1,0 +1,586 @@
+<title>年度视图 · 间距标注图</title>
+<style>
+:root{
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3;
+  --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4; --thumb:#FFFFFF;
+  --grn:#1C5A48; --red:#C71F37; --gry:#C9CBCF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D;
+    --dim:#F2718A; --acc:#5BB89A; --chip:#26262D; --thumb:#3A3A42;
+    --grn:#5BB89A; --red:#F2718A; --gry:#5A5C64;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D;
+  --dim:#F2718A; --acc:#5BB89A; --chip:#26262D; --thumb:#3A3A42;
+  --grn:#5BB89A; --red:#F2718A; --gry:#5A5C64;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.pagewrap{max-width:1140px;margin:0 auto;padding:56px 20px 96px;display:flex;flex-direction:column;gap:44px;}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+
+/* 页头 */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+.masthead .kicker{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 8px;letter-spacing:.01em;text-wrap:balance;}
+.masthead p{margin:0;color:var(--ink-2);max-width:62ch;}
+.meta{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:18px;}
+.meta span{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;letter-spacing:.04em;
+  color:var(--ink-2);background:var(--sheet);border:1px solid var(--hair);border-radius:2px;padding:4px 9px;}
+.meta span b{color:var(--ink);font-weight:600;}
+
+/* 图版 */
+.plate{display:flex;flex-direction:column;gap:14px;}
+.plate-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:10px;}
+.eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.18em;color:var(--dim);}
+.plate-hd h2{font-size:21px;margin:0;letter-spacing:.01em;}
+.plate-sub{font-size:13px;color:var(--ink-3);font-family:ui-monospace,"SF Mono",Menlo,monospace;}
+.scale{margin-left:auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 8px;white-space:nowrap;}
+.sheet{background:var(--sheet);border:1px solid var(--hair);border-radius:3px;overflow-x:auto;padding:8px 0;}
+.sheet svg{display:block;min-width:1080px;max-width:100%;height:auto;}
+
+/* SVG 语汇 */
+.page{fill:var(--paper);stroke:var(--hair);stroke-width:1;}
+.band{fill:var(--paper);stroke:none;}
+.card{fill:var(--sheet);stroke:var(--hair);stroke-width:1;}
+path.card{fill:none;}
+.chip{fill:var(--chip);stroke:none;}
+.thumb{fill:var(--thumb);stroke:var(--hair);stroke-width:1;}
+.btn{fill:none;stroke:var(--hair);stroke-width:1;stroke-dasharray:2 2;}
+.ghost{fill:none;stroke:var(--ink-3);stroke-width:1;stroke-dasharray:4 3;opacity:.6;}
+.ghost2{fill:none;stroke:var(--ink-3);stroke-width:1;stroke-dasharray:2 2;opacity:.55;}
+.safe{fill:none;stroke:var(--acc);stroke-width:1;stroke-dasharray:3 3;opacity:.5;}
+.plot{fill:none;stroke:none;}
+.grid{stroke:var(--hair);stroke-width:1;stroke-dasharray:4 4;}
+.grid.hi{stroke:var(--acc);stroke-dasharray:6 4;opacity:.75;}
+.axis{stroke:var(--hair);stroke-width:1.5;}
+.dwrap{fill:none;stroke:var(--hair);stroke-width:1;stroke-dasharray:3 3;}
+.slot{fill:var(--chip);stroke:none;opacity:.7;}
+.cell{fill:var(--chip);stroke:none;}
+.fill{fill:var(--red);opacity:.85;}
+.fill.deep{fill:var(--red);opacity:.55;}
+.fill.none{fill:none;}
+.ring{fill:none;stroke:var(--red);stroke-width:12;}
+.dot{fill:var(--red);}
+.sw{fill:var(--gry);}
+.bc{fill:var(--grn);}
+.bp{fill:var(--red);}
+.bs{fill:var(--gry);}
+.filt line{stroke:var(--ink-2);stroke-width:2;stroke-linecap:round;}
+.guide{stroke-width:1;stroke-dasharray:3 3;}
+.guide.a{stroke:var(--dim);}
+.guide.b{stroke:var(--acc);}
+
+/* 标注 */
+.dl,.dc{stroke:var(--dim);stroke-width:1;}
+.ex{stroke:var(--dim);stroke-width:.75;opacity:.4;}
+.lead{stroke:var(--ink-3);stroke-width:.75;opacity:.55;}
+text{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+.dt{fill:var(--dim);font-size:11px;font-weight:600;}
+.nt{fill:var(--ink);font-size:12px;font-weight:600;
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;}
+.nt2{fill:var(--ink-2);font-size:11.5px;
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;}
+.ui{fill:var(--ink);font-size:11px;
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;}
+.ui.on{font-weight:700;}
+.b18{font-size:18px;font-weight:700;}
+.b16{font-size:16px;font-weight:700;}
+.b14{font-size:14px;font-weight:700;}
+.b12{font-size:12px;font-weight:700;}
+.sm{font-size:12px;fill:var(--ink-2);}
+.sm2{font-size:12px;fill:var(--ink-3);}
+.xs{font-size:10px;fill:var(--ink-3);}
+.wk{font-size:11px;fill:var(--ink-3);}
+.dnum{font-size:11px;fill:var(--ink-2);}
+.dnum6{font-size:24px;fill:var(--ink-2);}
+.dnum.on,.dnum6.on{fill:#fff;}
+.dnum6.rd{fill:var(--red);font-weight:700;}
+.num{font-size:8px;font-weight:700;}
+text.num.bc{fill:var(--grn);}
+text.num.bp{fill:var(--red);}
+text.num.bs{fill:var(--ink-3);}
+
+/* 表 */
+.tables{display:flex;flex-direction:column;gap:28px;}
+.tblock h3{font-size:16px;margin:0 0 10px;letter-spacing:.02em;
+  padding-left:10px;border-left:3px solid var(--dim);}
+.tscroll{overflow-x:auto;background:var(--sheet);border:1px solid var(--hair);border-radius:3px;}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px;}
+th{text-align:left;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500;padding:10px 14px;border-bottom:1px solid var(--hair);}
+td{padding:9px 14px;border-bottom:1px solid var(--hair-2);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td.v{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;
+  color:var(--dim);font-weight:600;white-space:nowrap;}
+td.d{color:var(--ink-2);}
+td.ln{font-family:ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink-3);white-space:nowrap;font-size:12px;}
+
+/* 尾注 */
+.notes{border-top:1px solid var(--hair);padding-top:22px;display:flex;flex-direction:column;gap:16px;}
+.notes h3{font-size:16px;margin:0;letter-spacing:.02em;}
+.nitem{display:flex;gap:12px;align-items:flex-start;}
+.nitem .tag{flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 7px;margin-top:3px;white-space:nowrap;}
+.nitem p{margin:0;color:var(--ink-2);font-size:14px;max-width:70ch;}
+.nitem p b{color:var(--ink);font-weight:600;}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;background:var(--chip);
+  border-radius:2px;padding:1px 5px;color:var(--ink);}
+</style>
+
+<div class="pagewrap">
+  <header class="masthead">
+    <p class="kicker">my-list · 日历 › 年度</p>
+    <h1>年度视图 · 间距标注图</h1>
+    <p>这一页上每张卡、每行文字、每个日期圆的实际尺寸与间距。数值不是从 CSS 里读出来的期望值，而是把 index.html 装进 393 × 852 的无头浏览器、翻到年度视图后逐个元素量出来的渲染值，所以带小数的就是真的带小数。</p>
+    <div class="meta">
+      <span>视口 <b>393 × 852</b></span>
+      <span>页边距 <b>14</b></span>
+      <span>内容宽 <b>365</b></span>
+      <span>卡间距 <b>12</b></span>
+      <span>月卡网格 <b>2 列 · gap 8</b></span>
+      <span>单位 <b>CSS px</b></span>
+    </div>
+  </header>
+
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 01</span>
+    <h2>页面纵向节奏</h2>
+    <span class="plate-sub">视口 393 · 从视图切换条到第二行月卡</span>
+    <span class="scale">1 : 1</span>
+  </header>
+  <div class="sheet">
+    <svg viewBox="0 0 1080 730" width="1080" height="730" role="img" aria-label="页面纵向节奏 间距标注图"><rect class="page" x="300" y="26" width="393" height="668" rx="0"/><rect class="band" x="300" y="30" width="393" height="48" rx="0"/><rect class="chip" x="314" y="40" width="365" height="32" rx="16"/><rect class="thumb" x="496.5" y="43" width="89.75" height="26" rx="13"/><text class="ui" x="361.88" y="60.5" text-anchor="middle">日历</text><text class="ui" x="451.63" y="60.5" text-anchor="middle">经期</text><text class="ui on" x="541.38" y="60.5" text-anchor="middle">年度</text><text class="ui" x="631.13" y="60.5" text-anchor="middle">标签</text><rect class="card" x="314" y="84" width="365" height="276.98" rx="16"/><text class="ui b14" x="331" y="112" text-anchor="start">周期趋势</text><text class="ui sm" x="648" y="111" text-anchor="end">2026</text><rect class="bc" x="331" y="144.4" width="10" height="10" rx="3"/><text class="ui xs" x="347" y="153.5" text-anchor="start">周期</text><rect class="bp" x="385" y="144.4" width="10" height="10" rx="3"/><text class="ui xs" x="401" y="153.5" text-anchor="start">经期</text><rect class="bs" x="439" y="144.4" width="10" height="10" rx="3"/><text class="ui xs" x="455" y="153.5" text-anchor="start">点滴</text><rect class="bc" x="338.39" y="252.49" width="6" height="70.5" rx="3"/><rect class="bp" x="346.39" y="304.99" width="6" height="18" rx="3"/><rect class="bs" x="354.39" y="307.99" width="6" height="15" rx="3"/><rect class="bc" x="375.17" y="267.49" width="6" height="55.5" rx="3"/><rect class="bp" x="383.17" y="304.99" width="6" height="18" rx="3"/><rect class="bs" x="391.17" y="316.99" width="6" height="6" rx="3"/><rect class="bc" x="411.94" y="252.49" width="6" height="70.5" rx="3"/><rect class="bp" x="419.94" y="298.99" width="6" height="24" rx="3"/><rect class="bs" x="427.94" y="316.99" width="6" height="6" rx="3"/><rect class="bc" x="448.72" y="199.99" width="6" height="123" rx="3"/><rect class="bp" x="456.72" y="298.99" width="6" height="24" rx="3"/><rect class="bs" x="464.72" y="307.99" width="6" height="15" rx="3"/><rect class="bc" x="485.5" y="273.49" width="6" height="49.5" rx="3"/><rect class="bp" x="493.5" y="301.99" width="6" height="21" rx="3"/><rect class="bc" x="522.28" y="276.49" width="6" height="46.5" rx="3"/><rect class="bp" x="530.28" y="304.99" width="6" height="18" rx="3"/><rect class="bs" x="538.28" y="313.99" width="6" height="9" rx="3"/><rect class="bc" x="559.06" y="261.49" width="6" height="61.5" rx="3"/><rect class="bp" x="567.06" y="304.99" width="6" height="18" rx="3"/><rect class="bs" x="575.06" y="313.99" width="6" height="9" rx="3"/><rect class="bc" x="595.83" y="252.49" width="6" height="70.5" rx="3"/><rect class="bp" x="603.83" y="304.99" width="6" height="18" rx="3"/><rect class="bc" x="632.61" y="208.99" width="6" height="114" rx="3"/><rect class="bp" x="640.61" y="304.99" width="6" height="18" rx="3"/><line class="axis" x1="331" y1="322.99" x2="662" y2="322.99"/><line class="grid" x1="331" y1="210.49" x2="662" y2="210.49"/><line class="grid" x1="331" y1="247.99" x2="662" y2="247.99"/><line class="grid" x1="331" y1="285.49" x2="662" y2="285.49"/><rect class="ghost" x="314" y="372.98" width="365" height="48" rx="0"/><rect class="btn" x="334.78" y="380.98" width="26" height="32" rx="8"/><text class="ui b14" x="347.78" y="401.5" text-anchor="middle">‹</text><text class="ui b16" x="360.78" y="402.5" text-anchor="start">2026</text><rect class="btn" x="406.27" y="380.98" width="26" height="32" rx="8"/><text class="ui b14" x="419.27" y="401.5" text-anchor="middle">›</text><rect class="btn" x="629.22" y="380.98" width="32" height="32" rx="16"/><g class="filt"><line x1="637" y1="392" x2="653" y2="392"/><line x1="640" y1="397" x2="650" y2="397"/><line x1="643" y1="402" x2="647" y2="402"/></g><rect class="card" x="314" y="422.98" width="178.5" height="210.58" rx="12"/><text class="ui b12" x="323" y="449.98" text-anchor="start">1 月</text><circle class="cell" cx="333.61" cy="492.56" r="9"/><circle class="cell" cx="356.82" cy="492.56" r="9"/><circle class="cell" cx="380.04" cy="492.56" r="9"/><circle class="cell" cx="403.25" cy="492.56" r="9"/><circle class="cell" cx="426.46" cy="492.56" r="9"/><circle class="cell" cx="449.68" cy="492.56" r="9"/><circle class="cell" cx="472.89" cy="492.56" r="9"/><circle class="cell" cx="333.61" cy="520.56" r="9"/><circle class="cell" cx="356.82" cy="520.56" r="9"/><circle class="cell" cx="380.04" cy="520.56" r="9"/><circle class="cell" cx="403.25" cy="520.56" r="9"/><circle class="cell" cx="426.46" cy="520.56" r="9"/><circle class="cell" cx="449.68" cy="520.56" r="9"/><circle class="cell" cx="472.89" cy="520.56" r="9"/><circle class="cell" cx="333.61" cy="548.56" r="9"/><circle class="cell" cx="356.82" cy="548.56" r="9"/><circle class="cell" cx="380.04" cy="548.56" r="9"/><circle class="cell" cx="403.25" cy="548.56" r="9"/><circle class="cell" cx="426.46" cy="548.56" r="9"/><circle class="cell" cx="449.68" cy="548.56" r="9"/><circle class="cell" cx="472.89" cy="548.56" r="9"/><circle class="cell" cx="333.61" cy="576.56" r="9"/><circle class="cell" cx="356.82" cy="576.56" r="9"/><circle class="cell" cx="380.04" cy="576.56" r="9"/><circle class="cell" cx="403.25" cy="576.56" r="9"/><circle class="cell" cx="426.46" cy="576.56" r="9"/><circle class="cell" cx="449.68" cy="576.56" r="9"/><circle class="cell" cx="472.89" cy="576.56" r="9"/><circle class="cell" cx="333.61" cy="604.56" r="9"/><circle class="cell" cx="356.82" cy="604.56" r="9"/><circle class="cell" cx="380.04" cy="604.56" r="9"/><circle class="cell" cx="403.25" cy="604.56" r="9"/><circle class="cell" cx="426.46" cy="604.56" r="9"/><circle class="cell" cx="449.68" cy="604.56" r="9"/><circle class="cell" cx="472.89" cy="604.56" r="9"/><rect class="card" x="500.5" y="422.98" width="178.5" height="210.58" rx="12"/><text class="ui b12" x="509.5" y="449.98" text-anchor="start">2 月</text><circle class="cell" cx="520.11" cy="492.56" r="9"/><circle class="cell" cx="543.32" cy="492.56" r="9"/><circle class="cell" cx="566.54" cy="492.56" r="9"/><circle class="cell" cx="589.75" cy="492.56" r="9"/><circle class="cell" cx="612.96" cy="492.56" r="9"/><circle class="cell" cx="636.18" cy="492.56" r="9"/><circle class="cell" cx="659.39" cy="492.56" r="9"/><circle class="cell" cx="520.11" cy="520.56" r="9"/><circle class="cell" cx="543.32" cy="520.56" r="9"/><circle class="cell" cx="566.54" cy="520.56" r="9"/><circle class="cell" cx="589.75" cy="520.56" r="9"/><circle class="cell" cx="612.96" cy="520.56" r="9"/><circle class="cell" cx="636.18" cy="520.56" r="9"/><circle class="cell" cx="659.39" cy="520.56" r="9"/><circle class="cell" cx="520.11" cy="548.56" r="9"/><circle class="cell" cx="543.32" cy="548.56" r="9"/><circle class="cell" cx="566.54" cy="548.56" r="9"/><circle class="cell" cx="589.75" cy="548.56" r="9"/><circle class="cell" cx="612.96" cy="548.56" r="9"/><circle class="cell" cx="636.18" cy="548.56" r="9"/><circle class="cell" cx="659.39" cy="548.56" r="9"/><circle class="cell" cx="520.11" cy="576.56" r="9"/><circle class="cell" cx="543.32" cy="576.56" r="9"/><circle class="cell" cx="566.54" cy="576.56" r="9"/><circle class="cell" cx="589.75" cy="576.56" r="9"/><circle class="cell" cx="612.96" cy="576.56" r="9"/><circle class="cell" cx="636.18" cy="576.56" r="9"/><circle class="cell" cx="659.39" cy="576.56" r="9"/><circle class="cell" cx="520.11" cy="604.56" r="9"/><circle class="cell" cx="543.32" cy="604.56" r="9"/><circle class="cell" cx="566.54" cy="604.56" r="9"/><circle class="cell" cx="589.75" cy="604.56" r="9"/><circle class="cell" cx="612.96" cy="604.56" r="9"/><circle class="cell" cx="636.18" cy="604.56" r="9"/><circle class="cell" cx="659.39" cy="604.56" r="9"/><path class="card" d="M 314 665.56 L 314 653.56 A 12 12 0 0 1 326 641.56 L 480.5 641.56 A 12 12 0 0 1 492.5 653.56 L 492.5 665.56"/><path class="card" d="M 500.5 665.56 L 500.5 653.56 A 12 12 0 0 1 512.5 641.56 L 667 641.56 A 12 12 0 0 1 679 653.56 L 679 665.56"/><line class="ex" x1="300" y1="30" x2="218" y2="30"/><line class="ex" x1="300" y1="72" x2="218" y2="72"/><line class="ex" x1="300" y1="78" x2="218" y2="78"/><line class="ex" x1="300" y1="84" x2="218" y2="84"/><line class="ex" x1="300" y1="360.98" x2="218" y2="360.98"/><line class="ex" x1="300" y1="372.98" x2="218" y2="372.98"/><line class="ex" x1="300" y1="420.98" x2="218" y2="420.98"/><line class="ex" x1="300" y1="422.98" x2="218" y2="422.98"/><line class="ex" x1="300" y1="633.56" x2="218" y2="633.56"/><line class="ex" x1="300" y1="641.56" x2="218" y2="641.56"/><g class="dim">
+    <line class="dl" x1="226" y1="30" x2="226" y2="78"/>
+    <line class="dc" x1="222.5" y1="30" x2="229.5" y2="30"/>
+    <line class="dc" x1="222.5" y1="78" x2="229.5" y2="78"/>
+    <text class="dt" x="220" y="57.2" text-anchor="end">48</text>
+  </g><g class="dim">
+    <line class="dl" x1="226" y1="84" x2="226" y2="360.98"/>
+    <line class="dc" x1="222.5" y1="84" x2="229.5" y2="84"/>
+    <line class="dc" x1="222.5" y1="360.98" x2="229.5" y2="360.98"/>
+    <text class="dt" x="220" y="225.69" text-anchor="end">276.98</text>
+  </g><g class="dim">
+    <line class="dl" x1="226" y1="372.98" x2="226" y2="420.98"/>
+    <line class="dc" x1="222.5" y1="372.98" x2="229.5" y2="372.98"/>
+    <line class="dc" x1="222.5" y1="420.98" x2="229.5" y2="420.98"/>
+    <text class="dt" x="220" y="400.18" text-anchor="end">48</text>
+  </g><g class="dim">
+    <line class="dl" x1="226" y1="422.98" x2="226" y2="633.56"/>
+    <line class="dc" x1="222.5" y1="422.98" x2="229.5" y2="422.98"/>
+    <line class="dc" x1="222.5" y1="633.56" x2="229.5" y2="633.56"/>
+    <text class="dt" x="220" y="531.47" text-anchor="end">210.58</text>
+  </g><g class="dim">
+    <line class="dl" x1="274" y1="72" x2="274" y2="84"/>
+    <line class="dc" x1="270.5" y1="72" x2="277.5" y2="72"/>
+    <line class="dc" x1="270.5" y1="84" x2="277.5" y2="84"/>
+    <text class="dt" x="268" y="81.2" text-anchor="end">12</text>
+  </g><g class="dim">
+    <line class="dl" x1="274" y1="360.98" x2="274" y2="372.98"/>
+    <line class="dc" x1="270.5" y1="360.98" x2="277.5" y2="360.98"/>
+    <line class="dc" x1="270.5" y1="372.98" x2="277.5" y2="372.98"/>
+    <text class="dt" x="268" y="370.18" text-anchor="end">12</text>
+  </g><g class="dim">
+    <line class="dl" x1="274" y1="420.98" x2="274" y2="422.98"/>
+    <line class="dc" x1="270.5" y1="420.98" x2="277.5" y2="420.98"/>
+    <line class="dc" x1="270.5" y1="422.98" x2="277.5" y2="422.98"/>
+    <text class="dt" x="268" y="425.18" text-anchor="end">2</text>
+  </g><g class="dim">
+    <line class="dl" x1="274" y1="633.56" x2="274" y2="641.56"/>
+    <line class="dc" x1="270.5" y1="633.56" x2="277.5" y2="633.56"/>
+    <line class="dc" x1="270.5" y1="641.56" x2="277.5" y2="641.56"/>
+    <text class="dt" x="268" y="640.76" text-anchor="end">8</text>
+  </g><g class="dim">
+    <line class="dl" x1="300" y1="14" x2="314" y2="14"/>
+    <line class="dc" x1="300" y1="10.5" x2="300" y2="17.5"/>
+    <line class="dc" x1="314" y1="10.5" x2="314" y2="17.5"/>
+    <text class="dt" x="307" y="8" text-anchor="middle">14</text>
+  </g><g class="dim">
+    <line class="dl" x1="314" y1="14" x2="679" y2="14"/>
+    <line class="dc" x1="314" y1="10.5" x2="314" y2="17.5"/>
+    <line class="dc" x1="679" y1="10.5" x2="679" y2="17.5"/>
+    <text class="dt" x="496.5" y="8" text-anchor="middle">365</text>
+  </g><g class="dim">
+    <line class="dl" x1="679" y1="14" x2="693" y2="14"/>
+    <line class="dc" x1="679" y1="10.5" x2="679" y2="17.5"/>
+    <line class="dc" x1="693" y1="10.5" x2="693" y2="17.5"/>
+    <text class="dt" x="686" y="8" text-anchor="middle">14</text>
+  </g><g class="dim">
+    <line class="dl" x1="314" y1="680" x2="492.5" y2="680"/>
+    <line class="dc" x1="314" y1="676.5" x2="314" y2="683.5"/>
+    <line class="dc" x1="492.5" y1="676.5" x2="492.5" y2="683.5"/>
+    <text class="dt" x="403.25" y="693" text-anchor="middle">178.5</text>
+  </g><g class="dim">
+    <line class="dl" x1="492.5" y1="680" x2="500.5" y2="680"/>
+    <line class="dc" x1="492.5" y1="676.5" x2="492.5" y2="683.5"/>
+    <line class="dc" x1="500.5" y1="676.5" x2="500.5" y2="683.5"/>
+    <text class="dt" x="496.5" y="693" text-anchor="middle">8</text>
+  </g><g class="dim">
+    <line class="dl" x1="500.5" y1="680" x2="679" y2="680"/>
+    <line class="dc" x1="500.5" y1="676.5" x2="500.5" y2="683.5"/>
+    <line class="dc" x1="679" y1="676.5" x2="679" y2="683.5"/>
+    <text class="dt" x="589.75" y="693" text-anchor="middle">178.5</text>
+  </g><line class="lead" x1="693" y1="54" x2="711" y2="46"/><text class="nt" x="717" y="50" text-anchor="start">视图切换条 .cal-viewbar</text><text class="nt2" x="717" y="64" text-anchor="start">padding 10↑ / 14↔ / 6↓</text><text class="nt2" x="717" y="78" text-anchor="start">胶囊高 32，4 段各 89.75</text><line class="lead" x1="679" y1="190" x2="711" y2="176"/><text class="nt" x="717" y="180" text-anchor="start">周期趋势卡 .pv-trend-card</text><text class="nt2" x="717" y="194" text-anchor="start">365 × 276.98（高度恒定）</text><text class="nt2" x="717" y="208" text-anchor="start">圆角 16 · 1px 描边 → 图 2</text><line class="lead" x1="679" y1="385" x2="711" y2="371"/><text class="nt" x="717" y="375" text-anchor="start">年份导航 .home-header</text><text class="nt2" x="717" y="389" text-anchor="start">48 = 8 + 按钮 32 + 8</text><text class="nt2" x="717" y="403" text-anchor="start">透明，不是卡片 → 图 5</text><line class="lead" x1="679" y1="490" x2="711" y2="476"/><text class="nt" x="717" y="480" text-anchor="start">月卡 .month</text><text class="nt2" x="717" y="494" text-anchor="start">178.5 宽 · 圆角 12</text><text class="nt2" x="717" y="508" text-anchor="start">5 周 210.58 / 6 周 238.58</text><text class="nt2" x="717" y="522" text-anchor="start">→ 图 3</text><line class="lead" x1="679" y1="640" x2="711" y2="626"/><text class="nt" x="717" y="630" text-anchor="start">12 张月卡：2 列</text><text class="nt2" x="717" y="644" text-anchor="start">column-gap 8 · row-gap 8</text><text class="nt2" x="717" y="658" text-anchor="start">末行下方 12</text><text class="nt" x="12" y="74" text-anchor="start">12 = 切换条 padding-bottom 6</text><text class="nt2" x="12" y="88" text-anchor="start">　　+ #pvTrend margin-top 6</text><text class="nt" x="12" y="358" text-anchor="start">12 = 外边距合并 max(12, 6)</text><text class="nt2" x="12" y="372" text-anchor="start">　　（不是 12 + 6）</text><text class="nt" x="12" y="420" text-anchor="start">2 = .home-header margin-bottom</text><text class="nt2" x="12" y="434" text-anchor="start">　　另有 8 的 padding-bottom</text></svg>
+  </div>
+</section>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 02</span>
+    <h2>周期趋势卡</h2>
+    <span class="plate-sub">.pv-trend-card · 365 × 276.98</span>
+    <span class="scale">1 : 1</span>
+  </header>
+  <div class="sheet">
+    <svg viewBox="0 0 1080 400" width="1080" height="400" role="img" aria-label="周期趋势卡 间距标注图"><rect class="card" x="140" y="34" width="365" height="276.98" rx="16"/><rect class="safe" x="157" y="51" width="331" height="241.98" rx="0"/><text class="ui b18" x="157" y="72.5" text-anchor="start">周期趋势</text><text class="ui sm2" x="235" y="72.5" text-anchor="start">平均 24 天</text><rect class="ghost2" x="448" y="58" width="40" height="22.4" rx="0"/><text class="ui b14" x="468" y="72.5" text-anchor="middle">2026</text><rect class="bc" x="157" y="94.4" width="10" height="10" rx="3"/><text class="ui sm" x="173" y="103.5" text-anchor="start">周期</text><rect class="bp" x="211" y="94.4" width="10" height="10" rx="3"/><text class="ui sm" x="227" y="103.5" text-anchor="start">经期</text><rect class="bs" x="265" y="94.4" width="10" height="10" rx="3"/><text class="ui sm" x="281" y="103.5" text-anchor="start">点滴</text><rect class="plot" x="157" y="122.99" width="331" height="150" rx="0"/><line class="grid" x1="157" y1="160.49" x2="488" y2="160.49"/><line class="grid" x1="157" y1="197.99" x2="488" y2="197.99"/><line class="grid" x1="157" y1="235.49" x2="488" y2="235.49"/><line class="axis" x1="157" y1="272.99" x2="488" y2="272.99"/><rect class="bc" x="164.39" y="202.49" width="6" height="70.5" rx="3"/><text class="num bc" x="167.39" y="198.99" text-anchor="middle">23</text><rect class="bp" x="172.39" y="254.99" width="6" height="18" rx="3"/><text class="num bp" x="175.39" y="251.49" text-anchor="middle">6</text><rect class="bs" x="180.39" y="257.99" width="6" height="15" rx="3"/><text class="num bs" x="183.39" y="254.49" text-anchor="middle">5</text><text class="ui xs" x="175.39" y="292.5" text-anchor="middle">1</text><rect class="bc" x="201.17" y="217.49" width="6" height="55.5" rx="3"/><text class="num bc" x="204.17" y="213.99" text-anchor="middle">18</text><rect class="bp" x="209.17" y="254.99" width="6" height="18" rx="3"/><text class="num bp" x="212.17" y="251.49" text-anchor="middle">6</text><rect class="bs" x="217.17" y="266.99" width="6" height="6" rx="3"/><text class="num bs" x="220.17" y="263.49" text-anchor="middle">1</text><text class="ui xs" x="212.17" y="292.5" text-anchor="middle">2</text><rect class="bc" x="237.95" y="202.49" width="6" height="70.5" rx="3"/><text class="num bc" x="240.95" y="198.99" text-anchor="middle">23</text><rect class="bp" x="245.95" y="248.99" width="6" height="24" rx="3"/><text class="num bp" x="248.95" y="245.49" text-anchor="middle">8</text><rect class="bs" x="253.95" y="266.99" width="6" height="6" rx="3"/><text class="num bs" x="256.95" y="263.49" text-anchor="middle">1</text><text class="ui xs" x="248.94" y="292.5" text-anchor="middle">3</text><rect class="bc" x="274.72" y="149.99" width="6" height="123" rx="3"/><text class="num bc" x="277.72" y="146.49" text-anchor="middle">40</text><rect class="bp" x="282.72" y="248.99" width="6" height="24" rx="3"/><text class="num bp" x="285.72" y="245.49" text-anchor="middle">8</text><rect class="bs" x="290.72" y="257.99" width="6" height="15" rx="3"/><text class="num bs" x="293.72" y="254.49" text-anchor="middle">5</text><text class="ui xs" x="285.72" y="292.5" text-anchor="middle">4</text><rect class="bc" x="311.5" y="223.49" width="6" height="49.5" rx="3"/><text class="num bc" x="314.5" y="219.99" text-anchor="middle">16</text><rect class="bp" x="319.5" y="251.99" width="6" height="21" rx="3"/><text class="num bp" x="322.5" y="248.49" text-anchor="middle">7</text><text class="ui xs" x="322.5" y="292.5" text-anchor="middle">5</text><rect class="bc" x="348.28" y="226.49" width="6" height="46.5" rx="3"/><text class="num bc" x="351.28" y="222.99" text-anchor="middle">15</text><rect class="bp" x="356.28" y="254.99" width="6" height="18" rx="3"/><text class="num bp" x="359.28" y="251.49" text-anchor="middle">6</text><rect class="bs" x="364.28" y="263.99" width="6" height="9" rx="3"/><text class="num bs" x="367.28" y="260.49" text-anchor="middle">3</text><text class="ui xs" x="359.28" y="292.5" text-anchor="middle">6</text><rect class="bc" x="385.06" y="211.49" width="6" height="61.5" rx="3"/><text class="num bc" x="388.06" y="207.99" text-anchor="middle">20</text><rect class="bp" x="393.06" y="254.99" width="6" height="18" rx="3"/><text class="num bp" x="396.06" y="251.49" text-anchor="middle">6</text><rect class="bs" x="401.06" y="263.99" width="6" height="9" rx="3"/><text class="num bs" x="404.06" y="260.49" text-anchor="middle">3</text><text class="ui xs" x="396.06" y="292.5" text-anchor="middle">7</text><rect class="bc" x="421.83" y="202.49" width="6" height="70.5" rx="3"/><text class="num bc" x="424.83" y="198.99" text-anchor="middle">23</text><rect class="bp" x="429.83" y="254.99" width="6" height="18" rx="3"/><text class="num bp" x="432.83" y="251.49" text-anchor="middle">6</text><text class="ui xs" x="432.83" y="292.5" text-anchor="middle">8</text><rect class="bc" x="458.61" y="158.99" width="6" height="114" rx="3"/><text class="num bc" x="461.61" y="155.49" text-anchor="middle">37</text><rect class="bp" x="466.61" y="254.99" width="6" height="18" rx="3"/><text class="num bp" x="469.61" y="251.49" text-anchor="middle">6</text><text class="ui xs" x="469.61" y="292.5" text-anchor="middle">9</text><line class="ex" x1="140" y1="35" x2="62" y2="35"/><line class="ex" x1="140" y1="51" x2="62" y2="51"/><line class="ex" x1="140" y1="79.8" x2="62" y2="79.8"/><line class="ex" x1="140" y1="89.8" x2="62" y2="89.8"/><line class="ex" x1="140" y1="108.99" x2="62" y2="108.99"/><line class="ex" x1="140" y1="122.99" x2="62" y2="122.99"/><line class="ex" x1="140" y1="272.99" x2="62" y2="272.99"/><line class="ex" x1="140" y1="279.99" x2="62" y2="279.99"/><line class="ex" x1="140" y1="295.99" x2="62" y2="295.99"/><line class="ex" x1="140" y1="309.98" x2="62" y2="309.98"/><g class="dim">
+    <line class="dl" x1="118" y1="35" x2="118" y2="51"/>
+    <line class="dc" x1="114.5" y1="35" x2="121.5" y2="35"/>
+    <line class="dc" x1="114.5" y1="51" x2="121.5" y2="51"/>
+    <text class="dt" x="112" y="46.2" text-anchor="end">16</text>
+  </g><g class="dim">
+    <line class="dl" x1="118" y1="79.8" x2="118" y2="89.8"/>
+    <line class="dc" x1="114.5" y1="79.8" x2="121.5" y2="79.8"/>
+    <line class="dc" x1="114.5" y1="89.8" x2="121.5" y2="89.8"/>
+    <text class="dt" x="112" y="88" text-anchor="end">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="118" y1="108.99" x2="118" y2="122.99"/>
+    <line class="dc" x1="114.5" y1="108.99" x2="121.5" y2="108.99"/>
+    <line class="dc" x1="114.5" y1="122.99" x2="121.5" y2="122.99"/>
+    <text class="dt" x="112" y="119.19" text-anchor="end">14</text>
+  </g><g class="dim">
+    <line class="dl" x1="118" y1="272.99" x2="118" y2="279.99"/>
+    <line class="dc" x1="114.5" y1="272.99" x2="121.5" y2="272.99"/>
+    <line class="dc" x1="114.5" y1="279.99" x2="121.5" y2="279.99"/>
+    <text class="dt" x="112" y="279.69" text-anchor="end">7</text>
+  </g><g class="dim">
+    <line class="dl" x1="118" y1="295.99" x2="118" y2="309.98"/>
+    <line class="dc" x1="114.5" y1="295.99" x2="121.5" y2="295.99"/>
+    <line class="dc" x1="114.5" y1="309.98" x2="121.5" y2="309.98"/>
+    <text class="dt" x="112" y="306.19" text-anchor="end">14</text>
+  </g><g class="dim">
+    <line class="dl" x1="70" y1="51" x2="70" y2="79.8"/>
+    <line class="dc" x1="66.5" y1="51" x2="73.5" y2="51"/>
+    <line class="dc" x1="66.5" y1="79.8" x2="73.5" y2="79.8"/>
+    <text class="dt" x="64" y="68.6" text-anchor="end">28.8</text>
+  </g><g class="dim">
+    <line class="dl" x1="70" y1="89.8" x2="70" y2="108.99"/>
+    <line class="dc" x1="66.5" y1="89.8" x2="73.5" y2="89.8"/>
+    <line class="dc" x1="66.5" y1="108.99" x2="73.5" y2="108.99"/>
+    <text class="dt" x="64" y="102.6" text-anchor="end">19.19</text>
+  </g><g class="dim">
+    <line class="dl" x1="70" y1="122.99" x2="70" y2="272.99"/>
+    <line class="dc" x1="66.5" y1="122.99" x2="73.5" y2="122.99"/>
+    <line class="dc" x1="66.5" y1="272.99" x2="73.5" y2="272.99"/>
+    <text class="dt" x="64" y="201.19" text-anchor="end">150</text>
+  </g><g class="dim">
+    <line class="dl" x1="70" y1="279.99" x2="70" y2="295.99"/>
+    <line class="dc" x1="66.5" y1="279.99" x2="73.5" y2="279.99"/>
+    <line class="dc" x1="66.5" y1="295.99" x2="73.5" y2="295.99"/>
+    <text class="dt" x="64" y="291.19" text-anchor="end">16</text>
+  </g><line class="grid hi" x1="157" y1="149.99" x2="488" y2="149.99"/><g class="dim">
+    <line class="dl" x1="496" y1="149.99" x2="496" y2="272.99"/>
+    <line class="dc" x1="492.5" y1="149.99" x2="499.5" y2="149.99"/>
+    <line class="dc" x1="492.5" y1="272.99" x2="499.5" y2="272.99"/>
+    <text class="dt" x="502" y="214.69" text-anchor="start">123</text>
+  </g><g class="dim">
+    <line class="dl" x1="496" y1="122.99" x2="496" y2="149.99"/>
+    <line class="dc" x1="492.5" y1="122.99" x2="499.5" y2="122.99"/>
+    <line class="dc" x1="492.5" y1="149.99" x2="499.5" y2="149.99"/>
+    <text class="dt" x="502" y="139.69" text-anchor="start">27</text>
+  </g><g class="dim">
+    <line class="dl" x1="140" y1="326" x2="157" y2="326"/>
+    <line class="dc" x1="140" y1="322.5" x2="140" y2="329.5"/>
+    <line class="dc" x1="157" y1="322.5" x2="157" y2="329.5"/>
+    <text class="dt" x="148.5" y="339" text-anchor="middle">17</text>
+  </g><g class="dim">
+    <line class="dl" x1="157" y1="326" x2="488" y2="326"/>
+    <line class="dc" x1="157" y1="322.5" x2="157" y2="329.5"/>
+    <line class="dc" x1="488" y1="322.5" x2="488" y2="329.5"/>
+    <text class="dt" x="322.5" y="339" text-anchor="middle">331</text>
+  </g><g class="dim">
+    <line class="dl" x1="488" y1="326" x2="505" y2="326"/>
+    <line class="dc" x1="488" y1="322.5" x2="488" y2="329.5"/>
+    <line class="dc" x1="505" y1="322.5" x2="505" y2="329.5"/>
+    <text class="dt" x="496.5" y="339" text-anchor="middle">17</text>
+  </g><g class="dim">
+    <line class="dl" x1="157" y1="364" x2="193.78" y2="364"/>
+    <line class="dc" x1="157" y1="360.5" x2="157" y2="367.5"/>
+    <line class="dc" x1="193.78" y1="360.5" x2="193.78" y2="367.5"/>
+    <text class="dt" x="175.39" y="377" text-anchor="middle">列宽 36.78</text>
+  </g><text class="nt" x="551" y="64" text-anchor="start">标题行 .cyc-head 高 28.8</text><text class="nt2" x="551" y="78" text-anchor="start">= 18px 标题 × 行高 1.6</text><text class="nt2" x="551" y="92" text-anchor="start">「平均 N 天」12px · margin-left 6</text><text class="nt2" x="551" y="106" text-anchor="start">「2026」14px/700 · min-width 40</text><text class="nt" x="551" y="130" text-anchor="start">图例 .cyc-legend 高 19.19</text><text class="nt2" x="551" y="144" text-anchor="start">色块 10×10 · 圆角 3</text><text class="nt2" x="551" y="158" text-anchor="start">色块↔文字 6 · 项间 14</text><text class="nt2" x="551" y="172" text-anchor="start">下留白 14（上 −2 与 12 合并成 10）</text><text class="nt" x="551" y="204" text-anchor="start">绘图区 .cyc-plot 高 150</text><text class="nt2" x="551" y="218" text-anchor="start">含 1.5px 底轴线</text><text class="nt2" x="551" y="232" text-anchor="start">虚线在 25% / 50% / 75%</text><text class="nt2" x="551" y="246" text-anchor="start">柱高上限 82% = 123，顶部留 27 给数字</text><text class="nt" x="551" y="278" text-anchor="start">柱 .cyc-bar 宽 6 · 圆角 3/3/0/0</text><text class="nt2" x="551" y="292" text-anchor="start">柱间 gap 2 · 三柱组宽 22</text><text class="nt2" x="551" y="306" text-anchor="start">列宽 = 331 ÷ 柱数（此例 9 → 36.78）</text><text class="nt2" x="551" y="320" text-anchor="start">组居中，两侧各余 7.39</text><text class="nt" x="551" y="344" text-anchor="start">X 轴 .cyc-x 高 16 · margin-top 7</text><text class="nt2" x="551" y="358" text-anchor="start">数字 10px，与柱列同宽等分</text></svg>
+  </div>
+</section>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 03</span>
+    <h2>月卡</h2>
+    <span class="plate-sub">.month · 178.5 × 210.58（5 周）</span>
+    <span class="scale">2 : 1</span>
+  </header>
+  <div class="sheet">
+    <svg viewBox="0 0 1080 540" width="1080" height="540" role="img" aria-label="月卡 间距标注图"><rect class="card" x="150" y="54" width="357" height="421.16" rx="24"/><rect class="safe" x="168" y="76" width="321" height="373.16" rx="0"/><text class="ui b12" x="172" y="109" text-anchor="start">1 月</text><text class="ui wk" x="189.21" y="156" text-anchor="middle">一</text><text class="ui wk" x="235.64" y="156" text-anchor="middle">二</text><text class="ui wk" x="282.07" y="156" text-anchor="middle">三</text><text class="ui wk" x="328.5" y="156" text-anchor="middle">四</text><text class="ui wk" x="374.93" y="156" text-anchor="middle">五</text><text class="ui wk" x="421.35" y="156" text-anchor="middle">六</text><text class="ui wk" x="467.78" y="156" text-anchor="middle">日</text><circle class="fill deep" cx="328.5" cy="193.16" r="20"/><text class="ui dnum on" x="328.5" y="197.66" text-anchor="middle">1</text><circle class="fill deep" cx="374.93" cy="193.16" r="20"/><text class="ui dnum on" x="374.93" y="197.66" text-anchor="middle">2</text><circle class="fill deep" cx="421.35" cy="193.16" r="20"/><text class="ui dnum on" x="421.35" y="197.66" text-anchor="middle">3</text><circle class="fill" cx="467.78" cy="193.16" r="20"/><text class="ui dnum on" x="467.78" y="197.66" text-anchor="middle">4</text><circle class="fill" cx="189.21" cy="249.16" r="20"/><text class="ui dnum on" x="189.21" y="253.66" text-anchor="middle">5</text><circle class="fill" cx="235.64" cy="249.16" r="20"/><text class="ui dnum on" x="235.64" y="253.66" text-anchor="middle">6</text><text class="ui dnum" x="282.07" y="253.66" text-anchor="middle">7</text><text class="ui dnum" x="328.5" y="253.66" text-anchor="middle">8</text><text class="ui dnum" x="374.93" y="253.66" text-anchor="middle">9</text><text class="ui dnum" x="421.35" y="253.66" text-anchor="middle">10</text><text class="ui dnum" x="467.78" y="253.66" text-anchor="middle">11</text><text class="ui dnum" x="189.21" y="309.66" text-anchor="middle">12</text><text class="ui dnum" x="235.64" y="309.66" text-anchor="middle">13</text><text class="ui dnum" x="282.07" y="309.66" text-anchor="middle">14</text><text class="ui dnum" x="328.5" y="309.66" text-anchor="middle">15</text><text class="ui dnum" x="374.93" y="309.66" text-anchor="middle">16</text><text class="ui dnum" x="421.35" y="309.66" text-anchor="middle">17</text><text class="ui dnum" x="467.78" y="309.66" text-anchor="middle">18</text><text class="ui dnum" x="189.21" y="365.66" text-anchor="middle">19</text><text class="ui dnum" x="235.64" y="365.66" text-anchor="middle">20</text><text class="ui dnum" x="282.07" y="365.66" text-anchor="middle">21</text><text class="ui dnum" x="328.5" y="365.66" text-anchor="middle">22</text><text class="ui dnum" x="374.93" y="365.66" text-anchor="middle">23</text><text class="ui dnum" x="421.35" y="365.66" text-anchor="middle">24</text><text class="ui dnum" x="467.78" y="365.66" text-anchor="middle">25</text><text class="ui dnum" x="189.21" y="421.66" text-anchor="middle">26</text><text class="ui dnum" x="235.64" y="421.66" text-anchor="middle">27</text><text class="ui dnum" x="282.07" y="421.66" text-anchor="middle">28</text><text class="ui dnum" x="328.5" y="421.66" text-anchor="middle">29</text><text class="ui dnum" x="374.93" y="421.66" text-anchor="middle">30</text><text class="ui dnum" x="421.35" y="421.66" text-anchor="middle">31</text><line class="ex" x1="150" y1="56" x2="66" y2="56"/><line class="ex" x1="150" y1="76" x2="66" y2="76"/><line class="ex" x1="150" y1="120.78" x2="66" y2="120.78"/><line class="ex" x1="150" y1="128.78" x2="66" y2="128.78"/><line class="ex" x1="150" y1="167.16" x2="66" y2="167.16"/><line class="ex" x1="150" y1="173.16" x2="66" y2="173.16"/><line class="ex" x1="150" y1="449.16" x2="66" y2="449.16"/><line class="ex" x1="150" y1="473.16" x2="66" y2="473.16"/><g class="dim">
+    <line class="dl" x1="126" y1="56" x2="126" y2="76"/>
+    <line class="dc" x1="122.5" y1="56" x2="129.5" y2="56"/>
+    <line class="dc" x1="122.5" y1="76" x2="129.5" y2="76"/>
+    <text class="dt" x="120" y="69.2" text-anchor="end">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="126" y1="120.78" x2="126" y2="128.78"/>
+    <line class="dc" x1="122.5" y1="120.78" x2="129.5" y2="120.78"/>
+    <line class="dc" x1="122.5" y1="128.78" x2="129.5" y2="128.78"/>
+    <text class="dt" x="120" y="127.98" text-anchor="end">4</text>
+  </g><g class="dim">
+    <line class="dl" x1="126" y1="167.16" x2="126" y2="173.16"/>
+    <line class="dc" x1="122.5" y1="167.16" x2="129.5" y2="167.16"/>
+    <line class="dc" x1="122.5" y1="173.16" x2="129.5" y2="173.16"/>
+    <text class="dt" x="120" y="173.36" text-anchor="end">3</text>
+  </g><g class="dim">
+    <line class="dl" x1="126" y1="449.16" x2="126" y2="473.16"/>
+    <line class="dc" x1="122.5" y1="449.16" x2="129.5" y2="449.16"/>
+    <line class="dc" x1="122.5" y1="473.16" x2="129.5" y2="473.16"/>
+    <text class="dt" x="120" y="464.36" text-anchor="end">12</text>
+  </g><g class="dim">
+    <line class="dl" x1="74" y1="76" x2="74" y2="120.78"/>
+    <line class="dc" x1="70.5" y1="76" x2="77.5" y2="76"/>
+    <line class="dc" x1="70.5" y1="120.78" x2="77.5" y2="120.78"/>
+    <text class="dt" x="68" y="101.59" text-anchor="end">22.39</text>
+  </g><g class="dim">
+    <line class="dl" x1="74" y1="128.78" x2="74" y2="167.16"/>
+    <line class="dc" x1="70.5" y1="128.78" x2="77.5" y2="128.78"/>
+    <line class="dc" x1="70.5" y1="167.16" x2="77.5" y2="167.16"/>
+    <text class="dt" x="68" y="151.17" text-anchor="end">19.19</text>
+  </g><g class="dim">
+    <line class="dl" x1="74" y1="173.16" x2="74" y2="449.16"/>
+    <line class="dc" x1="70.5" y1="173.16" x2="77.5" y2="173.16"/>
+    <line class="dc" x1="70.5" y1="449.16" x2="77.5" y2="449.16"/>
+    <text class="dt" x="68" y="314.36" text-anchor="end">138</text>
+  </g><g class="dim">
+    <line class="dl" x1="150" y1="494" x2="168" y2="494"/>
+    <line class="dc" x1="150" y1="490.5" x2="150" y2="497.5"/>
+    <line class="dc" x1="168" y1="490.5" x2="168" y2="497.5"/>
+    <text class="dt" x="159" y="507" text-anchor="middle">9</text>
+  </g><g class="dim">
+    <line class="dl" x1="168" y1="494" x2="489" y2="494"/>
+    <line class="dc" x1="168" y1="490.5" x2="168" y2="497.5"/>
+    <line class="dc" x1="489" y1="490.5" x2="489" y2="497.5"/>
+    <text class="dt" x="328.5" y="507" text-anchor="middle">160.5</text>
+  </g><g class="dim">
+    <line class="dl" x1="489" y1="494" x2="507" y2="494"/>
+    <line class="dc" x1="489" y1="490.5" x2="489" y2="497.5"/>
+    <line class="dc" x1="507" y1="490.5" x2="507" y2="497.5"/>
+    <text class="dt" x="498" y="507" text-anchor="middle">9</text>
+  </g><g class="dim">
+    <line class="dl" x1="150" y1="26" x2="507" y2="26"/>
+    <line class="dc" x1="150" y1="22.5" x2="150" y2="29.5"/>
+    <line class="dc" x1="507" y1="22.5" x2="507" y2="29.5"/>
+    <text class="dt" x="328.5" y="20" text-anchor="middle">178.5</text>
+  </g><text class="nt" x="549" y="94" text-anchor="start">卡内边距 10 / 8 / 12（上/左右/下）</text><text class="nt2" x="549" y="108" text-anchor="start">圆角 12 · 1px 描边</text><text class="nt2" x="549" y="122" text-anchor="start">内容宽 160.5 = 178.5 − 8×2 − 1×2</text><text class="nt" x="549" y="186" text-anchor="start">月标题 .month-title 高 22.39</text><text class="nt2" x="549" y="200" text-anchor="start">14px/700 · 左对齐 + padding-left 2</text><text class="nt2" x="549" y="214" text-anchor="start">下留白 4</text><text class="nt" x="549" y="278" text-anchor="start">星期行 .weekdays 高 19.19</text><text class="nt2" x="549" y="292" text-anchor="start">12px · 7 等分 · column-gap 2</text><text class="nt2" x="549" y="306" text-anchor="start">下留白 3</text><text class="nt" x="549" y="370" text-anchor="start">日期网格 .days 高 138</text><text class="nt2" x="549" y="384" text-anchor="start">= 5 行 × 26 + 4 × 2</text><text class="nt2" x="549" y="398" text-anchor="start">6 周的月份 = 166 → 卡高 238.58</text><text class="nt" x="549" y="466" text-anchor="start">卡高 210.58 =</text><text class="nt2" x="549" y="480" text-anchor="start">1 + 10 + 22.39 + 4 + 19.19</text><text class="nt2" x="549" y="494" text-anchor="start">　+ 3 + 138 + 12 + 1</text></svg>
+  </div>
+</section>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 04</span>
+    <h2>日期格与网格</h2>
+    <span class="plate-sub">.daywrap / .day / .dot-slot</span>
+    <span class="scale">6 : 1</span>
+  </header>
+  <div class="sheet">
+    <svg viewBox="0 0 1080 700" width="1080" height="700" role="img" aria-label="日期格与网格 间距标注图"><rect class="dwrap" x="120" y="92" width="127.28" height="156" rx="0"/><circle class="fill" cx="183.64" cy="152" r="60"/><text class="ui dnum6 on" x="183.64" y="160" text-anchor="middle">8</text><rect class="slot" x="120" y="218" width="127.28" height="30" rx="0"/><circle class="dot" cx="183.64" cy="233" r="9"/><rect class="dwrap" x="259.28" y="92" width="127.28" height="156" rx="0"/><circle class="fill" cx="322.93" cy="152" r="60"/><text class="ui dnum6 on" x="322.93" y="160" text-anchor="middle">9</text><rect class="slot" x="259.28" y="218" width="127.28" height="30" rx="0"/><circle class="dot" cx="322.93" cy="233" r="9"/><rect class="dwrap" x="398.57" y="92" width="127.28" height="156" rx="0"/><circle class="fill" cx="462.21" cy="152" r="60"/><text class="ui dnum6 on" x="462.21" y="160" text-anchor="middle">10</text><rect class="slot" x="398.57" y="218" width="127.28" height="30" rx="0"/><circle class="dot" cx="462.21" cy="233" r="9"/><rect class="dwrap" x="120" y="260" width="127.28" height="156" rx="0"/><circle class="fill" cx="183.64" cy="320" r="60"/><text class="ui dnum6 on" x="183.64" y="328" text-anchor="middle">11</text><rect class="slot" x="120" y="386" width="127.28" height="30" rx="0"/><circle class="dot" cx="183.64" cy="401" r="9"/><rect class="dwrap" x="259.28" y="260" width="127.28" height="156" rx="0"/><circle class="fill none" cx="322.93" cy="320" r="60"/><circle class="ring" cx="322.93" cy="320" r="54"/><text class="ui dnum6 rd" x="322.93" y="328" text-anchor="middle">12</text><rect class="slot" x="259.28" y="386" width="127.28" height="30" rx="0"/><circle class="dot" cx="322.93" cy="401" r="9"/><rect class="dwrap" x="398.57" y="260" width="127.28" height="156" rx="0"/><circle class="fill" cx="462.21" cy="320" r="60"/><text class="ui dnum6 on" x="462.21" y="328" text-anchor="middle">13</text><rect class="slot" x="398.57" y="386" width="127.28" height="30" rx="0"/><circle class="dot" cx="462.21" cy="401" r="9"/><rect class="dwrap" x="120" y="428" width="127.28" height="156" rx="0"/><circle class="fill" cx="183.64" cy="488" r="60"/><text class="ui dnum6 on" x="183.64" y="496" text-anchor="middle">14</text><rect class="slot" x="120" y="554" width="127.28" height="30" rx="0"/><rect class="dwrap" x="259.28" y="428" width="127.28" height="156" rx="0"/><circle class="fill" cx="322.93" cy="488" r="60"/><text class="ui dnum6 on" x="322.93" y="496" text-anchor="middle">15</text><rect class="slot" x="259.28" y="554" width="127.28" height="30" rx="0"/><rect class="dwrap" x="398.57" y="428" width="127.28" height="156" rx="0"/><circle class="fill" cx="462.21" cy="488" r="60"/><text class="ui dnum6 on" x="462.21" y="496" text-anchor="middle">16</text><rect class="slot" x="398.57" y="554" width="127.28" height="30" rx="0"/><line class="ex" x1="120" y1="92" x2="26" y2="92"/><line class="ex" x1="120" y1="212" x2="26" y2="212"/><line class="ex" x1="120" y1="218" x2="26" y2="218"/><line class="ex" x1="120" y1="248" x2="26" y2="248"/><line class="ex" x1="120" y1="260" x2="26" y2="260"/><g class="dim">
+    <line class="dl" x1="94" y1="92" x2="94" y2="212"/>
+    <line class="dc" x1="90.5" y1="92" x2="97.5" y2="92"/>
+    <line class="dc" x1="90.5" y1="212" x2="97.5" y2="212"/>
+    <text class="dt" x="88" y="155.2" text-anchor="end">20</text>
+  </g><g class="dim">
+    <line class="dl" x1="94" y1="212" x2="94" y2="218"/>
+    <line class="dc" x1="90.5" y1="212" x2="97.5" y2="212"/>
+    <line class="dc" x1="90.5" y1="218" x2="97.5" y2="218"/>
+    <text class="dt" x="88" y="218.2" text-anchor="end">1</text>
+  </g><g class="dim">
+    <line class="dl" x1="94" y1="218" x2="94" y2="248"/>
+    <line class="dc" x1="90.5" y1="218" x2="97.5" y2="218"/>
+    <line class="dc" x1="90.5" y1="248" x2="97.5" y2="248"/>
+    <text class="dt" x="88" y="236.2" text-anchor="end">5</text>
+  </g><g class="dim">
+    <line class="dl" x1="94" y1="248" x2="94" y2="260"/>
+    <line class="dc" x1="90.5" y1="248" x2="97.5" y2="248"/>
+    <line class="dc" x1="90.5" y1="260" x2="97.5" y2="260"/>
+    <text class="dt" x="88" y="257.2" text-anchor="end">2</text>
+  </g><g class="dim">
+    <line class="dl" x1="34" y1="92" x2="34" y2="248"/>
+    <line class="dc" x1="30.5" y1="92" x2="37.5" y2="92"/>
+    <line class="dc" x1="30.5" y1="248" x2="37.5" y2="248"/>
+    <text class="dt" x="28" y="173.2" text-anchor="end">26</text>
+  </g><g class="dim">
+    <line class="dl" x1="34" y1="260" x2="34" y2="416"/>
+    <line class="dc" x1="30.5" y1="260" x2="37.5" y2="260"/>
+    <line class="dc" x1="30.5" y1="416" x2="37.5" y2="416"/>
+    <text class="dt" x="28" y="341.2" text-anchor="end">26</text>
+  </g><g class="dim">
+    <line class="dl" x1="120" y1="606" x2="247.28" y2="606"/>
+    <line class="dc" x1="120" y1="602.5" x2="120" y2="609.5"/>
+    <line class="dc" x1="247.28" y1="602.5" x2="247.28" y2="609.5"/>
+    <text class="dt" x="183.64" y="619" text-anchor="middle">21.214</text>
+  </g><g class="dim">
+    <line class="dl" x1="247.28" y1="606" x2="259.28" y2="606"/>
+    <line class="dc" x1="247.28" y1="602.5" x2="247.28" y2="609.5"/>
+    <line class="dc" x1="259.28" y1="602.5" x2="259.28" y2="609.5"/>
+    <text class="dt" x="253.28" y="619" text-anchor="middle">2</text>
+  </g><g class="dim">
+    <line class="dl" x1="183.64" y1="640" x2="322.93" y2="640"/>
+    <line class="dc" x1="183.64" y1="636.5" x2="183.64" y2="643.5"/>
+    <line class="dc" x1="322.93" y1="636.5" x2="322.93" y2="643.5"/>
+    <text class="dt" x="253.28" y="653" text-anchor="middle">23.214</text>
+  </g><line class="ex" x1="120" y1="92" x2="120" y2="56"/><line class="ex" x1="123.64" y1="92" x2="123.64" y2="56"/><line class="ex" x1="243.64" y1="92" x2="243.64" y2="56"/><line class="ex" x1="247.28" y1="92" x2="247.28" y2="56"/><g class="dim">
+    <line class="dl" x1="120" y1="52" x2="123.64" y2="52"/>
+    <line class="dc" x1="120" y1="48.5" x2="120" y2="55.5"/>
+    <line class="dc" x1="123.64" y1="48.5" x2="123.64" y2="55.5"/>
+    <text class="dt" x="121.82" y="46" text-anchor="middle">0.607</text>
+  </g><g class="dim">
+    <line class="dl" x1="123.64" y1="52" x2="243.64" y2="52"/>
+    <line class="dc" x1="123.64" y1="48.5" x2="123.64" y2="55.5"/>
+    <line class="dc" x1="243.64" y1="48.5" x2="243.64" y2="55.5"/>
+    <text class="dt" x="183.64" y="46" text-anchor="middle">20</text>
+  </g><g class="dim">
+    <line class="dl" x1="243.64" y1="52" x2="247.28" y2="52"/>
+    <line class="dc" x1="243.64" y1="48.5" x2="243.64" y2="55.5"/>
+    <line class="dc" x1="247.28" y1="48.5" x2="247.28" y2="55.5"/>
+    <text class="dt" x="245.46" y="46" text-anchor="middle">0.607</text>
+  </g><text class="nt" x="589.85" y="110" text-anchor="start">列宽 21.214 = (160.5 − 2×6) ÷ 7</text><text class="nt2" x="589.85" y="124" text-anchor="start">日期圆固定 20，两侧各余 0.607</text><text class="nt2" x="589.85" y="138" text-anchor="start">横向圆心距 21.214 + 2 = 23.214</text><text class="nt" x="589.85" y="200" text-anchor="start">行高 grid-auto-rows: 26</text><text class="nt2" x="589.85" y="214" text-anchor="start">= 圆 20 + margin-top 1 + 点槽 5</text><text class="nt2" x="589.85" y="228" text-anchor="start">row-gap 2 → 纵向圆心距 28</text><text class="nt2" x="589.85" y="242" text-anchor="start">（行高必须写死，auto 会把首周撑到 ~118）</text><text class="nt" x="589.85" y="310" text-anchor="start">点槽 .dot-slot 高 5 · 上距 1</text><text class="nt2" x="589.85" y="324" text-anchor="start">记录点 .rec-dot 3 × 3</text><text class="nt2" x="589.85" y="338" text-anchor="start">月视图是 9 / 6，年视图压小</text><text class="nt" x="589.85" y="400" text-anchor="start">今天 .day.today</text><text class="nt2" x="589.85" y="414" text-anchor="start">box-shadow: inset 0 0 0 2px</text><text class="nt2" x="589.85" y="428" text-anchor="start">描边画在圆内，不占额外空间</text></svg>
+  </div>
+</section>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 05</span>
+    <h2>导航条对位</h2>
+    <span class="plate-sub">.home-header 与日期列心</span>
+    <span class="scale">1 : 1</span>
+  </header>
+  <div class="sheet">
+    <svg viewBox="0 0 1080 300" width="1080" height="300" role="img" aria-label="导航条对位 间距标注图"><rect class="page" x="150" y="36" width="393" height="216" rx="0"/><rect class="ghost" x="164" y="46" width="365" height="48" rx="0"/><rect class="safe" x="174" y="46" width="345" height="48" rx="0"/><rect class="btn" x="184.78" y="54" width="26" height="32" rx="8"/><text class="ui b14" x="197.78" y="75" text-anchor="middle">‹</text><text class="ui b16" x="210.78" y="76" text-anchor="start">2026</text><rect class="btn" x="256.27" y="54" width="26" height="32" rx="8"/><text class="ui b14" x="269.27" y="75" text-anchor="middle">›</text><rect class="btn" x="479.22" y="54" width="32" height="32" rx="16"/><g class="filt"><line x1="487" y1="65" x2="503" y2="65"/><line x1="490" y1="70" x2="500" y2="70"/><line x1="493" y1="75" x2="497" y2="75"/></g><rect class="card" x="164" y="108" width="178.5" height="74" rx="12"/><rect class="card" x="350.5" y="108" width="178.5" height="74" rx="12"/><circle class="cell" cx="183.61" cy="146" r="10"/><circle class="cell" cx="370.11" cy="146" r="10"/><circle class="cell" cx="206.82" cy="146" r="10"/><circle class="cell" cx="393.32" cy="146" r="10"/><circle class="cell" cx="230.04" cy="146" r="10"/><circle class="cell" cx="416.54" cy="146" r="10"/><circle class="cell" cx="253.25" cy="146" r="10"/><circle class="cell" cx="439.75" cy="146" r="10"/><circle class="cell" cx="276.46" cy="146" r="10"/><circle class="cell" cx="462.96" cy="146" r="10"/><circle class="cell" cx="299.68" cy="146" r="10"/><circle class="cell" cx="486.18" cy="146" r="10"/><circle class="cell" cx="322.89" cy="146" r="10"/><circle class="cell" cx="509.39" cy="146" r="10"/><line class="guide a" x1="197.78" y1="50" x2="197.78" y2="194"/><line class="guide b" x1="183.61" y1="50" x2="183.61" y2="194"/><line class="guide a" x1="495.22" y1="50" x2="495.22" y2="194"/><line class="guide b" x1="509.39" y1="50" x2="509.39" y2="194"/><g class="dim">
+    <line class="dl" x1="183.61" y1="204" x2="197.78" y2="204"/>
+    <line class="dc" x1="183.61" y1="200.5" x2="183.61" y2="207.5"/>
+    <line class="dc" x1="197.78" y1="200.5" x2="197.78" y2="207.5"/>
+    <text class="dt" x="190.69" y="217" text-anchor="middle">14.18</text>
+  </g><g class="dim">
+    <line class="dl" x1="495.22" y1="204" x2="509.39" y2="204"/>
+    <line class="dc" x1="495.22" y1="200.5" x2="495.22" y2="207.5"/>
+    <line class="dc" x1="509.39" y1="200.5" x2="509.39" y2="207.5"/>
+    <text class="dt" x="502.31" y="217" text-anchor="middle">14.18</text>
+  </g><g class="dim">
+    <line class="dl" x1="164" y1="24" x2="174" y2="24"/>
+    <line class="dc" x1="164" y1="20.5" x2="164" y2="27.5"/>
+    <line class="dc" x1="174" y1="20.5" x2="174" y2="27.5"/>
+    <text class="dt" x="169" y="18" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="174" y1="24" x2="519" y2="24"/>
+    <line class="dc" x1="174" y1="20.5" x2="174" y2="27.5"/>
+    <line class="dc" x1="519" y1="20.5" x2="519" y2="27.5"/>
+    <text class="dt" x="346.5" y="18" text-anchor="middle">345</text>
+  </g><g class="dim">
+    <line class="dl" x1="519" y1="24" x2="529" y2="24"/>
+    <line class="dc" x1="519" y1="20.5" x2="519" y2="27.5"/>
+    <line class="dc" x1="529" y1="20.5" x2="529" y2="27.5"/>
+    <text class="dt" x="524" y="18" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="174" y1="102" x2="184.78" y2="102"/>
+    <line class="dc" x1="174" y1="98.5" x2="174" y2="105.5"/>
+    <line class="dc" x1="184.78" y1="98.5" x2="184.78" y2="105.5"/>
+    <text class="dt" x="179.39" y="96" text-anchor="middle">10.79</text>
+  </g><g class="dim">
+    <line class="dl" x1="511.22" y1="102" x2="519" y2="102"/>
+    <line class="dc" x1="511.22" y1="98.5" x2="511.22" y2="105.5"/>
+    <line class="dc" x1="519" y1="98.5" x2="519" y2="105.5"/>
+    <text class="dt" x="515.11" y="96" text-anchor="middle">7.78</text>
+  </g><text class="nt" x="583" y="52" text-anchor="start">.pv-nav margin-left</text><text class="nt2" x="583" y="66" text-anchor="start">= (100% − 12) ÷ 14 − 13</text><text class="nt2" x="583" y="80" text-anchor="start">= (345 − 12) ÷ 14 − 13 = 10.79</text><text class="nt" x="583" y="106" text-anchor="start">.home-header-right margin-right</text><text class="nt2" x="583" y="120" text-anchor="start">= (345 − 12) ÷ 14 − 16 = 7.78</text><text class="nt" x="583" y="160" text-anchor="start">公式是为月视图写的（7 列铺满整卡）。</text><text class="nt2" x="583" y="174" text-anchor="start">年视图两列月卡下不成立：</text><text class="nt2" x="583" y="188" text-anchor="start">箭头/筛选各比外侧日期列心内偏 14.18。</text><text class="nt" x="20" y="142" text-anchor="start">首列圆心</text><text class="nt2" x="20" y="156" text-anchor="start">x = 33.61</text><text class="nt" x="513" y="236" text-anchor="start">末列圆心 x = 359.39</text></svg>
+  </div>
+</section>
+
+  <section class="tables">
+    <div class="plate-hd"><span class="eyebrow">TABLE</span><h2>数值总表</h2><span class="plate-sub">附 index.html 行号</span></div>
+
+<div class="tblock">
+  <h3>页面</h3>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>项目</th><th>值</th><th>说明</th><th>index.html 行</th></tr></thead>
+    <tbody><tr><td>左右页边距</td><td class="v">14</td><td class="d">#pvTrend / .home-header / .pv-cardwrap 的 margin</td><td class="ln">2578 · 3119 · 3121</td></tr><tr><td>内容宽</td><td class="v">365</td><td class="d">393 − 14 × 2</td><td class="ln">—</td></tr><tr><td>切换条 → 趋势卡</td><td class="v">12</td><td class="d">.cal-viewbar padding-bottom 6 + #pvTrend margin-top 6</td><td class="ln">2106 · 2578</td></tr><tr><td>趋势卡 → 导航条</td><td class="v">12</td><td class="d">外边距合并 max(12, 6)</td><td class="ln">2578 · 3119</td></tr><tr><td>导航条 → 月卡</td><td class="v">2</td><td class="d">.home-header margin-bottom（另有 8 的 padding-bottom）</td><td class="ln">3119</td></tr><tr><td>月卡横向间隙</td><td class="v">8</td><td class="d">column-gap</td><td class="ln">3123</td></tr><tr><td>月卡纵向间隙</td><td class="v">8</td><td class="d">row-gap</td><td class="ln">3123</td></tr><tr><td>末行月卡下方</td><td class="v">12</td><td class="d">.pv-cardwrap margin-bottom</td><td class="ln">3121</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="tblock">
+  <h3>周期趋势卡</h3>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>项目</th><th>值</th><th>说明</th><th>index.html 行</th></tr></thead>
+    <tbody><tr><td>卡内边距</td><td class="v">16 / 16 / 14</td><td class="d">padding 上 / 左右 / 下</td><td class="ln">2580</td></tr><tr><td>圆角 · 描边</td><td class="v">16 · 1px</td><td class="d">border-radius · border</td><td class="ln">2580</td></tr><tr><td>卡高</td><td class="v">276.98</td><td class="d">与柱数无关，恒定</td><td class="ln">—</td></tr><tr><td>标题行高</td><td class="v">28.8</td><td class="d">18px × 行高 1.6</td><td class="ln">2506</td></tr><tr><td>标题 → 图例</td><td class="v">10</td><td class="d">margin-bottom 12 与 margin-top −2 合并</td><td class="ln">2583 · 2534</td></tr><tr><td>「平均 N 天」</td><td class="v">12px · 左距 6</td><td class="d">.stcard-title .sub</td><td class="ln">2507</td></tr><tr><td>「2026」</td><td class="v">14px/700 · min-width 40</td><td class="d">.cyc-year，右缘贴内容右缘</td><td class="ln">2520</td></tr><tr><td>图例行高</td><td class="v">19.19</td><td class="d">12px × 1.6；色块 10×10 圆角 3</td><td class="ln">2534 · 2536</td></tr><tr><td>图例：色块↔文字</td><td class="v">6</td><td class="d">gap</td><td class="ln">2536</td></tr><tr><td>图例：项间距</td><td class="v">14</td><td class="d">column-gap（换行时 row-gap 4）</td><td class="ln">2534</td></tr><tr><td>图例 → 绘图区</td><td class="v">14</td><td class="d">margin-bottom 14 吞掉 margin-top 2</td><td class="ln">2534 · 2587</td></tr><tr><td>绘图区高</td><td class="v">150</td><td class="d">含 1.5px 底轴线；虚线在 25 / 50 / 75%</td><td class="ln">2539</td></tr><tr><td>柱高上限</td><td class="v">123</td><td class="d">82% × 150，顶部留 27 给数字</td><td class="ln">—</td></tr><tr><td>柱宽 · 柱间距</td><td class="v">6 · 2</td><td class="d">flex 0 1 6px · gap；圆角 3/3/0/0</td><td class="ln">2545 · 2550</td></tr><tr><td>列宽</td><td class="v">331 ÷ 柱数</td><td class="d">此例 9 柱 → 36.78；三柱组 22 居中，两侧 7.39</td><td class="ln">2545</td></tr><tr><td>柱顶数字</td><td class="v">8px/700 · top −13</td><td class="d">.cyc-bar .num；≥16 柱时隐藏点滴数字</td><td class="ln">2558 · 2565</td></tr><tr><td>绘图区 → X 轴</td><td class="v">7</td><td class="d">.cyc-x margin-top</td><td class="ln">2572</td></tr><tr><td>X 轴行高</td><td class="v">16</td><td class="d">10px × 1.6</td><td class="ln">2573</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="tblock">
+  <h3>月卡</h3>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>项目</th><th>值</th><th>说明</th><th>index.html 行</th></tr></thead>
+    <tbody><tr><td>卡宽</td><td class="v">178.5</td><td class="d">(365 − 8) ÷ 2</td><td class="ln">3123</td></tr><tr><td>卡高</td><td class="v">210.58 / 238.58</td><td class="d">5 周 / 6 周</td><td class="ln">—</td></tr><tr><td>内边距</td><td class="v">10 / 8 / 12</td><td class="d">上 / 左右 / 下</td><td class="ln">3124</td></tr><tr><td>圆角 · 描边</td><td class="v">12 · 1px</td><td class="d"></td><td class="ln">3124</td></tr><tr><td>内容宽</td><td class="v">160.5</td><td class="d">178.5 − 8 × 2 − 1 × 2</td><td class="ln">—</td></tr><tr><td>月标题</td><td class="v">14px/700 · 高 22.39</td><td class="d">左对齐 + padding-left 2</td><td class="ln">2381 · 3132</td></tr><tr><td>月标题 → 星期行</td><td class="v">4</td><td class="d">margin-bottom</td><td class="ln">2381</td></tr><tr><td>星期行</td><td class="v">12px · 高 19.19</td><td class="d">7 等分 · column-gap 2</td><td class="ln">2382 · 3090</td></tr><tr><td>星期行 → 日期网格</td><td class="v">3</td><td class="d">margin-bottom</td><td class="ln">2382</td></tr><tr><td>日期网格高</td><td class="v">138 / 166</td><td class="d">5 行 × 26 + 4 × 2 ／ 6 行 × 26 + 5 × 2</td><td class="ln">3091</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="tblock">
+  <h3>日期格</h3>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>项目</th><th>值</th><th>说明</th><th>index.html 行</th></tr></thead>
+    <tbody><tr><td>列宽</td><td class="v">21.214</td><td class="d">(160.5 − 2 × 6) ÷ 7</td><td class="ln">3090</td></tr><tr><td>列间距</td><td class="v">2</td><td class="d">column-gap → 横向圆心距 23.214</td><td class="ln">3090</td></tr><tr><td>行高</td><td class="v">26</td><td class="d">grid-auto-rows（固定，不能用 auto）</td><td class="ln">3091</td></tr><tr><td>行间距</td><td class="v">2</td><td class="d">row-gap → 纵向圆心距 28</td><td class="ln">3091</td></tr><tr><td>日期圆</td><td class="v">20 × 20</td><td class="d">border-radius 50%；两侧各余 0.607</td><td class="ln">3092</td></tr><tr><td>日期数字</td><td class="v">12px · line-height 1</td><td class="d">保证数字在圆正中</td><td class="ln">3092</td></tr><tr><td>圆 → 点槽</td><td class="v">1</td><td class="d">.dot-slot margin-top</td><td class="ln">3098</td></tr><tr><td>点槽高</td><td class="v">5</td><td class="d">20 + 1 + 5 = 26 = 行高</td><td class="ln">3098</td></tr><tr><td>记录点</td><td class="v">3 × 3</td><td class="d">.rec-dot</td><td class="ln">3099</td></tr><tr><td>今天描边</td><td class="v">inset 2px</td><td class="d">画在圆内，不占空间</td><td class="ln">3100</td></tr></tbody>
+  </table>
+  </div>
+</div>
+
+<div class="tblock">
+  <h3>导航条</h3>
+  <div class="tscroll">
+  <table>
+    <thead><tr><th>项目</th><th>值</th><th>说明</th><th>index.html 行</th></tr></thead>
+    <tbody><tr><td>条高</td><td class="v">48</td><td class="d">padding 8 + 按钮 32 + 8</td><td class="ln">3119</td></tr><tr><td>左右内边距</td><td class="v">10</td><td class="d">padding-left / right → 内容宽 345</td><td class="ln">3119</td></tr><tr><td>翻页按钮</td><td class="v">26 × 32</td><td class="d">圆角 8 · 16px 字</td><td class="ln">3144</td></tr><tr><td>年份标题</td><td class="v">18px/700 · padding 0 2</td><td class="d">.pv-navlabel</td><td class="ln">3140</td></tr><tr><td>nav 左缩进</td><td class="v">10.79</td><td class="d">calc((100% − 12) / 14 − 13)</td><td class="ln">3136</td></tr><tr><td>筛选按钮</td><td class="v">32 × 32</td><td class="d">右缩进 7.78 = calc((100% − 12) / 14 − 16)</td><td class="ln">3138 · 3150</td></tr><tr><td>下方留白</td><td class="v">8 + 2</td><td class="d">padding-bottom + margin-bottom</td><td class="ln">3119</td></tr></tbody>
+  </table>
+  </div>
+</div>
+  </section>
+
+  <section class="notes">
+    <h3>三条读图时要知道的事</h3>
+    <div class="nitem">
+      <span class="tag">合并</span>
+      <p>趋势卡与导航条之间量到的是 <b>12</b>，不是 12 + 6 = 18。<code>#pvTrend</code> 的 <code>margin-bottom:12</code> 和 <code>.home-header</code> 的 <code>margin-top:6</code> 发生了外边距合并，取大的那个。图例的 <code>margin-top:-2</code> 同理，把标题行的 12 拉成了 10。</p>
+    </div>
+    <div class="nitem">
+      <span class="tag">对位</span>
+      <p><code>.pv-nav</code> 与 <code>.home-header-right</code> 的 <code>calc()</code> 是照月视图写的——那里 7 列日期铺满整张卡，算出来的偏移刚好让 ‹ 的图标中心落在周一列心上。年度视图是两张月卡各自 7 列，同一个公式下箭头和筛选按钮各比外侧日期列心<b>内偏 14.18</b>。要真对齐得改成按月卡内容框重算。</p>
+    </div>
+    <div class="nitem">
+      <span class="tag">撞名</span>
+      <p>补位空格 <code>&lt;div class="daywrap empty"&gt;</code> 撞上了全站通用的 <code>.empty</code>（index.html:488，<code>padding:56px 24px</code>），实测被撑成 48 × 112。因为它是 <code>visibility:hidden</code>、而网格行高被 <code>grid-auto-rows:26px</code> 钉死，目前不影响布局——但换个类名更保险。</p>
+    </div>
+  </section>
+</div>
