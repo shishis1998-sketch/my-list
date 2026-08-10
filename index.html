@@ -3149,12 +3149,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod.pv-year .pv-navlabel{order:0;margin-right:auto;margin-left:1px;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:first-child{order:1;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:last-child{order:2;}
-/* 筛选按钮的图标尾部对齐月卡里末列日期的尾部。
-   按钮盒子 32 宽、图标只有 16 且居中，图标右端比盒子右端内缩 10；
-   末列日期圆的右沿在 366.8，所以盒子右端要落到 ~377，
-   也就是比标题栏内容右缘(369)再外扩 8——负 margin 把它推进 padding 里。
+/* 筛选按钮的盒子右边框，对齐月卡里末列日期圆的右沿(366.8)。
+   标题栏内容右缘在 369，往里收 2 → 盒子右端 367，差 0.2。
    只给年视图；经期月视图那条按月视图列宽算的 calc 不动。 */
-#calViewPeriod.pv-year .home-header-right{order:3;margin-right:-8px;}
+#calViewPeriod.pv-year .home-header-right{order:3;margin-right:2px;}
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   font-family:var(--zh);letter-spacing:.02em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
