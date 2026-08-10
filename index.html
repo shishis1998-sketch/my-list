@@ -2531,7 +2531,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .st-tile.accent .lab {color: var(--brand-dark); opacity: .8;}
 #calViewPeriod .st-tile.accent .foot {color: var(--brand); opacity: .75;}
 /* 图例三项（周期/经期/非经期出血）：窄屏排不下时换行，别把卡片撑破 */
-#calViewPeriod .cyc-legend {display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 14px;}
+#calViewPeriod .cyc-legend {display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 10px;}
 #calViewPeriod .cyc-legend span {display: flex; align-items: center; gap: 6px; font-size: var(--fs-footnote); color: var(--body);}
 #calViewPeriod .cyc-legend i {width: 10px; height: 10px; border-radius: 3px;}
 /* 点滴色本身很浅（默认 GOTAS 灰），加一圈极淡的内描边才看得出边界 */
@@ -2578,7 +2578,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod #pvTrend {margin: 6px 14px 12px;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
 #calViewPeriod #pvTrend:empty {margin: 0;}
 #calViewPeriod .pv-trend-card {background: #FFFFFF; border: 1px solid var(--border);
-      border-radius: 16px; padding: 16px 16px 14px;}
+      border-radius: 16px; padding: 14px 16px;}
 #calViewPeriod .pv-trend-card .stcard-title {margin: 0;}
 #calViewPeriod .pv-trend-card .cyc-head {margin: 0 0 12px;}
 /* 年份切换箭头复用标题栏 .pv-navbtn（无描边/透明底/墨绿），到边界年份时淡化禁用 */
@@ -3149,7 +3149,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod.pv-year .pv-navlabel{order:0;margin-right:auto;margin-left:1px;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:first-child{order:1;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:last-child{order:2;}
-#calViewPeriod.pv-year .home-header-right{order:3;}
+/* 筛选按钮的图标尾部对齐月卡里末列日期的尾部。
+   按钮盒子 32 宽、图标只有 16 且居中，图标右端比盒子右端内缩 10；
+   末列日期圆的右沿在 366.8，所以盒子右端要落到 ~377，
+   也就是比标题栏内容右缘(369)再外扩 8——负 margin 把它推进 padding 里。
+   只给年视图；经期月视图那条按月视图列宽算的 calc 不动。 */
+#calViewPeriod.pv-year .home-header-right{order:3;margin-right:-8px;}
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   font-family:var(--zh);letter-spacing:.02em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
