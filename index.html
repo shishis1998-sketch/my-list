@@ -3089,7 +3089,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.year-view .month:nth-child(n+3) {border-top: 1px solid var(--line);}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
 #calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 26px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
-#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: 11px; line-height: 1;}  /* 固定小圆点(18px，列宽 20.79，左右各留 1.39)；数字 11px——圆缩到 18 后 --fs-footnote(12) 顶得太满；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
+#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: 11px; line-height: 1;}  /* 固定小圆点(18px，列宽见 3125 那条的注释，左右总有富余)；数字 11px——圆缩到 18 后 --fs-footnote(12) 顶得太满；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
@@ -3117,12 +3117,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    选择器带 .pv-year 且比上面那些年视图规则更靠后，才压得住 3109 行那条
    nth-child 分割线（两者特异性相同，靠源码顺序决胜）。 */
 #calViewPeriod.pv-year .home-header{background:transparent;border:none;border-radius:0;
-  margin:6px 14px 2px;padding:8px 10px;}
+  margin:6px 14px 0;padding:8px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{background:transparent;border:none;border-radius:0;
   margin:0 14px 12px;padding:0;}
-/* 两张月卡之间留 14，与左右页边距同宽——卡片自己按 1fr 缩窄到 175.5。
-   日期列跟着收到 20.79，20px 的圆仍放得下（每侧余 0.39）。 */
-#calViewPeriod.pv-year .calendar-container.year-view{margin:0;column-gap:14px;row-gap:8px;}
+/* 12 张月卡横竖都留 12——卡片自己按 1fr 缩到 176.5，日期列 20.36，
+   18 的圆每侧余 1.18。 */
+#calViewPeriod.pv-year .calendar-container.year-view{margin:0;gap:12px;}
 #calViewPeriod.pv-year .calendar-container.year-view .month{
   background:var(--surface);border:1px solid var(--border);border-radius:12px;
   padding:10px;border-top:1px solid var(--border);}
