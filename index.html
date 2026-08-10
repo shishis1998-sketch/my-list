@@ -3089,7 +3089,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.year-view .month:nth-child(n+3) {border-top: 1px solid var(--line);}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
 #calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 26px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
-#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: var(--fs-footnote); line-height: 1;}  /* 固定小圆点(18px，列宽 20.79，左右各留 1.39)；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
+#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: 11px; line-height: 1;}  /* 固定小圆点(18px，列宽 20.79，左右各留 1.39)；数字 11px——圆缩到 18 后 --fs-footnote(12) 顶得太满；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
