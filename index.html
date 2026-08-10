@@ -502,7 +502,7 @@ tr:hover .acts{opacity:1;}
    底部按钮行固定在弹窗底边，容器一收窄，按钮就停在导航条上方，导航条仍可见可点。 */
 .mbox{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;box-shadow:var(--shadowlg);max-height:min(92vh,100%);display:flex;flex-direction:column;overflow:hidden;}
 /* 日历导入配色弹窗：桌面端窄一点（手机端下面的媒体查询会改成贴底抽屉）*/
-#icsColorModal .mbox{max-width:400px;}
+#icsColorModal .mbox,#icsDelModal .mbox{max-width:400px;}
 /* 各弹窗的桌面宽度。原来都写在标签的 style="" 上，行内样式压过一切，
    断点想按屏幕调宽度就调不动了（平板上只能一直钉着这条手机宽的窄条）。挪到这里。 */
 #catmodal .mbox,#nsubModal .mbox{max-width:400px;}
@@ -873,15 +873,15 @@ tr:hover .acts{opacity:1;}
   #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
   /* 日历导入配色弹窗：同款底部抽屉，随内容高度、贴到屏幕底边、顶部圆角 + 抓手 */
   /* 设置页/日历页会把底栏抬到 z-index:115，抽屉得比它高，否则底部按钮被压住 */
-  #icsColorModal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
-  #icsColorModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
-  #icsColorModal .mbox{
+  #icsColorModal.moverlay,#icsDelModal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
+  #icsColorModal.moverlay.open .mbox,#icsDelModal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  #icsColorModal .mbox,#icsDelModal .mbox{
     width:100%;max-width:100%;height:auto;max-height:min(80vh,100%);
     border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);
     transform:translateZ(0);
   }
-  #icsColorModal .mhdr{position:relative;padding-top:var(--sp-20);}
-  #icsColorModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
+  #icsColorModal .mhdr,#icsDelModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #icsColorModal .mhdr::before,#icsDelModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
   .fg input[type=url],.fg input[type=password],
@@ -1471,6 +1471,17 @@ body.cal-searching .cal-searchresults{display:flex;}
   transition:transform .1s;}
 .icsc-c:active{transform:scale(.9);}
 .icsc-c.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text-primary);}
+
+/* ── 清除导入事件弹窗：每本日历一行，勾哪本删哪本 ───── */
+.icsd-row{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-10) 0;
+  border-bottom:1px solid var(--border-soft);cursor:pointer;}
+.icsd-row:last-child{border-bottom:none;}
+/* 「全选」那行不算日历，压在列表上方，用整条底边与下面分开 */
+.icsd-all{border-bottom:1px solid var(--border);margin-bottom:var(--sp-4);}
+.icsd-all .icsc-name{font-weight:600;color:var(--text-secondary);}
+.icsd-ck{width:17px;height:17px;flex-shrink:0;accent-color:var(--danger);margin:0;cursor:pointer;}
+/* 一条都没勾时「删除」置灰：pointer-events:none 顺手把 hover 变色也一起停掉 */
+.btn[disabled]{opacity:.4;pointer-events:none;}
 
 /* ── 「收集」分类卡片：默认折叠，点击展开 ───────────── */
 .note-card.collect{position:relative;}
@@ -3412,13 +3423,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
      只有 #qrModal（二维码）和 #scanModal（取景框）不在列——内容就那么大，
      放宽了只是两边空着。 */
   #catmodal .mbox,#nsubModal .mbox,#tagMgrModal .mbox,
-  #syncModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox{
+  #syncModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox,#icsDelModal .mbox{
     max-width:var(--pop-w);
   }
 
   /* 2) 底部抽屉（编辑笔记 / 日历事件预览 / 日历配色）：仍旧贴底升起，
         只把宽度放开并居中，上圆角照旧 */
-  #noteModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox{
+  #noteModal .mbox,#calNotePreviewModal .mbox,#icsColorModal .mbox,#icsDelModal .mbox{
     max-width:var(--pop-w);
     border-radius:var(--rxl) var(--rxl) 0 0;
     /* 抽屉压着屏幕下沿，描边只会在底边留一道，索性不加（同 .tlsheet） */
@@ -3546,7 +3557,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <button class="nitem" onclick="document.getElementById('icsimp').click()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>导入日历 (.ics)
       </button>
-      <button class="nitem" style="color:var(--danger)" onclick="clearImportedICS()">
+      <button class="nitem" style="color:var(--danger)" onclick="openClearICS()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>清除导入的日历事件
       </button>
     </div>
@@ -3988,6 +3999,23 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="mftr">
       <button class="btn btn-g" onclick="closeIcsColor()">取消</button>
       <button class="btn btn-p" onclick="confirmIcsColor()">开始导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="moverlay" id="icsDelModal">
+  <div class="mbox" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mtitle">清除导入的日历事件</div>
+      <button class="mclose" onclick="closeIcsDel()">✕</button>
+    </div>
+    <div class="mbody">
+      <p style="font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:var(--sp-12)">勾选要清空的日历，没勾的那几本原样留着。你自己写的笔记、收集、媒体记录都不受影响，删掉的日历随时能重新导入。</p>
+      <div id="icsDelList"></div>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-g" onclick="closeIcsDel()">取消</button>
+      <button class="btn btn-d" id="icsDelBtn" onclick="confirmIcsDel()" disabled>删除所选</button>
     </div>
   </div>
 </div>
@@ -10636,17 +10664,78 @@ function doImportICS(parsed,colorOf){
     toast('没有新增（都已存在或无日期）');
   }
 }
-// 一键删除所有从 .ics 导入的日历事件（不动手写的笔记 / 媒体记录），方便重新导入
-function clearImportedICS(){
-  const imp=notes.filter(n=>('_ics' in n)||(n.tags||[]).includes('日历导入'));
+// 删除从 .ics 导入的日历事件（不动手写的笔记 / 媒体记录），方便重新导入。
+// 按「来源日历」分组让人挑：一股脑全清的话，想重导其中一本就得连另外几本一起重来。
+function importedICSNotes(){
+  return notes.filter(n=>('_ics' in n)||(n.tags||[]).includes('日历导入'));
+}
+// 分组键同 calNoteColor 的取法：新数据有 _icsCal，老数据退回标签里除「日历导入」外的第一个
+function icsGroupKey(n){
+  return n._icsCal||(n.tags||[]).find(t=>t!=='日历导入')||'未命名日历';
+}
+let icsDelGroups=null;   // [{key,count,color,sel}]
+function openClearICS(){
+  const imp=importedICSNotes();
   if(!imp.length){toast('没有从日历导入的事件');return;}
-  if(!confirm(`将删除 ${imp.length} 条从日历导入的事件。\n你自己写的笔记、收集、媒体记录都不受影响。\n删除后可重新导入所有日历。确定？`))return;
-  const ids=new Set(imp.map(n=>n.id));
+  const byKey={};icsDelGroups=[];
+  imp.forEach(n=>{
+    const k=icsGroupKey(n);
+    if(!byKey[k]){byKey[k]={key:k,count:0,color:calNoteColor(n),sel:false};icsDelGroups.push(byKey[k]);}
+    byKey[k].count++;
+  });
+  icsDelGroups.sort((a,b)=>b.count-a.count);   // 条数多的排前面
+  renderIcsDelList();
+  document.getElementById('icsDelModal').classList.add('open');
+}
+function closeIcsDel(){
+  document.getElementById('icsDelModal').classList.remove('open');
+  icsDelGroups=null;
+}
+function renderIcsDelList(){
+  const el=document.getElementById('icsDelList');
+  if(!el||!icsDelGroups)return;
+  const many=icsDelGroups.length>1;
+  el.innerHTML=(many?`<label class="icsd-row icsd-all">
+      <input type="checkbox" class="icsd-ck" id="icsDelAll">
+      <span class="icsc-name">全选</span>
+      <span class="icsc-cnt">共 ${icsDelGroups.reduce((s,g)=>s+g.count,0)} 条</span>
+    </label>`:'')+icsDelGroups.map((g,i)=>`
+    <label class="icsd-row">
+      <input type="checkbox" class="icsd-ck" data-i="${i}"${g.sel?' checked':''}>
+      <span class="icsc-dot" style="background:${g.color}"></span>
+      <span class="icsc-name">${esc(g.key)}</span>
+      <span class="icsc-cnt">${g.count} 条</span>
+    </label>`).join('');
+  el.querySelectorAll('.icsd-ck[data-i]').forEach(b=>{
+    b.onchange=()=>{icsDelGroups[+b.dataset.i].sel=b.checked;syncIcsDelBtn();};
+  });
+  const all=document.getElementById('icsDelAll');
+  if(all)all.onchange=()=>{icsDelGroups.forEach(g=>g.sel=all.checked);renderIcsDelList();};
+  syncIcsDelBtn();
+}
+// 按钮上直接写清楚这一下要删掉多少条，一条没勾就置灰
+function syncIcsDelBtn(){
+  const n=(icsDelGroups||[]).filter(g=>g.sel).reduce((s,g)=>s+g.count,0);
+  const btn=document.getElementById('icsDelBtn');
+  if(btn){btn.disabled=!n;btn.textContent=n?`删除所选 ${n} 条`:'删除所选';}
+  const all=document.getElementById('icsDelAll');
+  if(all)all.checked=!!icsDelGroups&&icsDelGroups.length>0&&icsDelGroups.every(g=>g.sel);
+}
+function confirmIcsDel(){
+  const sel=(icsDelGroups||[]).filter(g=>g.sel);
+  if(!sel.length)return;
+  const keys=new Set(sel.map(g=>g.key));
+  const doomed=importedICSNotes().filter(n=>keys.has(icsGroupKey(n)));
+  if(!doomed.length){closeIcsDel();return;}
+  const names=sel.map(g=>'「'+g.key+'」').join('、');
+  if(!confirm(`将删除${names}里的 ${doomed.length} 条导入事件。\n其余日历、你自己写的笔记都不受影响。\n删除后可重新导入。确定？`))return;
+  const ids=new Set(doomed.map(n=>n.id));
   notes=notes.filter(n=>!ids.has(n.id));
   // 若「日历」子分类已空，顺手从筛选里移除
   if(!notes.some(n=>n.subCat==='日历')){noteSubs=noteSubs.filter(s=>s!=='日历');persistNoteSubs();}
   persistNotes();render();
-  toast(`已删除 ${imp.length} 条导入的日历事件`);
+  closeIcsDel();
+  toast(`已删除 ${doomed.length} 条导入的日历事件`);
 }
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 function today(){return new Date().toISOString().slice(0,10);}
