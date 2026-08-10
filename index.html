@@ -3125,7 +3125,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod.pv-year .calendar-container.year-view{margin:0;column-gap:14px;row-gap:8px;}
 #calViewPeriod.pv-year .calendar-container.year-view .month{
   background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:10px 8px 12px;border-top:1px solid var(--border);}
+  padding:10px;border-top:1px solid var(--border);}
 /* 首行原本要贴着标题栏、所以上内边距被收成 4px；现在每月自成一卡，四张卡内边距要一致 */
 #calViewPeriod.pv-year .calendar-container.year-view .month:nth-child(-n+2){padding-top:10px;}
 /* 月份名靠左（只改年视图；月视图那个 .month-title 是另一处，不动）。
@@ -3142,11 +3142,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    .pv-nav 用 display:contents 把 ‹ / 年份 / › 三个子元素摊成 .home-header 的直接
    flex 项，再用 order 重排成「年份 → ‹ → › → 筛选」。这样不动 HTML，
    经期月视图（不带 .pv-year）仍是原来的「‹ 年月 ›  筛选」。
-   年份靠 margin-right:auto 吃掉中间的空档；margin-left:-1px 让「2026」的文字
-   左沿落在 25，与月卡里「1 月」的左沿对齐。 */
+   年份靠 margin-right:auto 吃掉中间的空档；margin-left:1px 让「2026」的文字
+   左沿落在 27，与月卡里「1 月」的左沿对齐（月卡内边距 10 之后「1 月」在 27）。 */
 #calViewPeriod.pv-year .home-header{gap:0;}
 #calViewPeriod.pv-year .pv-nav{display:contents;}
-#calViewPeriod.pv-year .pv-navlabel{order:0;margin-right:auto;margin-left:-1px;}
+#calViewPeriod.pv-year .pv-navlabel{order:0;margin-right:auto;margin-left:1px;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:first-child{order:1;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:last-child{order:2;}
 #calViewPeriod.pv-year .home-header-right{order:3;}
