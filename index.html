@@ -8208,7 +8208,7 @@ window.PV = (function(){
 
     const dim = new Date(heatYear, heatMonth, 0).getDate();
 
-    // 按 SYMPTOMS_LIB 原序收集当月记过的标签（顺序与记录面板一致）
+    // 先按 SYMPTOMS_LIB 原序收集当月记过的标签
     const cards = [];
     (SYMPTOMS_LIB || []).forEach(tag => {
       const days = [];
@@ -8218,6 +8218,10 @@ window.PV = (function(){
       }
       if (days.length) cards.push({ tag, days });
     });
+    // 再按本月天数从多到少排：这一屏是「这个月哪些标签冒头得最凶」，
+    // 最多的那几条该在最上面，不用往下翻着找。
+    // sort 稳定，天数相同的仍保持库内原序（与记录面板一致）。
+    cards.sort((a, b) => b.days.length - a.days.length);
 
     if (!cards.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
