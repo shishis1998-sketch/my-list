@@ -3089,7 +3089,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.year-view .month:nth-child(n+3) {border-top: 1px solid var(--line);}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
 #calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 26px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
-#calViewPeriod .calendar-container.year-view .day {width: 20px; height: 20px; aspect-ratio: auto; border-radius: 50%; font-size: var(--fs-footnote); line-height: 1;}  /* 固定小圆点(20px≈列宽，留少量间距)；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
+#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: var(--fs-footnote); line-height: 1;}  /* 固定小圆点(18px，列宽 20.79，左右各留 1.39)；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
@@ -3120,7 +3120,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   margin:6px 14px 2px;padding:8px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{background:transparent;border:none;border-radius:0;
   margin:0 14px 12px;padding:0;}
-#calViewPeriod.pv-year .calendar-container.year-view{margin:0;column-gap:8px;row-gap:8px;}
+/* 两张月卡之间留 14，与左右页边距同宽——卡片自己按 1fr 缩窄到 175.5。
+   日期列跟着收到 20.79，20px 的圆仍放得下（每侧余 0.39）。 */
+#calViewPeriod.pv-year .calendar-container.year-view{margin:0;column-gap:14px;row-gap:8px;}
 #calViewPeriod.pv-year .calendar-container.year-view .month{
   background:var(--surface);border:1px solid var(--border);border-radius:12px;
   padding:10px 8px 12px;border-top:1px solid var(--border);}
@@ -3136,6 +3138,18 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:calc((100% - 12px) / 14 - 13px);}
 /* 筛选按钮左移半列减半个按钮，图标中心落在最后一列日期的中心线上（同 .cal-nav） */
 #calViewPeriod .home-header-right{margin-right:calc((100% - 12px) / 14 - 16px);}
+/* ── 年视图标题栏：年份留在左边，‹ › 挪到右侧与筛选按钮并排 ──
+   .pv-nav 用 display:contents 把 ‹ / 年份 / › 三个子元素摊成 .home-header 的直接
+   flex 项，再用 order 重排成「年份 → ‹ → › → 筛选」。这样不动 HTML，
+   经期月视图（不带 .pv-year）仍是原来的「‹ 年月 ›  筛选」。
+   年份靠 margin-right:auto 吃掉中间的空档；margin-left:-1px 让「2026」的文字
+   左沿落在 25，与月卡里「1 月」的左沿对齐。 */
+#calViewPeriod.pv-year .home-header{gap:0;}
+#calViewPeriod.pv-year .pv-nav{display:contents;}
+#calViewPeriod.pv-year .pv-navlabel{order:0;margin-right:auto;margin-left:-1px;}
+#calViewPeriod.pv-year .pv-nav .pv-navbtn:first-child{order:1;}
+#calViewPeriod.pv-year .pv-nav .pv-navbtn:last-child{order:2;}
+#calViewPeriod.pv-year .home-header-right{order:3;}
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   font-family:var(--zh);letter-spacing:.02em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
