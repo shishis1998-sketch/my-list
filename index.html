@@ -3456,6 +3456,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 }
 </style>
 <script>
+// 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
+// 而且是在 load 之后才还原，会盖掉我们自己的 scrollTo(0,0)，结果页面停在半空、
+// 顶部视图切换条被地址栏/吸顶条挡住。这里关掉自动还原，由 init 统一回到顶部。
+(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}})();
 // 主题色：尽早写上 data-theme，避免加载时先闪一下墨绿
 (function(){try{var t=localStorage.getItem('my_list_theme_v1');
   if(t&&t!=='green')document.documentElement.setAttribute('data-theme',t);
@@ -12848,6 +12852,14 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 
 // ── Init ─────────────────────────────────────────────────────────
 boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger(); restoreLastPage();
+// 恢复完页面/视图后强制回到顶部：内容是 JS 渲染的，首帧高度还没定下来，
+// 光在 openCalendar() 里滚一次可能被随后的布局/图片撑高带偏。再补两帧兜底。
+(function(){
+  const toTop=()=>{try{window.scrollTo(0,0);}catch(e){}};
+  toTop();
+  requestAnimationFrame(()=>{toTop();requestAnimationFrame(toTop);});
+  window.addEventListener('load',toTop,{once:true});
+})();
 checkIncomingSyncLink();
 
 // ── 弹窗背景滚动锁（iOS/Android 通用）──────────────────────────
