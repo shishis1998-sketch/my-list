@@ -2168,15 +2168,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
 /* 色带：当月天数列等分整宽。列数用 --dim 传进来，28~31 天都能自适应 */
 #calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);gap:2px;}
-#calViewHeat .hm-cell{height:16px;border-radius:3px;background:var(--surface-2);}
+#calViewHeat .hm-cell{height:14px;border-radius:3px;background:var(--surface-2);}
 #calViewHeat .hm-cell.on{background:var(--accent);}
-/* 今天：描边空心格，与实心格外径一致（inset 落在格内侧）*/
-#calViewHeat .hm-cell.today{box-shadow:inset 0 0 0 var(--bd) var(--accent);background:var(--surface);}
-/* 今天恰好也是记录日：实心格上再压一道浅色内描边。
-   旧的网格版每格里有数字，填实了也能读出「7」；长条没有数字，
-   两者重合时如果不加这道边，今天就彻底失去参照了 */
-#calViewHeat .hm-cell.on.today{background:var(--accent);
-  box-shadow:inset 0 0 0 var(--bd) var(--surface);}
+/* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
+   后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
+   色带只表达「这天记没记」，参照交给下方刻度尺。 */
 /* 刻度尺：每 3 天一个数字（1、4、7…），列宽与色带严格对齐 */
 #calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);
   margin-top:var(--sp-4);font-family:var(--en);font-size:9px;line-height:1;color:var(--text-muted);}
@@ -8211,8 +8207,6 @@ window.PV = (function(){
     if (title) title.textContent = `${heatYear} 年 ${heatMonth} 月`;
 
     const dim = new Date(heatYear, heatMonth, 0).getDate();
-    const now = new Date();
-    const todayD = (now.getFullYear() === heatYear && now.getMonth() + 1 === heatMonth) ? now.getDate() : 0;
 
     // 按 SYMPTOMS_LIB 原序收集当月记过的标签（顺序与记录面板一致）
     const cards = [];
@@ -8242,8 +8236,7 @@ window.PV = (function(){
       let cells = '';
       for (let d = 1; d <= dim; d++) {
         const on = c.days.includes(d) ? ' on' : '';
-        const today = d === todayD ? ' today' : '';
-        cells += `<div class="hm-cell${on}${today}"></div>`;
+        cells += `<div class="hm-cell${on}"></div>`;
       }
       return `<div class="hm-card" style="--dim:${dim}">` +
         '<div class="hm-card-hd">' +
