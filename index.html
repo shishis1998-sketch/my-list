@@ -3096,7 +3096,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.year-view .month:nth-child(n+3) {border-top: 1px solid var(--line);}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
 #calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 26px; min-height: 0; row-gap: 2px;}  /* 固定行高：auto 会让首周行被撑到 ~118px（浏览器 grid 轨道量算怪癖），导致月内出现大片空白 */
-#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: 11px; line-height: 1;}  /* 固定小圆点(18px，列宽见 3125 那条的注释，左右总有富余)；数字 11px——圆缩到 18 后 --fs-footnote(12) 顶得太满；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
+#calViewPeriod .calendar-container.year-view .day {width: 18px; height: 18px; aspect-ratio: auto; border-radius: 50%; font-size: 11px; line-height: 1;}  /* 固定小圆点(18px，列宽见 3132 那条的注释，左右总有富余)；数字 11px——圆缩到 18 后 --fs-footnote(12) 顶得太满；line-height:1 保证数字在圆圈正中央（与月度视图一致）；桌面端也不会被拉成大圆 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
@@ -3151,7 +3151,16 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    经期月视图（不带 .pv-year）仍是原来的「‹ 年月 ›  筛选」。
    年份靠 margin-right:auto 吃掉中间的空档；margin-left:1px 让「2026」的文字
    左沿落在 27，与月卡里「1 月」的左沿对齐（月卡内边距 10 之后「1 月」在 27）。 */
-#calViewPeriod.pv-year .home-header{gap:0;}
+/* 三个键做成 1px 描边的圆钮：直径 28、彼此间距 8。
+   盒子不可见的话，上面那条「右边框对齐末列日期」就只是数字上成立、看不出来。
+   圆缩到 28 后撑起标题栏高度的变成「2026」那行文字，纵向 padding 补一下，
+   标题栏仍是 48，下面整页节奏不动。 */
+#calViewPeriod.pv-year .home-header{gap:8px;padding-top:9.6px;padding-bottom:9.6px;}
+#calViewPeriod.pv-year .pv-navbtn,
+#calViewPeriod.pv-year .home-filter-btn{width:28px;height:28px;border-radius:50%;
+  border:1px solid var(--border) !important;}
+/* 筛选按钮是 inline-flex，外面这层若留着行盒会多出 2px，把标题栏顶到 50 */
+#calViewPeriod.pv-year .home-filter{display:flex;}
 #calViewPeriod.pv-year .pv-nav{display:contents;}
 #calViewPeriod.pv-year .pv-navlabel{order:0;margin-right:auto;margin-left:1px;}
 #calViewPeriod.pv-year .pv-nav .pv-navbtn:first-child{order:1;}
