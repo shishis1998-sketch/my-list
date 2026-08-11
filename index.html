@@ -2181,7 +2181,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 格子宽度不写死：1fr 等分，宽 = (色带宽 − (天数−1)×4) ÷ 天数。
    31 天的月份落在 7.06（393 视口），28 天的宽到 8.86——铺满卡片优先于统一宽度。 */
 #calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);gap:4px;}
-#calViewHeat .hm-cell{height:12px;border-radius:3px;background:var(--surface-2);}
+/* 圆角 1.5 而不是 3：格子只有 7 出头宽，3px 两边一吃就只剩 1px 平直边，
+   形状读起来是胶囊不是方块。1.5 留出 4px 平边，还能看出是「带圆角的方块」。
+   注意这个值是跟着格子宽度定的——格子再变窄就得跟着往下调。 */
+#calViewHeat .hm-cell{height:12px;border-radius:1.5px;background:var(--surface-2);}
 #calViewHeat .hm-cell.on{background:var(--accent);}
 /* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
    后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
