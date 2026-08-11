@@ -2524,8 +2524,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .hm-nav.next::before, #calViewPeriod .cyc-nav.next::before {left: 50%; transform: translate(-70%, -50%) rotate(-45deg);}
 #calViewPeriod .mv-nav.prev::before {left: 14px;  transform: translateY(-50%) rotate(135deg);}
 #calViewPeriod .mv-nav.next::before {right: 14px; transform: translateY(-50%) rotate(-45deg);}
-#calViewPeriod .cyc-year {font-size: var(--fs-callout); font-weight: 700; color: var(--ink-2);
-      min-width: 40px; text-align: center; font-variant-numeric: tabular-nums;}
 #calViewPeriod .st-tiles {display: grid; grid-template-columns: 1fr 1fr; gap: 10px;}
 #calViewPeriod .st-tile {background: var(--surface-2); border-radius: var(--r-md); padding: var(--sp-3) var(--sp-3) 14px;}
 #calViewPeriod .st-tile .lab {font-size: var(--fs-footnote); color: var(--muted);}
@@ -2538,7 +2536,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .st-tile.accent .lab {color: var(--brand-dark); opacity: .8;}
 #calViewPeriod .st-tile.accent .foot {color: var(--brand); opacity: .75;}
 /* 图例三项（周期/经期/非经期出血）：窄屏排不下时换行，别把卡片撑破 */
-#calViewPeriod .cyc-legend {display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -2px 0 10px;}
+#calViewPeriod .cyc-legend {display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 6px;}
 #calViewPeriod .cyc-legend span {display: flex; align-items: center; gap: 6px; font-size: var(--fs-footnote); color: var(--body);}
 #calViewPeriod .cyc-legend i {width: 10px; height: 10px; border-radius: 3px;}
 /* 点滴色本身很浅（默认 GOTAS 灰），加一圈极淡的内描边才看得出边界 */
@@ -2587,7 +2585,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .pv-trend-card {background: #FFFFFF; border: 1px solid var(--border);
       border-radius: 16px; padding: 14px 16px;}
 #calViewPeriod .pv-trend-card .stcard-title {margin: 0;}
-#calViewPeriod .pv-trend-card .cyc-head {margin: 0 0 12px;}
+#calViewPeriod .pv-trend-card .cyc-head {margin: 0 0 6px;}
 /* 年份切换箭头复用标题栏 .pv-navbtn（无描边/透明底/墨绿），到边界年份时淡化禁用 */
 #calViewPeriod .pv-trend-card .cyc-yearbar {gap: 0;}
 #calViewPeriod .pv-trend-card .pv-navbtn:disabled {opacity: .28; cursor: default;}
@@ -7465,10 +7463,11 @@ window.PV = (function(){
       const avg = cycCols.length
         ? Math.round(cycCols.reduce((a, c) => a + c.cyc, 0) / cycCols.length) : 0;
 
+      // 右上角原来还有个年份，和标题栏那个「2026」用的是同一个 year、永远相同，
+      // 而那个就在卡片下方 12px 处、还是可点的控件——重复，去掉。
       const head =
         '<div class="cyc-head">' +
           `<div class="stcard-title">周期趋势${cycCols.length ? `<span class="sub">平均 ${avg} 天</span>` : ''}</div>` +
-          `<span class="cyc-year">${year}</span>` +
         '</div>';
 
       let body;
