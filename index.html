@@ -2184,8 +2184,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
    后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
    色带只表达「这天记没记」，参照交给下方刻度尺。 */
-/* 刻度尺：每 3 天一个数字（1、4、7…），列宽与色带严格对齐 */
-#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);
+/* 刻度尺：每 2 天一个数字（1、3、5…），列宽与色带严格对齐。
+   minmax(0,1fr) 不能省：1fr 的最小值是 auto，两位数会把自己那列撑宽，
+   等分被打破后刻度就和下面的色块对不上了。gap 也必须和色带一样是 2px，
+   否则两个网格的列心会逐格漂移（实测末端差 0.97）。 */
+#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim,31),minmax(0,1fr));gap:2px;
   margin-top:var(--sp-4);font-family:var(--en);font-size:9px;line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-ruler span{text-align:center;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
@@ -8265,11 +8268,13 @@ window.PV = (function(){
         '<small>在「经期」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
       return;
     }
-    // 刻度：每 3 天一个数字，从 1 号起（1、4、7…），末尾那格若不落在节拍上也补一个，
-    // 这样两端都有参照，中间不会出现「最后 2 格没刻度」的悬空感
+    // 刻度：每 2 天一个数字，从 1 号起（1、3、5…）。3 天一个太疏，色带中段没有参照。
+    // 末尾那格若不落在节拍上就补一个，让两端都有参照；但只在它离前一个刻度 ≥2 格时才补——
+    // 紧挨着的话两个两位数会贴在一起（30 天、28 天的月份正是这种情况）。
+    const RULER_STEP = 2;
     let ruler = '';
     for (let d = 1; d <= dim; d++) {
-      const show = (d - 1) % 3 === 0 || d === dim;
+      const show = (d - 1) % RULER_STEP === 0 || (d === dim && (dim - 1) % RULER_STEP >= 2);
       ruler += `<span>${show ? d : ''}</span>`;
     }
     box.innerHTML = '<div class="hm-cards">' + cards.map(c => {
