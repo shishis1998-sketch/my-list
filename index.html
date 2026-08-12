@@ -2064,6 +2064,9 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 /* —— 分类/状态徽章：圆 + 描边 —— */
 /* 分类胶囊：只留淡色底，不描边（标签胶囊下面那条本来就是 border:none）*/
 .cbadge{font-family:var(--zh);font-weight:700;border:none;}
+/* 媒体列表这两种胶囊单独走 10 的圆角（--rchip 是全站的 6，笔记、日历、筛选条照旧）。
+   胶囊高 24，圆角到 12 就是全圆胶囊了，10 是「明显圆但还不是胶囊」那一档。 */
+#tbl .cbadge,#tbl .ctag{border-radius:10px;}
 .ctag{font-family:var(--zh);font-weight:600;border:none;background:var(--surface-2);border-radius:var(--rchip);}
 
 
