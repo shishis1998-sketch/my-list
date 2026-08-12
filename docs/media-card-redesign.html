@@ -1,0 +1,785 @@
+<title>封面卡片改版提案</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   文稿外壳：沿用 docs/ 已有的「图版」语汇（纸色 + 发丝线 + 等宽眉标）
+   屏幕内部：直接搬 index.html 的 :root token，保证示意图＝真机观感
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  /* 文稿 */
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3; --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4;
+  --stage:#EDEDE7;
+  /* App（= index.html 浅色 token） */
+  --a-bg:#F7F7F5; --a-surface:#FFFFFF; --a-surface2:#F2F2F0;
+  --a-border:#ECECEA; --a-border-soft:#F2F2F0;
+  --a-t1:#1A1A1A; --a-t2:#6B6B6B; --a-t3:#9B9B9B;
+  --a-accent:#2B4D3F; --a-accent-light:#E8EEEB; --a-on-accent:#fff;
+  --a-watch:#14532D; --a-badge-bg:rgba(43,77,63,.12);
+  --st-done:#14532D; --st-doing:#1E40AF; --st-want:#92400E; --st-drop:#6B7280;
+  --scrim:rgba(10,8,6,.42);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+    --stage:#15151A;
+    --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+    --a-border:#2E2E33; --a-border-soft:#26262A;
+    --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+    --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-on-accent:#10201A;
+    --a-watch:#6FB394; --a-badge-bg:rgba(111,179,148,.15);
+    --st-done:#6FB394; --st-doing:#7BA3E8; --st-want:#D9A05B; --st-drop:#9AA0A6;
+    --scrim:rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+  --stage:#15151A;
+  --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+  --a-border:#2E2E33; --a-border-soft:#26262A;
+  --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+  --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-on-accent:#10201A;
+  --a-watch:#6FB394; --a-badge-bg:rgba(111,179,148,.15);
+  --st-done:#6FB394; --st-doing:#7BA3E8; --st-want:#D9A05B; --st-drop:#9AA0A6;
+  --scrim:rgba(0,0,0,.55);
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.mono,.eyebrow,.kicker,.tagline,.num{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+.wrap{max-width:1180px;margin:0 auto;padding:52px 20px 100px;display:flex;flex-direction:column;gap:46px;}
+
+/* ── 页头 ── */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+.kicker{font-size:11px;letter-spacing:.2em;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-family:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+  font-size:clamp(30px,5.4vw,44px);line-height:1.15;margin:0 0 10px;letter-spacing:.02em;text-wrap:balance;font-weight:600;}
+.masthead p{margin:0;color:var(--ink-2);max-width:64ch;}
+.meta{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:18px;}
+.meta span{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;letter-spacing:.04em;color:var(--ink-2);
+  background:var(--sheet);border:1px solid var(--hair);border-radius:2px;padding:4px 9px;}
+.meta b{color:var(--ink);font-weight:600;}
+
+/* ── 通用图版 ── */
+.plate{display:flex;flex-direction:column;gap:14px;}
+.plate-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:10px;}
+.eyebrow{font-size:11px;letter-spacing:.18em;color:var(--dim);}
+.plate-hd h2{font-size:21px;margin:0;letter-spacing:.01em;font-weight:600;}
+.plate-sub{font-size:13px;color:var(--ink-3);}
+.badge-fit{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;letter-spacing:.08em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 8px;white-space:nowrap;}
+.lede{margin:0;color:var(--ink-2);max-width:70ch;font-size:14.5px;}
+
+/* 舞台 */
+.stage{background:var(--stage);border:1px solid var(--hair);border-radius:3px;padding:26px 20px;
+  display:flex;gap:26px;justify-content:center;align-items:flex-start;flex-wrap:wrap;overflow-x:auto;}
+.stage.tight{padding:20px 16px;}
+.shot{display:flex;flex-direction:column;gap:9px;align-items:center;flex:0 1 auto;width:340px;max-width:100%;}
+.shot.wide{width:660px;}
+.shot-cap{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--ink-3);text-align:center;max-width:100%;}
+
+/* 评述两栏 */
+.crit{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0;border:1px solid var(--hair);border-radius:3px;background:var(--sheet);}
+.crit>div{padding:13px 16px;border-right:1px solid var(--hair-2);}
+.crit>div:last-child{border-right:none;}
+.crit h4{margin:0 0 6px;font-size:11px;letter-spacing:.14em;font-family:ui-monospace,Menlo,monospace;color:var(--ink-3);font-weight:600;}
+.crit ul{margin:0;padding-left:17px;font-size:13.5px;color:var(--ink-2);line-height:1.65;}
+.crit li+li{margin-top:3px;}
+.crit .yes::marker{color:var(--acc);}
+.crit .no::marker{color:var(--dim);}
+
+/* 表格 */
+.tablewrap{overflow-x:auto;border:1px solid var(--hair);border-radius:3px;background:var(--sheet);}
+table.doc{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px;}
+table.doc th{text-align:left;padding:9px 14px;background:var(--chip);color:var(--ink-2);
+  font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.1em;font-weight:600;border-bottom:1px solid var(--hair);}
+table.doc td{padding:9px 14px;border-bottom:1px solid var(--hair-2);vertical-align:top;color:var(--ink-2);}
+table.doc tr:last-child td{border-bottom:none;}
+table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
+.mk{font-family:ui-monospace,Menlo,monospace;}
+.mk.on{color:var(--acc);}
+.mk.off{color:var(--ink-3);}
+
+/* ══════════ 手机屏 ══════════ */
+.phone{width:100%;border:1px solid var(--hair);border-radius:26px;background:var(--a-bg);
+  overflow:hidden;position:relative;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;
+  color:var(--a-t1);line-height:1.45;}
+.phone.wide{border-radius:8px;}
+.p-top{background:var(--a-surface);border-bottom:1px solid var(--a-border-soft);padding:12px 16px 10px;}
+.p-title{display:flex;align-items:baseline;gap:8px;}
+.p-title b{font-size:19px;font-weight:700;letter-spacing:.01em;}
+.p-title span{font-size:12px;color:var(--a-t3);}
+.p-chips{display:flex;gap:6px;margin-top:9px;overflow:hidden;}
+.p-chip{font-size:11.5px;font-weight:600;color:var(--a-t2);background:var(--a-bg);border:1px solid var(--a-border);
+  border-radius:6px;padding:3px 9px;white-space:nowrap;}
+.p-chip.on{background:var(--a-accent);color:var(--a-on-accent);border-color:var(--a-accent);}
+.p-body{padding:12px;height:452px;overflow:hidden;position:relative;}
+.p-body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;
+  background:linear-gradient(to bottom,transparent,var(--a-bg));}
+.p-body.flush{padding:0;}
+.p-body.flush::after{background:linear-gradient(to bottom,transparent,var(--a-surface));}
+
+/* 封面（真机是 item.cover 图片，这里用色块＋书脊代替） */
+.cv{position:relative;border-radius:4px;overflow:hidden;background:var(--a-surface2);flex-shrink:0;
+  display:flex;align-items:flex-end;padding:6px;color:rgba(255,255,255,.94);
+  font-family:"Songti SC","Noto Serif SC",Georgia,serif;font-weight:600;line-height:1.15;
+  text-shadow:0 1px 3px rgba(0,0,0,.3);}
+.cv::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:rgba(0,0,0,.22);}
+.cv1{background:linear-gradient(150deg,#3D5A4B,#22322B);}
+.cv2{background:linear-gradient(150deg,#8C5A3C,#4E3123);}
+.cv3{background:linear-gradient(150deg,#3E4A72,#232A43);}
+.cv4{background:linear-gradient(150deg,#6E3F62,#3A2135);}
+.cv5{background:linear-gradient(150deg,#9A7B3A,#4F3E1D);}
+.cv6{background:linear-gradient(150deg,#3B5F6B,#1F343B);}
+.cv7{background:linear-gradient(150deg,#7A3540,#3F1C22);}
+
+/* 通用小件 */
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.dot.done{background:var(--st-done);}.dot.doing{background:var(--st-doing);}.dot.want{background:var(--st-want);}
+.stars{font-size:11px;color:var(--a-t2);letter-spacing:.5px;}
+.wd{font-family:-apple-system,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--a-watch);font-weight:600;}
+.badge-cat{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:600;
+  background:var(--a-badge-bg);color:var(--a-accent);}
+.tagpill{display:inline-flex;align-items:center;height:21px;padding:0 9px;border-radius:6px;font-size:12px;
+  background:var(--a-bg);border:1px solid var(--a-border-soft);color:var(--a-t2);}
+
+/* ── A 封面网格 ── */
+.grid-a{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 11px;}
+.ga-cell{display:flex;flex-direction:column;gap:6px;}
+.ga-cell .cv{aspect-ratio:2/3;width:100%;font-size:12px;}
+.ga-nm{font-size:12.5px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.ga-sub{font-size:11px;color:var(--a-t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ga-wd{font-size:11px;}
+
+/* ── B 横向卡片 ── */
+.list-b{display:flex;flex-direction:column;gap:8px;}
+.lb-row{display:flex;gap:11px;background:var(--a-surface);border:1px solid var(--a-border);border-radius:12px;padding:10px;}
+.lb-row .cv{width:44px;height:64px;font-size:0;padding:0;}
+.lb-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.lb-nm{font-size:14px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-au{font-size:11px;color:var(--a-t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-ft{display:flex;align-items:center;gap:7px;margin-top:1px;}
+.lb-ft .wd{font-size:11.5px;}
+.lb-arrow{align-self:center;color:var(--a-t3);font-size:15px;flex-shrink:0;}
+
+/* ── C 月份分组 ── */
+.grp-hd{display:flex;align-items:center;gap:9px;padding:14px 4px 7px;}
+.grp-hd b{font-size:12px;font-weight:700;color:var(--a-t2);letter-spacing:.04em;font-variant-numeric:tabular-nums;}
+.grp-hd i{flex:1;height:1px;background:var(--a-border);}
+.grp-hd span{font-size:11px;color:var(--a-t3);}
+.list-c{background:var(--a-surface);border:1px solid var(--a-border);border-radius:12px;overflow:hidden;}
+.lc-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid var(--a-border-soft);}
+.lc-row:last-child{border-bottom:none;}
+.lc-row .cv{width:30px;height:42px;font-size:0;padding:0;border-radius:3px;}
+.lc-mid{flex:1;min-width:0;}
+.lc-nm{font-size:13.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lc-au{font-size:11px;color:var(--a-t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lc-day{font-size:12px;font-weight:700;color:var(--a-t2);font-variant-numeric:tabular-nums;flex-shrink:0;}
+
+/* ── D 双列杂志 ── */
+.grid-d{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.gd-cell{background:var(--a-surface);border:1px solid var(--a-border);border-radius:12px;overflow:hidden;}
+.gd-cell .cv{width:100%;aspect-ratio:3/4;border-radius:0;font-size:14px;padding:9px;}
+.gd-txt{padding:9px 10px 11px;display:flex;flex-direction:column;gap:4px;}
+.gd-nm{font-size:13.5px;font-weight:600;line-height:1.3;}
+.gd-au{font-size:11px;color:var(--a-t3);}
+.gd-ft{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;}
+
+/* ── 详情页 ── */
+.d-nav{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--a-surface);
+  border-bottom:1px solid var(--a-border-soft);}
+.d-back{font-size:14px;color:var(--a-accent);font-weight:600;cursor:pointer;background:none;border:none;padding:0;
+  font-family:inherit;display:flex;align-items:center;gap:4px;}
+.d-nav .sp{flex:1;}
+.d-act{font-size:12.5px;color:var(--a-t2);}
+.d-hero{display:flex;gap:14px;padding:16px 14px;background:var(--a-surface);border-bottom:1px solid var(--a-border-soft);position:relative;overflow:hidden;}
+.d-hero .cv{width:84px;height:120px;font-size:0;padding:0;border-radius:6px;z-index:1;}
+.d-hero-wash{position:absolute;inset:0;opacity:.1;filter:blur(26px);}
+.d-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;z-index:1;}
+.d-nm{font-size:18px;font-weight:700;line-height:1.25;}
+.d-au{font-size:12.5px;color:var(--a-t2);}
+.d-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:2px;}
+.d-status{font-size:12px;font-weight:700;}
+.sec{padding:14px;border-bottom:1px solid var(--a-border-soft);background:var(--a-surface);}
+.sec-lbl{font-size:10.5px;letter-spacing:.12em;color:var(--a-t3);font-weight:700;margin-bottom:8px;text-transform:uppercase;}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:11px 12px;}
+.kv-k{font-size:10.5px;color:var(--a-t3);letter-spacing:.06em;}
+.kv-v{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:1px;}
+.d-note{font-size:13.5px;color:var(--a-t2);line-height:1.65;white-space:pre-wrap;}
+.d-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.d-span{display:flex;align-items:center;gap:8px;padding:2px 0;}
+.d-span .bar{flex:1;height:4px;border-radius:2px;background:var(--a-surface2);position:relative;overflow:hidden;}
+.d-span .bar i{position:absolute;left:12%;right:26%;top:0;bottom:0;background:var(--a-accent);opacity:.7;border-radius:2px;}
+.d-span small{font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums;}
+
+/* 半屏 sheet 版 */
+.sheetstage{position:relative;height:520px;overflow:hidden;border-radius:26px;}
+.sheet-dim{position:absolute;inset:0;background:var(--scrim);}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:88px;background:var(--a-surface);
+  border-radius:16px 16px 0 0;overflow:hidden;display:flex;flex-direction:column;}
+.sheet-grab{height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sheet-grab i{width:34px;height:4px;border-radius:2px;background:var(--a-border);}
+.sheet-scroll{overflow:hidden;flex:1;}
+
+/* 分栏（电脑端） */
+.split{display:flex;height:430px;}
+.split-l{width:270px;border-right:1px solid var(--a-border);background:var(--a-surface);overflow:hidden;flex-shrink:0;}
+.split-r{flex:1;background:var(--a-bg);overflow:hidden;}
+.sl-row{display:flex;gap:9px;align-items:center;padding:9px 11px;border-bottom:1px solid var(--a-border-soft);}
+.sl-row.on{background:var(--a-accent-light);box-shadow:inset 2px 0 0 var(--a-accent);}
+.sl-row .cv{width:26px;height:37px;font-size:0;padding:0;border-radius:3px;}
+.sl-nm{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sl-au{font-size:10.5px;color:var(--a-t3);}
+
+/* ══════════ 可点原型 ══════════ */
+.proto{position:relative;height:512px;overflow:hidden;}
+.proto-pane{position:absolute;inset:0;background:var(--a-bg);overflow:hidden;}
+.proto-detail{transform:translateX(100%);opacity:0;visibility:hidden;
+  transition:transform 240ms cubic-bezier(.22,1,.36,1),opacity 200ms linear,visibility 0s linear 240ms;}
+.proto[data-open="1"] .proto-detail{transform:translateX(0);opacity:1;visibility:visible;transition:transform 240ms cubic-bezier(.22,1,.36,1),opacity 160ms linear,visibility 0s;}
+.proto[data-open="1"] .proto-list{transform:translateX(-14%);opacity:.35;}
+.proto-list{transition:transform 240ms cubic-bezier(.22,1,.36,1),opacity 240ms linear;}
+.tap{display:block;width:100%;text-align:left;background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;}
+.tap:focus-visible,.d-back:focus-visible{outline:2px solid var(--a-accent);outline-offset:2px;border-radius:12px;}
+.tap .lb-row{transition:background .12s;}
+.tap:hover .lb-row{background:var(--a-bg);}
+.proto-hint{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-3);letter-spacing:.05em;text-align:center;}
+@media (prefers-reduced-motion:reduce){
+  .proto-detail,.proto-list{transition-duration:1ms !important;}
+}
+
+/* 尾注 */
+.foot{border-top:1px solid var(--hair);padding-top:18px;color:var(--ink-3);font-size:12.5px;}
+.foot code{font-family:ui-monospace,Menlo,monospace;background:var(--chip);padding:1px 5px;border-radius:2px;color:var(--ink-2);}
+.pick{background:var(--sheet);border:1px solid var(--acc);border-left-width:3px;border-radius:3px;padding:14px 18px;}
+.pick h3{margin:0 0 8px;font-size:15px;letter-spacing:.02em;}
+.pick p{margin:0 0 6px;color:var(--ink-2);font-size:14px;}
+.pick p:last-child{margin-bottom:0;}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">MY-LIST · 媒体页改版提案 · 2026-08</p>
+  <h1>封面卡片 + 详情页</h1>
+  <p>把现在的十列表格拆成两层：<b>列表只留封面、书名、作者、结束时间</b>，点进去才展开评分、状态、时间跨度、标签和备注全文。
+  下面是列表 4 版、详情 3 版，都用 <code style="font-family:ui-monospace,Menlo,monospace">index.html</code> 里现成的 token 画的，颜色字号即所见。</p>
+  <div class="meta">
+    <span>现状 <b>10 列表格</b></span>
+    <span>数据字段 <b>13 个</b></span>
+    <span>列表版本 <b>A–D</b></span>
+    <span>详情版本 <b>1–3</b></span>
+    <span><b>cover</b> 字段已存在，只是没显示</span>
+  </div>
+</header>
+
+<!-- ══════ 字段分配 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">前提</span>
+    <h2>字段怎么分两层</h2>
+    <span class="plate-sub">卡片＝认出它；详情＝回忆它</span>
+  </div>
+  <p class="lede">卡片上每多一个字段，认书的速度就慢一点。判断标准很简单：<b>翻列表时会用到的留在卡片上，翻完之后才想看的进详情页。</b></p>
+  <div class="tablewrap">
+    <table class="doc">
+      <thead><tr><th>字段</th><th>卡片</th><th>详情</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>cover 封面</td><td class="mk on">●</td><td class="mk on">●</td><td>认书最快的一眼，数据里一直有，只是列表没画</td></tr>
+        <tr><td>name 书名</td><td class="mk on">●</td><td class="mk on">●</td><td>—</td></tr>
+        <tr><td>creator 作者</td><td class="mk on">●</td><td class="mk on">●</td><td>同名书、同作者串读都靠它</td></tr>
+        <tr><td>watchDate 结束时间</td><td class="mk on">●</td><td class="mk on">●</td><td>你的清单本质是「读完记录」，这是排序主键</td></tr>
+        <tr><td>status 状态</td><td class="mk on">◐ 一个色点</td><td class="mk on">●</td><td>只填了开始时间的「进行中」得能一眼分出来，但不必写字</td></tr>
+        <tr><td>score 评分</td><td class="mk off">○</td><td class="mk on">●</td><td>星星占一整行宽度，收益不抵成本（D 版例外）</td></tr>
+        <tr><td>type 分类</td><td class="mk off">○</td><td class="mk on">●</td><td>顶部已经按分类筛过了，卡片再标一遍是重复</td></tr>
+        <tr><td>year 作品年份</td><td class="mk off">○</td><td class="mk on">●</td><td>和结束时间两个年份并排，容易读错</td></tr>
+        <tr><td>startDate 开始时间</td><td class="mk off">○</td><td class="mk on">●</td><td>详情页里和结束时间合成「读了多少天」</td></tr>
+        <tr><td>tags 标签</td><td class="mk off">○</td><td class="mk on">●</td><td>数量不定，最毁版式的字段</td></tr>
+        <tr><td>note 备注</td><td class="mk off">○</td><td class="mk on">● 全文</td><td>详情页有整屏，从此不用再折叠/展开</td></tr>
+        <tr><td>首次添加</td><td class="mk off">○</td><td class="mk on">●</td><td>由 id 反解，放详情页页脚</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 版本 A ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">版本 A</span>
+    <h2>封面网格</h2>
+    <span class="plate-sub">手机 3 列 / 电脑 6–8 列</span>
+    <span class="badge-fit">封面齐全时最好看</span>
+  </div>
+  <p class="lede">封面当主角，文字缩到封面下两行小字。一屏能塞 12 本，像书架。代价是书名超过 8 个字就要截断两行。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone">
+        <div class="p-top">
+          <div class="p-title"><b>书籍</b><span>36 条记录</span></div>
+          <div class="p-chips"><span class="p-chip on">按结束时间</span><span class="p-chip">已完成</span><span class="p-chip">进行中</span></div>
+        </div>
+        <div class="p-body">
+          <div class="grid-a">
+            <div class="ga-cell"><div class="cv cv1">人类简史</div>
+              <div><div class="ga-nm">人类简史</div><div class="ga-sub">尤瓦尔·赫拉利</div><div class="ga-sub ga-wd"><span class="wd">2026.8.2</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv2">长安的荔枝</div>
+              <div><div class="ga-nm">长安的荔枝</div><div class="ga-sub">马伯庸</div><div class="ga-sub ga-wd" style="color:var(--st-doing);font-weight:600">读到 8.5</div></div></div>
+            <div class="ga-cell"><div class="cv cv3">克拉拉与太阳</div>
+              <div><div class="ga-nm">克拉拉与太阳</div><div class="ga-sub">石黑一雄</div><div class="ga-sub ga-wd"><span class="wd">2026.7.28</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv4">百年孤独</div>
+              <div><div class="ga-nm">百年孤独</div><div class="ga-sub">加西亚·马尔克斯</div><div class="ga-sub ga-wd"><span class="wd">2026.7.15</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv5">置身事内</div>
+              <div><div class="ga-nm">置身事内</div><div class="ga-sub">兰小欢</div><div class="ga-sub ga-wd"><span class="wd">2026.6.30</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv6">我们仨</div>
+              <div><div class="ga-nm">我们仨</div><div class="ga-sub">杨绛</div><div class="ga-sub ga-wd"><span class="wd">2026.6.11</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv7">三体</div>
+              <div><div class="ga-nm">三体</div><div class="ga-sub">刘慈欣</div><div class="ga-sub ga-wd"><span class="wd">2026.5.24</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv1">应许之地</div>
+              <div><div class="ga-nm">应许之地</div><div class="ga-sub">巴拉克·奥巴马</div><div class="ga-sub ga-wd"><span class="wd">2026.5.9</span></div></div></div>
+            <div class="ga-cell"><div class="cv cv3">失明症漫记</div>
+              <div><div class="ga-nm">失明症漫记</div><div class="ga-sub">若泽·萨拉马戈</div><div class="ga-sub ga-wd"><span class="wd">2026.4.27</span></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">封面 2:3 · 书名 12.5px / 作者 · 日期 11px · 在读的画「读到 8.5」</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">信息密度最高，一屏 12 本</li><li class="yes">封面直接当索引，不用读字</li><li class="yes">和日历页的缩略图语言一致</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">没封面的条目留一堆灰块，最依赖 cover 填得全</li><li class="no">长书名截断成两行，作者常被省略号吃掉</li><li class="no">滑动时日期不成列，不好比时间</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 版本 B ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">版本 B</span>
+    <h2>横向卡片</h2>
+    <span class="plate-sub">一行一本 · 小封面在左</span>
+    <span class="badge-fit">改动最小 · 最稳</span>
+  </div>
+  <p class="lede">最接近现在的行式结构：小封面 44×64 在左，书名／作者／结束时间竖着排在右边，右端一个箭头提示可以点进去。书名再长也放得下。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone">
+        <div class="p-top">
+          <div class="p-title"><b>书籍</b><span>36 条记录</span></div>
+          <div class="p-chips"><span class="p-chip on">按结束时间</span><span class="p-chip">已完成</span><span class="p-chip">进行中</span></div>
+        </div>
+        <div class="p-body">
+          <div class="list-b">
+            <div class="lb-row"><div class="cv cv1"></div>
+              <div class="lb-mid"><div class="lb-nm">人类简史：从动物到上帝</div><div class="lb-au">尤瓦尔·赫拉利</div>
+                <div class="lb-ft"><span class="dot done"></span><span class="wd">2026.8.2 读完</span></div></div>
+              <span class="lb-arrow">›</span></div>
+            <div class="lb-row"><div class="cv cv2"></div>
+              <div class="lb-mid"><div class="lb-nm">长安的荔枝</div><div class="lb-au">马伯庸</div>
+                <div class="lb-ft"><span class="dot doing"></span><span style="font-size:11.5px;color:var(--st-doing);font-weight:600;font-variant-numeric:tabular-nums">8.5 起 · 在读</span></div></div>
+              <span class="lb-arrow">›</span></div>
+            <div class="lb-row"><div class="cv cv3"></div>
+              <div class="lb-mid"><div class="lb-nm">克拉拉与太阳</div><div class="lb-au">石黑一雄</div>
+                <div class="lb-ft"><span class="dot done"></span><span class="wd">2026.7.28 读完</span></div></div>
+              <span class="lb-arrow">›</span></div>
+            <div class="lb-row"><div class="cv cv4"></div>
+              <div class="lb-mid"><div class="lb-nm">百年孤独</div><div class="lb-au">加西亚·马尔克斯</div>
+                <div class="lb-ft"><span class="dot done"></span><span class="wd">2026.7.15 读完</span></div></div>
+              <span class="lb-arrow">›</span></div>
+            <div class="lb-row"><div class="cv cv5"></div>
+              <div class="lb-mid"><div class="lb-nm">置身事内：中国政府与经济发展</div><div class="lb-au">兰小欢</div>
+                <div class="lb-ft"><span class="dot done"></span><span class="wd">2026.6.30 读完</span></div></div>
+              <span class="lb-arrow">›</span></div>
+            <div class="lb-row"><div class="cv cv6"></div>
+              <div class="lb-mid"><div class="lb-nm">我们仨</div><div class="lb-au">杨绛</div>
+                <div class="lb-ft"><span class="dot done"></span><span class="wd">2026.6.11 读完</span></div></div>
+              <span class="lb-arrow">›</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">卡片高 86px · 封面缺失时留 44×64 灰块，不塌陷</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">书名不截断，长副标题也放得下</li><li class="yes">没封面也不难看，容错最好</li><li class="yes">保留现有左滑删除／编辑手势不用重写</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">一屏只有 5–6 本，翻得久</li><li class="no">封面太小，几乎只剩配色作用</li><li class="no">和现在的手机卡片长得像，改版感最弱</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 版本 C ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">版本 C</span>
+    <h2>按月分组</h2>
+    <span class="plate-sub">结束时间当章节标题</span>
+    <span class="badge-fit">最贴「阅读记录」这件事</span>
+  </div>
+  <p class="lede">既然结束时间是主键，干脆让它当分组标题：月份写一次，行里只留日号。行高压到 60px，一屏能看 8 本，还自带「这个月读了 4 本」的统计。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone">
+        <div class="p-top">
+          <div class="p-title"><b>书籍</b><span>36 条记录</span></div>
+          <div class="p-chips"><span class="p-chip on">按结束时间</span><span class="p-chip">已完成</span><span class="p-chip">进行中</span></div>
+        </div>
+        <div class="p-body">
+          <div class="grp-hd"><b>2026 年 8 月</b><i></i><span>2 本</span></div>
+          <div class="list-c">
+            <div class="lc-row"><div class="cv cv1"></div><div class="lc-mid"><div class="lc-nm">人类简史：从动物到上帝</div><div class="lc-au">尤瓦尔·赫拉利</div></div><span class="lc-day">8.2</span></div>
+            <div class="lc-row"><div class="cv cv2"></div><div class="lc-mid"><div class="lc-nm">长安的荔枝</div><div class="lc-au">马伯庸 · 在读</div></div><span class="lc-day" style="color:var(--st-doing)">8.5 起</span></div>
+          </div>
+          <div class="grp-hd"><b>2026 年 7 月</b><i></i><span>2 本</span></div>
+          <div class="list-c">
+            <div class="lc-row"><div class="cv cv3"></div><div class="lc-mid"><div class="lc-nm">克拉拉与太阳</div><div class="lc-au">石黑一雄</div></div><span class="lc-day">7.28</span></div>
+            <div class="lc-row"><div class="cv cv4"></div><div class="lc-mid"><div class="lc-nm">百年孤独</div><div class="lc-au">加西亚·马尔克斯</div></div><span class="lc-day">7.15</span></div>
+          </div>
+          <div class="grp-hd"><b>2026 年 6 月</b><i></i><span>3 本</span></div>
+          <div class="list-c">
+            <div class="lc-row"><div class="cv cv5"></div><div class="lc-mid"><div class="lc-nm">置身事内</div><div class="lc-au">兰小欢</div></div><span class="lc-day">6.30</span></div>
+            <div class="lc-row"><div class="cv cv6"></div><div class="lc-mid"><div class="lc-nm">我们仨</div><div class="lc-au">杨绛</div></div><span class="lc-day">6.11</span></div>
+            <div class="lc-row"><div class="cv cv7"></div><div class="lc-mid"><div class="lc-nm">三体</div><div class="lc-au">刘慈欣</div></div><span class="lc-day">6.3</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">月份标题只在切月时出现 · 日号右对齐成列，等宽数字</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">白送一份「每月读了几本」的节奏感</li><li class="yes">日号成列，翻起来像流水账，符合记录的用途</li><li class="yes">行最矮，一屏 8 本</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">封面缩到 30×42，基本只是色标</li><li class="no">按评分／书名排序时分组失效，得退回不分组</li><li class="no">「在读」没有结束时间，得单开一组顶在最上面</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 版本 D ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">版本 D</span>
+    <h2>双列大封面</h2>
+    <span class="plate-sub">卡片带边框 · 封面 3:4</span>
+    <span class="badge-fit">最有「作品集」气质</span>
+  </div>
+  <p class="lede">A 和 B 的折中：两列，封面大到能看清，文字区仍有整行宽度放书名和作者，还塞得下评分。适合当年度回顾页。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone">
+        <div class="p-top">
+          <div class="p-title"><b>书籍</b><span>36 条记录</span></div>
+          <div class="p-chips"><span class="p-chip on">按结束时间</span><span class="p-chip">已完成</span><span class="p-chip">进行中</span></div>
+        </div>
+        <div class="p-body">
+          <div class="grid-d">
+            <div class="gd-cell"><div class="cv cv1">人类简史</div>
+              <div class="gd-txt"><div class="gd-nm">人类简史</div><div class="gd-au">尤瓦尔·赫拉利</div>
+                <div class="gd-ft"><span class="wd">2026.8.2</span><span class="stars">★★★★☆</span></div></div></div>
+            <div class="gd-cell"><div class="cv cv2">长安的荔枝</div>
+              <div class="gd-txt"><div class="gd-nm">长安的荔枝</div><div class="gd-au">马伯庸</div>
+                <div class="gd-ft"><span style="color:var(--st-doing);font-weight:600;font-variant-numeric:tabular-nums">8.5 起 · 在读</span></div></div></div>
+            <div class="gd-cell"><div class="cv cv3">克拉拉与太阳</div>
+              <div class="gd-txt"><div class="gd-nm">克拉拉与太阳</div><div class="gd-au">石黑一雄</div>
+                <div class="gd-ft"><span class="wd">2026.7.28</span><span class="stars">★★★★☆</span></div></div></div>
+            <div class="gd-cell"><div class="cv cv4">百年孤独</div>
+              <div class="gd-txt"><div class="gd-nm">百年孤独</div><div class="gd-au">加西亚·马尔克斯</div>
+                <div class="gd-ft"><span class="wd">2026.7.15</span><span class="stars">★★★★★</span></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">电脑端同一套卡片按 min(200px) 自动排成 4–5 列</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">封面够大，一眼认得出</li><li class="yes">文字有整行宽度，还能多放评分</li><li class="yes">一套卡片手机 2 列、电脑 5 列，代码只写一份</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">一屏只 4–6 本，密度最低</li><li class="no">封面比例不齐时（电影海报 vs 书）留白难看</li><li class="no">边框 + 卡片阴影和现在的极简风稍冲</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 详情 1 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">详情 1</span>
+    <h2>整页推入</h2>
+    <span class="plate-sub">列表左移淡出 · 详情从右滑入</span>
+    <span class="badge-fit">推荐</span>
+  </div>
+  <p class="lede">整屏一页，用现成的 <code style="font-family:ui-monospace,Menlo,monospace">--nav-dur / --nav-ease</code> 转场，跟日历详情、笔记详情同一套动效。备注终于有整屏宽度，可以彻底删掉列表里的展开／收起胶囊。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone">
+        <div class="d-nav"><button class="d-back">‹ 书籍</button><span class="sp"></span><span class="d-act">编辑</span></div>
+        <div class="p-body flush" style="height:566px">
+          <div class="d-hero">
+            <div class="d-hero-wash cv1"></div>
+            <div class="cv cv1"></div>
+            <div class="d-meta">
+              <div class="d-nm">人类简史</div>
+              <div class="d-au">尤瓦尔·赫拉利 · 2014</div>
+              <div class="d-row"><span class="badge-cat">书籍</span><span class="d-status" style="color:var(--st-done)">已完成</span></div>
+              <div class="d-row"><span class="stars" style="font-size:13px">★★★★☆</span><span style="font-size:12px;color:var(--a-t3)">4.5</span></div>
+            </div>
+          </div>
+          <div class="sec">
+            <div class="sec-lbl">时间</div>
+            <div class="kv">
+              <div><div class="kv-k">开始</div><div class="kv-v">2026.7.20</div></div>
+              <div><div class="kv-k">结束</div><div class="kv-v" style="color:var(--a-watch)">2026.8.2</div></div>
+            </div>
+            <div class="d-span" style="margin-top:11px"><small>7.20</small><span class="bar"><i></i></span><small>13 天</small></div>
+          </div>
+          <div class="sec">
+            <div class="sec-lbl">备注</div>
+            <div class="d-note">认知革命那章最好。「虚构故事」这个说法把国家、货币、公司一次讲通了——它们能运转，只是因为足够多的人同时相信。农业革命被写成史上最大骗局，有点狠，但确实解释了为什么人变多了却过得更累。</div>
+          </div>
+          <div class="sec">
+            <div class="sec-lbl">标签</div>
+            <div class="d-tags"><span class="tagpill">历史</span><span class="tagpill">认知</span><span class="tagpill">重读候选</span></div>
+          </div>
+          <div class="sec" style="border-bottom:none">
+            <div style="font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums">首次添加 2026.7.19 · 最后保存 2026.8.2</div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">封面色做一层模糊底纹（opacity .1），是全页唯一的装饰</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">空间最足，备注、标签、时间跨度全放得下</li><li class="yes">和日历／笔记详情的转场完全一致</li><li class="yes">列表卡片因此可以做到最简</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">要接管返回手势和浏览器后退，最费工</li><li class="no">连着看几本书要来回进出</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 详情 2 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">详情 2</span>
+    <h2>半屏抽屉</h2>
+    <span class="plate-sub">复用日历的 cal-sheet</span>
+    <span class="badge-fit">改动最小</span>
+  </div>
+  <p class="lede">从底部升起、盖住八成屏幕，下拉关闭。日历页那套 sheet 的滑动、遮罩、下拉手势已经写好了，直接改改内容就能用。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone" style="background:var(--a-bg)">
+        <div class="sheetstage">
+          <div class="p-top" style="border-radius:26px 26px 0 0">
+            <div class="p-title"><b>书籍</b><span>36 条记录</span></div>
+            <div class="p-chips"><span class="p-chip on">按结束时间</span><span class="p-chip">已完成</span></div>
+          </div>
+          <div class="sheet-dim"></div>
+          <div class="sheet">
+            <div class="sheet-grab"><i></i></div>
+            <div class="sheet-scroll">
+              <div class="d-hero" style="padding-top:6px">
+                <div class="cv cv1"></div>
+                <div class="d-meta">
+                  <div class="d-nm">人类简史</div>
+                  <div class="d-au">尤瓦尔·赫拉利 · 2014</div>
+                  <div class="d-row"><span class="badge-cat">书籍</span><span class="d-status" style="color:var(--st-done)">已完成</span></div>
+                  <div class="d-row"><span class="stars" style="font-size:13px">★★★★☆</span><span style="font-size:12px;color:var(--a-t3)">4.5</span></div>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="kv">
+                  <div><div class="kv-k">开始</div><div class="kv-v">2026.7.20</div></div>
+                  <div><div class="kv-k">结束</div><div class="kv-v" style="color:var(--a-watch)">2026.8.2</div></div>
+                </div>
+              </div>
+              <div class="sec">
+                <div class="sec-lbl">备注</div>
+                <div class="d-note">认知革命那章最好。「虚构故事」这个说法把国家、货币、公司一次讲通了——它们能运转，只是因为足够多的人同时相信。</div>
+              </div>
+              <div class="sec">
+                <div class="d-tags"><span class="tagpill">历史</span><span class="tagpill">认知</span><span class="tagpill">重读候选</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">列表在遮罩后仍在，关掉就回到原来的滚动位置</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">日历 sheet 的代码能直接复用，工作量最小</li><li class="yes">不丢列表滚动位置，连着翻好几本很顺</li><li class="yes">不用管浏览器后退栈</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">高度有限，备注长了要在 sheet 里再滚一层</li><li class="no">电脑端的抽屉观感不如整页</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 详情 3 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">详情 3</span>
+    <h2>电脑端分栏</h2>
+    <span class="plate-sub">左列表 · 右详情，不跳页</span>
+    <span class="badge-fit">仅 ≥1024px</span>
+  </div>
+  <p class="lede">电脑端屏幕横着有富余，与其点进点出，不如左边留一条窄列表，右边常驻详情。手机端仍走详情 1 或 2——同一套详情 DOM，换个容器。</p>
+  <div class="stage">
+    <div class="shot wide">
+      <div class="phone wide">
+        <div class="split">
+          <div class="split-l">
+            <div class="sl-row on"><div class="cv cv1"></div><div class="lc-mid"><div class="sl-nm">人类简史</div><div class="sl-au">尤瓦尔·赫拉利 · 8.2</div></div></div>
+            <div class="sl-row"><div class="cv cv2"></div><div class="lc-mid"><div class="sl-nm">长安的荔枝</div><div class="sl-au">马伯庸 · 在读</div></div></div>
+            <div class="sl-row"><div class="cv cv3"></div><div class="lc-mid"><div class="sl-nm">克拉拉与太阳</div><div class="sl-au">石黑一雄 · 7.28</div></div></div>
+            <div class="sl-row"><div class="cv cv4"></div><div class="lc-mid"><div class="sl-nm">百年孤独</div><div class="sl-au">加西亚·马尔克斯 · 7.15</div></div></div>
+            <div class="sl-row"><div class="cv cv5"></div><div class="lc-mid"><div class="sl-nm">置身事内</div><div class="sl-au">兰小欢 · 6.30</div></div></div>
+            <div class="sl-row"><div class="cv cv6"></div><div class="lc-mid"><div class="sl-nm">我们仨</div><div class="sl-au">杨绛 · 6.11</div></div></div>
+            <div class="sl-row"><div class="cv cv7"></div><div class="lc-mid"><div class="sl-nm">三体</div><div class="sl-au">刘慈欣 · 5.24</div></div></div>
+          </div>
+          <div class="split-r">
+            <div class="d-hero" style="background:var(--a-bg);border-bottom:1px solid var(--a-border)">
+              <div class="cv cv1" style="width:96px;height:138px"></div>
+              <div class="d-meta">
+                <div class="d-nm" style="font-size:20px">人类简史</div>
+                <div class="d-au">尤瓦尔·赫拉利 · 2014</div>
+                <div class="d-row"><span class="badge-cat">书籍</span><span class="d-status" style="color:var(--st-done)">已完成</span><span class="stars" style="font-size:13px">★★★★☆</span></div>
+                <div class="d-row" style="margin-top:6px"><span style="font-size:12px;color:var(--a-t3)">2026.7.20 → </span><span class="wd" style="font-size:12px">2026.8.2</span><span style="font-size:12px;color:var(--a-t3)">（13 天）</span></div>
+                <div class="d-row"><span class="tagpill">历史</span><span class="tagpill">认知</span><span class="tagpill">重读候选</span></div>
+              </div>
+            </div>
+            <div class="sec" style="background:var(--a-bg);border-bottom:none">
+              <div class="sec-lbl">备注</div>
+              <div class="d-note">认知革命那章最好。「虚构故事」这个说法把国家、货币、公司一次讲通了——它们能运转，只是因为足够多的人同时相信。农业革命被写成史上最大骗局，有点狠，但确实解释了为什么人变多了却过得更累。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="shot-cap">左栏 270px 固定 · 右栏跟着选中行换内容，无转场跳动</div>
+    </div>
+  </div>
+  <div class="crit">
+    <div><h4>好处</h4><ul><li class="yes">电脑端一眼看完，不用来回跳</li><li class="yes">键盘上下键就能连着翻</li><li class="yes">详情内容和手机端共用一份渲染函数</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">要多维护一套断点布局</li><li class="no">窄列表塞不下封面网格，只能用 B/C 的行式</li></ul></div>
+  </div>
+</section>
+
+<!-- ══════ 可点原型 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">原型</span>
+    <h2>点一下试试</h2>
+    <span class="plate-sub">版本 B ＋ 详情 1，真实转场速度</span>
+  </div>
+  <p class="lede">下面这个是能点的：点任意一本进详情，左上角返回。转场参数就是 <code style="font-family:ui-monospace,Menlo,monospace">240ms / cubic-bezier(.22,1,.36,1)</code>，和 App 里其他页面完全一样。</p>
+  <div class="stage">
+    <div class="shot">
+      <div class="phone">
+        <div class="proto" id="proto" data-open="0">
+          <div class="proto-pane proto-list">
+            <div class="p-top">
+              <div class="p-title"><b>书籍</b><span>36 条记录</span></div>
+              <div class="p-chips"><span class="p-chip on">按结束时间</span><span class="p-chip">已完成</span><span class="p-chip">进行中</span></div>
+            </div>
+            <div class="p-body" style="height:435px">
+              <div class="list-b" id="protoList"></div>
+            </div>
+          </div>
+          <div class="proto-pane proto-detail" id="protoDetail">
+            <div class="d-nav"><button class="d-back" id="protoBack">‹ 书籍</button><span class="sp"></span><span class="d-act">编辑</span></div>
+            <div class="p-body flush" style="height:462px" id="protoBody"></div>
+          </div>
+        </div>
+      </div>
+      <p class="proto-hint">TAP A ROW →</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ 结论 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">结论</span>
+    <h2>建议怎么配</h2>
+  </div>
+  <div class="pick">
+    <h3>主推：版本 B（横向卡片）＋ 详情 1（整页推入）</h3>
+    <p>B 对封面缺失最宽容——你库里不是每条都有 cover，而 A 和 D 一旦缺图就是成片灰块。等封面补齐了，把网格布局作为「视图切换」加在排序条旁边，A 随时能接上，卡片数据完全一样。</p>
+    <p>详情选 1 而不是 2，是因为备注是这个 App 里最长的字段，半屏抽屉迟早要在里面再滚一层；而且详情 1 落地后，列表里那套折叠／展开胶囊可以整块删掉。</p>
+  </div>
+  <div class="tablewrap">
+    <table class="doc">
+      <thead><tr><th>落地顺序</th><th>动到哪里</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>render() 的 tbody.innerHTML</td><td>整块换成卡片列表；表格 colgroup／thead 一起删，td:nth-child 那批样式跟着清</td></tr>
+        <tr><td>2</td><td>新增 openDetail(id)</td><td>参照 calRoot 做成和 .content 平级的同级视图，不做浮层</td></tr>
+        <tr><td>3</td><td>封面兜底</td><td>无 cover 时画分类 emoji 占位，和日历行的 .cal-row-cover 同一套</td></tr>
+        <tr><td>4</td><td>删除折叠逻辑</td><td>toggleCnoteCard、.cnote-toggle、note-expanded 全部退休</td></tr>
+        <tr><td>5</td><td>左滑手势</td><td>enhanceMediaSwipe 从 tr 改绑到卡片元素</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="foot">
+  <p>示意图由 <code>index.html</code> 的 token 直接绘制：字号取 --fs-* 阶梯，颜色取 :root 与 :root[data-mode=dark] 两套，圆角取 4/6/8/12/16。封面为色块占位，真机走 <code>item.cover</code>。跟随系统深浅色。</p>
+</footer>
+
+</div>
+
+<script>
+const BOOKS=[
+  {cv:"cv1",nm:"人类简史：从动物到上帝",au:"尤瓦尔·赫拉利",yr:2014,st:"done",stl:"已完成",wd:"2026.8.2",sd:"2026.7.20",days:13,score:"★★★★☆",sc:"4.5",
+   note:"认知革命那章最好。「虚构故事」这个说法把国家、货币、公司一次讲通了——它们能运转，只是因为足够多的人同时相信。农业革命被写成史上最大骗局，有点狠，但确实解释了为什么人变多了却过得更累。",
+   tags:["历史","认知","重读候选"],add:"2026.7.19"},
+  {cv:"cv2",nm:"长安的荔枝",au:"马伯庸",yr:2022,st:"doing",stl:"进行中",wd:null,sd:"2026.8.5",days:null,score:"",sc:"",
+   note:"一骑红尘妃子笑，背后是一整套转运成本核算。李善德算账那几页，读着像看项目排期。",
+   tags:["历史","小说"],add:"2026.8.5"},
+  {cv:"cv3",nm:"克拉拉与太阳",au:"石黑一雄",yr:2021,st:"done",stl:"已完成",wd:"2026.7.28",sd:"2026.7.16",days:12,score:"★★★★☆",sc:"4.0",
+   note:"用 AI 的眼睛看人的爱，越平静越难受。太阳是克拉拉唯一的信仰，而她把它用在了别人身上。",
+   tags:["小说","科幻"],add:"2026.7.15"},
+  {cv:"cv4",nm:"百年孤独",au:"加西亚·马尔克斯",yr:1967,st:"done",stl:"已完成",wd:"2026.7.15",sd:"2026.6.20",days:25,score:"★★★★★",sc:"5.0",
+   note:"第三遍读了，名字还是记不住，但这次终于跟上了时间的循环。最后一页那阵风，读到就起鸡皮疙瘩。",
+   tags:["小说","拉美"],add:"2026.6.20"},
+  {cv:"cv5",nm:"置身事内：中国政府与经济发展",au:"兰小欢",yr:2021,st:"done",stl:"已完成",wd:"2026.6.30",sd:"2026.6.14",days:16,score:"★★★★☆",sc:"4.5",
+   note:"把土地财政、城投、分税制串成一条线讲。上篇微观下篇宏观，读完再看新闻里的地方债，不再是名词。",
+   tags:["经济","中国"],add:"2026.6.13"},
+  {cv:"cv6",nm:"我们仨",au:"杨绛",yr:2003,st:"done",stl:"已完成",wd:"2026.6.11",sd:"2026.6.8",days:3,score:"★★★★☆",sc:"4.0",
+   note:"前半是梦，后半是账。越平淡越受不了——「我一个人思念我们仨」。",
+   tags:["散文","回忆"],add:"2026.6.8"}
+];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const foot=b=>b.st==="doing"
+  ? '<span class="dot doing"></span><span style="font-size:11.5px;color:var(--st-doing);font-weight:600;font-variant-numeric:tabular-nums">'+esc(b.sd.slice(5))+' 起 · 在读</span>'
+  : '<span class="dot done"></span><span class="wd">'+esc(b.wd)+' 读完</span>';
+
+document.getElementById("protoList").innerHTML=BOOKS.map((b,i)=>
+  '<button class="tap" data-i="'+i+'" aria-label="打开 '+esc(b.nm)+' 详情">'+
+    '<div class="lb-row"><div class="cv '+b.cv+'"></div>'+
+      '<div class="lb-mid"><div class="lb-nm">'+esc(b.nm)+'</div><div class="lb-au">'+esc(b.au)+'</div>'+
+      '<div class="lb-ft">'+foot(b)+'</div></div><span class="lb-arrow">›</span></div>'+
+  '</button>').join("");
+
+const proto=document.getElementById("proto"), body=document.getElementById("protoBody");
+function openDetail(i){
+  const b=BOOKS[i];
+  const stc=b.st==="doing"?"var(--st-doing)":"var(--st-done)";
+  body.innerHTML=
+   '<div class="d-hero"><div class="d-hero-wash '+b.cv+'"></div><div class="cv '+b.cv+'"></div>'+
+     '<div class="d-meta"><div class="d-nm">'+esc(b.nm)+'</div>'+
+     '<div class="d-au">'+esc(b.au)+' · '+b.yr+'</div>'+
+     '<div class="d-row"><span class="badge-cat">书籍</span><span class="d-status" style="color:'+stc+'">'+b.stl+'</span></div>'+
+     (b.score?'<div class="d-row"><span class="stars" style="font-size:13px">'+b.score+'</span><span style="font-size:12px;color:var(--a-t3)">'+b.sc+'</span></div>':'')+
+     '</div></div>'+
+   '<div class="sec"><div class="sec-lbl">时间</div><div class="kv">'+
+     '<div><div class="kv-k">开始</div><div class="kv-v">'+esc(b.sd)+'</div></div>'+
+     '<div><div class="kv-k">结束</div><div class="kv-v" style="color:'+(b.wd?'var(--a-watch)':'var(--a-t3)')+'">'+(b.wd?esc(b.wd):'—')+'</div></div>'+
+   '</div>'+(b.days?'<div class="d-span" style="margin-top:11px"><small>'+esc(b.sd.slice(5))+'</small><span class="bar"><i></i></span><small>'+b.days+' 天</small></div>':'')+'</div>'+
+   '<div class="sec"><div class="sec-lbl">备注</div><div class="d-note">'+esc(b.note)+'</div></div>'+
+   '<div class="sec"><div class="sec-lbl">标签</div><div class="d-tags">'+b.tags.map(t=>'<span class="tagpill">'+esc(t)+'</span>').join("")+'</div></div>'+
+   '<div class="sec" style="border-bottom:none"><div style="font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums">首次添加 '+esc(b.add)+'</div></div>';
+  proto.dataset.open="1";
+  document.getElementById("protoBack").focus({preventScroll:true});
+}
+document.getElementById("protoList").addEventListener("click",e=>{
+  const t=e.target.closest(".tap"); if(t) openDetail(+t.dataset.i);
+});
+document.getElementById("protoBack").addEventListener("click",()=>{
+  proto.dataset.open="0";
+  const first=document.querySelector("#protoList .tap");
+  if(first) first.focus({preventScroll:true});
+});
+</script>
