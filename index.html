@@ -958,10 +958,21 @@ tr:hover .acts{opacity:1;}
   /* 笔记模式下隐藏分类条(此时显示 nfrow 子分类条) */
   body.notes-mode .catfrow{display:none !important;}
 
-  /* 手机端：弹窗给底部导航条让出高度，底部按钮就停在导航条上方，导航条依旧可见可点。
-     只有侧栏/日历打开时导航条会盖到弹窗上（z-index:115），那时它只剩 64px 高的标签行，
-     所以留出 64px + 手势条安全区即可精确避开，不必用 JS 实测。 */
-  .moverlay{padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));}
+  /* 手机端弹窗一律铺到屏幕下沿。
+     以前这里无条件给底栏留 64px + 安全区，本意是「导航条依旧可见可点」——可在列表页
+     底栏是 z-index:90，压在弹窗遮罩下面，点不动也看不清，留出来的只是一条被压暗的空档，
+     整块白卡看着像悬在半空（添加/编辑记录、分类管理、子分类、标签管理、章节编辑、
+     二维码、扫码都吃这一条）。所以默认改成贴底。
+     真正会盖到弹窗上的只有侧栏/日历打开那两档（.bottombar 提到 z-index:115，且此时
+     只剩 64px 高的标签行）——只在那两种页面下把留白加回来，导航条照旧可见可点，
+     64px + 手势条安全区即可精确避开，不必用 JS 实测。
+     底部抽屉那几个（#noteModal / #calNotePreviewModal / #icsColorModal / #icsDelModal /
+     #tlModal）各自钉着 #id.moverlay{padding-bottom:0}，优先级高于下面这条类选择器，
+     在日历页也照旧贴底——它们本就把 z-index 抬到 115/120 压过底栏。 */
+  .moverlay{padding-bottom:0;}
+  body.cal-open .moverlay,body.sb-open .moverlay{
+    padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));
+  }
 
   /* 云同步设置内容多，手机端做成一整页自然滚动（跟「全部/笔记/日历」一样）：
      整个 .mbox 是滚动容器，头/尾随内容一起滚，不再固定成三段夹一条。
