@@ -1,4 +1,4 @@
-<title>无封面卡片列表</title>
+<title>纯文字卡片列表</title>
 <style>
 /* ══════════════════════════════════════════════════════════════
    文稿外壳：沿用 docs/ 已有的「图版」语汇（纸色 + 发丝线 + 等宽眉标）
@@ -162,7 +162,9 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
 .n-nm{font-size:14px;font-weight:600;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .n-au{font-size:11.5px;color:var(--a-t3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .n-wd{font-size:12px;flex-shrink:0;text-align:right;}
-.n-wd .sm{display:block;font-size:10.5px;color:var(--a-t3);font-weight:500;margin-top:1px;}
+.n-wd .sm{display:block;font-size:10.5px;color:var(--st-done);font-weight:600;margin-top:1px;}
+.n-wd .sm.doing{color:var(--st-doing);}
+.n-wd .pend{color:var(--a-t3);font-weight:500;}
 .n-arrow{color:var(--a-t3);font-size:15px;flex-shrink:0;margin-left:-3px;}
 
 /* N2：日期当左锚 */
@@ -245,15 +247,16 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
 <div class="wrap">
 
 <header class="masthead">
-  <p class="kicker">MY-LIST · 媒体页改版 · 第二版 · 2026-08</p>
-  <h1>去掉封面之后</h1>
-  <p>方向已定：<b>横向卡片列表 ＋ 整页详情</b>。这一版回答「封面拿掉长什么样」——没有封面，卡片就少了左边那块视觉锚点，行会矮下去、也会平下去。</p>
-  <p>下面先并排看去掉前后的差别，再给三种补锚点的排法：<b>N1 纯文字</b>、<b>N2 日期当锚</b>、<b>N3 首字方块</b>。详情页也一并改成无封面版。</p>
+  <p class="kicker">MY-LIST · 媒体页改版 · 定稿 · 2026-08</p>
+  <h1>纯文字列表</h1>
+  <p>定案并已落地：<b>N1 纯文字行 ＋ 整页详情</b>，日期写成 <b>2026/8/2</b>。封面不显示（<code>item.cover</code> 仍留在数据里给日历页用），列表只回答「是哪本、什么时候读完的」，其余全部搬进详情页。</p>
+  <p>下面第一张是去掉封面前后的对照，接着是定稿的 N1，再往后 N2 / N3 是当时一起比过的两种「补锚点」方案，留档备查。</p>
   <div class="meta">
-    <span>卡片高 <b>86px → 58px</b></span>
+    <span>行高 <b>86px → 58px</b></span>
     <span>一屏 <b>5 本 → 7–8 本</b></span>
-    <span>卡片字段 <b>书名 · 作者 · 结束时间</b></span>
-    <span>cover 字段 <b>保留在数据里，不显示</b></span>
+    <span>行上字段 <b>书名 · 年份 · 作者 · 日期 · 状态</b></span>
+    <span>日期 <b>2026/8/2</b></span>
+    <span>状态 <b>✅ 已实施</b></span>
   </div>
 </header>
 
@@ -274,11 +277,11 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
         </div>
         <div class="p-body">
           <div class="list-old">
-            <div class="lo-row"><div class="cv cv1"></div><div class="lo-mid"><div class="lo-nm">人类简史：从动物到上帝</div><div class="lo-au">尤瓦尔·赫拉利</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026.8.2 读完</span></div></div><span class="lo-arrow">›</span></div>
+            <div class="lo-row"><div class="cv cv1"></div><div class="lo-mid"><div class="lo-nm">人类简史：从动物到上帝</div><div class="lo-au">尤瓦尔·赫拉利</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026/8/2 读完</span></div></div><span class="lo-arrow">›</span></div>
             <div class="lo-row"><div class="cv cv2"></div><div class="lo-mid"><div class="lo-nm">长安的荔枝</div><div class="lo-au">马伯庸</div><div class="lo-ft"><span class="dot doing"></span><span style="color:var(--st-doing);font-weight:600;font-variant-numeric:tabular-nums">8.5 起 · 在读</span></div></div><span class="lo-arrow">›</span></div>
-            <div class="lo-row"><div class="cv cv3"></div><div class="lo-mid"><div class="lo-nm">克拉拉与太阳</div><div class="lo-au">石黑一雄</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026.7.28 读完</span></div></div><span class="lo-arrow">›</span></div>
-            <div class="lo-row"><div class="cv cv4"></div><div class="lo-mid"><div class="lo-nm">百年孤独</div><div class="lo-au">加西亚·马尔克斯</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026.7.15 读完</span></div></div><span class="lo-arrow">›</span></div>
-            <div class="lo-row"><div class="cv cv5"></div><div class="lo-mid"><div class="lo-nm">置身事内：中国政府与经济发展</div><div class="lo-au">兰小欢</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026.6.30 读完</span></div></div><span class="lo-arrow">›</span></div>
+            <div class="lo-row"><div class="cv cv3"></div><div class="lo-mid"><div class="lo-nm">克拉拉与太阳</div><div class="lo-au">石黑一雄</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026/7/28 读完</span></div></div><span class="lo-arrow">›</span></div>
+            <div class="lo-row"><div class="cv cv4"></div><div class="lo-mid"><div class="lo-nm">百年孤独</div><div class="lo-au">加西亚·马尔克斯</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026/7/15 读完</span></div></div><span class="lo-arrow">›</span></div>
+            <div class="lo-row"><div class="cv cv5"></div><div class="lo-mid"><div class="lo-nm">置身事内：中国政府与经济发展</div><div class="lo-au">兰小欢</div><div class="lo-ft"><span class="dot done"></span><span class="wd">2026/6/30 读完</span></div></div><span class="lo-arrow">›</span></div>
           </div>
         </div>
       </div>
@@ -292,18 +295,18 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
         </div>
         <div class="p-body">
           <div class="list-n">
-            <div class="n-row"><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">尤瓦尔·赫拉利</div></div><div class="n-wd"><span class="wd">8.2</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">马伯庸</div></div><div class="n-wd"><span style="color:var(--st-doing);font-weight:600">在读</span><span class="sm">8.5 起</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">石黑一雄</div></div><div class="n-wd"><span class="wd">7.28</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">加西亚·马尔克斯</div></div><div class="n-wd"><span class="wd">7.15</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">兰小欢</div></div><div class="n-wd"><span class="wd">6.30</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">杨绛</div></div><div class="n-wd"><span class="wd">6.11</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">刘慈欣</div></div><div class="n-wd"><span class="wd">5.24</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">应许之地</div><div class="n-au">巴拉克·奥巴马</div></div><div class="n-wd"><span class="wd">5.9</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">2014 · 尤瓦尔·赫拉利</div></div><div class="n-wd"><span class="wd">2026/8/2</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">2022 · 马伯庸</div></div><div class="n-wd"><span class="pend">2026/8/5 起</span><span class="sm doing">进行中</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">2021 · 石黑一雄</div></div><div class="n-wd"><span class="wd">2026/7/28</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">1967 · 加西亚·马尔克斯</div></div><div class="n-wd"><span class="wd">2026/7/15</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">2021 · 兰小欢</div></div><div class="n-wd"><span class="wd">2026/6/30</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">2003 · 杨绛</div></div><div class="n-wd"><span class="wd">2026/6/11</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">2008 · 刘慈欣</div></div><div class="n-wd"><span class="wd">2026/5/24</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">应许之地</div><div class="n-au">2020 · 巴拉克·奥巴马</div></div><div class="n-wd"><span class="wd">2026/5/9</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
           </div>
         </div>
       </div>
-      <div class="shot-cap">去掉后 · 行高 <b>58px</b> · 一屏 7–8 本（＝ N1 纯文字）</div>
+      <div class="shot-cap">去掉后 · 行高 <b>58px</b> · 一屏 7–8 本 · 右栏 <b>2026/8/2</b> ＋ 状态</div>
     </div>
   </div>
 </section>
@@ -312,11 +315,11 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
 <section class="plate">
   <div class="plate-hd">
     <span class="eyebrow">排法 N1</span>
-    <h2>纯文字</h2>
-    <span class="plate-sub">书名 / 作者 左对齐 · 日期右对齐</span>
-    <span class="badge-fit">最干净</span>
+    <h2>纯文字 · 定稿</h2>
+    <span class="plate-sub">书名 / 年份 · 作者 左对齐 · 日期右对齐</span>
+    <span class="badge-fit">✅ 已实施</span>
   </div>
-  <p class="lede">什么都不补，一整块白底列表，行与行之间只有一条发丝线。日期靠右成一列，年份省掉只留「月.日」——同一年的记录本来就不用重复写年份，跨年时那一行补成「2025.12.30」。</p>
+  <p class="lede">什么都不补，一整块白底列表，行与行之间只有一条发丝线。右栏两行：上面是<b>结束时间，写成 2026/8/2</b>，下面是状态。年份写全不省略——四位年份在等宽数字下照样成列，而且不用为跨年那几行单开一套写法。还没读完的写「2026/8/5 起」并转成中性灰，和已完成的墨绿一眼分得开。</p>
   <div class="stage">
     <div class="shot">
       <div class="phone">
@@ -326,23 +329,23 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
         </div>
         <div class="p-body">
           <div class="list-n">
-            <div class="n-row"><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">尤瓦尔·赫拉利</div></div><div class="n-wd"><span class="wd">8.2</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">马伯庸</div></div><div class="n-wd"><span style="color:var(--st-doing);font-weight:600">在读</span><span class="sm">8.5 起</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">石黑一雄</div></div><div class="n-wd"><span class="wd">7.28</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">加西亚·马尔克斯</div></div><div class="n-wd"><span class="wd">7.15</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">兰小欢</div></div><div class="n-wd"><span class="wd">6.30</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">杨绛</div></div><div class="n-wd"><span class="wd">6.11</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">刘慈欣</div></div><div class="n-wd"><span class="wd">5.24</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="n-mid"><div class="n-nm">失明症漫记</div><div class="n-au">若泽·萨拉马戈</div></div><div class="n-wd"><span class="wd">4.27</span><span class="sm">读完</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">2014 · 尤瓦尔·赫拉利</div></div><div class="n-wd"><span class="wd">2026/8/2</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">2022 · 马伯庸</div></div><div class="n-wd"><span class="pend">2026/8/5 起</span><span class="sm doing">进行中</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">2021 · 石黑一雄</div></div><div class="n-wd"><span class="wd">2026/7/28</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">1967 · 加西亚·马尔克斯</div></div><div class="n-wd"><span class="wd">2026/7/15</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">2021 · 兰小欢</div></div><div class="n-wd"><span class="wd">2026/6/30</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">2003 · 杨绛</div></div><div class="n-wd"><span class="wd">2026/6/11</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">2008 · 刘慈欣</div></div><div class="n-wd"><span class="wd">2026/5/24</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="n-mid"><div class="n-nm">失明症漫记</div><div class="n-au">1995 · 若泽·萨拉马戈</div></div><div class="n-wd"><span class="wd">2026/4/27</span><span class="sm">已完成</span></div><span class="n-arrow">›</span></div>
           </div>
         </div>
       </div>
-      <div class="shot-cap">书名 14px/600 · 作者 11.5px · 日期 12px 等宽数字 · 行高 58px</div>
+      <div class="shot-cap">书名 14px/600（手机 16px）· 年份 · 作者 11.5px · 日期 12px 等宽数字 · 行高 58px</div>
     </div>
   </div>
   <div class="crit">
     <div><h4>好处</h4><ul><li class="yes">最省，改动也最小：一个 div 就够</li><li class="yes">书名有整行宽度，长副标题不挤</li><li class="yes">日期右对齐成一列，好比时间</li></ul></div>
-    <div><h4>代价</h4><ul><li class="no">左边缘完全平齐，快速滑动时没有落点</li><li class="no">书名一长，整屏几乎只剩黑字，缺呼吸</li><li class="no">状态只能靠「在读」两个字，弱</li></ul></div>
+    <div><h4>代价</h4><ul><li class="no">左边缘完全平齐，快速滑动时没有固定落点</li><li class="no">书名一长，整屏几乎只剩黑字，缺呼吸</li><li class="no">状态只有一个词，比色块弱一些</li></ul></div>
   </div>
 </section>
 
@@ -352,7 +355,7 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
     <span class="eyebrow">排法 N2</span>
     <h2>日期当左锚</h2>
     <span class="plate-sub">把结束时间搬到封面的位置</span>
-    <span class="badge-fit">推荐</span>
+    <span class="badge-fit">备选 · 未采用</span>
   </div>
   <p class="lede">封面腾出来的那 44px，交给最该被看见的字段：<b>结束时间</b>。日号 17px 粗体、月份 10px 灰字压在下面，靠左成一条数字轴。左边缘重新有了节奏，而且这次是有信息的节奏——不像封面只是好看。</p>
   <div class="stage">
@@ -364,14 +367,14 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
         </div>
         <div class="p-body">
           <div class="list-n">
-            <div class="n-row"><div class="dblk"><b>2</b><small>8 月</small></div><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">尤瓦尔·赫拉利</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk doing"><b>5</b><small>8 月起</small></div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">马伯庸 · <span style="color:var(--st-doing);font-weight:600">在读</span></div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>28</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">石黑一雄</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>15</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">加西亚·马尔克斯</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>30</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">兰小欢</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>11</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">杨绛</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>24</b><small>5 月</small></div><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">刘慈欣</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>27</b><small>4 月</small></div><div class="n-mid"><div class="n-nm">失明症漫记</div><div class="n-au">若泽·萨拉马戈</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>2</b><small>8 月</small></div><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">2014 · 尤瓦尔·赫拉利</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk doing"><b>5</b><small>8 月起</small></div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">2022 · 马伯庸 · <span style="color:var(--st-doing);font-weight:600">在读</span></div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>28</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">2021 · 石黑一雄</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>15</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">1967 · 加西亚·马尔克斯</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>30</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">2021 · 兰小欢</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>11</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">2003 · 杨绛</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>24</b><small>5 月</small></div><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">2008 · 刘慈欣</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>27</b><small>4 月</small></div><div class="n-mid"><div class="n-nm">失明症漫记</div><div class="n-au">1995 · 若泽·萨拉马戈</div></div><span class="n-arrow">›</span></div>
           </div>
         </div>
       </div>
@@ -403,19 +406,19 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
         <div class="p-body">
           <div class="grp-hd"><b>2026 年 8 月</b><i></i><span>2 本</span></div>
           <div class="list-n">
-            <div class="n-row"><div class="dblk"><b>2</b><small>日</small></div><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">尤瓦尔·赫拉利</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk doing"><b>5</b><small>起</small></div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">马伯庸 · <span style="color:var(--st-doing);font-weight:600">在读</span></div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>2</b><small>日</small></div><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">2014 · 尤瓦尔·赫拉利</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk doing"><b>5</b><small>起</small></div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">2022 · 马伯庸 · <span style="color:var(--st-doing);font-weight:600">在读</span></div></div><span class="n-arrow">›</span></div>
           </div>
           <div class="grp-hd"><b>2026 年 7 月</b><i></i><span>2 本</span></div>
           <div class="list-n">
-            <div class="n-row"><div class="dblk"><b>28</b><small>日</small></div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">石黑一雄</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>15</b><small>日</small></div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">加西亚·马尔克斯</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>28</b><small>日</small></div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">2021 · 石黑一雄</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>15</b><small>日</small></div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">1967 · 加西亚·马尔克斯</div></div><span class="n-arrow">›</span></div>
           </div>
           <div class="grp-hd"><b>2026 年 6 月</b><i></i><span>3 本</span></div>
           <div class="list-n">
-            <div class="n-row"><div class="dblk"><b>30</b><small>日</small></div><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">兰小欢</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>11</b><small>日</small></div><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">杨绛</div></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="dblk"><b>3</b><small>日</small></div><div class="n-mid"><div class="n-nm">刀锋</div><div class="n-au">毛姆</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>30</b><small>日</small></div><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">2021 · 兰小欢</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>11</b><small>日</small></div><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">2003 · 杨绛</div></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="dblk"><b>3</b><small>日</small></div><div class="n-mid"><div class="n-nm">刀锋</div><div class="n-au">1944 · 毛姆</div></div><span class="n-arrow">›</span></div>
           </div>
         </div>
       </div>
@@ -430,6 +433,7 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
     <span class="eyebrow">排法 N3</span>
     <h2>首字方块</h2>
     <span class="plate-sub">书名首字当图标 · 36×36</span>
+    <span class="badge-fit">备选 · 未采用</span>
   </div>
   <p class="lede">如果还是想要一块「像封面的东西」但不想要图：用书名第一个字，宋体，浅色底。它其实是排版而不是图片——不用填任何数据，天然人人都有。底色可以跟着分类走（书籍墨绿、电影靛蓝……），列表就多了一层分类识别。</p>
   <div class="stage">
@@ -441,13 +445,13 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
         </div>
         <div class="p-body">
           <div class="list-n">
-            <div class="n-row"><div class="tile">人</div><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">尤瓦尔·赫拉利</div></div><div class="n-wd"><span class="wd">8.2</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="tile">长</div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">马伯庸</div></div><div class="n-wd"><span style="color:var(--st-doing);font-weight:600">在读</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="tile" style="background:rgba(30,64,175,.10);color:#1E40AF">奥</div><div class="n-mid"><div class="n-nm">奥本海默</div><div class="n-au">克里斯托弗·诺兰</div></div><div class="n-wd"><span class="wd">7.30</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="tile">克</div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">石黑一雄</div></div><div class="n-wd"><span class="wd">7.28</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="tile">百</div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">加西亚·马尔克斯</div></div><div class="n-wd"><span class="wd">7.15</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="tile" style="background:rgba(146,64,14,.10);color:#92400E">漫</div><div class="n-mid"><div class="n-nm">漫长的季节</div><div class="n-au">辛爽</div></div><div class="n-wd"><span class="wd">7.6</span></div><span class="n-arrow">›</span></div>
-            <div class="n-row"><div class="tile">置</div><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">兰小欢</div></div><div class="n-wd"><span class="wd">6.30</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile">人</div><div class="n-mid"><div class="n-nm">人类简史：从动物到上帝</div><div class="n-au">2014 · 尤瓦尔·赫拉利</div></div><div class="n-wd"><span class="wd">8.2</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile">长</div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">2022 · 马伯庸</div></div><div class="n-wd"><span style="color:var(--st-doing);font-weight:600">在读</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile" style="background:rgba(30,64,175,.10);color:#1E40AF">奥</div><div class="n-mid"><div class="n-nm">奥本海默</div><div class="n-au">2023 · 克里斯托弗·诺兰</div></div><div class="n-wd"><span class="wd">7.30</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile">克</div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">2021 · 石黑一雄</div></div><div class="n-wd"><span class="wd">7.28</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile">百</div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">1967 · 加西亚·马尔克斯</div></div><div class="n-wd"><span class="wd">7.15</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile" style="background:rgba(146,64,14,.10);color:#92400E">漫</div><div class="n-mid"><div class="n-nm">漫长的季节</div><div class="n-au">2023 · 辛爽</div></div><div class="n-wd"><span class="wd">7.6</span></div><span class="n-arrow">›</span></div>
+            <div class="n-row"><div class="tile">置</div><div class="n-mid"><div class="n-nm">置身事内：中国政府与经济发展</div><div class="n-au">2021 · 兰小欢</div></div><div class="n-wd"><span class="wd">6.30</span></div><span class="n-arrow">›</span></div>
           </div>
         </div>
       </div>
@@ -482,8 +486,8 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
           <div class="sec">
             <div class="sec-lbl">时间</div>
             <div class="kv">
-              <div><div class="kv-k">开始</div><div class="kv-v">2026.7.20</div></div>
-              <div><div class="kv-k">结束</div><div class="kv-v" style="color:var(--a-watch)">2026.8.2</div></div>
+              <div><div class="kv-k">开始</div><div class="kv-v">2026/7/20</div></div>
+              <div><div class="kv-k">结束</div><div class="kv-v" style="color:var(--a-watch)">2026/8/2</div></div>
               <div><div class="kv-k">用时</div><div class="kv-v">13 天</div></div>
             </div>
             <div class="d-span"><small>7.20</small><span class="bar"><i></i></span><small>8.2</small></div>
@@ -497,7 +501,7 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
             <div class="d-tags"><span class="tagpill">历史</span><span class="tagpill">认知</span><span class="tagpill">重读候选</span></div>
           </div>
           <div class="sec">
-            <div style="font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums">首次添加 2026.7.19 · 最后保存 2026.8.2</div>
+            <div style="font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums">首次添加 2026/7/19</div>
           </div>
         </div>
       </div>
@@ -515,21 +519,22 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
   <div class="plate-hd">
     <span class="eyebrow">电脑端</span>
     <h2>左列表 · 右详情</h2>
-    <span class="plate-sub">≥1024px · 同一套行式和详情</span>
+    <span class="plate-sub">≥1024px</span>
+    <span class="badge-fit">备选 · 未采用</span>
   </div>
-  <p class="lede">没有封面之后，窄列表反而更合适了——280px 一列排 N2 的行式绰绰有余，右边常驻详情，上下键连着翻。手机端和电脑端共用同一份行渲染和详情渲染，只是容器不同。</p>
+  <p class="lede">当时一并比过的分栏方案：左边一条窄列表、右边常驻详情。最后没走这条——<b>电脑端与手机端共用同一套「整页详情」</b>，只是正文收成一张 760px 的居中卡片，少维护一套断点布局。这张留档，将来想加「上下键连着翻」时可以回来看。</p>
   <div class="stage">
     <div class="shot wide">
       <div class="phone wide">
         <div class="split">
           <div class="split-l">
-            <div class="n-row on"><div class="dblk"><b>2</b><small>8 月</small></div><div class="n-mid"><div class="n-nm">人类简史</div><div class="n-au">尤瓦尔·赫拉利</div></div></div>
+            <div class="n-row on"><div class="dblk"><b>2</b><small>8 月</small></div><div class="n-mid"><div class="n-nm">人类简史</div><div class="n-au">2014 · 尤瓦尔·赫拉利</div></div></div>
             <div class="n-row"><div class="dblk doing"><b>5</b><small>8 月起</small></div><div class="n-mid"><div class="n-nm">长安的荔枝</div><div class="n-au">马伯庸 · 在读</div></div></div>
-            <div class="n-row"><div class="dblk"><b>28</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">石黑一雄</div></div></div>
-            <div class="n-row"><div class="dblk"><b>15</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">加西亚·马尔克斯</div></div></div>
-            <div class="n-row"><div class="dblk"><b>30</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">置身事内</div><div class="n-au">兰小欢</div></div></div>
-            <div class="n-row"><div class="dblk"><b>11</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">杨绛</div></div></div>
-            <div class="n-row"><div class="dblk"><b>24</b><small>5 月</small></div><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">刘慈欣</div></div></div>
+            <div class="n-row"><div class="dblk"><b>28</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">克拉拉与太阳</div><div class="n-au">2021 · 石黑一雄</div></div></div>
+            <div class="n-row"><div class="dblk"><b>15</b><small>7 月</small></div><div class="n-mid"><div class="n-nm">百年孤独</div><div class="n-au">1967 · 加西亚·马尔克斯</div></div></div>
+            <div class="n-row"><div class="dblk"><b>30</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">置身事内</div><div class="n-au">2021 · 兰小欢</div></div></div>
+            <div class="n-row"><div class="dblk"><b>11</b><small>6 月</small></div><div class="n-mid"><div class="n-nm">我们仨</div><div class="n-au">2003 · 杨绛</div></div></div>
+            <div class="n-row"><div class="dblk"><b>24</b><small>5 月</small></div><div class="n-mid"><div class="n-nm">三体</div><div class="n-au">2008 · 刘慈欣</div></div></div>
           </div>
           <div class="split-r">
             <div class="d-head" style="border-bottom:1px solid var(--a-border)">
@@ -537,7 +542,7 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
               <div class="d-nm">人类简史：从动物到上帝</div>
               <div class="d-au">尤瓦尔·赫拉利 · 2014</div>
               <div class="d-row"><span class="badge-cat">书籍</span><span class="d-status" style="color:var(--st-done)">已完成</span><span class="stars" style="font-size:13px">★★★★☆</span>
-                <span style="font-size:12px;color:var(--a-t3)">2026.7.20 → </span><span class="wd" style="font-size:12px">2026.8.2</span><span style="font-size:12px;color:var(--a-t3)">（13 天）</span></div>
+                <span style="font-size:12px;color:var(--a-t3)">2026/7/20 → </span><span class="wd" style="font-size:12px">2026/8/2</span><span style="font-size:12px;color:var(--a-t3)">（13 天）</span></div>
               <div class="d-row"><span class="tagpill">历史</span><span class="tagpill">认知</span><span class="tagpill">重读候选</span></div>
             </div>
             <div class="sec">
@@ -563,8 +568,8 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
   <div class="stage">
     <div class="shot">
       <div class="switch" role="group" aria-label="切换行式">
-        <button type="button" data-v="n1" aria-pressed="false">N1 纯文字</button>
-        <button type="button" data-v="n2" aria-pressed="true">N2 日期锚</button>
+        <button type="button" data-v="n1" aria-pressed="true">N1 纯文字 · 定稿</button>
+        <button type="button" data-v="n2" aria-pressed="false">N2 日期锚</button>
         <button type="button" data-v="n3" aria-pressed="false">N3 首字块</button>
       </div>
       <div class="phone">
@@ -591,24 +596,24 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
 <section class="plate">
   <div class="plate-hd">
     <span class="eyebrow">结论</span>
-    <h2>建议选 N2</h2>
+    <h2>定稿：N1</h2>
   </div>
   <div class="pick">
-    <h3>N2 日期当左锚 ＋ 按结束时间排序时自动分月</h3>
-    <p>去掉封面之后唯一真正的损失是「左边缘没有落点了」。N3 用首字方块补，补的是装饰；N2 用日期补，补的是这个 App 里最该被看见的字段——你的清单本来就是一份读完记录，日号成列之后，翻列表就是在翻流水账。</p>
-    <p>N1 也留着：它其实就是 N2 关掉左列的样子。按书名或评分排序时日期轴失去意义，自动退回 N1，同一套 DOM，去掉一个 div 而已。</p>
+    <h3>N1 纯文字 ＋ 整页详情，日期写 2026/8/2</h3>
+    <p>N2 / N3 补的那块左边缘，代价是每行都要多一个恒定宽度的格子；N1 把整行宽度全给书名，长副标题也放得下，而右栏「2026/8/2 ＋ 状态」两行本身就构成了一条稳定的右轴，扫起来并不比左锚差。</p>
+    <p>年份写全不省略：四位年份配等宽数字照样对齐成列，也省掉「同年省略、跨年补全」那套额外规则。状态跟在日期下面，「进行中」的行则把日期换成「2026/8/5 起」并转灰，不必再单独画色点。</p>
   </div>
   <div class="tablewrap">
     <table class="doc">
-      <thead><tr><th>顺序</th><th>动到哪里</th><th>说明</th></tr></thead>
+      <thead><tr><th>改动</th><th>动到哪里</th><th>说明</th></tr></thead>
       <tbody>
         <tr><td>1</td><td>render() 的 tbody.innerHTML</td><td>整块换成 <code>.list-n</code> 行式；table / colgroup / thead 一并删，样式表里成片的 <code>td:nth-child(n)</code> 跟着清</td></tr>
-        <tr><td>2</td><td>日期左列</td><td>watchDate 拆成日号 + 月份两行；只有 startDate 的记录画蓝色「起」</td></tr>
-        <tr><td>3</td><td>分月分组</td><td>仅在「按结束时间」排序时生效，其余排序退回 N1</td></tr>
+        <tr><td>2</td><td>右栏日期</td><td>fmtWatchShort 写成 2026/8/2；只有 startDate 的记录写「2026/8/5 起」并转灰</td></tr>
+        <tr><td>3</td><td>状态</td><td>日期下面一行，颜色取 SMAP 的 c / cd 两版，深色模式不发闷</td></tr>
         <tr><td>4</td><td>新增 openDetail(id)</td><td>参照 calRoot，做成与 .content 平级的同级视图，用 --nav-* 转场</td></tr>
         <tr><td>5</td><td>删除折叠逻辑</td><td>备注全文进详情页，<code>toggleCnoteCard</code> / <code>.cnote-toggle</code> / <code>note-expanded</code> 一起退休</td></tr>
         <tr><td>6</td><td>左滑手势</td><td><code>enhanceMediaSwipe</code> 从 tr 改绑到 <code>.n-row</code></td></tr>
-        <tr><td>7</td><td>封面字段</td><td>编辑弹窗里的「封面链接」输入框收起来；<code>item.cover</code> 保留在数据里不动，日历页仍在用</td></tr>
+        <tr><td>7</td><td>封面字段</td><td><code>item.cover</code> 原样留在数据里（日历页仍在用），列表和详情都不显示</td></tr>
       </tbody>
     </table>
   </div>
@@ -623,33 +628,33 @@ table.doc td:first-child{color:var(--ink);font-weight:600;white-space:nowrap;}
 <script>
 const BOOKS=[
   {nm:"人类简史：从动物到上帝",short:"人类简史",au:"尤瓦尔·赫拉利",yr:2014,st:"done",stl:"已完成",
-   d:"2",m:"8 月",wd:"8.2",sd:"2026.7.20",ed:"2026.8.2",days:13,score:"★★★★☆",sc:"4.5",
+   d:"2",m:"8 月",wd:"8.2",sd:"2026/7/20",ed:"2026/8/2",days:13,score:"★★★★☆",sc:"4.5",
    note:"认知革命那章最好。「虚构故事」这个说法把国家、货币、公司一次讲通了——它们能运转，只是因为足够多的人同时相信。农业革命被写成史上最大骗局，有点狠，但确实解释了为什么人变多了却过得更累。",
-   tags:["历史","认知","重读候选"],add:"2026.7.19"},
+   tags:["历史","认知","重读候选"],add:"2026/7/19"},
   {nm:"长安的荔枝",short:"长安的荔枝",au:"马伯庸",yr:2022,st:"doing",stl:"进行中",
-   d:"5",m:"8 月起",wd:"在读",sd:"2026.8.5",ed:null,days:null,score:"",sc:"",
+   d:"5",m:"8 月起",wd:"在读",sd:"2026/8/5",ed:null,days:null,score:"",sc:"",
    note:"一骑红尘妃子笑，背后是一整套转运成本核算。李善德算账那几页，读着像看项目排期。",
-   tags:["历史","小说"],add:"2026.8.5"},
+   tags:["历史","小说"],add:"2026/8/5"},
   {nm:"克拉拉与太阳",short:"克拉拉与太阳",au:"石黑一雄",yr:2021,st:"done",stl:"已完成",
-   d:"28",m:"7 月",wd:"7.28",sd:"2026.7.16",ed:"2026.7.28",days:12,score:"★★★★☆",sc:"4.0",
+   d:"28",m:"7 月",wd:"7.28",sd:"2026/7/16",ed:"2026/7/28",days:12,score:"★★★★☆",sc:"4.0",
    note:"用 AI 的眼睛看人的爱，越平静越难受。太阳是克拉拉唯一的信仰，而她把它用在了别人身上。",
-   tags:["小说","科幻"],add:"2026.7.15"},
+   tags:["小说","科幻"],add:"2026/7/15"},
   {nm:"百年孤独",short:"百年孤独",au:"加西亚·马尔克斯",yr:1967,st:"done",stl:"已完成",
-   d:"15",m:"7 月",wd:"7.15",sd:"2026.6.20",ed:"2026.7.15",days:25,score:"★★★★★",sc:"5.0",
+   d:"15",m:"7 月",wd:"7.15",sd:"2026/6/20",ed:"2026/7/15",days:25,score:"★★★★★",sc:"5.0",
    note:"第三遍读了，名字还是记不住，但这次终于跟上了时间的循环。最后一页那阵风，读到就起鸡皮疙瘩。",
-   tags:["小说","拉美"],add:"2026.6.20"},
+   tags:["小说","拉美"],add:"2026/6/20"},
   {nm:"置身事内：中国政府与经济发展",short:"置身事内",au:"兰小欢",yr:2021,st:"done",stl:"已完成",
-   d:"30",m:"6 月",wd:"6.30",sd:"2026.6.14",ed:"2026.6.30",days:16,score:"★★★★☆",sc:"4.5",
+   d:"30",m:"6 月",wd:"6.30",sd:"2026/6/14",ed:"2026/6/30",days:16,score:"★★★★☆",sc:"4.5",
    note:"把土地财政、城投、分税制串成一条线讲。上篇微观下篇宏观，读完再看新闻里的地方债，不再是名词。",
-   tags:["经济","中国"],add:"2026.6.13"},
+   tags:["经济","中国"],add:"2026/6/13"},
   {nm:"我们仨",short:"我们仨",au:"杨绛",yr:2003,st:"done",stl:"已完成",
-   d:"11",m:"6 月",wd:"6.11",sd:"2026.6.8",ed:"2026.6.11",days:3,score:"★★★★☆",sc:"4.0",
+   d:"11",m:"6 月",wd:"6.11",sd:"2026/6/8",ed:"2026/6/11",days:3,score:"★★★★☆",sc:"4.0",
    note:"前半是梦，后半是账。越平淡越受不了——「我一个人思念我们仨」。",
-   tags:["散文","回忆"],add:"2026.6.8"},
+   tags:["散文","回忆"],add:"2026/6/8"},
   {nm:"三体",short:"三体",au:"刘慈欣",yr:2008,st:"done",stl:"已完成",
-   d:"24",m:"5 月",wd:"5.24",sd:"2026.5.2",ed:"2026.5.24",days:22,score:"★★★★★",sc:"5.0",
+   d:"24",m:"5 月",wd:"5.24",sd:"2026/5/2",ed:"2026/5/24",days:22,score:"★★★★★",sc:"5.0",
    note:"重读第一部。红岸那条线比黑暗森林更耐看，因为它讲的是人怎么对自己失望。",
-   tags:["科幻","重读候选"],add:"2026.5.2"}
+   tags:["科幻","重读候选"],add:"2026/5/2"}
 ];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -663,17 +668,17 @@ function rowHTML(b,i,v){
     right='<div class="n-wd">'+(doing?'<span style="color:var(--st-doing);font-weight:600">在读</span>':'<span class="wd">'+b.wd+'</span>')+'</div>';
   }else{
     right='<div class="n-wd">'+(doing
-      ?'<span style="color:var(--st-doing);font-weight:600">在读</span><span class="sm">'+esc(b.sd.slice(5))+' 起</span>'
-      :'<span class="wd">'+b.wd+'</span><span class="sm">读完</span>')+'</div>';
+      ?'<span class="pend">'+esc(b.sd)+' 起</span><span class="sm doing">进行中</span>'
+      :'<span class="wd">'+esc(b.ed)+'</span><span class="sm">已完成</span>')+'</div>';
   }
-  const au=esc(b.au)+(v==="n2"&&doing?' · <span style="color:var(--st-doing);font-weight:600">在读</span>':'');
+  const au=b.yr+' · '+esc(b.au)+(v==="n2"&&doing?' · <span style="color:var(--st-doing);font-weight:600">在读</span>':'');
   return '<button class="tap" data-i="'+i+'" aria-label="打开 '+esc(b.short)+' 详情">'+
     '<div class="n-row">'+left+
       '<div class="n-mid"><div class="n-nm">'+esc(b.nm)+'</div><div class="n-au">'+au+'</div></div>'+
       right+'<span class="n-arrow">›</span>'+
     '</div></button>';
 }
-let view="n2";
+let view="n1";
 function paint(){
   document.getElementById("protoList").innerHTML=BOOKS.map((b,i)=>rowHTML(b,i,view)).join("");
 }
@@ -703,7 +708,7 @@ document.getElementById("protoList").addEventListener("click",e=>{
       '<div><div class="kv-k">开始</div><div class="kv-v">'+esc(b.sd)+'</div></div>'+
       '<div><div class="kv-k">结束</div><div class="kv-v" style="color:'+(b.ed?'var(--a-watch)':'var(--a-t3)')+'">'+(b.ed?esc(b.ed):'—')+'</div></div>'+
       '<div><div class="kv-k">用时</div><div class="kv-v">'+(b.days?b.days+' 天':'进行中')+'</div></div>'+
-    '</div>'+(b.days?'<div class="d-span"><small>'+esc(b.sd.slice(5))+'</small><span class="bar"><i></i></span><small>'+esc(b.ed.slice(5))+'</small></div>':'')+'</div>'+
+    '</div>'+(b.days?'<div class="d-span"><small>'+esc(b.sd)+'</small><span class="bar"><i></i></span><small>'+esc(b.ed)+'</small></div>':'')+'</div>'+
     '<div class="sec"><div class="sec-lbl">备注</div><div class="d-note">'+esc(b.note)+'</div></div>'+
     '<div class="sec"><div class="sec-lbl">标签</div><div class="d-tags">'+b.tags.map(t=>'<span class="tagpill">'+esc(t)+'</span>').join("")+'</div></div>'+
     '<div class="sec"><div style="font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums">首次添加 '+esc(b.add)+'</div></div>';
