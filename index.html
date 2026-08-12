@@ -3707,7 +3707,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <thead>
           <tr>
             <th></th><th>名称</th><th>备注</th><th>分类</th><th>标签</th>
-            <th>评分</th><th>作品年份</th><th>观看时间</th><th>状态</th><th>操作</th>
+            <th>评分</th><th>作品年份</th><th>时间</th><th>状态</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -3961,13 +3961,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <input type="number" id="f-year" placeholder="2000" min="1900" max="2099">
       </div>
       <div class="fg">
-        <label>观看 / 阅读时间</label>
-        <input type="date" id="f-watch">
-      </div>
-    </div>
-    <div class="fg">
-      <label>评分</label>
-      <select id="f-score">
+        <label>评分</label>
+        <select id="f-score">
         <option value="">未评分</option>
         <option value="0.5">0.5/5</option>
         <option value="1">1/5</option>
@@ -3979,7 +3974,20 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <option value="4">4/5</option>
         <option value="4.5">4.5/5</option>
         <option value="5">5/5</option>
-      </select>
+        </select>
+      </div>
+    </div>
+    <!-- 观看/阅读时间拆成开始 + 结束两格。结束时间仍是原来那个 watchDate 字段——
+         日历、排序、统计都认它，所以只填一个的话填「结束」。 -->
+    <div class="frow2">
+      <div class="fg">
+        <label>开始时间</label>
+        <input type="date" id="f-watch-start">
+      </div>
+      <div class="fg">
+        <label>结束时间</label>
+        <input type="date" id="f-watch">
+      </div>
     </div>
     <div class="fg">
       <label>导演 / 作者 / 艺人</label>
@@ -8513,17 +8521,12 @@ function renderRichInline(text){
 }
 function getCat(id){return cats.find(c=>c.id===id)||{name:id,color:'#888',emoji:'📌'};}
 // 分类名包含「电影」「剧」「书」→ 标题加《》
-function needsBrackets(catName){
-  if(!catName)return false;
-  return /电影|剧|书/.test(catName);
-}
-// 给名称包装书名号（按分类判断）+ 拼年份
+
+// 名称 + 年份（书名号已去掉）
 function fmtTitle(item){
-  const cat=getCat(item.type);
-  const nm=hl(item.name||'');
-  const wrapped=needsBrackets(cat.name)?`《${nm}》`:nm;
+  const nm=hl(item.name||'');   // 影视/书籍原先自动套一层《》，看着噪，去掉了
   const yr=item.year?esc(item.year):'—';
-  return `${wrapped}<span class="cyear">（${yr}）</span>`;
+  return `${nm}<span class="cyear">（${yr}）</span>`;
 }
 
 // ── 主题色（设置 › 外观）────────────────────────────────
@@ -9638,6 +9641,25 @@ function fmtWatchShort(wd){
   const p=wd.split('-').map(n=>parseInt(n,10));
   return p.length===3 ? `${p[0]}.${p[1]}.${p[2]}` : `${p[0]}.${p[1]}`;
 }
+// 开始 → 结束：卡片上的紧凑区间。同年就省掉后一个年份（2026.5.1–8.12），
+// 跨年才两头都写。只填一头时退回单个日期（只有开始时加个「起」）。
+function fmtSpanShort(st,ed){
+  if(st&&ed){
+    const a=st.split('-').map(Number), b=ed.split('-').map(Number);
+    const tail=a[0]===b[0] ? `${b[1]}.${b[2]}` : `${b[0]}.${b[1]}.${b[2]}`;
+    return `${a[0]}.${a[1]}.${a[2]}–${tail}`;
+  }
+  if(ed) return fmtWatchShort(ed);
+  if(st) return fmtWatchShort(st)+' 起';
+  return '—';
+}
+// 表格那一列的长写法
+function fmtSpan(st,ed){
+  if(st&&ed) return fmtWatch(st)+' – '+fmtWatch(ed);
+  if(ed) return fmtWatch(ed);
+  if(st) return fmtWatch(st)+' 起';
+  return '—';
+}
 function fmtWatch(wd){
   if(!wd) return '—';
   const parts=wd.split('-');
@@ -9742,12 +9764,12 @@ function render(){
       ? `<span class="cnote-toggle" onclick="event.stopPropagation();toggleCnoteCard('${item.id}', event)"><span class="arr">▾</span>收起</span>`
       : '';
     const noteCell=noteRaw
-      ? `<div class="cnote-wrap"><div class="cnote">💬 ${hl(noteRaw)}</div></div>`
+      ? `<div class="cnote-wrap"><div class="cnote">${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
     // nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那两条）
     const rowCls=['note-expanded'];
-    if(!item.watchDate) rowCls.push('nowatch');
+    if(!item.watchDate&&!item.startDate) rowCls.push('nowatch');
     if(!(item.tags||[]).length) rowCls.push('notags');
 
     // 封面格留着不画内容：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n)
@@ -9764,7 +9786,7 @@ function render(){
       <td>${tagsH||'<span style="color:var(--text-muted);font-size:var(--fs-foot)">—</span>'}</td>
       <td>${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
-      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
+      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtSpan(item.startDate,item.watchDate)}</span><span class="wd-short">${fmtSpanShort(item.startDate,item.watchDate)}</span></td>
       <td><span style="color:${st.c};font-size:var(--fs-foot);font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
         ${noteToggle}
@@ -10191,6 +10213,7 @@ function openAdd(){
   document.getElementById('f-status').value='completed';
   document.getElementById('f-year').value='';
   document.getElementById('f-watch').value='';
+  document.getElementById('f-watch-start').value='';
   document.getElementById('f-creator').value='';
   document.getElementById('f-cover').value='';
   document.getElementById('f-note').value='';
@@ -10210,6 +10233,7 @@ function openEdit(id){
   document.getElementById('f-status').value=item.status||'completed';
   document.getElementById('f-year').value=item.year||'';
   document.getElementById('f-watch').value=item.watchDate||'';
+  document.getElementById('f-watch-start').value=item.startDate||'';
   document.getElementById('f-creator').value=item.creator||'';
   document.getElementById('f-cover').value=item.cover||'';
   document.getElementById('f-note').value=item.note||'';
@@ -10223,12 +10247,15 @@ function closeModal(){document.getElementById('modal').classList.remove('open');
 function saveRec(){
   const name=document.getElementById('f-name').value.trim();
   if(!name){toast('请输入名称','warn');return;}
+  const wStart=document.getElementById('f-watch-start').value, wEnd=document.getElementById('f-watch').value;
+  if(wStart&&wEnd&&wStart>wEnd){toast('开始时间晚于结束时间','warn');return;}
   const scoreRaw=document.getElementById('f-score').value;
   const rec={
     name, type:document.getElementById('f-type').value,
     status:document.getElementById('f-status').value,
     score:scoreRaw?parseFloat(scoreRaw):null,
     year:parseInt(document.getElementById('f-year').value)||null,
+    startDate:document.getElementById('f-watch-start').value||null,
     watchDate:document.getElementById('f-watch').value||null,
     creator:document.getElementById('f-creator').value.trim(),
     cover:document.getElementById('f-cover').value.trim(),
@@ -10446,9 +10473,9 @@ function exportJSON(){
   dl(b,'我的清单_'+today()+'.json'); toast('已导出 JSON');
 }
 function exportCSV(){
-  const hdr=['名称','分类','作品年份','观看时间','导演/作者','评分','状态','标签','备注','添加日期'];
+  const hdr=['名称','分类','作品年份','开始时间','结束时间','导演/作者','评分','状态','标签','备注','添加日期'];
   const rows=data.map(d=>[
-    d.name,getCat(d.type).name,d.year||'',d.watchDate||'',d.creator||'',
+    d.name,getCat(d.type).name,d.year||'',d.startDate||'',d.watchDate||'',d.creator||'',
     d.score||'',SMAP[d.status]?.lbl||'',(d.tags||[]).join('|'),d.note||'',d.date||''
   ]);
   const csv=[hdr,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
