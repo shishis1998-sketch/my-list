@@ -476,10 +476,13 @@ tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
 tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 
 .cbadge{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;line-height:1;border:1px solid transparent;box-sizing:border-box;}
-/* 右上角的观看/阅读时间：与「已完成」同色（= SMAP.completed.c #14532D）。
-   深色模式下这个墨绿压在深底上几乎看不见，换回随主题走的 --accent-mid。 */
+/* 状态文字：颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP），
+   这里只管按模式挑一个。四种状态各有一版深色，避免墨绿压在深底上看不见。 */
+.cstatus{color:var(--c);font-size:var(--fs-caption);font-weight:700;}
+:root[data-mode="dark"] .cstatus{color:var(--cd);}
+/* 右上角的观看/阅读时间：与「已完成」同色，深浅两版都跟着它走 */
 :root{--watch-c:#14532D;}
-:root[data-mode="dark"]{--watch-c:var(--accent-mid);}
+:root[data-mode="dark"]{--watch-c:#6FB394;}
 /* 编辑弹窗里的「首次添加」：只读的一行小字 */
 .created-val{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);padding:var(--sp-6) 0;}
 .cbadge-m{display:none;}   /* 分类胶囊的第二份：只有手机端才画（跟标签同一格，见媒体查询）*/
@@ -8489,11 +8492,13 @@ const DCATS=[
   {id:'music',name:'音乐', color:'#6B2D6B', emoji:'🎵'},
   {id:'other',name:'其他', color:'#4A4A4A', emoji:'📌'},
 ];
+// c = 浅色模式的文字色；cd = 深色模式的。原来只有 c，那几个深色（#14532D 等）
+// 压在深色卡片（#1C1C1F）上几乎看不见，深色模式下换成同色系的亮版。
 const SMAP={
-  completed:{lbl:'已完成',c:'#14532D',bg:'#DCFCE7'},
-  'in-progress':{lbl:'进行中',c:'#1E40AF',bg:'#DBEAFE'},
-  want:{lbl:'待看/读',c:'#92400E',bg:'#FEF3C7'},
-  dropped:{lbl:'放弃',c:'#6B7280',bg:'#F3F4F6'},
+  completed:{lbl:'已完成',c:'#14532D',cd:'#6FB394',bg:'#DCFCE7'},
+  'in-progress':{lbl:'进行中',c:'#1E40AF',cd:'#7BA3E8',bg:'#DBEAFE'},
+  want:{lbl:'待看/读',c:'#92400E',cd:'#D9A05B',bg:'#FEF3C7'},
+  dropped:{lbl:'放弃',c:'#6B7280',cd:'#9AA0A6',bg:'#F3F4F6'},
 };
 const DEFAULT_NOTE_SUBS=['灵感','备忘','读书笔记','日记'];
 
@@ -9834,7 +9839,7 @@ function render(){
       <td style="font-size:var(--fs-caption)">${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--watch-c);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
-      <td><span style="color:${st.c};font-size:var(--fs-caption);font-weight:700">${st.lbl}</span></td>
+      <td><span class="cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span></td>
       <td><div class="acts">
         ${noteToggle}
         <button class="ibt" onclick="openEdit('${item.id}')" title="编辑">编辑</button>
