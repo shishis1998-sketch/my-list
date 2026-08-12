@@ -2063,7 +2063,8 @@ mark.shl{
 thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);font-family:var(--zh);}
 
 /* —— 分类/状态徽章：圆 + 描边 —— */
-.cbadge{font-family:var(--zh);font-weight:700;border:1.5px solid var(--ink);}
+/* 分类胶囊：只留淡色底，不描边（标签胶囊下面那条本来就是 border:none）*/
+.cbadge{font-family:var(--zh);font-weight:700;border:none;}
 .ctag{font-family:var(--zh);font-weight:600;border:none;background:var(--surface-2);border-radius:var(--rchip);}
 
 
