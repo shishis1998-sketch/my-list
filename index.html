@@ -476,6 +476,9 @@ tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
 tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 
 .cbadge{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;line-height:1;border:1px solid transparent;box-sizing:border-box;}
+/* 编辑弹窗里的「首次添加」：只读的一行小字 */
+.created-val{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);padding:var(--sp-6) 0;}
+.cbadge-m{display:none;}   /* 分类胶囊的第二份：只有手机端才画（跟标签同一格，见媒体查询）*/
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:500;background:var(--bg);color:var(--text-secondary);white-space:nowrap;line-height:1;border:1px solid var(--border-soft);box-sizing:border-box;margin:var(--sp-2) var(--sp-2) var(--sp-2) 0;}
 
 /* 观看/阅读时间有两份写法：表格列用「2026年8月12日」，手机卡片右上角用紧凑的
@@ -788,20 +791,19 @@ tr:hover .acts{opacity:1;}
     border-radius:var(--rlg);box-shadow:var(--pop-sm);
     padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-8);
     display:grid;
-    /* 4 列: 分类(auto) / 中段(1fr,可挤压) / 状态(auto) / 右栏(时间·评分,贴右)
-       行 1＝标题 + 观看/阅读时间；行 2＝年份·作者 + 状态 + 评分（同一行，左边不再空着）；
-       行 3＝备注；末行＝分类胶囊 + 标签贴左，「收起/展开」贴右 */
-    grid-template-columns:auto minmax(0,1fr) auto auto;
+    /* 3 列: 中段(1fr,可挤压) / 状态(auto) / 右栏(时间·评分,贴右)
+       行 1＝标题 + 观看/阅读时间；行 2＝年份·作者 + 状态 + 评分；行 3＝备注；
+       末行＝分类 + 标签（同一个 flex 行，间距 8）贴左，「收起/展开」贴右 */
+    grid-template-columns:minmax(0,1fr) auto auto;
     grid-template-areas:
-      "name name name   watch"
-      "meta meta status score"
-      "note note note   note"
-      "cat  tags tags   acts";
+      "name   name   watch"
+      "meta   status score"
+      "note   note   note"
+      "tags   tags   acts";
     gap:var(--sp-6) var(--sp-10);align-items:center;
   }
   /* 没填时间 / 没打标签的行：那两格在卡片上不画「—」占位，留白即可 */
   tbody tr.nowatch td:nth-child(8){display:none;}
-  tbody tr.notags td:nth-child(5){display:none;}
   tbody tr:hover{background:var(--surface);}
   tbody tr td{padding:0;border:none;}
 
@@ -810,8 +812,11 @@ tr:hover .acts{opacity:1;}
   tbody tr td:nth-child(2){grid-area:name;}      /* 名称（作者那份只给电脑端）*/
   .csub-d{display:none;}
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
-  tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊：末行打头，贴左 */
-  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;}/* 标签：末行贴左，与「收起」同一行 */
+  tbody tr td:nth-child(4){display:none;}        /* 分类列：手机端胶囊改画在标签那一格里 */
+  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-8);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;}/* 末行：分类 + 标签同一 flex 行，间距 8 */
+  #tbl .cbadge-m{display:inline-flex;}
+  #tbl .tags-dash{display:none;}          /* 手机端不画「—」占位 */
+  #tbl .ctag{margin:0;}                   /* 间距全交给上面的 gap:8，不再叠外边距 */
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
   /* 观看/阅读时间：右上角，与标题一行对齐（align-self:start 才是标题那行，
@@ -4019,6 +4024,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <label>备注</label>
       <textarea id="f-note" rows="3" placeholder="想说的话..."></textarea>
     </div>
+    <div class="fg fg-created" id="f-created-row" style="display:none">
+      <label>首次添加</label>
+      <div class="created-val" id="f-created"></div>
+    </div>
     </div><!-- /mbody -->
     <div class="mftr">
       <button class="btn btn-g" onclick="closeModal()">取消</button>
@@ -4281,6 +4290,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <div class="tsugg-lbl">笔记常用标签</div>
         <div class="tsugg-list" id="ntsuggList"></div>
       </div>
+    </div>
+    <div class="fg fg-created" id="nf-created-row" style="display:none">
+      <label>首次添加</label>
+      <div class="created-val" id="nf-created"></div>
     </div>
     <!-- 备忘专用：仅本机开关 -->
     <div class="fg" id="memo-local-group" style="display:none">
@@ -8473,6 +8486,31 @@ const SMAP={
 const DEFAULT_NOTE_SUBS=['灵感','备忘','读书笔记','日记'];
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+// 首次添加时间。笔记有 createdAt 可用；媒体记录没存创建时间，但 id 是 uid() 生成的——
+// 前 8 位就是 Date.now() 的 36 进制（2000～2038 年都是 8 位），精确到毫秒。
+// 不能用 date 字段：saveRec() 每次保存都会把它重写成当天，那是「最后保存日」不是「首次添加」。
+function createdAtOf(item){
+  if(!item) return null;
+  if(item.createdAt) return new Date(item.createdAt);
+  const id=String(item.id||'');
+  const hex=id.startsWith('n_')?id.slice(2,10):id.slice(0,8);   // 笔记 id 前缀是 n_
+  const t=parseInt(hex,36);
+  if(!isFinite(t)) return null;
+  const d=new Date(t);
+  return (d.getFullYear()>=2015 && t<=Date.now()+864e5) ? d : null;   // 兜底：导入的自定义 id 解不出就不显示
+}
+function fmtCreated(d){
+  if(!d) return '';
+  const z=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+function fillCreatedRow(rowId,valId,item){
+  const row=document.getElementById(rowId), val=document.getElementById(valId);
+  if(!row||!val) return;
+  const txt=fmtCreated(createdAtOf(item));
+  row.style.display=txt?'':'none';
+  val.textContent=txt;
+}
 function h2r(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
@@ -9761,14 +9799,17 @@ function render(){
     const metaM=(yrTxt||crTxt)?`<div class="csub">${yrTxt}${yrTxt&&crTxt?' · ':''}${crTxt}</div>`:'';
     const metaD=crTxt?`<div class="csub csub-d">${crTxt}</div>`:'';   // 电脑端另有「作品年份」列，只留作者
 
-    // nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那两条）
+    // nowatch：只填了开始时间 / 什么都没填的行，右上角那格不画（见样式表）
     const rowCls=['note-expanded'];
     if(!item.watchDate) rowCls.push('nowatch');   // 只填了开始时间的行，卡片右上角也留白
-    if(!(item.tags||[]).length) rowCls.push('notags');
 
     // 第一格原是封面格：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n) 全部
     // 错位，所以格子留着——电脑端连同表头、colgroup 一起 display:none，手机端改当
     // 「年份 · 作者」那格用（item.cover 仍存在数据里，只是不再显示缩略图）。
+    // 分类胶囊画两份：电脑端留在「分类」列，手机端那份跟标签同在一格，
+    // 三颗胶囊就在同一个 flex 行里、间距统一（不再是列间距 10 对上标签间距 6）。
+    const badge=(cls)=>`<span class="cbadge${cls}" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span>`;
+
     return `<tr data-id="${item.id}" class="${rowCls.join(' ')}">
       <td class="c-meta-td">${metaM}</td>
       <td>
@@ -9776,8 +9817,8 @@ function render(){
         ${metaD}
       </td>
       <td>${noteCell}</td>
-      <td><span class="cbadge" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span></td>
-      <td>${tagsH||'<span style="color:var(--text-muted);font-size:var(--fs-foot)">—</span>'}</td>
+      <td>${badge('')}</td>
+      <td>${badge(' cbadge-m')}${tagsH}<span class="tags-dash" style="color:var(--text-muted);font-size:var(--fs-foot)">${tagsH?'':'—'}</span></td>
       <td style="font-size:var(--fs-caption)">${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
@@ -10208,6 +10249,7 @@ function openAdd(){
   document.getElementById('f-year').value='';
   document.getElementById('f-watch').value='';
   document.getElementById('f-watch-start').value='';
+  fillCreatedRow('f-created-row','f-created',null);   // 新增时没有首次添加可言
   document.getElementById('f-creator').value='';
   document.getElementById('f-cover').value='';
   document.getElementById('f-note').value='';
@@ -10228,6 +10270,7 @@ function openEdit(id){
   document.getElementById('f-year').value=item.year||'';
   document.getElementById('f-watch').value=item.watchDate||'';
   document.getElementById('f-watch-start').value=item.startDate||'';
+  fillCreatedRow('f-created-row','f-created',item);
   document.getElementById('f-creator').value=item.creator||'';
   document.getElementById('f-cover').value=item.cover||'';
   document.getElementById('f-note').value=item.note||'';
@@ -12684,6 +12727,7 @@ function openNoteEdit(id){
   document.getElementById('memoLocalToggle').classList.toggle('on',curMemoLocal);
   applyMemoEditorMode();
   renderNoteChips2();
+  fillCreatedRow('nf-created-row','nf-created',n);
   document.getElementById('noteModal').classList.add('open');
   setTimeout(()=>setupNfThumb(document.getElementById('nf-sub').value==='读书笔记'),120);
 }
@@ -12691,6 +12735,7 @@ function openNoteEdit(id){
 function openNoteNew(){
   editNoteId=null;
   curNoteTags=[];
+  fillCreatedRow('nf-created-row','nf-created',null);   // 新建时没有首次添加可言
   document.getElementById('nm-title').textContent='新建笔记';
   document.getElementById('nf-title').value='';
   document.getElementById('nf-body').value='';
