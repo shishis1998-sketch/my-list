@@ -423,7 +423,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 table{width:100%;border-collapse:collapse;table-layout:fixed;}
 /* 封面列整列不显示（表头 / colgroup / 单元格三处一起收）：列表不再显示封面缩略图。
    格子本身留在 DOM 里，抽掉会让样式表里成片的 td:nth-child(n) 全部错位。 */
-col.c-cover,thead th:first-child,td.c-cover-td{display:none;}
+col.c-cover,thead th:first-child,td.c-meta-td{display:none;}
 col.c-cover{width:42px;}
 col.c-name{width:180px;}col.c-note{width:auto;}
 col.c-cat{width:82px;}
@@ -481,8 +481,6 @@ tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 /* 观看/阅读时间有两份写法：表格列用「2026年8月12日」，手机卡片右上角用紧凑的
    「2026.8.12」（见手机端媒体查询里的对调） */
 .wd-short{display:none;}
-/* 第二行打头的年份：只在手机卡片上显示；电脑端表格另有「作品年份」列 */
-.c-yr{display:none;}
 .acts{display:flex;gap:var(--sp-4);opacity:0;transition:opacity .15s;}
 tr:hover .acts{opacity:1;}
 .ibt{background:none;border:none;cursor:pointer;padding:var(--sp-6) var(--sp-10);border-radius:var(--r);color:var(--text-muted);transition:all .1s;display:flex;align-items:center;font-size:var(--fs-caption);font-family:var(--zh);}
@@ -790,15 +788,15 @@ tr:hover .acts{opacity:1;}
     border-radius:var(--rlg);box-shadow:var(--pop-sm);
     padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-8);
     display:grid;
-    /* 3 列: 分类(auto) / 中段(1fr,可挤压) / 右侧(时间+评分,贴右)
-       行 1 右侧＝观看/阅读时间（与标题同一行）；状态在行 2 跟评分并排；
-       末行＝分类胶囊 + 标签，一起贴左；「收起/展开」在同一行贴右 */
-    grid-template-columns:auto minmax(0,1fr) auto;
+    /* 4 列: 分类(auto) / 中段(1fr,可挤压) / 状态(auto) / 右栏(时间·评分,贴右)
+       行 1＝标题 + 观看/阅读时间；行 2＝年份·作者 + 状态 + 评分（同一行，左边不再空着）；
+       行 3＝备注；末行＝分类胶囊 + 标签贴左，「收起/展开」贴右 */
+    grid-template-columns:auto minmax(0,1fr) auto auto;
     grid-template-areas:
-      "name name   watch"
-      ".    status score"
-      "note note   note"
-      "cat  tags   acts";
+      "name name name   watch"
+      "meta meta status score"
+      "note note note   note"
+      "cat  tags tags   acts";
     gap:var(--sp-6) var(--sp-10);align-items:center;
   }
   /* 没填时间 / 没打标签的行：那两格在卡片上不画「—」占位，留白即可 */
@@ -807,8 +805,10 @@ tr:hover .acts{opacity:1;}
   tbody tr:hover{background:var(--surface);}
   tbody tr td{padding:0;border:none;}
 
-  /* 按 td 顺序分配到 grid 区域（封面格在上面已整列 display:none）*/
-  tbody tr td:nth-child(2){grid-area:name;}      /* 名称+作者 */
+  /* 按 td 顺序分配到 grid 区域 */
+  tbody tr td.c-meta-td{display:block;grid-area:meta;justify-self:start;align-self:center;}  /* 年份 · 作者 */
+  tbody tr td:nth-child(2){grid-area:name;}      /* 名称（作者那份只给电脑端）*/
+  .csub-d{display:none;}
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
   tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊：末行打头，贴左 */
   tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;}/* 标签：末行贴左，与「收起」同一行 */
@@ -823,12 +823,11 @@ tr:hover .acts{opacity:1;}
   }
   .wd-full{display:none;}
   .wd-short{display:inline;}
-  .c-yr{display:inline;}
   tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态：与评分并排贴右 */
   tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
   .cname{font-size:var(--fs-body);font-weight:700;}
-  .csub{font-size:var(--fs-caption);margin-top:var(--sp-2);}
+  .csub{font-size:var(--fs-caption);margin-top:0;}   /* 手机端它自成一格，不再靠 margin 顶开 */
   .cnote{font-size:var(--fs-body);}
   /* 手机端折叠态：约 2 行 */
   tr:not(.note-expanded) .cnote-wrap .cnote{max-height:42px;}
@@ -9769,27 +9768,27 @@ function render(){
       ? `<div class="cnote-wrap"><div class="cnote">${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
-    // 第二行＝年份 · 作者。年份原来跟在标题后面（1984），现在挪到作者前面打头。
-    // 电脑端表格另有「作品年份」列，那边把 .c-yr 藏起来，只留作者，避免一份数据画两遍。
+    // 第二行＝年份 · 作者。手机端它要和状态/评分并排，所以必须是独立的格子——
+    // 塞在名称格里就只能跟着标题一块儿走位。这里借用整表第一格（原封面格，现在
+    // 电脑端隐藏、手机端复用成 meta 格），名称格里另留一份只给电脑端。
     const yrTxt=item.year?esc(item.year):'';
     const crTxt=item.creator?hl(item.creator):'';
-    const metaH=(yrTxt||crTxt)
-      ? `<div class="csub">${yrTxt?`<span class="c-yr">${yrTxt}${crTxt?' · ':''}</span>`:''}${crTxt}</div>`
-      : '';
+    const metaM=(yrTxt||crTxt)?`<div class="csub">${yrTxt}${yrTxt&&crTxt?' · ':''}${crTxt}</div>`:'';
+    const metaD=crTxt?`<div class="csub csub-d">${crTxt}</div>`:'';   // 电脑端另有「作品年份」列，只留作者
 
     // nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那两条）
     const rowCls=['note-expanded'];
     if(!item.watchDate&&!item.startDate) rowCls.push('nowatch');
     if(!(item.tags||[]).length) rowCls.push('notags');
 
-    // 封面格留着不画内容：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n)
-    // 全部错位。这一格连同表头、colgroup 一起在样式里 display:none（item.cover 仍
-    // 存在数据里，只是列表不再显示缩略图）。
+    // 第一格原是封面格：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n) 全部
+    // 错位，所以格子留着——电脑端连同表头、colgroup 一起 display:none，手机端改当
+    // 「年份 · 作者」那格用（item.cover 仍存在数据里，只是不再显示缩略图）。
     return `<tr data-id="${item.id}" class="${rowCls.join(' ')}">
-      <td class="c-cover-td"></td>
+      <td class="c-meta-td">${metaM}</td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
-        ${metaH}
+        ${metaD}
       </td>
       <td>${noteCell}</td>
       <td><span class="cbadge" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span></td>
