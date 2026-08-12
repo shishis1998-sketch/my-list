@@ -813,7 +813,10 @@ tr:hover .acts{opacity:1;}
   .csub-d{display:none;}
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
   tbody tr td:nth-child(4){display:none;}        /* 分类列：手机端胶囊改画在标签那一格里 */
-  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-8);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;}/* 末行：分类 + 标签同一 flex 行，间距 8 */
+  /* 末行（分类 + 标签 / 收起）离备注远一点：网格的行间距只有一个 gap 管全部四行，
+     单独拉开某两行只能靠 margin——两格都要加，只加一格会让胶囊和「收起」错开半格。
+     6（gap）+ 6（margin）= 12。 */
+  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-8);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;margin-top:var(--sp-6);}/* 末行：分类 + 标签同一 flex 行，间距 8 */
   #tbl .cbadge-m{display:inline-flex;}
   #tbl .tags-dash{display:none;}          /* 手机端不画「—」占位 */
   #tbl .ctag{margin:0;}                   /* 间距全交给上面的 gap:8，不再叠外边距 */
@@ -829,7 +832,7 @@ tr:hover .acts{opacity:1;}
   .wd-full{display:none;}
   .wd-short{display:inline;}
   tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态：与评分并排贴右 */
-  tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
+  tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;margin-top:var(--sp-6);}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
   .cname{font-size:var(--fs-body);font-weight:700;}
   .csub{font-size:var(--fs-caption);margin-top:0;}   /* 手机端它自成一格，不再靠 margin 顶开 */
