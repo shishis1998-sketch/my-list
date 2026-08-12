@@ -792,12 +792,12 @@ tr:hover .acts{opacity:1;}
     padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-12);   /* 没被滑动容器包时（有 hover 的触摸设备）走这份 */
     display:grid;
     /* 3 列: 中段(1fr,可挤压) / 状态(auto) / 右栏(时间·评分,贴右)
-       行 1＝标题 + 观看/阅读时间；行 2＝年份·作者 + 状态 + 评分；行 3＝备注；
-       末行＝分类 + 标签（同一个 flex 行，间距 8）贴左，「收起/展开」贴右 */
+       行 1＝标题 + 状态 + 观看/阅读时间（状态在日期左边）；行 2＝年份·作者 + 评分；
+       行 3＝备注；末行＝分类 + 标签（同一个 flex 行，间距 8）贴左，「收起/展开」贴右 */
     grid-template-columns:minmax(0,1fr) auto auto;
     grid-template-areas:
-      "name   name   watch"
-      "meta   status score"
+      "name   status watch"
+      "meta   meta   score"
       "note   note   note"
       "tags   tags   acts";
     gap:var(--sp-6) var(--sp-10);align-items:center;
@@ -831,7 +831,10 @@ tr:hover .acts{opacity:1;}
   }
   .wd-full{display:none;}
   .wd-short{display:inline;}
-  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态：与评分并排贴右 */
+  /* 状态：标题那一行、日期左边。align-self:start 跟日期一样对齐到标题这一行。
+     没填日期的行（.nowatch）日期格不画，状态就顺势占到最右，不然会吊在半空。 */
+  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:start;text-align:right;}
+  tbody tr.nowatch td:nth-child(9){grid-column:2 / -1;}
   tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;margin-top:var(--sp-6);}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
   .cname{font-size:var(--fs-body);font-weight:700;}
