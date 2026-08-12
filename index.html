@@ -9637,32 +9637,14 @@ function starsHtml(score){
   return `<span style="color:var(--gold);font-weight:700;font-family:var(--en);font-size:var(--fs-caption);white-space:nowrap">${score}/5</span>`;
 }
 
-// 手机卡片右上角那份：同一个日期的紧凑写法（2026.8.12）。
-// 「2026年8月12日」在 412 宽的卡片上要吃掉 100px，标题连带年份会被挤到第二行；
-// 点号写法只要 60 出头，标题一行放得下。电脑端表格照旧用上面的中文写法。
+// 手机卡片右上角那份：斜杠写法（2026/8/12）。
+// 中文写法「2026年8月12日」在 412 宽的卡片上要吃掉 100px，标题连带年份会被挤到
+// 第二行；斜杠写法只要 60 出头。电脑端表格照旧用上面的中文写法。
+// 卡片和表格都只显示结束时间，开始时间只在编辑弹窗里填/看。
 function fmtWatchShort(wd){
   if(!wd) return '—';
   const p=wd.split('-').map(n=>parseInt(n,10));
-  return p.length===3 ? `${p[0]}.${p[1]}.${p[2]}` : `${p[0]}.${p[1]}`;
-}
-// 开始 → 结束：卡片上的紧凑区间。同年就省掉后一个年份（2026.5.1–8.12），
-// 跨年才两头都写。只填一头时退回单个日期（只有开始时加个「起」）。
-function fmtSpanShort(st,ed){
-  if(st&&ed){
-    const a=st.split('-').map(Number), b=ed.split('-').map(Number);
-    const tail=a[0]===b[0] ? `${b[1]}.${b[2]}` : `${b[0]}.${b[1]}.${b[2]}`;
-    return `${a[0]}.${a[1]}.${a[2]}–${tail}`;
-  }
-  if(ed) return fmtWatchShort(ed);
-  if(st) return fmtWatchShort(st)+' 起';
-  return '—';
-}
-// 表格那一列的长写法
-function fmtSpan(st,ed){
-  if(st&&ed) return fmtWatch(st)+' – '+fmtWatch(ed);
-  if(ed) return fmtWatch(ed);
-  if(st) return fmtWatch(st)+' 起';
-  return '—';
+  return p.length===3 ? `${p[0]}/${p[1]}/${p[2]}` : `${p[0]}/${p[1]}`;
 }
 function fmtWatch(wd){
   if(!wd) return '—';
@@ -9781,7 +9763,7 @@ function render(){
 
     // nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那两条）
     const rowCls=['note-expanded'];
-    if(!item.watchDate&&!item.startDate) rowCls.push('nowatch');
+    if(!item.watchDate) rowCls.push('nowatch');   // 只填了开始时间的行，卡片右上角也留白
     if(!(item.tags||[]).length) rowCls.push('notags');
 
     // 第一格原是封面格：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n) 全部
@@ -9798,7 +9780,7 @@ function render(){
       <td>${tagsH||'<span style="color:var(--text-muted);font-size:var(--fs-foot)">—</span>'}</td>
       <td style="font-size:var(--fs-caption)">${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
-      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtSpan(item.startDate,item.watchDate)}</span><span class="wd-short">${fmtSpanShort(item.startDate,item.watchDate)}</span></td>
+      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
       <td><span style="color:${st.c};font-size:var(--fs-caption);font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
         ${noteToggle}
