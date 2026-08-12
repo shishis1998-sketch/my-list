@@ -476,6 +476,10 @@ tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
 tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 
 .cbadge{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;line-height:1;border:1px solid transparent;box-sizing:border-box;}
+/* 右上角的观看/阅读时间：与「已完成」同色（= SMAP.completed.c #14532D）。
+   深色模式下这个墨绿压在深底上几乎看不见，换回随主题走的 --accent-mid。 */
+:root{--watch-c:#14532D;}
+:root[data-mode="dark"]{--watch-c:var(--accent-mid);}
 /* 编辑弹窗里的「首次添加」：只读的一行小字 */
 .created-val{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);padding:var(--sp-6) 0;}
 .cbadge-m{display:none;}   /* 分类胶囊的第二份：只有手机端才画（跟标签同一格，见媒体查询）*/
@@ -9829,7 +9833,7 @@ function render(){
       <td>${badge(' cbadge-m')}${tagsH}<span class="tags-dash" style="color:var(--text-muted);font-size:var(--fs-foot)">${tagsH?'':'—'}</span></td>
       <td style="font-size:var(--fs-caption)">${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
-      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
+      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--watch-c);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
       <td><span style="color:${st.c};font-size:var(--fs-caption);font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
         ${noteToggle}
