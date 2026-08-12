@@ -481,6 +481,8 @@ tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 /* 观看/阅读时间有两份写法：表格列用「2026年8月12日」，手机卡片右上角用紧凑的
    「2026.8.12」（见手机端媒体查询里的对调） */
 .wd-short{display:none;}
+/* 第二行打头的年份：只在手机卡片上显示；电脑端表格另有「作品年份」列 */
+.c-yr{display:none;}
 .acts{display:flex;gap:var(--sp-4);opacity:0;transition:opacity .15s;}
 tr:hover .acts{opacity:1;}
 .ibt{background:none;border:none;cursor:pointer;padding:var(--sp-6) var(--sp-10);border-radius:var(--r);color:var(--text-muted);transition:all .1s;display:flex;align-items:center;font-size:var(--fs-caption);font-family:var(--zh);}
@@ -790,13 +792,13 @@ tr:hover .acts{opacity:1;}
     display:grid;
     /* 3 列: 分类(auto) / 中段(1fr,可挤压) / 右侧(时间+评分,贴右)
        行 1 右侧＝观看/阅读时间（与标题同一行）；状态在行 2 跟评分并排；
-       标签下到最后一行贴左，「收起/展开」在同一行贴右 */
+       末行＝分类胶囊 + 标签，一起贴左；「收起/展开」在同一行贴右 */
     grid-template-columns:auto minmax(0,1fr) auto;
     grid-template-areas:
       "name name   watch"
-      "cat  status score"
+      ".    status score"
       "note note   note"
-      "tags tags   acts";
+      "cat  tags   acts";
     gap:var(--sp-6) var(--sp-10);align-items:center;
   }
   /* 没填时间 / 没打标签的行：那两格在卡片上不画「—」占位，留白即可 */
@@ -808,7 +810,7 @@ tr:hover .acts{opacity:1;}
   /* 按 td 顺序分配到 grid 区域（封面格在上面已整列 display:none）*/
   tbody tr td:nth-child(2){grid-area:name;}      /* 名称+作者 */
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
-  tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊在 cat 列贴左 */
+  tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊：末行打头，贴左 */
   tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;}/* 标签：末行贴左，与「收起」同一行 */
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
@@ -821,6 +823,7 @@ tr:hover .acts{opacity:1;}
   }
   .wd-full{display:none;}
   .wd-short{display:inline;}
+  .c-yr{display:inline;}
   tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态：与评分并排贴右 */
   tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
@@ -8522,11 +8525,9 @@ function renderRichInline(text){
 function getCat(id){return cats.find(c=>c.id===id)||{name:id,color:'#888',emoji:'📌'};}
 // 分类名包含「电影」「剧」「书」→ 标题加《》
 
-// 名称 + 年份（书名号已去掉）
+// 只剩名称：书名号去掉了，年份挪到第二行（作者前面，见 render() 里的 .csub）
 function fmtTitle(item){
-  const nm=hl(item.name||'');   // 影视/书籍原先自动套一层《》，看着噪，去掉了
-  const yr=item.year?esc(item.year):'—';
-  return `${nm}<span class="cyear">（${yr}）</span>`;
+  return hl(item.name||'');
 }
 
 // ── 主题色（设置 › 外观）────────────────────────────────
@@ -9767,6 +9768,14 @@ function render(){
       ? `<div class="cnote-wrap"><div class="cnote">${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
+    // 第二行＝年份 · 作者。年份原来跟在标题后面（1984），现在挪到作者前面打头。
+    // 电脑端表格另有「作品年份」列，那边把 .c-yr 藏起来，只留作者，避免一份数据画两遍。
+    const yrTxt=item.year?esc(item.year):'';
+    const crTxt=item.creator?hl(item.creator):'';
+    const metaH=(yrTxt||crTxt)
+      ? `<div class="csub">${yrTxt?`<span class="c-yr">${yrTxt}${crTxt?' · ':''}</span>`:''}${crTxt}</div>`
+      : '';
+
     // nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那两条）
     const rowCls=['note-expanded'];
     if(!item.watchDate&&!item.startDate) rowCls.push('nowatch');
@@ -9779,15 +9788,15 @@ function render(){
       <td class="c-cover-td"></td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
-        ${item.creator?`<div class="csub">${hl(item.creator)}</div>`:''}
+        ${metaH}
       </td>
       <td>${noteCell}</td>
       <td><span class="cbadge" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span></td>
       <td>${tagsH||'<span style="color:var(--text-muted);font-size:var(--fs-foot)">—</span>'}</td>
-      <td>${starsHtml(item.score)}</td>
+      <td style="font-size:var(--fs-caption)">${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtSpan(item.startDate,item.watchDate)}</span><span class="wd-short">${fmtSpanShort(item.startDate,item.watchDate)}</span></td>
-      <td><span style="color:${st.c};font-size:var(--fs-foot);font-weight:700">${st.lbl}</span></td>
+      <td><span style="color:${st.c};font-size:var(--fs-caption);font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
         ${noteToggle}
         <button class="ibt" onclick="openEdit('${item.id}')" title="编辑">编辑</button>
