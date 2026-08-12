@@ -794,6 +794,16 @@ tr:hover .acts{opacity:1;}
       "acts  acts acts    acts";
     gap:var(--sp-6) var(--sp-10);align-items:center;
   }
+  /* 没有封面的行：整列去掉，文字从卡片左内边距直接起排，不留 46px 空档 */
+  tbody tr.nocover{
+    grid-template-columns:auto minmax(0,1fr) auto;
+    grid-template-areas:
+      "name name status"
+      "cat  tags score"
+      "note note note"
+      "acts acts acts";
+  }
+  tbody tr.nocover td.c-cover-td{display:none;}
   tbody tr:hover{background:var(--surface);}
   tbody tr td{padding:0;border:none;}
 
@@ -9713,9 +9723,11 @@ function render(){
     const st=SMAP[item.status]||SMAP.completed;
     const bbg=h2r(cat.color,.12);
     const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
+    // 没填封面就整块不画：以前退回一个 emoji 占位方块，一屏下来全是同一个图标，反而吵。
+    // 图片加载失败也一样处理（顺手给行加 nocover，手机端那 46px 的封面列跟着收掉）。
     const coverH=item.cover
-      ?`<div class="cover"><img src="${esc(item.cover)}" onerror="this.parentNode.textContent='${cat.emoji||'📌'}'"></div>`
-      :`<div class="cover">${cat.emoji||'📌'}</div>`;
+      ?`<div class="cover"><img src="${esc(item.cover)}" onerror="this.closest('tr').classList.add('nocover');this.parentNode.remove();"></div>`
+      :'';
 
     // 备注：长内容（>40 字 或 含换行）才显示展开/收起胶囊，默认展开
     // 「剧集」分类备注一般很短，不显示胶囊，全部直接展开
@@ -9728,7 +9740,7 @@ function render(){
       ? `<div class="cnote-wrap"><div class="cnote">💬 ${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
-    return `<tr data-id="${item.id}" class="note-expanded">
+    return `<tr data-id="${item.id}" class="note-expanded${item.cover?'':' nocover'}">
       <td class="c-cover-td">${coverH}</td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
