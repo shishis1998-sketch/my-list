@@ -418,62 +418,39 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .snum{font-size:var(--fs-title);font-weight:600;color:var(--text-primary);line-height:1;margin-bottom:var(--sp-2);font-family:var(--en);}
 .slbl{font-size:var(--fs-foot);color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
 
-/* --- TABLE --- */
+/* --- LIST（媒体列表）---------------------------------------------
+   一行一条：左边书名 + 「年份 · 作者」，右边结束时间（2026/8/2）和状态。
+   评分、分类、标签、备注全部搬进详情页（点整行进入，见 openDetail）——
+   列表只回答「是哪本、什么时候读完的」，其余都是翻完之后才想看的东西。 */
 .twrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;box-shadow:var(--shadow);}
-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-/* 封面列整列不显示（表头 / colgroup / 单元格三处一起收）：列表不再显示封面缩略图。
-   格子本身留在 DOM 里，抽掉会让样式表里成片的 td:nth-child(n) 全部错位。 */
-col.c-cover,thead th:first-child,td.c-meta-td{display:none;}
-col.c-cover{width:42px;}
-col.c-name{width:180px;}col.c-note{width:auto;}
-col.c-cat{width:82px;}
-col.c-tag{width:120px;}
-col.c-score{width:95px;}
-col.c-year{width:76px;}
-col.c-watch{width:90px;}
-col.c-status{width:90px;}
-col.c-act{width:70px;}
-thead th{
-  background:var(--bg);padding:var(--sp-8) var(--sp-12);text-align:left;
-  font-size:var(--fs-foot);font-weight:600;letter-spacing:.04em;
-  color:var(--text-muted);border-bottom:1px solid var(--border);
-  white-space:nowrap;font-family:var(--zh);overflow:hidden;
+.mrow{
+  display:flex;align-items:center;gap:var(--sp-12);
+  padding:var(--sp-12) var(--sp-16);background:var(--surface);
+  border-bottom:1px solid var(--border-soft);
+  cursor:pointer;transition:background .1s;
 }
-tbody tr{border-bottom:1px solid var(--border-soft);transition:background .1s;}
-tbody tr:last-child{border-bottom:none;}
-tbody tr:hover{background:var(--bg);}
-td{padding:var(--sp-10) var(--sp-12);vertical-align:top;}
-
-.cname{font-weight:600;font-size:var(--fs-sub);color:var(--text-primary);line-height:var(--lh-tight);}
-.cyear{font-weight:500;color:var(--text-muted);font-family:var(--en);font-size:var(--fs-caption);margin-left:var(--sp-2);}
-.csub{font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-2);}
-.cnote{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-normal);}
-/* 备注展开/收起：默认展开；折叠时限高+底部渐变遮罩 */
-.cnote-wrap{position:relative;}
-.cnote-wrap .cnote{display:block;white-space:pre-wrap;overflow:hidden;max-height:none;transition:max-height .25s ease;}
-/* 折叠态：电脑端约 3 行 */
-tr:not(.note-expanded) .cnote-wrap .cnote{max-height:66px;}
-tr:not(.note-expanded) .cnote-wrap .cnote::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
-  background:linear-gradient(to bottom, var(--surface-fade), var(--surface));
-  pointer-events:none;
+.mrow:last-child{border-bottom:none;}
+@media (hover:hover){.mrow:hover{background:var(--bg);}}
+.mrow-main{flex:1;min-width:0;}
+/* 书名和「年份 · 作者」都只占一行，长了截断——列表要的是能扫，
+   完整标题在详情页里有整屏宽度可以铺开 */
+.cname{font-weight:600;font-size:var(--fs-sub);color:var(--text-primary);line-height:var(--lh-tight);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.csub{font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* 右栏两行：上＝结束时间，下＝状态，两行恒在。
+   左边那一行「年份 · 作者」即使没填也留着空行（见 render），两边都是两行，行高才齐。 */
+.mrow-wd{flex-shrink:0;text-align:right;line-height:var(--lh-tight);}
+.mrow-date{
+  font-family:var(--en);font-variant-numeric:tabular-nums;white-space:nowrap;
+  font-size:var(--fs-caption);font-weight:600;color:var(--watch-c);
 }
-tr.note-expanded .cnote-wrap .cnote{max-height:none;overflow:visible;}
-/* 备注胶囊：复用「收集」胶囊视觉风格 */
-.cnote-toggle{
-  display:flex;width:fit-content;margin-left:auto;
-  align-items:center;gap:var(--sp-4);
-  font-size:var(--fs-foot);color:var(--accent-mid);font-weight:600;
-  margin-top:var(--sp-6);padding:var(--sp-4) var(--sp-10);border-radius:var(--rchip);
-  background:var(--accent-light);border:1px solid transparent;
-  cursor:pointer;user-select:none;
-  transition:background .15s, color .15s;
-  line-height:1;
-}
-.cnote-toggle:hover{background:rgba(var(--accent-rgb),.12);color:var(--accent);}
-/* .cnote-toggle:active 颜色已去除 */
-.cnote-toggle .arr{display:inline-block;transition:transform .2s;line-height:1;font-size:10px;}
-tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
+/* 还没读完的：右上角写开始时间「2026/8/5 起」，用中性灰与已完成的绿区分开 */
+.mrow-date.pending{color:var(--text-muted);font-weight:500;}
+/* 状态颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP）*/
+.mrow-st{display:block;font-size:var(--fs-foot);font-weight:600;color:var(--c);margin-top:1px;}
+:root[data-mode="dark"] .mrow-st{color:var(--cd);}
+.mrow-arr{flex-shrink:0;color:var(--text-muted);font-size:var(--fs-headline);line-height:1;}
 
 .cbadge{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;line-height:1;border:1px solid transparent;box-sizing:border-box;}
 /* 状态文字：颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP），
@@ -485,14 +462,9 @@ tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 :root[data-mode="dark"]{--watch-c:#6FB394;}
 /* 编辑弹窗里的「首次添加」：只读的一行小字 */
 .created-val{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);padding:var(--sp-6) 0;}
-.cbadge-m{display:none;}   /* 分类胶囊的第二份：只有手机端才画（跟标签同一格，见媒体查询）*/
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:500;background:var(--bg);color:var(--text-secondary);white-space:nowrap;line-height:1;border:1px solid var(--border-soft);box-sizing:border-box;margin:var(--sp-2) var(--sp-2) var(--sp-2) 0;}
 
-/* 观看/阅读时间有两份写法：表格列用「2026年8月12日」，手机卡片右上角用紧凑的
-   「2026.8.12」（见手机端媒体查询里的对调） */
-.wd-short{display:none;}
-.acts{display:flex;gap:var(--sp-4);opacity:0;transition:opacity .15s;}
-tr:hover .acts{opacity:1;}
+/* 详情页顶部那一排小按钮（编辑 / 删除）也用它 */
 .ibt{background:none;border:none;cursor:pointer;padding:var(--sp-6) var(--sp-10);border-radius:var(--r);color:var(--text-muted);transition:all .1s;display:flex;align-items:center;font-size:var(--fs-caption);font-family:var(--zh);}
 .ibt:hover{background:var(--border);color:var(--text-primary);}
 .ibt.del:hover{background:var(--danger-bg);color:var(--danger);}
@@ -502,6 +474,53 @@ tr:hover .acts{opacity:1;}
 .empty-ic{font-size:34px;margin-bottom:var(--sp-10);opacity:.4;}
 .empty h3{font-size:var(--fs-sub);color:var(--text-secondary);margin-bottom:var(--sp-6);font-weight:500;}
 .empty p{font-size:var(--fs-caption);}
+
+/* ===== DETAIL：点列表某一行进来的详情页 =====================
+   和日历页一样是「与 .content 平级的同级视图」，不是浮层——列表整块不渲染，
+   底下没有第二层可漏，整页滚是安全的（详见 .cal-view 那段注释）。 */
+.detail-view{display:none;}
+.detail-view.open{display:flex;flex-direction:column;flex:1;overflow-y:auto;background:var(--bg);
+  animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
+/* 详情激活时列表页那一套整体让位（同级切换，不是叠加，与 body.cal-open 一致）*/
+body.detail-open .topbar,
+body.detail-open .frow,
+body.detail-open .catfrow,
+body.detail-open .nfrow,
+body.detail-open .content{display:none!important;}
+/* 顶部返回条：左返回，右编辑/删除 */
+.dt-nav{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-10) var(--sp-16);
+  background:var(--surface);border-bottom:1px solid var(--border-soft);position:sticky;top:0;z-index:3;}
+.dt-back{background:none;border:none;cursor:pointer;font-family:var(--zh);
+  font-size:var(--fs-sub);font-weight:600;color:var(--accent);padding:var(--sp-4) 0;
+  display:inline-flex;align-items:center;gap:var(--sp-4);}
+.dt-nav .sp{flex:1;}
+/* 详情正文：一张白卡从头铺到尾，节与节之间一条发丝线 */
+.dt-body{background:var(--surface);}
+.dt-hd{padding:var(--sp-20) var(--sp-16) var(--sp-16);border-bottom:1px solid var(--border-soft);}
+/* 主题色短线：整页唯一的装饰，跟着「设置 › 外观」的主题色走 */
+.dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
+.dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;}
+.dt-au{font-size:var(--fs-sub);color:var(--text-secondary);margin-top:var(--sp-6);}
+.dt-row{display:flex;align-items:center;gap:var(--sp-8);flex-wrap:wrap;margin-top:var(--sp-10);}
+.dt-sec{padding:var(--sp-14) var(--sp-16);border-bottom:1px solid var(--border-soft);}
+.dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
+/* 时间：开始 / 结束 / 用时 三列 */
+.dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
+.dt-k{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;}
+.dt-v{font-size:var(--fs-sub);font-weight:600;font-family:var(--en);font-variant-numeric:tabular-nums;margin-top:var(--sp-2);}
+.dt-v.end{color:var(--watch-c);}
+.dt-v.none{color:var(--text-muted);font-weight:500;}
+/* 读了多久：一条从开始到结束的细条，纯示意 */
+.dt-span{display:flex;align-items:center;gap:var(--sp-8);margin-top:var(--sp-12);}
+.dt-span .bar{flex:1;height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden;}
+.dt-span .bar i{display:block;height:100%;background:var(--accent);opacity:.7;border-radius:2px;}
+.dt-span small{font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--en);font-variant-numeric:tabular-nums;}
+/* 备注：整屏宽度直接铺开，不再折叠 */
+.dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
+.dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
+.dt-tags .ctag{margin:0;}
+.dt-foot{padding:var(--sp-14) var(--sp-16);font-size:var(--fs-foot);color:var(--text-muted);
+  font-family:var(--en);font-variant-numeric:tabular-nums;}
 
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:var(--sp-20);}
@@ -786,79 +805,24 @@ tr:hover .acts{opacity:1;}
   .scard{padding:var(--sp-10) var(--sp-12);min-width:0;}
   .snum{font-size:var(--fs-title);}
 
-  /* === 关键: 表格 → 卡片列表 === */
-  .twrap{background:transparent;border:none;box-shadow:none;border-radius:0;overflow:visible;}
-  table, thead, tbody, tr, td{display:block;width:100%;}
-  thead{display:none;}
-  colgroup{display:none;}
-  table{table-layout:auto;}
-
-  tbody tr{
-    background:var(--surface);border:none;
-    border-radius:var(--rlg);box-shadow:var(--pop-sm);
-    padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-12);   /* 没被滑动容器包时（有 hover 的触摸设备）走这份 */
-    display:grid;
-    /* 3 列: 中段(1fr,可挤压) / 状态(auto) / 右栏(时间·评分,贴右)
-       行 1＝标题 + 状态 + 观看/阅读时间（状态在日期左边）；行 2＝年份·作者 + 评分；
-       行 3＝备注；末行＝分类 + 标签（同一个 flex 行，间距 8）贴左，「收起/展开」贴右 */
-    grid-template-columns:minmax(0,1fr) auto auto;
-    grid-template-areas:
-      "name   status watch"
-      "meta   meta   score"
-      "note   note   note"
-      "tags   tags   acts";
-    gap:var(--sp-6) var(--sp-10);align-items:center;
-  }
-  /* 没填时间 / 没打标签的行：那两格在卡片上不画「—」占位，留白即可 */
-  tbody tr.nowatch td:nth-child(8){display:none;}
-  tbody tr:hover{background:var(--surface);}
-  tbody tr td{padding:0;border:none;}
-
-  /* 按 td 顺序分配到 grid 区域 */
-  tbody tr td.c-meta-td{display:block;grid-area:meta;justify-self:start;align-self:center;}  /* 年份 · 作者 */
-  /* 标题行三格一律按「基线」对齐，不是按盒子居中：标题 15px、状态与日期 13px，
-     行盒不等高，居中会让标题基线比另外两个低 1.64px——同一行的文字眼睛读的是
-     基线，那 1.6px 看着就是没对齐。标题换行时对齐的是第一行基线，正合适。 */
-  tbody tr td:nth-child(2){grid-area:name;align-self:baseline;}   /* 名称（作者那份只给电脑端）*/
-  .csub-d{display:none;}
-  tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
-  tbody tr td:nth-child(4){display:none;}        /* 分类列：手机端胶囊改画在标签那一格里 */
-  /* 末行（分类 + 标签 / 收起）离备注远一点：网格的行间距只有一个 gap 管全部四行，
-     单独拉开某两行只能靠 margin——两格都要加，只加一格会让胶囊和「收起」错开半格。
-     6（gap）+ 6（margin）= 12。 */
-  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-8);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;margin-top:var(--sp-6);}/* 末行：分类 + 标签同一 flex 行，间距 8 */
-  #tbl .cbadge-m{display:inline-flex;}
-  #tbl .tags-dash{display:none;}          /* 手机端不画「—」占位 */
-  #tbl .ctag{margin:0;}                   /* 间距全交给上面的 gap:8，不再叠外边距 */
-  tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
-  tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
-  /* 观看/阅读时间：右上角，与标题同一行、基线对齐。字号跟着 td 上的行内样式走
-     （caption 13px），这里再写 font-size 也压不过行内，要改去 render() 那行改。 */
-  tbody tr td:nth-child(8){
-    display:block;grid-area:watch;justify-self:end;align-self:baseline;
-    text-align:right;white-space:nowrap;
-  }
-  .wd-full{display:none;}
-  .wd-short{display:inline;}
-  /* 状态：标题那一行、日期左边，与标题基线对齐。
-     格子本身也要设 13：不设的话它按继承的 15px 撑出 24 的行高（比日期的 20.8 高），
-     整行被它顶高，日期与标题的文字中心会差出 3px 上下。
-     没填日期的行（.nowatch）日期格不画，状态就顺势占到最右，不然会吊在半空。 */
-  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:baseline;text-align:right;font-size:var(--fs-caption);}
-  tbody tr.nowatch td:nth-child(9){grid-column:2 / -1;}
-  tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;margin-top:var(--sp-6);}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
-
-  .cname{font-size:var(--fs-title);font-weight:700;}   /* 18px（--fs-title）；跟着设置里的字号档位缩放 */
-  .csub{font-size:var(--fs-caption);margin-top:0;}   /* 手机端它自成一格，不再靠 margin 顶开 */
-  .cnote{font-size:var(--fs-body);}
-  /* 手机端折叠态：约 2 行 */
-  tr:not(.note-expanded) .cnote-wrap .cnote{max-height:42px;}
+  /* === 媒体列表（手机端）===
+     结构和电脑端是同一套行，只是行内边距和字号各升半档：手机上正文基准是 15px，
+     书名跟着提到 headline(16)，右栏日期/状态保持 caption/foot。 */
+  .mrow{padding:var(--sp-12) var(--sp-14);gap:var(--sp-10);}
+  .cname{font-size:var(--fs-headline);}
+  .csub{font-size:var(--fs-caption);}
   .cbadge{height:24px;padding:0 var(--sp-12);font-size:var(--fs-caption);}
   .ctag{height:24px;padding:0 var(--sp-12);font-size:var(--fs-caption);}
 
-  /* 操作按钮在手机端始终可见(没有 hover) */
-  .acts{opacity:1;gap:var(--sp-2);justify-content:flex-end;}
-  .acts .cnote-toggle{margin-top:0;margin-left:0;background:none;border:none;color:var(--text-muted);padding:var(--sp-6) var(--sp-12);font-size:var(--fs-caption);font-weight:400;}
+  /* 详情页：跟随 body 滚动（同 .content，手机端不做内部滚动容器）*/
+  .detail-view.open{overflow:visible;flex:none;min-height:100vh;}
+  /* 返回条粘在视口顶部（列表页的 topbar 此时不渲染，所以 top 就是 0），
+     刘海那圈由它自己的 padding-top 让开 */
+  .dt-nav{position:sticky;top:0;
+    padding:calc(var(--sp-10) + env(safe-area-inset-top)) var(--sp-14) var(--sp-10);
+    box-shadow:0 1px 0 var(--border);}
+  .dt-hd{padding:var(--sp-20) var(--sp-14) var(--sp-16);}
+  .dt-sec,.dt-foot{padding-left:var(--sp-14);padding-right:var(--sp-14);}
   .ibt{padding:var(--sp-6) var(--sp-12);}
 
   /* 弹窗 - 手机端全屏 */
@@ -1375,6 +1339,10 @@ body.cal-searching .cal-searchresults{display:flex;}
   body.cal-open .cal-grid{border-bottom:none;}     /* 去掉网格自身底线 → 全屏只剩底栏一条分界 */
   body.cal-open .cal-scroll{scrollbar-width:none;overflow:visible;} /* 记录直接长出去，由页面统一滚 */
   body.cal-open .cal-scroll::-webkit-scrollbar{display:none;}
+  /* 详情页同理：只留 tab 行，搜索/排序/添加都是列表页的东西 */
+  body.detail-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
+  body.detail-open .bb-actions{display:none;}
+  body.detail-open .bb-tabs{max-height:64px;opacity:1;}
   /* 「设置」页与日历同一套导航：底栏浮于其上、只留 tab 行，靠点其它 tab 切走，无需关闭按钮 */
   body.sb-open .bottombar{z-index:115;border-radius:0;box-shadow:none;border-top:1px solid var(--border);}
   body.sb-open .bb-actions{display:none;}
@@ -1508,20 +1476,13 @@ body.cal-searching .cal-searchresults{display:flex;}
 .swipe-wrap>.note-card.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
 
 /* ── 媒体列表：与笔记同一套左滑删除 / 右滑编辑 ─────────────────────
-   手机端 tr 已经被「表格 → 卡片列表」那段改成 display:block 的卡片，
-   所以直接复用 .swipe-wrap 和红/绿两块面板，只是被平移的是 tr 而不是 .note-card。
-   卡片间距原本挂在 tr 的 margin-bottom 上，包上滑动容器后要挪到容器上——
-   留在 tr 上的话，容器高度会把那 8px 一并算进去，红绿面板从卡片缝隙里透出来。 */
-.swipe-wrap-row{margin-bottom:var(--sp-12);}   /* 卡间距：手机端卡片被滑动容器包着，间距挂在容器上 */
-.swipe-wrap>tr{position:relative;z-index:2;will-change:transform;touch-action:pan-y;margin-bottom:0;}
-.swipe-wrap>tr.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
-.swipe-wrap>tr.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
-@media (hover:none){
-  /* 触摸设备上「编辑 / 删除」两个文字按钮改由左右滑触发（同笔记卡片） */
-  .acts .ibt{display:none !important;}
-  /* 那一格只剩「收起」胶囊；连胶囊也没有的行整格收掉，否则底部空出一条 grid 行 */
-  tbody tr td:nth-child(10):not(:has(.cnote-toggle)){display:none;}
-}
+   直接复用 .swipe-wrap 和红/绿两块面板，被平移的是 .mrow 而不是 .note-card。
+   列表现在是一整块白卡、行与行之间只有发丝线，所以滑动容器不再留卡间距；
+   行本身也不带圆角，swipe-cut 那套「拼圆角」的补丁跟着一起退休。 */
+.swipe-wrap-row{margin-bottom:0;border-radius:0;}
+.swipe-wrap>.mrow{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
+/* 末行的下边线：行被滑动容器包起来后 .mrow:last-child 选不中它了 */
+.swipe-wrap-row:last-child>.mrow{border-bottom:none;}
 
 /* ── 日历导入配色弹窗：每本日历一行，一行色块任选 ───── */
 .icsc-row{padding:var(--sp-10) 0;border-bottom:1px solid var(--border-soft);}
@@ -2016,7 +1977,7 @@ body.modal-open{
 .logo h1{font-size:var(--fs-title);}
 
 /* —— 三角/箭头：强制文字渲染，避免 iOS 变蓝色 emoji —— */
-.tl-caret,.cnote-toggle .arr,#tl-allbtn,.tl-allbtn{
+.tl-caret,#tl-allbtn,.tl-allbtn{
   font-variant-emoji:text;
 }
 
@@ -2077,18 +2038,21 @@ mark.shl{
 }
 .snum{color:var(--text-primary);}
 
-/* —— 表格容器：圆角 + 描边（电脑端双栏）—— */
+/* —— 列表容器：圆角 + 描边（电脑端双栏）—— */
 @media(min-width:1025px) and (pointer:fine){
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
+  /* 详情正文：宽屏上收成一张居中的卡，行长控制在 60 字上下，别横铺满整屏 */
+  .dt-body{max-width:760px;margin:var(--sp-20) auto var(--sp-24);border-radius:var(--rlg);
+    overflow:hidden;box-shadow:var(--pop-sm);}
+  .dt-body>*:last-child{border-bottom:none;}
 }
-thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);font-family:var(--zh);}
 
 /* —— 分类/状态徽章：圆 + 描边 —— */
 /* 分类胶囊：只留淡色底，不描边（标签胶囊下面那条本来就是 border:none）*/
 .cbadge{font-family:var(--zh);font-weight:700;border:none;}
-/* 媒体列表这两种胶囊走全圆（--rchip 是全站的 6，笔记、日历、筛选条照旧）。
+/* 详情页这两种胶囊走全圆（--rchip 是全站的 6，笔记、日历、筛选条照旧）。
    写 999 而不是 12：高度将来若变，两头照样是半圆，不用回来改数。 */
-#tbl .cbadge,#tbl .ctag{border-radius:999px;}
+.detail-view .cbadge,.detail-view .ctag{border-radius:999px;}
 .ctag{font-family:var(--zh);font-weight:600;border:none;background:var(--surface-2);border-radius:var(--rchip);}
 
 
@@ -2154,11 +2118,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 .note-title{color:var(--text-primary);}
 .note-date{font-family:var(--zh);}
 
-/* 收集卡展开箭头 / 备注展开胶囊 */
-.cnote-toggle{
-  font-family:var(--zh);font-weight:700;
-  border:1.5px solid var(--ink);border-radius:var(--rchip);background:var(--accent-light);color:var(--text-primary);
-}
 .note-edit{
   font-family:var(--zh);font-weight:600;
   border:none;background:none;color:var(--text-muted);
@@ -3726,20 +3685,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <div class="vcnt" id="vcnt"></div>
     </div>
     <div class="twrap" id="twrap">
-      <table id="tbl">
-        <colgroup>
-          <col class="c-cover"><col class="c-name"><col class="c-note"><col class="c-cat">
-          <col class="c-tag"><col class="c-score"><col class="c-year">
-          <col class="c-watch"><col class="c-status"><col class="c-act">
-        </colgroup>
-        <thead>
-          <tr>
-            <th></th><th>名称</th><th>备注</th><th>分类</th><th>标签</th>
-            <th>评分</th><th>作品年份</th><th>时间</th><th>状态</th><th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+      <div id="mlist"></div>
       <div id="empty" class="empty" style="display:none">
         <div class="empty-ic" id="empty-ic">📋</div>
         <h3>暂无记录</h3>
@@ -3753,6 +3699,17 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <h3>暂无笔记</h3>
       <p>点击右上角「添加」开始记录想法</p>
     </div>
+  </div>
+
+  <!-- ===== DETAIL VIEW：点列表某一行进来，同样与 .content 平级 ===== -->
+  <div class="detail-view" id="detailRoot">
+    <div class="dt-nav">
+      <button class="dt-back" onclick="closeDetail()">‹ 返回</button>
+      <span class="sp"></span>
+      <button class="ibt" id="dtEdit" onclick="editDetail()">编辑</button>
+      <button class="ibt del" id="dtDel" onclick="delDetail()">删除</button>
+    </div>
+    <div class="dt-body" id="dtBody"></div>
   </div>
 
   <!-- ===== CALENDAR VIEW：与 .content 平级的同级视图，不是浮层 ===== -->
@@ -9694,20 +9651,12 @@ function starsHtml(score){
   return `<span style="color:var(--gold);font-weight:700;font-family:var(--en);font-size:var(--fs-caption);white-space:nowrap">${score}/5</span>`;
 }
 
-// 手机卡片右上角那份：斜杠写法（2026/8/12）。
-// 中文写法「2026年8月12日」在 412 宽的卡片上要吃掉 100px，标题连带年份会被挤到
-// 第二行；斜杠写法只要 60 出头。电脑端表格照旧用上面的中文写法。
-// 卡片和表格都只显示结束时间，开始时间只在编辑弹窗里填/看。
+// 列表右栏和详情页都用斜杠写法（2026/8/12）：中文写法「2026年8月12日」在
+// 412 宽的手机上要吃掉 100px，书名会被挤没；斜杠写法只要 60 出头。
 function fmtWatchShort(wd){
   if(!wd) return '—';
   const p=wd.split('-').map(n=>parseInt(n,10));
   return p.length===3 ? `${p[0]}/${p[1]}/${p[2]}` : `${p[0]}/${p[1]}`;
-}
-function fmtWatch(wd){
-  if(!wd) return '—';
-  const parts=wd.split('-');
-  if(parts.length===3) return parts[0]+'年'+parseInt(parts[1])+'月'+parseInt(parts[2])+'日';
-  return parts[0]+'年'+parseInt(parts[1])+'月';
 }
 
 function renderSidebar(){
@@ -9781,79 +9730,120 @@ function render(){
   // 笔记模式分流
   if(isNoteMode()){ renderNotes(); renderSidebar(); renderTagFilterRow(); return; }
   const L=filtered();
-  const tbody=document.getElementById('tbody');
+  const list=document.getElementById('mlist');
   const empty=document.getElementById('empty');
-  const tbl=document.getElementById('tbl');
   // 笔记模式留下的空状态归笔记管，切回媒体时它不该继续挂着
   document.getElementById('nempty').style.display='none';
-  if(!L.length){tbl.style.display='none';empty.style.display='block';const cat=getCat(curCat);document.getElementById('empty-ic').textContent=curCat==='all'?'📋':(cat.emoji||'📌');
+  if(!L.length){list.style.display='none';empty.style.display='block';const cat=getCat(curCat);document.getElementById('empty-ic').textContent=curCat==='all'?'📋':(cat.emoji||'📌');
     // 新设备一片空白时，真正该做的是接入云同步，而不是从头添加
     const eh=document.getElementById('empty-hint');
     if(eh)eh.textContent=(!getToken()||!getGistId())?'这台设备还没接入云同步——去「设置 › 云同步」填入 token 和 Gist ID，就能拉到你的数据':'点击右上角「添加」开始收录';
   }
-  else{tbl.style.display='';empty.style.display='none';}
+  else{list.style.display='';empty.style.display='none';}
   syncSearchNoResult(L.length);
 
-  tbody.innerHTML=L.map(item=>{
-    const cat=getCat(item.type);
+  // 一行一条：左边书名 + 「年份 · 作者」，右边结束时间和状态。点整行进详情页。
+  // 评分/分类/标签/备注都不在列表上——它们是翻完之后才想看的东西，见 renderDetail()。
+  list.innerHTML=L.map(item=>{
     const st=SMAP[item.status]||SMAP.completed;
-    const bbg=h2r(cat.color,.12);
-    const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
-    // 备注：长内容（>40 字 或 含换行）才显示展开/收起胶囊，默认展开
-    // 「剧集」分类备注一般很短，不显示胶囊，全部直接展开
-    const noteRaw=item.note||'';
-    const isLongNote=(noteRaw.length>40||noteRaw.includes('\n'))&&cat.name!=='剧集';
-    const noteToggle=isLongNote
-      ? `<span class="cnote-toggle" onclick="event.stopPropagation();toggleCnoteCard('${item.id}', event)"><span class="arr">▾</span>收起</span>`
-      : '';
-    const noteCell=noteRaw
-      ? `<div class="cnote-wrap"><div class="cnote">${hl(noteRaw)}</div></div>`
-      : '<span style="color:var(--text-muted)">—</span>';
-
-    // 第二行＝年份 · 作者。手机端它要和状态/评分并排，所以必须是独立的格子——
-    // 塞在名称格里就只能跟着标题一块儿走位。这里借用整表第一格（原封面格，现在
-    // 电脑端隐藏、手机端复用成 meta 格），名称格里另留一份只给电脑端。
     const yrTxt=item.year?esc(item.year):'';
     const crTxt=item.creator?hl(item.creator):'';
-    const metaM=(yrTxt||crTxt)?`<div class="csub">${yrTxt}${yrTxt&&crTxt?' · ':''}${crTxt}</div>`:'';
-    const metaD=crTxt?`<div class="csub csub-d">${crTxt}</div>`:'';   // 电脑端另有「作品年份」列，只留作者
-
-    // nowatch：只填了开始时间 / 什么都没填的行，右上角那格不画（见样式表）
-    const rowCls=['note-expanded'];
-    if(!item.watchDate) rowCls.push('nowatch');   // 只填了开始时间的行，卡片右上角也留白
-
-    // 第一格原是封面格：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n) 全部
-    // 错位，所以格子留着——电脑端连同表头、colgroup 一起 display:none，手机端改当
-    // 「年份 · 作者」那格用（item.cover 仍存在数据里，只是不再显示缩略图）。
-    // 分类胶囊画两份：电脑端留在「分类」列，手机端那份跟标签同在一格，
-    // 三颗胶囊就在同一个 flex 行里、间距统一（不再是列间距 10 对上标签间距 6）。
-    const badge=(cls)=>`<span class="cbadge${cls}" style="background:${bbg};color:${cat.color}">${esc(cat.name)}</span>`;
-
-    return `<tr data-id="${item.id}" class="${rowCls.join(' ')}">
-      <td class="c-meta-td">${metaM}</td>
-      <td>
+    // 年份和作者都没填时也留着这一行（空格占位）：行高不随有没有作者忽高忽低，
+    // 用空行而不是写死 min-height，字号档位改成大/小时照样对得齐
+    const sub=(yrTxt||crTxt)?`<div class="csub">${yrTxt}${yrTxt&&crTxt?' · ':''}${crTxt}</div>`
+                            :'<div class="csub">&nbsp;</div>';
+    // 右上角：读完了写结束时间，还没读完就写「开始时间 起」，两者都没有画一道杠
+    const dt=item.watchDate?fmtWatchShort(item.watchDate)
+            :(item.startDate?fmtWatchShort(item.startDate)+' 起':'—');
+    const dtCls=item.watchDate?'':' pending';
+    return `<div class="mrow" data-id="${item.id}" onclick="openDetail('${item.id}')">
+      <div class="mrow-main">
         <div class="cname">${fmtTitle(item)}</div>
-        ${metaD}
-      </td>
-      <td>${noteCell}</td>
-      <td>${badge('')}</td>
-      <td>${badge(' cbadge-m')}${tagsH}<span class="tags-dash" style="color:var(--text-muted);font-size:var(--fs-foot)">${tagsH?'':'—'}</span></td>
-      <td style="font-size:var(--fs-caption)">${starsHtml(item.score)}</td>
-      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
-      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--watch-c);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
-      <td><span class="cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span></td>
-      <td><div class="acts">
-        ${noteToggle}
-        <button class="ibt" onclick="openEdit('${item.id}')" title="编辑">编辑</button>
-        <button class="ibt del" onclick="askDel('${item.id}')" title="删除">删除</button>
-      </div></td>
-    </tr>`;
+        ${sub}
+      </div>
+      <div class="mrow-wd">
+        <span class="mrow-date${dtCls}">${dt}</span>
+        <span class="mrow-st" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
+      </div>
+      <span class="mrow-arr">›</span>
+    </div>`;
   }).join('');
-  enhanceMediaSwipe(tbody);
+  enhanceMediaSwipe(list);
 
   renderStats(); renderSidebar(); renderTagFilterRow();
   document.getElementById('vtitle').textContent=curCat==='all'?'全部':getCat(curCat).name;
   document.getElementById('vcnt').textContent=L.length+' 条记录';
+}
+
+// ── 详情页 ────────────────────────────────────────────────────────
+// 与 .content 平级的同级视图（同日历页），不是浮层：打开时列表整块不渲染。
+let detailId=null;
+
+function openDetail(id){
+  const item=data.find(d=>d.id===id); if(!item) return;
+  detailId=id;
+  renderDetail();
+  document.body.classList.add('detail-open');
+  document.getElementById('detailRoot').classList.add('open');
+  window.scrollTo(0,0);
+}
+function closeDetail(){
+  if(!detailId) return;
+  detailId=null;
+  document.getElementById('detailRoot').classList.remove('open');
+  document.body.classList.remove('detail-open');
+}
+function editDetail(){ if(detailId) openEdit(detailId); }
+function delDetail(){ if(detailId) askDel(detailId); }
+
+// 天数：含首尾两天（7.20 → 8.2 记 14 天里的 13 个整日，这里按「读了 13 天」算）
+function daysBetween(a,b){
+  if(!a||!b) return null;
+  const d1=new Date(a+'T00:00:00'), d2=new Date(b+'T00:00:00');
+  if(isNaN(d1)||isNaN(d2)) return null;
+  const n=Math.round((d2-d1)/864e5);
+  return n>=0?n:null;
+}
+
+function renderDetail(){
+  const item=data.find(d=>d.id===detailId);
+  const box=document.getElementById('dtBody');
+  if(!item||!box){ closeDetail(); return; }
+  const cat=getCat(item.type);
+  const st=SMAP[item.status]||SMAP.completed;
+  const days=daysBetween(item.startDate,item.watchDate);
+  const au=[item.creator,item.year].filter(Boolean).map(esc).join(' · ');
+  const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
+  const created=fmtCreated(createdAtOf(item));
+  // 时间条：只是「读了多久」的示意，没有起止刻度，所以整条铺满
+  const spanH=days!==null?`<div class="dt-span">
+      <small>${fmtWatchShort(item.startDate)}</small>
+      <span class="bar"><i style="width:100%"></i></span>
+      <small>${fmtWatchShort(item.watchDate)}</small>
+    </div>`:'';
+  box.innerHTML=`
+    <div class="dt-hd">
+      <i class="dt-rule"></i>
+      <h2 class="dt-name">${esc(item.name)}</h2>
+      ${au?`<div class="dt-au">${au}</div>`:''}
+      <div class="dt-row">
+        <span class="cbadge" style="background:${h2r(cat.color,.12)};color:${cat.color}">${esc(cat.name)}</span>
+        <span class="cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
+        ${item.score?starsHtml(item.score):''}
+      </div>
+    </div>
+    <div class="dt-sec">
+      <div class="dt-lbl">时间</div>
+      <div class="dt-kv">
+        <div><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
+        <div><div class="dt-k">结束</div><div class="dt-v${item.watchDate?' end':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
+        <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
+      </div>
+      ${spanH}
+    </div>
+    ${item.note?`<div class="dt-sec"><div class="dt-lbl">备注</div><div class="dt-note">${esc(item.note)}</div></div>`:''}
+    ${tagsH?`<div class="dt-sec"><div class="dt-lbl">标签</div><div class="dt-tags">${tagsH}</div></div>`:''}
+    ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
 }
 
 function renderStats(){
@@ -9897,6 +9887,7 @@ function isNoteMode(){return typeof curCat==='string'&&curCat.indexOf('notes')==
 // ── Filters ───────────────────────────────────────────────────────
 function filterCat(cat){
   if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
+  closeDetail();                                                     // 从详情页切回列表
   curCat=cat;
   curFilterTags=[];
   // 解析笔记模式的子分类
@@ -9958,7 +9949,7 @@ function restoreLastPage(){
 // 切换分类时给可见列表的卡片/行做「上滑错落」入场
 // 仅在切分类时触发；延迟封顶到第 10 个（约 0.45s 内全部到位），件数再多也不拖沓
 function playCatStagger(){
-  const c=isNoteMode()?document.getElementById('nlist'):document.getElementById('tbody');
+  const c=isNoteMode()?document.getElementById('nlist'):document.getElementById('mlist');
   if(!c) return;
   const items=c.children;
   for(let i=0;i<items.length;i++){
@@ -10321,6 +10312,7 @@ function saveRec(){
   if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新','success');}
   else{data.unshift({id:uid(),...rec});toast('已添加记录','success');}
   persist(); closeModal(); render();
+  if(detailId) renderDetail();   // 详情页开着：就地刷新，不退回列表
 }
 
 // ── Tags ──────────────────────────────────────────────────────────
@@ -10452,7 +10444,11 @@ function askDel(id){
   document.getElementById('cfdlg').classList.add('open');
 }
 function closeCf(){document.getElementById('cfdlg').classList.remove('open');delId=null;}
-function doDel(){if(!delId)return;data=data.filter(d=>d.id!==delId);persist();render();closeCf();toast('已删除','delete');}
+function doDel(){
+  if(!delId)return;
+  if(delId===detailId) closeDetail();   // 删的正好是详情里这条，退回列表
+  data=data.filter(d=>d.id!==delId);persist();render();closeCf();toast('已删除','delete');
+}
 
 // ── Cat manager ───────────────────────────────────────────────────
 function openCatMgr(){
@@ -10946,6 +10942,7 @@ let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起�
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
 function openCalendar(){
+  closeDetail();                                  // 详情页开着的话先退回列表
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
   document.getElementById('calRoot').classList.add('open');
   const today=new Date();
@@ -11804,12 +11801,12 @@ function enhanceNoteSwipe(list){
   });
 }
 
-// 媒体列表：同一套手势（左滑删除 / 右滑编辑）。手机端每个 tr 就是一张卡片，
+// 媒体列表：同一套手势（左滑删除 / 右滑编辑）。列表里每个 .mrow 就是一行，
 // 和笔记的区别只有两点：每行都有编辑，动作走 openEdit / askDel。
-function enhanceMediaSwipe(tbody){
+function enhanceMediaSwipe(list){
   if(window.matchMedia('(hover:hover)').matches) return;
   swipeOpenCard=null;   // innerHTML 重建后旧节点已失效
-  tbody.querySelectorAll('tr[data-id]').forEach(row=>{
+  list.querySelectorAll('.mrow[data-id]').forEach(row=>{
     const id=row.getAttribute('data-id');
     const wrap=document.createElement('div');
     wrap.className='swipe-wrap swipe-wrap-row';
@@ -11888,27 +11885,6 @@ function toggleCollectCard(id, ev){
   const card=ev&&ev.currentTarget;
   if(!card) return;
   card.classList.toggle('expanded');
-}
-
-// ── 媒体卡片「备注」展开/收起 ─────────────────────────
-// 默认展开；点底部胶囊切换；选中文字时不切换；找当前行 tr 切 note-expanded
-function toggleCnoteCard(id, ev){
-  const sel=window.getSelection&&window.getSelection().toString();
-  if(sel&&sel.length>0) return;
-  // 胶囊在 td 里，沿 DOM 上找最近的 tr
-  let row=ev&&ev.target;
-  while(row&&row.tagName!=='TR') row=row.parentElement;
-  if(!row) row=document.querySelector('tr[data-id="'+id+'"]');
-  if(!row) return;
-  row.classList.toggle('note-expanded');
-  // 同步切换胶囊文字「展开 ⇄ 收起」，保留 .arr 子节点
-  const t=row.querySelector('.cnote-toggle');
-  if(t){
-    const expanded=row.classList.contains('note-expanded');
-    const arr=t.querySelector('.arr');
-    t.textContent=expanded?'收起':'展开';
-    if(arr) t.insertBefore(arr, t.firstChild);
-  }
 }
 
 // ── 读书笔记时间线 ────────────────────────────────────────────
