@@ -9847,6 +9847,13 @@ function renderDetail(){
 }
 
 function renderStats(){
+  const sb=document.getElementById('sbar');
+  // 统计卡只在「全部」视图出现。点进某个分类后，这一排数字讲的仍是整库的事
+  // （总计 42、电影 12……），和眼前这份列表没关系，纯占地方。
+  // 整块 display:none 而不是只清空内容：.sbar 自带 margin-bottom，
+  // 空着留在流里会在标题上方多出 12px 的缝。
+  if(curCat!=='all'){ sb.style.display='none'; sb.innerHTML=''; return; }
+  sb.style.display='';
   const cnt={};cats.forEach(c=>cnt[c.id]=0);
   data.forEach(d=>{cnt[d.type]=(cnt[d.type]||0)+1;});
   const sc=data.filter(d=>d.score);
@@ -11687,7 +11694,7 @@ function renderNotes(){
   document.getElementById('vcnt').textContent=L.length+' 条笔记';
   syncSearchNoResult(L.length);
   // 笔记不显示统计卡片
-  document.getElementById('sbar').innerHTML='';
+  const sb=document.getElementById('sbar'); sb.style.display='none'; sb.innerHTML='';
   // 渲染列表
   const list=document.getElementById('nlist');
   const empty=document.getElementById('nempty');
