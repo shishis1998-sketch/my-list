@@ -498,9 +498,14 @@ body.detail-open .content{display:none!important;}
 .dt-hd{padding:var(--sp-20) var(--sp-16) var(--sp-16);border-bottom:1px solid var(--border-soft);}
 /* 主题色短线：整页唯一的装饰，跟着「设置 › 外观」的主题色走 */
 .dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
-.dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;}
-.dt-au{font-size:var(--fs-sub);color:var(--text-secondary);margin-top:var(--sp-6);}
-.dt-row{display:flex;align-items:center;justify-content:flex-end;gap:var(--sp-10);flex-wrap:wrap;margin-top:var(--sp-10);}
+/* 头部两行两列：左边书名 / 作者，右边评分 / 状态。
+   按基线对齐而不是盒子居中——两侧字号差着 9px（22 对 13），居中会让评分
+   浮在书名中腰上；眼睛读的是基线，对齐基线才看着在同一行。 */
+.dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
+.dt-hdrow2{margin-top:var(--sp-6);}
+.dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
+.dt-au{font-size:var(--fs-sub);color:var(--text-secondary);flex:1;min-width:0;}
+.dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
 .dt-sec{padding:var(--sp-14) var(--sp-16);border-bottom:1px solid var(--border-soft);}
 .dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 /* 时间：开始 / 结束 / 用时 三列 */
@@ -9818,11 +9823,13 @@ function renderDetail(){
   box.innerHTML=`
     <div class="dt-hd">
       <i class="dt-rule"></i>
-      <h2 class="dt-name">${esc(item.name)}</h2>
-      ${au?`<div class="dt-au">${au}</div>`:''}
-      <div class="dt-row">
-        <span class="cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
-        ${item.score?starsHtml(item.score):''}
+      <div class="dt-hdrow">
+        <h2 class="dt-name">${esc(item.name)}</h2>
+        ${item.score?`<span class="dt-side">${starsHtml(item.score)}</span>`:''}
+      </div>
+      <div class="dt-hdrow dt-hdrow2">
+        <div class="dt-au">${au}</div>
+        <span class="dt-side cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
       </div>
     </div>
     <div class="dt-sec">
