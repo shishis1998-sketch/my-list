@@ -789,7 +789,7 @@ tr:hover .acts{opacity:1;}
   tbody tr{
     background:var(--surface);border:none;
     border-radius:var(--rlg);box-shadow:var(--pop-sm);
-    padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-8);
+    padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-12);   /* 没被滑动容器包时（有 hover 的触摸设备）走这份 */
     display:grid;
     /* 3 列: 中段(1fr,可挤压) / 状态(auto) / 右栏(时间·评分,贴右)
        行 1＝标题 + 观看/阅读时间；行 2＝年份·作者 + 状态 + 评分；行 3＝备注；
@@ -1498,7 +1498,7 @@ body.cal-searching .cal-searchresults{display:flex;}
    所以直接复用 .swipe-wrap 和红/绿两块面板，只是被平移的是 tr 而不是 .note-card。
    卡片间距原本挂在 tr 的 margin-bottom 上，包上滑动容器后要挪到容器上——
    留在 tr 上的话，容器高度会把那 8px 一并算进去，红绿面板从卡片缝隙里透出来。 */
-.swipe-wrap-row{margin-bottom:var(--sp-8);}
+.swipe-wrap-row{margin-bottom:var(--sp-12);}   /* 卡间距：手机端卡片被滑动容器包着，间距挂在容器上 */
 .swipe-wrap>tr{position:relative;z-index:2;will-change:transform;touch-action:pan-y;margin-bottom:0;}
 .swipe-wrap>tr.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
 .swipe-wrap>tr.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
