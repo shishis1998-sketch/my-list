@@ -816,7 +816,10 @@ tr:hover .acts{opacity:1;}
 
   /* 按 td 顺序分配到 grid 区域 */
   tbody tr td.c-meta-td{display:block;grid-area:meta;justify-self:start;align-self:center;}  /* 年份 · 作者 */
-  tbody tr td:nth-child(2){grid-area:name;}      /* 名称（作者那份只给电脑端）*/
+  /* 标题行三格一律按「基线」对齐，不是按盒子居中：标题 15px、状态与日期 13px，
+     行盒不等高，居中会让标题基线比另外两个低 1.64px——同一行的文字眼睛读的是
+     基线，那 1.6px 看着就是没对齐。标题换行时对齐的是第一行基线，正合适。 */
+  tbody tr td:nth-child(2){grid-area:name;align-self:baseline;}   /* 名称（作者那份只给电脑端）*/
   .csub-d{display:none;}
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
   tbody tr td:nth-child(4){display:none;}        /* 分类列：手机端胶囊改画在标签那一格里 */
@@ -829,20 +832,19 @@ tr:hover .acts{opacity:1;}
   #tbl .ctag{margin:0;}                   /* 间距全交给上面的 gap:8，不再叠外边距 */
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
-  /* 观看/阅读时间：右上角，与标题一行对齐（align-self:start 才是标题那行，
-     居中会掉到标题与作者之间）。字号跟着 td 上的行内样式走（caption 13px），
-     这里再写 font-size 也压不过行内，要改去 render() 那行改。 */
+  /* 观看/阅读时间：右上角，与标题同一行、基线对齐。字号跟着 td 上的行内样式走
+     （caption 13px），这里再写 font-size 也压不过行内，要改去 render() 那行改。 */
   tbody tr td:nth-child(8){
-    display:block;grid-area:watch;justify-self:end;align-self:start;
+    display:block;grid-area:watch;justify-self:end;align-self:baseline;
     text-align:right;white-space:nowrap;
   }
   .wd-full{display:none;}
   .wd-short{display:inline;}
-  /* 状态：标题那一行、日期左边。align-self:start 跟日期一样对齐到标题这一行。
+  /* 状态：标题那一行、日期左边，与标题基线对齐。
      格子本身也要设 13：不设的话它按继承的 15px 撑出 24 的行高（比日期的 20.8 高），
      整行被它顶高，日期与标题的文字中心会差出 3px 上下。
      没填日期的行（.nowatch）日期格不画，状态就顺势占到最右，不然会吊在半空。 */
-  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:start;text-align:right;font-size:var(--fs-caption);}
+  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:baseline;text-align:right;font-size:var(--fs-caption);}
   tbody tr.nowatch td:nth-child(9){grid-column:2 / -1;}
   tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;margin-top:var(--sp-6);}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
