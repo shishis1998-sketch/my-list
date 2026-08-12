@@ -1469,6 +1469,22 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* 右滑时同理：卡片左侧改直角，与绿色「编辑」面板拼成整块圆角矩形 */
 .swipe-wrap>.note-card.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
 
+/* ── 媒体列表：与笔记同一套左滑删除 / 右滑编辑 ─────────────────────
+   手机端 tr 已经被「表格 → 卡片列表」那段改成 display:block 的卡片，
+   所以直接复用 .swipe-wrap 和红/绿两块面板，只是被平移的是 tr 而不是 .note-card。
+   卡片间距原本挂在 tr 的 margin-bottom 上，包上滑动容器后要挪到容器上——
+   留在 tr 上的话，容器高度会把那 8px 一并算进去，红绿面板从卡片缝隙里透出来。 */
+.swipe-wrap-row{margin-bottom:var(--sp-8);}
+.swipe-wrap>tr{position:relative;z-index:2;will-change:transform;touch-action:pan-y;margin-bottom:0;}
+.swipe-wrap>tr.swipe-cut{border-top-right-radius:0;border-bottom-right-radius:0;}
+.swipe-wrap>tr.swipe-cut-l{border-top-left-radius:0;border-bottom-left-radius:0;}
+@media (hover:none){
+  /* 触摸设备上「编辑 / 删除」两个文字按钮改由左右滑触发（同笔记卡片） */
+  .acts .ibt{display:none !important;}
+  /* 那一格只剩「收起」胶囊；连胶囊也没有的行整格收掉，否则底部空出一条 grid 行 */
+  tbody tr td:nth-child(10):not(:has(.cnote-toggle)){display:none;}
+}
+
 /* ── 日历导入配色弹窗：每本日历一行，一行色块任选 ───── */
 .icsc-row{padding:var(--sp-10) 0;border-bottom:1px solid var(--border-soft);}
 .icsc-row:last-child{border-bottom:none;}
@@ -9732,6 +9748,7 @@ function render(){
       </div></td>
     </tr>`;
   }).join('');
+  enhanceMediaSwipe(tbody);
 
   renderStats(); renderSidebar(); renderTagFilterRow();
   document.getElementById('vtitle').textContent=curCat==='all'?'全部':getCat(curCat).name;
@@ -11676,6 +11693,33 @@ function enhanceNoteSwipe(list){
     }
     wrap.appendChild(card);
     attachSwipe(card, hasEdit);
+  });
+}
+
+// 媒体列表：同一套手势（左滑删除 / 右滑编辑）。手机端每个 tr 就是一张卡片，
+// 和笔记的区别只有两点：每行都有编辑，动作走 openEdit / askDel。
+function enhanceMediaSwipe(tbody){
+  if(window.matchMedia('(hover:hover)').matches) return;
+  swipeOpenCard=null;   // innerHTML 重建后旧节点已失效
+  tbody.querySelectorAll('tr[data-id]').forEach(row=>{
+    const id=row.getAttribute('data-id');
+    const wrap=document.createElement('div');
+    wrap.className='swipe-wrap swipe-wrap-row';
+    row.parentNode.insertBefore(wrap, row);
+    const del=document.createElement('button');
+    del.type='button';
+    del.className='swipe-del';
+    del.textContent='删除';
+    del.addEventListener('click',(e)=>{ e.stopPropagation(); closeSwipe(row); askDel(id); });
+    wrap.appendChild(del);
+    const ed=document.createElement('button');
+    ed.type='button';
+    ed.className='swipe-edit';
+    ed.textContent='编辑';
+    ed.addEventListener('click',(e)=>{ e.stopPropagation(); closeSwipe(row); openEdit(id); });
+    wrap.appendChild(ed);
+    wrap.appendChild(row);
+    attachSwipe(row, true);
   });
 }
 
