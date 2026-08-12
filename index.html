@@ -476,6 +476,9 @@ tr.note-expanded .cnote-toggle .arr{transform:rotate(180deg);}
 .cbadge{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;line-height:1;border:1px solid transparent;box-sizing:border-box;}
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:500;background:var(--bg);color:var(--text-secondary);white-space:nowrap;line-height:1;border:1px solid var(--border-soft);box-sizing:border-box;margin:var(--sp-2) var(--sp-2) var(--sp-2) 0;}
 
+/* 观看/阅读时间有两份写法：表格列用「2026年8月12日」，手机卡片右上角用紧凑的
+   「2026.8.12」（见手机端媒体查询里的对调） */
+.wd-short{display:none;}
 .acts{display:flex;gap:var(--sp-4);opacity:0;transition:opacity .15s;}
 tr:hover .acts{opacity:1;}
 .ibt{background:none;border:none;cursor:pointer;padding:var(--sp-6) var(--sp-10);border-radius:var(--r);color:var(--text-muted);transition:all .1s;display:flex;align-items:center;font-size:var(--fs-caption);font-family:var(--zh);}
@@ -785,25 +788,30 @@ tr:hover .acts{opacity:1;}
     border-radius:var(--rlg);box-shadow:var(--pop-sm);
     padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-8);
     display:grid;
-    /* 4 列: 封面 / 分类(auto) / 标签(1fr,可挤压) / 右侧(状态+评分,贴右) */
+    /* 4 列: 封面 / 分类(auto) / 中段(1fr,可挤压) / 右侧(时间+评分,贴右)
+       行 1 右侧＝观看/阅读时间（与标题同一行）；状态挪到行 2 跟评分并排；
+       标签下到最后一行，与「收起/展开」同一行、一起贴右 */
     grid-template-columns:46px auto minmax(0,1fr) auto;
     grid-template-areas:
-      "cover name name    status"
-      "cover cat  tags    score"
-      "note  note note    note"
-      "acts  acts acts    acts";
+      "cover name name   watch"
+      "cover cat  status score"
+      "note  note note   note"
+      "tags  tags tags   acts";
     gap:var(--sp-6) var(--sp-10);align-items:center;
   }
   /* 没有封面的行：整列去掉，文字从卡片左内边距直接起排，不留 46px 空档 */
   tbody tr.nocover{
     grid-template-columns:auto minmax(0,1fr) auto;
     grid-template-areas:
-      "name name status"
-      "cat  tags score"
-      "note note note"
-      "acts acts acts";
+      "name name   watch"
+      "cat  status score"
+      "note note   note"
+      "tags tags   acts";
   }
   tbody tr.nocover td.c-cover-td{display:none;}
+  /* 没填时间 / 没打标签的行：那两格在卡片上不画「—」占位，留白即可 */
+  tbody tr.nowatch td:nth-child(8){display:none;}
+  tbody tr.notags td:nth-child(5){display:none;}
   tbody tr:hover{background:var(--surface);}
   tbody tr td{padding:0;border:none;}
 
@@ -812,11 +820,18 @@ tr:hover .acts{opacity:1;}
   tbody tr td:nth-child(2){grid-area:name;}      /* 名称+作者 */
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
   tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊在 cat 列贴左 */
-  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:start;min-width:0;}/* 标签贴左排 */
+  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:end;justify-content:flex-end;min-width:0;}/* 标签：末行贴右，与「收起」同一行 */
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
-  tbody tr td:nth-child(8){display:none;}        /* 观看时间 隐藏 */
-  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态严格贴右 */
+  /* 观看/阅读时间：右上角，与标题一行对齐（align-self:start 才是标题那行，
+     居中会掉到标题与作者之间）。字号收到 foot，免得压过标题。 */
+  tbody tr td:nth-child(8){
+    display:block;grid-area:watch;justify-self:end;align-self:start;
+    text-align:right;font-size:var(--fs-foot);white-space:nowrap;
+  }
+  .wd-full{display:none;}
+  .wd-short{display:inline;}
+  tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态：与评分并排贴右 */
   tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
   .cover{width:46px;height:62px;border-radius:var(--rsm);font-size:20px;}
@@ -9627,6 +9642,14 @@ function starsHtml(score){
   return `<span style="color:var(--gold);font-weight:700;font-family:var(--en);font-size:var(--fs-caption);white-space:nowrap">${score}/5</span>`;
 }
 
+// 手机卡片右上角那份：同一个日期的紧凑写法（2026.8.12）。
+// 「2026年8月12日」在 412 宽的卡片上要吃掉 100px，标题连带年份会被挤到第二行；
+// 点号写法只要 60 出头，标题一行放得下。电脑端表格照旧用上面的中文写法。
+function fmtWatchShort(wd){
+  if(!wd) return '—';
+  const p=wd.split('-').map(n=>parseInt(n,10));
+  return p.length===3 ? `${p[0]}.${p[1]}.${p[2]}` : `${p[0]}.${p[1]}`;
+}
 function fmtWatch(wd){
   if(!wd) return '—';
   const parts=wd.split('-');
@@ -9740,7 +9763,13 @@ function render(){
       ? `<div class="cnote-wrap"><div class="cnote">💬 ${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
-    return `<tr data-id="${item.id}" class="note-expanded${item.cover?'':' nocover'}">
+    // nocover / nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那几条）
+    const rowCls=['note-expanded'];
+    if(!item.cover) rowCls.push('nocover');
+    if(!item.watchDate) rowCls.push('nowatch');
+    if(!(item.tags||[]).length) rowCls.push('notags');
+
+    return `<tr data-id="${item.id}" class="${rowCls.join(' ')}">
       <td class="c-cover-td">${coverH}</td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
@@ -9751,7 +9780,7 @@ function render(){
       <td>${tagsH||'<span style="color:var(--text-muted);font-size:var(--fs-foot)">—</span>'}</td>
       <td>${starsHtml(item.score)}</td>
       <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--text-muted)">${item.year||'—'}</td>
-      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600">${fmtWatch(item.watchDate)}</td>
+      <td style="font-family:var(--en);font-size:var(--fs-caption);color:var(--accent-mid);font-weight:600"><span class="wd-full">${fmtWatch(item.watchDate)}</span><span class="wd-short">${fmtWatchShort(item.watchDate)}</span></td>
       <td><span style="color:${st.c};font-size:var(--fs-foot);font-weight:700">${st.lbl}</span></td>
       <td><div class="acts">
         ${noteToggle}
