@@ -1,0 +1,382 @@
+<title>详情页字号标注</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   文稿外壳：沿用 docs/ 的图版语汇（纸色 + 发丝线 + 等宽眉标）
+   图里那台手机：直接搬 index.html 的 token 和 .dt-* 尺寸，
+   所以图上量到多少，代码里就是多少
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3; --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4;
+  --stage:#EDEDE7; --guide:#C71F37;
+  /* App 浅色 token */
+  --bg:#F7F7F5; --surface:#FFFFFF; --surface-2:#F2F2F0;
+  --border:#ECECEA; --border-soft:#F2F2F0;
+  --text-primary:#1A1A1A; --text-secondary:#6B6B6B; --text-muted:#9B9B9B;
+  --accent:#2B4D3F; --gold:#6B6B6B; --watch-c:#14532D;
+  --st-done:#14532D; --st-doing:#1E40AF;
+  /* App 字号阶梯（手机档，--fs-scale = 1） */
+  --fs-heading:22px; --fs-title:18px; --fs-headline:16px;
+  --fs-sub:14px; --fs-body:15px; --fs-caption:13px; --fs-foot:11px;
+  --lh-tight:1.3; --lh-normal:1.45; --lh-loose:1.6;
+  --sp-2:2px; --sp-4:4px; --sp-6:6px; --sp-8:8px; --sp-10:10px; --sp-12:12px;
+  --sp-14:14px; --sp-16:16px; --sp-20:20px; --sp-24:24px;
+  --zh:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --en:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --rchip:6px; --rlg:12px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+    --stage:#15151A; --guide:#F2718A;
+    --bg:#121214; --surface:#1C1C1F; --surface-2:#26262A;
+    --border:#2E2E33; --border-soft:#26262A;
+    --text-primary:#EDEDEF; --text-secondary:#A6A6AD; --text-muted:#77777E;
+    --accent:#6FB394; --gold:#9B9BA2; --watch-c:#6FB394;
+    --st-done:#6FB394; --st-doing:#7BA3E8;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+  --stage:#15151A; --guide:#F2718A;
+  --bg:#121214; --surface:#1C1C1F; --surface-2:#26262A;
+  --border:#2E2E33; --border-soft:#26262A;
+  --text-primary:#EDEDEF; --text-secondary:#A6A6AD; --text-muted:#77777E;
+  --accent:#6FB394; --gold:#9B9BA2; --watch-c:#6FB394;
+  --st-done:#6FB394; --st-doing:#7BA3E8;
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:48px 18px 96px;display:flex;flex-direction:column;gap:44px;}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+
+/* 页头 */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;}
+.kicker{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.2em;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-family:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+  font-size:clamp(28px,5.4vw,42px);line-height:1.15;margin:0 0 10px;letter-spacing:.02em;font-weight:600;}
+.masthead p{margin:0;color:var(--ink-2);max-width:62ch;}
+.meta{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:16px;}
+.meta span{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;letter-spacing:.04em;color:var(--ink-2);
+  background:var(--sheet);border:1px solid var(--hair);border-radius:2px;padding:4px 9px;}
+.meta b{color:var(--ink);font-weight:600;}
+
+/* 图版 */
+.plate{display:flex;flex-direction:column;gap:13px;}
+.plate-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:9px;}
+.eyebrow{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.18em;color:var(--dim);}
+.plate-hd h2{font-size:20px;margin:0;font-weight:600;}
+.plate-sub{font-size:13px;color:var(--ink-3);}
+.lede{margin:0;color:var(--ink-2);max-width:70ch;font-size:14.5px;}
+.lede code,td code,.note code{font-family:ui-monospace,Menlo,monospace;font-size:.88em;background:var(--chip);padding:1px 5px;border-radius:2px;}
+
+/* 舞台 + 标注 */
+.stage{background:var(--stage);border:1px solid var(--hair);border-radius:3px;padding:24px 12px;overflow-x:auto;}
+.fig{position:relative;width:458px;margin:0 auto;padding:0 34px;}
+.lane{position:absolute;top:0;bottom:0;}
+.lane-l{left:0;width:34px;}
+.lane-r{right:0;width:34px;}
+.mk{position:absolute;width:22px;height:22px;border-radius:50%;
+  background:var(--guide);font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;letter-spacing:0;
+  /* 编号点的字色跟着纸色走：浅色主题是纸白压在红上，夜间是墨底压在粉上，两边都够黑白分明 */
+  color:var(--paper);}
+.lane-l .mk{left:2px;} .lane-r .mk{right:2px;}
+.guides{position:absolute;inset:0;pointer-events:none;}
+.gv{position:absolute;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,var(--guide) 0 4px,transparent 4px 8px);opacity:.85;}
+.gh{position:absolute;height:1px;background:repeating-linear-gradient(to right,var(--acc) 0 5px,transparent 5px 10px);}
+.legend{display:flex;align-items:center;flex-wrap:wrap;gap:4px;justify-content:center;margin:18px 0 0;
+  font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.03em;color:var(--ink-3);}
+.legend i{display:inline-block;vertical-align:middle;}
+.lg-v{width:14px;height:0;border-top:2px dashed var(--guide);margin-right:5px;}
+.lg-h{width:14px;height:0;border-top:2px dashed var(--acc);margin-right:5px;}
+.lg-n{width:15px;height:15px;border-radius:50%;background:var(--guide);color:var(--paper);font-size:9px;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;margin-right:5px;font-style:normal;}
+.gv span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-family:ui-monospace,Menlo,monospace;
+  font-size:10px;color:var(--guide);background:var(--stage);padding:0 4px;white-space:nowrap;}
+
+/* 图里那台「手机」——.dt-* 的尺寸与 index.html 逐条对齐 */
+.phone{width:390px;background:var(--bg);border:1px solid var(--hair);border-radius:22px;overflow:hidden;
+  font-family:var(--zh);color:var(--text-primary);line-height:var(--lh-normal);}
+.dt-nav{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-10) var(--sp-14);
+  background:var(--surface);border-bottom:1px solid var(--border-soft);}
+.dt-back{font-size:var(--fs-sub);font-weight:600;color:var(--accent);}
+.dt-nav .sp{flex:1;}
+.ibt{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-6) var(--sp-12);}
+.dt-body{background:var(--surface);}
+.dt-hd{padding:var(--sp-20) var(--sp-14) var(--sp-16);border-bottom:1px solid var(--border-soft);}
+.dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
+.dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
+.dt-hdrow2{margin-top:var(--sp-6);}
+.dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
+.dt-au{font-size:var(--fs-sub);color:var(--text-secondary);flex:1;min-width:0;}
+.dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
+.score{color:var(--gold);font-weight:700;font-family:var(--en);font-size:var(--fs-caption);}
+.cstatus{font-size:var(--fs-caption);font-weight:700;color:var(--st-done);}
+.dt-sec{padding:var(--sp-14);border-bottom:1px solid var(--border-soft);}
+.dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
+.dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
+.dt-k{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;}
+.dt-v{font-size:var(--fs-sub);font-weight:600;font-family:var(--en);font-variant-numeric:tabular-nums;margin-top:var(--sp-2);}
+.dt-v.end{color:var(--watch-c);}
+.dt-v.none{color:var(--text-muted);font-weight:500;}
+.dt-span{display:flex;align-items:center;gap:var(--sp-8);margin-top:var(--sp-12);}
+.dt-span .bar{flex:1;height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden;}
+.dt-span .bar i{display:block;height:100%;background:var(--accent);opacity:.7;border-radius:2px;}
+.dt-span small{font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--en);font-variant-numeric:tabular-nums;}
+.dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
+.dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
+.ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:999px;
+  font-size:var(--fs-caption);font-weight:600;background:var(--surface-2);color:var(--text-secondary);line-height:1;}
+.dt-foot{padding:var(--sp-14);font-size:var(--fs-foot);color:var(--text-muted);
+  font-family:var(--en);font-variant-numeric:tabular-nums;}
+
+/* 表 */
+.tablewrap{overflow-x:auto;border:1px solid var(--hair);border-radius:3px;background:var(--sheet);}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px;}
+th{text-align:left;padding:9px 12px;background:var(--chip);color:var(--ink-2);
+  font-family:ui-monospace,Menlo,monospace;font-size:10.5px;letter-spacing:.1em;font-weight:600;
+  border-bottom:1px solid var(--hair);white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid var(--hair-2);color:var(--ink-2);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td.n{font-family:ui-monospace,Menlo,monospace;color:var(--guide);font-weight:700;width:34px;}
+td.el{color:var(--ink);font-weight:600;white-space:nowrap;}
+td.tk,td.px{font-family:ui-monospace,Menlo,monospace;white-space:nowrap;}
+td.px b{color:var(--ink);font-weight:700;}
+tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
+
+.note{border:1px solid var(--hair);border-left:3px solid var(--acc);border-radius:3px;background:var(--sheet);padding:13px 16px;}
+.note h3{margin:0 0 7px;font-size:14.5px;}
+.note p{margin:0 0 6px;font-size:13.5px;color:var(--ink-2);}
+.note p:last-child{margin-bottom:0;}
+.foot{border-top:1px solid var(--hair);padding-top:16px;color:var(--ink-3);font-size:12.5px;}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">MY-LIST · 详情页 · 字号与对齐 · 2026-08</p>
+  <h1>详情页标注图</h1>
+  <p>下面这台「手机」是把 <code>index.html</code> 里 <code>.dt-*</code> 的字号、行高、间距逐条抄过来画的，图上量到多少，代码里就是多少。红色虚线是左右留白线，绿色虚线是两条基线，圆点编号对应后面的表。</p>
+  <div class="meta">
+    <span>版式 <b>手机 390</b></span>
+    <span>字号档 <b>中（--fs-scale = 1）</b></span>
+    <span>用到的字号级 <b>4 级</b></span>
+    <span>左右留白 <b>14</b></span>
+  </div>
+</header>
+
+<!-- ══════ 标注图 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">图</span>
+    <h2>对齐线与编号</h2>
+    <span class="plate-sub">红＝留白线 · 绿＝基线</span>
+  </div>
+  <div class="stage">
+    <div class="fig" id="fig">
+      <div class="lane lane-l" id="laneL"></div>
+      <div class="lane lane-r" id="laneR"></div>
+      <div class="phone" id="phone">
+        <div class="dt-nav">
+          <span class="dt-back" data-n="1">‹ 返回</span>
+          <span class="sp"></span>
+          <span class="ibt" data-n="2" data-side="r">编辑</span>
+          <span class="ibt">删除</span>
+        </div>
+        <div class="dt-body">
+          <div class="dt-hd">
+            <i class="dt-rule"></i>
+            <div class="dt-hdrow">
+              <h2 class="dt-name" id="elName" data-n="3">平凡的世界（第二部）</h2>
+              <span class="dt-side"><span class="score" data-n="4" data-side="r">4.5/5</span></span>
+            </div>
+            <div class="dt-hdrow dt-hdrow2">
+              <div class="dt-au" id="elAu" data-n="5">路遥 · 1984</div>
+              <span class="dt-side cstatus" data-n="6" data-side="r">已完成</span>
+            </div>
+          </div>
+          <div class="dt-sec">
+            <div class="dt-lbl" data-n="7">时间</div>
+            <div class="dt-kv">
+              <div><div class="dt-k" data-n="8">开始</div><div class="dt-v none">—</div></div>
+              <div><div class="dt-k">结束</div><div class="dt-v end" data-n="9">2026/6/10</div></div>
+              <div><div class="dt-k">用时</div><div class="dt-v none">—</div></div>
+            </div>
+            <div class="dt-span"><small data-n="10">2026/5/28</small><span class="bar"><i style="width:100%"></i></span><small>2026/6/10</small></div>
+          </div>
+          <div class="dt-sec">
+            <div class="dt-lbl">备注</div>
+            <div class="dt-note" data-n="11">断断续续看了好几年了吧，总算看完了！
+上班摸鱼看完的嘿嘿嘿</div>
+          </div>
+          <div class="dt-sec">
+            <div class="dt-lbl">标签</div>
+            <div class="dt-tags"><span class="ctag" data-n="12">中国</span><span class="ctag">文学</span></div>
+          </div>
+          <div class="dt-foot" data-n="13">首次添加 2026/6/12 22:28</div>
+        </div>
+      </div>
+      <div class="guides" id="guides"></div>
+    </div>
+    <p class="legend"><i class="lg-v"></i>左右留白线（14）　<i class="lg-h"></i>基线：上一条串起书名和评分，下一条串起作者和状态　<i class="lg-n">7</i>编号对应下面的表</p>
+  </div>
+</section>
+
+<!-- ══════ 字号表 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">表 1</span>
+    <h2>字号</h2>
+    <span class="plate-sub">px 为「中」档；小档 ×0.90，大档 ×1.15</span>
+  </div>
+  <p class="lede">全站只有 <b>4 级</b>字号出现在这一页：<code>--fs-heading</code> 22、<code>--fs-sub</code> 14、<code>--fs-caption</code> 13、<code>--fs-foot</code> 11，外加备注用的 <code>--fs-body</code>（手机 15 / 电脑 14）。想调哪一行，看「改哪里」那列。</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>#</th><th>元素</th><th>class</th><th>token</th><th>手机</th><th>电脑</th><th>平板</th><th>字重 / 行高</th><th>颜色</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td class="el">返回</td><td class="tk">.dt-back</td><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">14</td><td class="px">15</td><td>600</td><td class="tk">--accent</td></tr>
+        <tr><td class="n">2</td><td class="el">编辑 / 删除</td><td class="tk">.ibt</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>400</td><td class="tk">--text-muted</td></tr>
+        <tr class="hl"><td class="n">3</td><td class="el">书名</td><td class="tk">.dt-name</td><td class="tk">--fs-heading</td><td class="px"><b>22</b></td><td class="px">22</td><td class="px">24</td><td>700 / 1.3</td><td class="tk">--text-primary</td></tr>
+        <tr><td class="n">4</td><td class="el">评分</td><td class="tk">starsHtml()</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>700 · 数字字体</td><td class="tk">--gold #6B6B6B</td></tr>
+        <tr><td class="n">5</td><td class="el">作者 · 年份</td><td class="tk">.dt-au</td><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">14</td><td class="px">15</td><td>400 / 1.45</td><td class="tk">--text-secondary</td></tr>
+        <tr><td class="n">6</td><td class="el">状态</td><td class="tk">.cstatus</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>700</td><td class="tk">SMAP 的 c / cd</td></tr>
+        <tr><td class="n">7</td><td class="el">节标签（时间 / 备注 / 标签）</td><td class="tk">.dt-lbl</td><td class="tk">--fs-foot</td><td class="px"><b>11</b></td><td class="px">11</td><td class="px">12</td><td>700 · 字距 .1em</td><td class="tk">--text-muted</td></tr>
+        <tr><td class="n">8</td><td class="el">键（开始 / 结束 / 用时）</td><td class="tk">.dt-k</td><td class="tk">--fs-foot</td><td class="px"><b>11</b></td><td class="px">11</td><td class="px">12</td><td>400 · 字距 .06em</td><td class="tk">--text-muted</td></tr>
+        <tr><td class="n">9</td><td class="el">值（日期 / 天数）</td><td class="tk">.dt-v</td><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">14</td><td class="px">15</td><td>600 · 等宽数字</td><td class="tk">结束 --watch-c，空值 muted</td></tr>
+        <tr><td class="n">10</td><td class="el">时间条两端</td><td class="tk">.dt-span small</td><td class="tk">--fs-foot</td><td class="px"><b>11</b></td><td class="px">11</td><td class="px">12</td><td>400 · 等宽数字</td><td class="tk">--text-muted</td></tr>
+        <tr class="hl"><td class="n">11</td><td class="el">备注正文</td><td class="tk">.dt-note</td><td class="tk">--fs-body</td><td class="px"><b>15</b></td><td class="px">14</td><td class="px">16</td><td>400 / 1.6</td><td class="tk">--text-secondary</td></tr>
+        <tr><td class="n">12</td><td class="el">标签</td><td class="tk">.ctag</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>600 · 胶囊高 22（大档 26）</td><td class="tk">--text-secondary</td></tr>
+        <tr><td class="n">13</td><td class="el">首次添加</td><td class="tk">.dt-foot</td><td class="tk">--fs-foot</td><td class="px"><b>11</b></td><td class="px">11</td><td class="px">12</td><td>400 · 等宽数字</td><td class="tk">--text-muted</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 间距表 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">表 2</span>
+    <h2>间距与对齐</h2>
+    <span class="plate-sub">全部取自 --sp-* 阶梯</span>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>位置</th><th>值</th><th>写在哪</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="el">左右留白</td><td class="px"><b>14</b>（电脑 16）</td><td class="tk">.dt-nav / .dt-hd / .dt-sec / .dt-foot</td><td>四处必须一致，图上那条红虚线就是它——书名、作者、节标签、键值、备注、标签、页脚全都咬着这条线起笔</td></tr>
+        <tr><td class="el">右侧对齐</td><td class="px"><b>同上</b></td><td class="tk">.dt-side</td><td>评分和状态贴右边那条红线；左右两列最小间距 12</td></tr>
+        <tr><td class="el">返回条上下</td><td class="px">10 / 10</td><td class="tk">.dt-nav padding</td><td>手机端上边再加刘海安全区</td></tr>
+        <tr><td class="el">头部上 / 下</td><td class="px">20 / 16</td><td class="tk">.dt-hd padding</td><td>上边比下边多 4，让书名从分隔线上「站起来」</td></tr>
+        <tr><td class="el">主题色短线</td><td class="px">26 × 2，下方 12</td><td class="tk">.dt-rule</td><td>宽高是图形尺寸，不跟字号阶梯缩放</td></tr>
+        <tr><td class="el">书名行 → 作者行</td><td class="px">6</td><td class="tk">.dt-hdrow2 margin-top</td><td>两行按基线对齐，图上绿虚线就是这两条基线</td></tr>
+        <tr><td class="el">节上下</td><td class="px">14 / 14</td><td class="tk">.dt-sec padding</td><td>时间 / 备注 / 标签三节同一套</td></tr>
+        <tr><td class="el">节标签 → 内容</td><td class="px">8</td><td class="tk">.dt-lbl margin-bottom</td><td>—</td></tr>
+        <tr><td class="el">三列 列距 / 行距</td><td class="px">12 / 10</td><td class="tk">.dt-kv gap</td><td>三列等宽 <code>repeat(3,1fr)</code></td></tr>
+        <tr><td class="el">键 → 值</td><td class="px">2</td><td class="tk">.dt-v margin-top</td><td>—</td></tr>
+        <tr><td class="el">时间条</td><td class="px">上 12 · 条高 4 · 间距 8</td><td class="tk">.dt-span</td><td>条高是图形尺寸，不跟字号走</td></tr>
+        <tr><td class="el">标签之间</td><td class="px">6</td><td class="tk">.dt-tags gap</td><td>—</td></tr>
+        <tr><td class="el">分隔线</td><td class="px">1</td><td class="tk">--border-soft</td><td>节与节之间那条发丝线</td></tr>
+        <tr><td class="el">电脑端正文卡</td><td class="px">最宽 760 · 圆角 12</td><td class="tk">.dt-body（≥1025px）</td><td>居中，上 20 下 24；手机端整屏铺开不收窄</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════ 阶梯 ══════ -->
+<section class="plate">
+  <div class="plate-hd">
+    <span class="eyebrow">表 3</span>
+    <h2>八级字号阶梯</h2>
+    <span class="plate-sub">三种版式各一份基线，再乘档位</span>
+  </div>
+  <p class="lede">要调字号，优先在这张表里换一级（比如书名从 <code>--fs-heading</code> 降到 <code>--fs-title</code>），而不是往 <code>.dt-name</code> 里写死 px——写死之后设置里的「小 / 中 / 大」就管不到它了。<b>加粗的是详情页正在用的四级。</b></p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>token</th><th>手机 ≤1024</th><th>平板 700–1024</th><th>电脑 ≥1025</th><th>详情页用在哪</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td class="tk">--fs-heading</td><td class="px"><b>22</b></td><td class="px">24</td><td class="px">22</td><td>书名</td></tr>
+        <tr><td class="tk">--fs-title</td><td class="px">18</td><td class="px">20</td><td class="px">18</td><td>—（列表页标题在用）</td></tr>
+        <tr><td class="tk">--fs-headline</td><td class="px">16</td><td class="px">17</td><td class="px">16</td><td>—（列表行的书名在用）</td></tr>
+        <tr class="hl"><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">15</td><td class="px">14</td><td>返回 · 作者 · 时间值</td></tr>
+        <tr class="hl"><td class="tk">--fs-body</td><td class="px"><b>15</b></td><td class="px">16</td><td class="px">14</td><td>备注正文</td></tr>
+        <tr class="hl"><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">14</td><td class="px">13</td><td>评分 · 状态 · 标签 · 编辑删除</td></tr>
+        <tr class="hl"><td class="tk">--fs-foot</td><td class="px"><b>11</b></td><td class="px">12</td><td class="px">11</td><td>节标签 · 键 · 时间条 · 页脚</td></tr>
+        <tr><td class="tk">--fs-input</td><td class="px">≥16</td><td class="px">≥16</td><td class="px">≥16</td><td>—（输入框防 iOS 缩放）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <h3>调的时候注意三件事</h3>
+    <p><b>一、别写死 px。</b>每一级都是 <code>calc(N px × var(--fs-scale))</code>，设置里的「小 / 中 / 大」靠它整梯缩放。写死之后那一处就不跟着变了。</p>
+    <p><b>二、行高只有三档</b>：<code>--lh-tight 1.3</code>（书名）、<code>--lh-normal 1.45</code>（默认）、<code>--lh-loose 1.6</code>（备注）。别新增第四档。</p>
+    <p><b>三、图形尺寸不算字号。</b>主题色短线 26×2、时间条高 4、标签胶囊高 22、分隔线 1px 都是画出来的形状，不跟字号阶梯缩放（标签胶囊在「大」档单独长到 26，否则字会把胶囊塞满）。</p>
+  </div>
+</section>
+
+<footer class="foot">
+  <p>图中数值 = <code>index.html</code> 现状（<code>.dt-*</code> 段落 + <code>:root</code> 字号阶梯）。手机档 <code>--fs-body</code> 是 15，电脑档 14——这是全站唯一一处手机比电脑大的字号，备注正文因此在手机上更好读。跟随系统深浅色。</p>
+</footer>
+
+</div>
+
+<script>
+// 标注是量出来的，不是画上去的：所有编号点和参考线都按元素实际位置摆，
+// 上面那台「手机」的 CSS 一改，图跟着自动对上。
+function drawSpec(){
+  const fig=document.getElementById('fig');
+  const phone=document.getElementById('phone');
+  const laneL=document.getElementById('laneL'), laneR=document.getElementById('laneR');
+  const guides=document.getElementById('guides');
+  if(!fig||!phone) return;
+  laneL.innerHTML=''; laneR.innerHTML=''; guides.innerHTML='';
+  const F=fig.getBoundingClientRect(), P=phone.getBoundingClientRect();
+
+  // 左右留白线：直接读 .dt-hd 的实际内边距，不写死数字
+  const hd=phone.querySelector('.dt-hd');
+  const pad=parseFloat(getComputedStyle(hd).paddingLeft);
+  [[pad,'左 '+pad],[P.width-pad,'右 '+pad]].forEach(([x,lbl])=>{
+    const v=document.createElement('i');
+    v.className='gv'; v.style.left=(P.left-F.left+x)+'px';
+    v.innerHTML='<span>'+lbl+'</span>';
+    guides.appendChild(v);
+  });
+
+  // 基线：行盒里 (行高 − 字号)/2 + 约 0.88 个字号，够画一条示意线
+  ['elName','elAu'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cs=getComputedStyle(el), fs=parseFloat(cs.fontSize);
+    let lh=parseFloat(cs.lineHeight); if(!isFinite(lh)) lh=fs*1.45;
+    const r=el.getBoundingClientRect();
+    const y=r.top-F.top+(lh-fs)/2+fs*0.88;
+    const h=document.createElement('i');
+    h.className='gh'; h.style.top=y+'px';
+    h.style.left=(P.left-F.left)+'px'; h.style.width=P.width+'px';
+    guides.appendChild(h);
+  });
+
+  // 编号点
+  phone.querySelectorAll('[data-n]').forEach(el=>{
+    const r=el.getBoundingClientRect();
+    const m=document.createElement('i');
+    m.className='mk';
+    m.textContent=el.getAttribute('data-n');
+    m.style.top=(r.top-F.top+r.height/2-11)+'px';
+    (el.dataset.side==='r'?laneR:laneL).appendChild(m);
+  });
+}
+drawSpec();
+window.addEventListener('load',drawSpec);
+let t; window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(drawSpec,120);});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(drawSpec);
+</script>
