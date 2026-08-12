@@ -824,10 +824,11 @@ tr:hover .acts{opacity:1;}
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
   /* 观看/阅读时间：右上角，与标题一行对齐（align-self:start 才是标题那行，
-     居中会掉到标题与作者之间）。字号收到 foot，免得压过标题。 */
+     居中会掉到标题与作者之间）。字号跟着 td 上的行内样式走（caption 13px），
+     这里再写 font-size 也压不过行内，要改去 render() 那行改。 */
   tbody tr td:nth-child(8){
     display:block;grid-area:watch;justify-self:end;align-self:start;
-    text-align:right;font-size:var(--fs-foot);white-space:nowrap;
+    text-align:right;white-space:nowrap;
   }
   .wd-full{display:none;}
   .wd-short{display:inline;}

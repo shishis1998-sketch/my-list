@@ -1,0 +1,406 @@
+<title>媒体卡片 · 间距标注图</title>
+<style>
+:root{
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3;
+  --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4; --thumb:#FFFFFF;
+  --grn:#1C5A48; --red:#C71F37; --gry:#C9CBCF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D;
+    --dim:#F2718A; --acc:#5BB89A; --chip:#26262D; --thumb:#3A3A42;
+    --grn:#5BB89A; --red:#F2718A; --gry:#5A5C64;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D;
+  --dim:#F2718A; --acc:#5BB89A; --chip:#26262D; --thumb:#3A3A42;
+  --grn:#5BB89A; --red:#F2718A; --gry:#5A5C64;
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.pagewrap{max-width:1140px;margin:0 auto;padding:56px 20px 96px;display:flex;flex-direction:column;gap:44px;}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+
+/* 页头 */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+.masthead .kicker{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-size:clamp(28px,5vw,40px);line-height:1.2;margin:0 0 8px;letter-spacing:.01em;text-wrap:balance;}
+.masthead p{margin:0;color:var(--ink-2);max-width:62ch;}
+.meta{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:18px;}
+.meta span{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;letter-spacing:.04em;
+  color:var(--ink-2);background:var(--sheet);border:1px solid var(--hair);border-radius:2px;padding:4px 9px;}
+.meta span b{color:var(--ink);font-weight:600;}
+
+/* 图版 */
+.plate{display:flex;flex-direction:column;gap:14px;}
+.plate-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:10px;}
+.eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.18em;color:var(--dim);}
+.plate-hd h2{font-size:21px;margin:0;letter-spacing:.01em;}
+.plate-sub{font-size:13px;color:var(--ink-3);font-family:ui-monospace,"SF Mono",Menlo,monospace;}
+.scale{margin-left:auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 8px;white-space:nowrap;}
+.sheet{background:var(--sheet);border:1px solid var(--hair);border-radius:3px;overflow-x:auto;padding:8px 0;}
+.sheet svg{display:block;min-width:1080px;max-width:100%;height:auto;}
+
+/* SVG 语汇 */
+.page{fill:var(--paper);stroke:var(--hair);stroke-width:1;}
+.band{fill:var(--paper);stroke:none;}
+.card{fill:var(--sheet);stroke:var(--hair);stroke-width:1;}
+path.card{fill:none;}
+.chip{fill:var(--chip);stroke:none;}
+.thumb{fill:var(--thumb);stroke:var(--hair);stroke-width:1;}
+.btn{fill:none;stroke:var(--hair);stroke-width:1;stroke-dasharray:2 2;}
+.knob{fill:none;stroke:var(--hair);stroke-width:1;}
+.ghost{fill:none;stroke:var(--ink-3);stroke-width:1;stroke-dasharray:4 3;opacity:.6;}
+.ghost2{fill:none;stroke:var(--ink-3);stroke-width:1;stroke-dasharray:2 2;opacity:.55;}
+.safe{fill:none;stroke:var(--acc);stroke-width:1;stroke-dasharray:3 3;opacity:.5;}
+.plot{fill:none;stroke:none;}
+.grid{stroke:var(--hair);stroke-width:1;stroke-dasharray:4 4;}
+.grid.hi{stroke:var(--acc);stroke-dasharray:6 4;opacity:.75;}
+.axis{stroke:var(--hair);stroke-width:1.5;}
+.dwrap{fill:none;stroke:var(--hair);stroke-width:1;stroke-dasharray:3 3;}
+.slot{fill:var(--chip);stroke:none;opacity:.7;}
+.cell{fill:var(--chip);stroke:none;}
+.fill{fill:var(--red);opacity:.85;}
+.fill.deep{fill:var(--red);opacity:.55;}
+.fill.none{fill:none;}
+.ring{fill:none;stroke:var(--red);stroke-width:12;}
+.dot{fill:var(--red);}
+.sw{fill:var(--gry);}
+.bc{fill:var(--grn);}
+.bp{fill:var(--red);}
+.bs{fill:var(--gry);}
+.filt line{stroke:var(--ink-2);stroke-width:2;stroke-linecap:round;}
+.guide{stroke-width:1;stroke-dasharray:3 3;}
+.guide.a{stroke:var(--dim);}
+.guide.b{stroke:var(--acc);}
+.gap-hi{fill:var(--dim);opacity:.10;}
+
+/* 标注 */
+.dl,.dc{stroke:var(--dim);stroke-width:1;}
+.ex{stroke:var(--dim);stroke-width:.75;opacity:.4;}
+.lead{stroke:var(--ink-3);stroke-width:.75;opacity:.55;}
+text{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+.dt{fill:var(--dim);font-size:11px;font-weight:600;}
+.nt{fill:var(--ink);font-size:12px;font-weight:600;
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;}
+.nt2{fill:var(--ink-2);font-size:11.5px;
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;}
+.ui{fill:var(--ink);font-size:11px;
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;}
+.ui.on{font-weight:700;}
+.b18{font-size:18px;font-weight:700;}
+.b16{font-size:16px;font-weight:700;}
+.b14{font-size:14px;font-weight:700;}
+.b12{font-size:12px;font-weight:700;}
+.sm{font-size:12px;fill:var(--ink-2);}
+.sm2{font-size:12px;fill:var(--ink-3);}
+.xs{font-size:10px;fill:var(--ink-3);}
+.wk{font-size:11px;fill:var(--ink-3);}
+.dnum{font-size:11px;fill:var(--ink-2);}
+.dnum6{font-size:24px;fill:var(--ink-2);}
+.dnum.on,.dnum6.on{fill:#fff;}
+.dnum6.rd{fill:var(--red);font-weight:700;}
+.num{font-size:8px;font-weight:700;}
+text.num.bc{fill:var(--grn);}
+text.num.bp{fill:var(--red);}
+text.num.bs{fill:var(--ink-3);}
+
+/* 表 */
+.tables{display:flex;flex-direction:column;gap:28px;}
+.tblock h3{font-size:16px;margin:0 0 10px;letter-spacing:.02em;
+  padding-left:10px;border-left:3px solid var(--dim);}
+.tscroll{overflow-x:auto;background:var(--sheet);border:1px solid var(--hair);border-radius:3px;}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px;}
+th{text-align:left;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:500;padding:10px 14px;border-bottom:1px solid var(--hair);}
+td{padding:9px 14px;border-bottom:1px solid var(--hair-2);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td.v{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;
+  color:var(--dim);font-weight:600;white-space:nowrap;}
+td.d{color:var(--ink-2);}
+td.ln{font-family:ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink-3);white-space:nowrap;font-size:12px;}
+
+/* 尾注 */
+.notes{border-top:1px solid var(--hair);padding-top:22px;display:flex;flex-direction:column;gap:16px;}
+.notes h3{font-size:16px;margin:0;letter-spacing:.02em;}
+.nitem{display:flex;gap:12px;align-items:flex-start;}
+.nitem .tag{flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 7px;margin-top:3px;white-space:nowrap;}
+.nitem p{margin:0;color:var(--ink-2);font-size:14px;max-width:70ch;}
+.nitem p b{color:var(--ink);font-weight:600;}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;background:var(--chip);
+  border-radius:2px;padding:1px 5px;color:var(--ink);}
+
+.hair{stroke:var(--hair);stroke-width:1;}
+</style>
+
+<div class="pagewrap">
+  <header class="masthead">
+    <p class="kicker">my-list · 全部 › 媒体列表</p>
+    <h1>媒体卡片 · 间距标注图</h1>
+    <p>手机端一张记录卡的实际尺寸与间距。数值不是从 CSS 里读出来的期望值，而是把 index.html 装进 393 × 852 的无头浏览器、切到「全部」后逐个元素量出来的渲染值，所以带小数的就是真的带小数。要调间距，看图找到那一段，再照后面两张表里的位置改。</p>
+    <div class="meta">
+      <span>视口 <b>393 × 852</b></span>
+      <span>页边距 <b>14</b></span>
+      <span>内容宽 <b>365</b></span>
+      <span>卡内边距 <b>14 / 16</b></span>
+      <span>网格 gap <b>6 / 10</b></span>
+      <span>卡间距 <b>8</b></span>
+      <span>圆角 <b>12</b></span>
+      <span>单位 <b>CSS px</b></span>
+    </div>
+  </header>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 01</span>
+    <h2>一张标准卡</h2>
+    <span class="plate-sub">无封面 · 长备注 · 两个标签</span>
+    <span class="scale">1 : 1</span>
+  </header>
+  <div class="sheet"><svg viewBox="0 0 1080 474" width="1080" height="474" role="img" aria-label="标准卡间距标注图"><rect class="card" x="300" y="52" width="365" height="262.94" rx="12"/><rect class="ghost" x="316" y="66" width="333" height="234.94"/><text class="ui b14" x="316" y="80" text-anchor="start">《平凡的世界（第三部）》</text><text class="sm2" x="494" y="80" text-anchor="start">（1984）</text><text class="sm" x="316" y="102.39" text-anchor="start">路遥</text><text class="ui b12" x="649" y="80.5" text-anchor="end">2026.8.12</text><rect class="chip" x="316" y="114.69" width="52" height="24" rx="12"/><text class="ui" x="342" y="130.69" text-anchor="middle">书籍</text><text class="ui b12" x="565.8" y="130.94" text-anchor="end">已完成</text><text class="ui b12" x="649" y="130.94" text-anchor="end">5/5</text><line class="hair" x1="316" y1="149.19" x2="649" y2="149.19"/><text class="sm" x="316" y="173.19" text-anchor="start">💬 终于看完了…</text><text class="sm" x="316" y="194.94" text-anchor="start">2020年开始看第一部，时隔6年，在一个月内看完了最</text><text class="sm" x="316" y="216.69" text-anchor="start">后两部</text><text class="sm" x="316" y="238.44" text-anchor="start"></text><text class="sm" x="316" y="260.19" text-anchor="start">田晓霞之死…意难平啊</text><rect class="chip" x="457.8" y="274.94" width="50" height="24" rx="12"/><text class="ui" x="482.8" y="290.94" text-anchor="middle">中国</text><rect class="chip" x="513.8" y="274.94" width="50" height="24" rx="12"/><text class="ui" x="538.8" y="290.94" text-anchor="middle">文学</text><rect class="btn" x="590" y="274.44" width="59" height="25" rx="6"/><text class="ui" x="619.5" y="290.94" text-anchor="middle">· 收起</text><line class="ex" x1="300" y1="52" x2="214" y2="52"/><line class="ex" x1="300" y1="66" x2="214" y2="66"/><line class="ex" x1="300" y1="108.69" x2="214" y2="108.69"/><line class="ex" x1="300" y1="114.44" x2="214" y2="114.44"/><line class="ex" x1="300" y1="138.94" x2="214" y2="138.94"/><line class="ex" x1="300" y1="149.19" x2="214" y2="149.19"/><line class="ex" x1="300" y1="266.94" x2="214" y2="266.94"/><line class="ex" x1="300" y1="272.94" x2="214" y2="272.94"/><line class="ex" x1="300" y1="300.94" x2="214" y2="300.94"/><line class="ex" x1="300" y1="314.94" x2="214" y2="314.94"/><g class="dim">
+    <line class="dl" x1="222" y1="52" x2="222" y2="66"/>
+    <line class="dc" x1="218.5" y1="52" x2="225.5" y2="52"/>
+    <line class="dc" x1="218.5" y1="66" x2="225.5" y2="66"/>
+    <text class="dt" x="216" y="62.8" text-anchor="end">14</text>
+  </g><g class="dim">
+    <line class="dl" x1="222" y1="66" x2="222" y2="108.69"/>
+    <line class="dc" x1="218.5" y1="66" x2="225.5" y2="66"/>
+    <line class="dc" x1="218.5" y1="108.69" x2="225.5" y2="108.69"/>
+    <text class="dt" x="216" y="91.14" text-anchor="end">42.69</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="108.69" x2="268" y2="114.44"/>
+    <line class="dc" x1="264.5" y1="108.69" x2="271.5" y2="108.69"/>
+    <line class="dc" x1="264.5" y1="114.44" x2="271.5" y2="114.44"/>
+    <text class="dt" x="262" y="115.36" text-anchor="end">6</text>
+  </g><g class="dim">
+    <line class="dl" x1="222" y1="114.44" x2="222" y2="138.94"/>
+    <line class="dc" x1="218.5" y1="114.44" x2="225.5" y2="114.44"/>
+    <line class="dc" x1="218.5" y1="138.94" x2="225.5" y2="138.94"/>
+    <text class="dt" x="216" y="130.49" text-anchor="end">24.25</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="138.94" x2="268" y2="149.19"/>
+    <line class="dc" x1="264.5" y1="138.94" x2="271.5" y2="138.94"/>
+    <line class="dc" x1="264.5" y1="149.19" x2="271.5" y2="149.19"/>
+    <text class="dt" x="262" y="147.86" text-anchor="end">10.25</text>
+  </g><g class="dim">
+    <line class="dl" x1="222" y1="149.19" x2="222" y2="266.94"/>
+    <line class="dc" x1="218.5" y1="149.19" x2="225.5" y2="149.19"/>
+    <line class="dc" x1="218.5" y1="266.94" x2="225.5" y2="266.94"/>
+    <text class="dt" x="216" y="211.86" text-anchor="end">117.75</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="266.94" x2="268" y2="272.94"/>
+    <line class="dc" x1="264.5" y1="266.94" x2="271.5" y2="266.94"/>
+    <line class="dc" x1="264.5" y1="272.94" x2="271.5" y2="272.94"/>
+    <text class="dt" x="262" y="273.74" text-anchor="end">6</text>
+  </g><g class="dim">
+    <line class="dl" x1="222" y1="272.94" x2="222" y2="300.94"/>
+    <line class="dc" x1="218.5" y1="272.94" x2="225.5" y2="272.94"/>
+    <line class="dc" x1="218.5" y1="300.94" x2="225.5" y2="300.94"/>
+    <text class="dt" x="216" y="290.74" text-anchor="end">28</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="300.94" x2="268" y2="314.94"/>
+    <line class="dc" x1="264.5" y1="300.94" x2="271.5" y2="300.94"/>
+    <line class="dc" x1="264.5" y1="314.94" x2="271.5" y2="314.94"/>
+    <text class="dt" x="262" y="311.74" text-anchor="end">14</text>
+  </g><line class="ex" x1="174" y1="52" x2="174" y2="314.94"/><g class="dim">
+    <line class="dl" x1="174" y1="52" x2="174" y2="314.94"/>
+    <line class="dc" x1="170.5" y1="52" x2="177.5" y2="52"/>
+    <line class="dc" x1="170.5" y1="314.94" x2="177.5" y2="314.94"/>
+    <text class="dt" x="168" y="187.27" text-anchor="end">262.94</text>
+  </g><line class="ex" x1="300" y1="52" x2="300" y2="22"/><line class="ex" x1="316" y1="66" x2="316" y2="22"/><line class="ex" x1="368" y1="114.69" x2="368" y2="22"/><line class="ex" x1="378" y1="114.94" x2="378" y2="22"/><line class="ex" x1="565.8" y1="114.94" x2="565.8" y2="22"/><line class="ex" x1="575.8" y1="114.94" x2="575.8" y2="22"/><line class="ex" x1="649" y1="66" x2="649" y2="22"/><line class="ex" x1="665" y1="52" x2="665" y2="22"/><g class="dim">
+    <line class="dl" x1="300" y1="26" x2="316" y2="26"/>
+    <line class="dc" x1="300" y1="22.5" x2="300" y2="29.5"/>
+    <line class="dc" x1="316" y1="22.5" x2="316" y2="29.5"/>
+    <text class="dt" x="308" y="20" text-anchor="middle">16</text>
+  </g><g class="dim">
+    <line class="dl" x1="316" y1="26" x2="368" y2="26"/>
+    <line class="dc" x1="316" y1="22.5" x2="316" y2="29.5"/>
+    <line class="dc" x1="368" y1="22.5" x2="368" y2="29.5"/>
+    <text class="dt" x="342" y="20" text-anchor="middle">52</text>
+  </g><g class="dim">
+    <line class="dl" x1="368" y1="26" x2="378" y2="26"/>
+    <line class="dc" x1="368" y1="22.5" x2="368" y2="29.5"/>
+    <line class="dc" x1="378" y1="22.5" x2="378" y2="29.5"/>
+    <text class="dt" x="373" y="20" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="378" y1="26" x2="565.8" y2="26"/>
+    <line class="dc" x1="378" y1="22.5" x2="378" y2="29.5"/>
+    <line class="dc" x1="565.8" y1="22.5" x2="565.8" y2="29.5"/>
+    <text class="dt" x="471.9" y="20" text-anchor="middle">187.8</text>
+  </g><g class="dim">
+    <line class="dl" x1="565.8" y1="26" x2="575.8" y2="26"/>
+    <line class="dc" x1="565.8" y1="22.5" x2="565.8" y2="29.5"/>
+    <line class="dc" x1="575.8" y1="22.5" x2="575.8" y2="29.5"/>
+    <text class="dt" x="570.8" y="20" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="575.8" y1="26" x2="649" y2="26"/>
+    <line class="dc" x1="575.8" y1="22.5" x2="575.8" y2="29.5"/>
+    <line class="dc" x1="649" y1="22.5" x2="649" y2="29.5"/>
+    <text class="dt" x="612.4" y="20" text-anchor="middle">73.2</text>
+  </g><g class="dim">
+    <line class="dl" x1="649" y1="26" x2="665" y2="26"/>
+    <line class="dc" x1="649" y1="22.5" x2="649" y2="29.5"/>
+    <line class="dc" x1="665" y1="22.5" x2="665" y2="29.5"/>
+    <text class="dt" x="657" y="20" text-anchor="middle">16</text>
+  </g><line class="ex" x1="563.8" y1="300.94" x2="563.8" y2="320.94"/><line class="ex" x1="590" y1="299.44" x2="590" y2="320.94"/><g class="dim">
+    <line class="dl" x1="563.8" y1="316.94" x2="590" y2="316.94"/>
+    <line class="dc" x1="563.8" y1="313.44" x2="563.8" y2="320.44"/>
+    <line class="dc" x1="590" y1="313.44" x2="590" y2="320.44"/>
+    <text class="dt" x="576.9" y="330.94" text-anchor="middle">26.2</text>
+  </g><line class="lead" x1="665" y1="56" x2="689" y2="62"/><text class="nt" x="695" y="66" text-anchor="start">卡片 tbody tr（手机端 = 卡片）</text><text class="nt2" x="695" y="80" text-anchor="start">365 × 262.94 · 圆角 12</text><text class="nt2" x="695" y="94" text-anchor="start">padding 14 ↕ / 16 ↔</text><text class="nt2" x="695" y="108" text-anchor="start">grid gap 6 ↕ / 10 ↔</text><line class="lead" x1="665" y1="76" x2="689" y2="150"/><text class="nt" x="695" y="154" text-anchor="start">时间格 td:nth-child(8)</text><text class="nt2" x="695" y="168" text-anchor="start">align-self:start → 与标题同一行</text><text class="nt2" x="695" y="182" text-anchor="start">（改成 center 会掉到标题与作者之间）</text><text class="nt2" x="695" y="196" text-anchor="start">13 / 行高 20.8 · 右栏宽由它决定</text><line class="lead" x1="665" y1="128.94" x2="689" y2="238"/><text class="nt" x="695" y="242" text-anchor="start">第二行右侧：状态 + 评分</text><text class="nt2" x="695" y="256" text-anchor="start">两格都 justify-self:end</text><text class="nt2" x="695" y="270" text-anchor="start">状态 11 · 评分 13</text><line class="lead" x1="665" y1="151.19" x2="689" y2="312"/><text class="nt" x="695" y="316" text-anchor="start">备注格 td:nth-child(3)</text><text class="nt2" x="695" y="330" text-anchor="start">分隔线 = border-top 1px</text><text class="nt2" x="695" y="344" text-anchor="start">线上留白 margin-top 4</text><text class="nt2" x="695" y="358" text-anchor="start">线下留白 padding-top 8</text><line class="lead" x1="665" y1="286.94" x2="689" y2="400"/><text class="nt" x="695" y="404" text-anchor="start">末行：标签 + 收起</text><text class="nt2" x="695" y="418" text-anchor="start">标签贴右 · 胶囊 24 高 · 间距 4</text><text class="nt2" x="695" y="432" text-anchor="start">「收起」胶囊 59 × 25</text><text class="nt2" x="695" y="446" text-anchor="start">中间 26.2 = 右栏 73.2 − 59</text></svg></div>
+</section>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 02</span>
+    <h2>有封面的卡</h2>
+    <span class="plate-sub">四列版式 · 封面 46 × 62</span>
+    <span class="scale">1 : 1</span>
+  </header>
+  <div class="sheet"><svg viewBox="0 0 1080 291.94" width="1080" height="291.94" role="img" aria-label="有封面的卡间距标注图"><rect class="card" x="300" y="60" width="365" height="175.94" rx="12"/><rect class="thumb" x="316" y="79.6" width="46" height="62" rx="4"/><text class="ui b14" x="372" y="88" text-anchor="start">《卧虎藏龙》</text><text class="sm2" x="468" y="88" text-anchor="start">（2000）</text><text class="sm" x="372" y="110.39" text-anchor="start">李安</text><text class="ui b12" x="649" y="88.5" text-anchor="end">2025.11.3</text><rect class="chip" x="372" y="122.69" width="52" height="24" rx="12"/><text class="ui" x="398" y="138.69" text-anchor="middle">影视</text><text class="ui b12" x="565.8" y="138.94" text-anchor="end">已完成</text><text class="ui b12" x="649" y="138.94" text-anchor="end">4/5</text><line class="hair" x1="316" y1="157.19" x2="649" y2="157.19"/><text class="sm" x="316" y="181.19" text-anchor="start">💬 很好看</text><rect class="chip" x="513.8" y="195.94" width="50" height="24" rx="12"/><text class="ui" x="538.8" y="211.94" text-anchor="middle">武侠</text><line class="ex" x1="300" y1="60" x2="300" y2="30"/><line class="ex" x1="316" y1="60" x2="316" y2="30"/><line class="ex" x1="362" y1="60" x2="362" y2="30"/><line class="ex" x1="372" y1="60" x2="372" y2="30"/><line class="ex" x1="424" y1="60" x2="424" y2="30"/><line class="ex" x1="434" y1="60" x2="434" y2="30"/><line class="ex" x1="565.8" y1="60" x2="565.8" y2="30"/><line class="ex" x1="575.8" y1="60" x2="575.8" y2="30"/><line class="ex" x1="649" y1="60" x2="649" y2="30"/><line class="ex" x1="665" y1="60" x2="665" y2="30"/><g class="dim">
+    <line class="dl" x1="300" y1="34" x2="316" y2="34"/>
+    <line class="dc" x1="300" y1="30.5" x2="300" y2="37.5"/>
+    <line class="dc" x1="316" y1="30.5" x2="316" y2="37.5"/>
+    <text class="dt" x="308" y="28" text-anchor="middle">16</text>
+  </g><g class="dim">
+    <line class="dl" x1="316" y1="34" x2="362" y2="34"/>
+    <line class="dc" x1="316" y1="30.5" x2="316" y2="37.5"/>
+    <line class="dc" x1="362" y1="30.5" x2="362" y2="37.5"/>
+    <text class="dt" x="339" y="28" text-anchor="middle">46</text>
+  </g><g class="dim">
+    <line class="dl" x1="362" y1="34" x2="372" y2="34"/>
+    <line class="dc" x1="362" y1="30.5" x2="362" y2="37.5"/>
+    <line class="dc" x1="372" y1="30.5" x2="372" y2="37.5"/>
+    <text class="dt" x="367" y="28" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="372" y1="34" x2="424" y2="34"/>
+    <line class="dc" x1="372" y1="30.5" x2="372" y2="37.5"/>
+    <line class="dc" x1="424" y1="30.5" x2="424" y2="37.5"/>
+    <text class="dt" x="398" y="28" text-anchor="middle">52</text>
+  </g><g class="dim">
+    <line class="dl" x1="424" y1="34" x2="434" y2="34"/>
+    <line class="dc" x1="424" y1="30.5" x2="424" y2="37.5"/>
+    <line class="dc" x1="434" y1="30.5" x2="434" y2="37.5"/>
+    <text class="dt" x="429" y="28" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="434" y1="34" x2="565.8" y2="34"/>
+    <line class="dc" x1="434" y1="30.5" x2="434" y2="37.5"/>
+    <line class="dc" x1="565.8" y1="30.5" x2="565.8" y2="37.5"/>
+    <text class="dt" x="499.9" y="28" text-anchor="middle">131.8</text>
+  </g><g class="dim">
+    <line class="dl" x1="565.8" y1="34" x2="575.8" y2="34"/>
+    <line class="dc" x1="565.8" y1="30.5" x2="565.8" y2="37.5"/>
+    <line class="dc" x1="575.8" y1="30.5" x2="575.8" y2="37.5"/>
+    <text class="dt" x="570.8" y="28" text-anchor="middle">10</text>
+  </g><g class="dim">
+    <line class="dl" x1="575.8" y1="34" x2="649" y2="34"/>
+    <line class="dc" x1="575.8" y1="30.5" x2="575.8" y2="37.5"/>
+    <line class="dc" x1="649" y1="30.5" x2="649" y2="37.5"/>
+    <text class="dt" x="612.4" y="28" text-anchor="middle">73.2</text>
+  </g><g class="dim">
+    <line class="dl" x1="649" y1="34" x2="665" y2="34"/>
+    <line class="dc" x1="649" y1="30.5" x2="649" y2="37.5"/>
+    <line class="dc" x1="665" y1="30.5" x2="665" y2="37.5"/>
+    <text class="dt" x="657" y="28" text-anchor="middle">16</text>
+  </g><line class="ex" x1="300" y1="79.6" x2="214" y2="79.6"/><line class="ex" x1="300" y1="141.6" x2="214" y2="141.6"/><line class="ex" x1="300" y1="60" x2="214" y2="60"/><line class="ex" x1="300" y1="235.94" x2="214" y2="235.94"/><g class="dim">
+    <line class="dl" x1="222" y1="79.6" x2="222" y2="141.6"/>
+    <line class="dc" x1="218.5" y1="79.6" x2="225.5" y2="79.6"/>
+    <line class="dc" x1="218.5" y1="141.6" x2="225.5" y2="141.6"/>
+    <text class="dt" x="216" y="114.4" text-anchor="end">62</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="60" x2="268" y2="79.6"/>
+    <line class="dc" x1="264.5" y1="60" x2="271.5" y2="60"/>
+    <line class="dc" x1="264.5" y1="79.6" x2="271.5" y2="79.6"/>
+    <text class="dt" x="262" y="73.6" text-anchor="end">19.6</text>
+  </g><g class="dim">
+    <line class="dl" x1="174" y1="60" x2="174" y2="235.94"/>
+    <line class="dc" x1="170.5" y1="60" x2="177.5" y2="60"/>
+    <line class="dc" x1="170.5" y1="235.94" x2="177.5" y2="235.94"/>
+    <text class="dt" x="168" y="151.77" text-anchor="end">175.94</text>
+  </g><line class="lead" x1="665" y1="64" x2="689" y2="70"/><text class="nt" x="695" y="74" text-anchor="start">有封面时是四列</text><text class="nt2" x="695" y="88" text-anchor="start">46px auto minmax(0,1fr) auto</text><text class="nt2" x="695" y="102" text-anchor="start">没封面的行走三列（图 1）：</text><text class="nt2" x="695" y="116" text-anchor="start">整列连同 10 的列间距一起消失</text><line class="lead" x1="665" y1="85.6" x2="689" y2="158"/><text class="nt" x="695" y="162" text-anchor="start">封面 .cover</text><text class="nt2" x="695" y="176" text-anchor="start">46 × 62 · 圆角 4 · 1px 描边</text><text class="nt2" x="695" y="190" text-anchor="start">align-items:center → 竖直居中</text><text class="nt2" x="695" y="204" text-anchor="start">（上下各 19.6，随卡高变化）</text></svg></div>
+</section>
+
+<section class="plate">
+  <header class="plate-hd">
+    <span class="eyebrow">PLATE 03</span>
+    <h2>列表纵向节奏</h2>
+    <span class="plate-sub">三种卡型 · 卡间距 8</span>
+    <span class="scale">1 : 1</span>
+  </header>
+  <div class="sheet"><svg viewBox="0 0 1080 666.27" width="1080" height="666.27" role="img" aria-label="列表纵向节奏标注图"><rect class="page" x="286" y="24" width="393" height="622.27"/><rect class="card" x="300" y="44" width="365" height="127.39" rx="12"/><text class="ui b12" x="316" y="70" text-anchor="start">精简卡（无备注/标签/时间）</text><text class="nt2" x="316" y="86" text-anchor="start">高 127.39</text><line class="ex" x1="300" y1="44" x2="214" y2="44"/><line class="ex" x1="300" y1="171.39" x2="214" y2="171.39"/><g class="dim">
+    <line class="dl" x1="222" y1="44" x2="222" y2="171.39"/>
+    <line class="dc" x1="218.5" y1="44" x2="225.5" y2="44"/>
+    <line class="dc" x1="218.5" y1="171.39" x2="225.5" y2="171.39"/>
+    <text class="dt" x="216" y="111.5" text-anchor="end">127.39</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="171.39" x2="268" y2="179.39"/>
+    <line class="dc" x1="264.5" y1="171.39" x2="271.5" y2="171.39"/>
+    <line class="dc" x1="264.5" y1="179.39" x2="271.5" y2="179.39"/>
+    <text class="dt" x="262" y="179.19" text-anchor="end">8</text>
+  </g><rect class="card" x="300" y="179.39" width="365" height="175.94" rx="12"/><text class="ui b12" x="316" y="205.39" text-anchor="start">标准卡 + 封面</text><text class="nt2" x="316" y="221.39" text-anchor="start">高 175.94</text><line class="ex" x1="300" y1="179.39" x2="214" y2="179.39"/><line class="ex" x1="300" y1="355.33" x2="214" y2="355.33"/><g class="dim">
+    <line class="dl" x1="222" y1="179.39" x2="222" y2="355.33"/>
+    <line class="dc" x1="218.5" y1="179.39" x2="225.5" y2="179.39"/>
+    <line class="dc" x1="218.5" y1="355.33" x2="225.5" y2="355.33"/>
+    <text class="dt" x="216" y="271.16" text-anchor="end">175.94</text>
+  </g><g class="dim">
+    <line class="dl" x1="268" y1="355.33" x2="268" y2="363.33"/>
+    <line class="dc" x1="264.5" y1="355.33" x2="271.5" y2="355.33"/>
+    <line class="dc" x1="264.5" y1="363.33" x2="271.5" y2="363.33"/>
+    <text class="dt" x="262" y="363.13" text-anchor="end">8</text>
+  </g><rect class="card" x="300" y="363.33" width="365" height="262.94" rx="12"/><text class="ui b12" x="316" y="389.33" text-anchor="start">标准卡 + 长备注</text><text class="nt2" x="316" y="405.33" text-anchor="start">高 262.94</text><line class="ex" x1="300" y1="363.33" x2="214" y2="363.33"/><line class="ex" x1="300" y1="626.27" x2="214" y2="626.27"/><g class="dim">
+    <line class="dl" x1="222" y1="363.33" x2="222" y2="626.27"/>
+    <line class="dc" x1="218.5" y1="363.33" x2="225.5" y2="363.33"/>
+    <line class="dc" x1="218.5" y1="626.27" x2="225.5" y2="626.27"/>
+    <text class="dt" x="216" y="498.6" text-anchor="end">262.94</text>
+  </g><line class="ex" x1="286" y1="24" x2="286" y2="14"/><line class="ex" x1="300" y1="24" x2="300" y2="14"/><line class="ex" x1="665" y1="24" x2="665" y2="14"/><line class="ex" x1="679" y1="24" x2="679" y2="14"/><g class="dim">
+    <line class="dl" x1="286" y1="18" x2="300" y2="18"/>
+    <line class="dc" x1="286" y1="14.5" x2="286" y2="21.5"/>
+    <line class="dc" x1="300" y1="14.5" x2="300" y2="21.5"/>
+    <text class="dt" x="293" y="12" text-anchor="middle">14</text>
+  </g><g class="dim">
+    <line class="dl" x1="300" y1="18" x2="665" y2="18"/>
+    <line class="dc" x1="300" y1="14.5" x2="300" y2="21.5"/>
+    <line class="dc" x1="665" y1="14.5" x2="665" y2="21.5"/>
+    <text class="dt" x="482.5" y="12" text-anchor="middle">365</text>
+  </g><g class="dim">
+    <line class="dl" x1="665" y1="18" x2="679" y2="18"/>
+    <line class="dc" x1="665" y1="14.5" x2="665" y2="21.5"/>
+    <line class="dc" x1="679" y1="14.5" x2="679" y2="21.5"/>
+    <text class="dt" x="672" y="12" text-anchor="middle">14</text>
+  </g><line class="lead" x1="679" y1="44" x2="703" y2="50"/><text class="nt" x="709" y="54" text-anchor="start">页边距 14</text><text class="nt2" x="709" y="68" text-anchor="start">.content 的 padding（手机端）</text><text class="nt2" x="709" y="82" text-anchor="start">内容宽 = 393 − 14 × 2 = 365</text><line class="lead" x1="679" y1="179.39" x2="703" y2="185.39"/><text class="nt" x="709" y="189.39" text-anchor="start">卡间距 8</text><text class="nt2" x="709" y="203.39" text-anchor="start">来自 .swipe-wrap-row 的 margin-bottom</text><text class="nt2" x="709" y="217.39" text-anchor="start">（手机端卡片被滑动容器包了一层，</text><text class="nt2" x="709" y="231.39" text-anchor="start">tr 自身的 margin-bottom 归 0）</text><line class="lead" x1="679" y1="363.33" x2="703" y2="369.33"/><text class="nt" x="709" y="373.33" text-anchor="start">卡高随内容走</text><text class="nt2" x="709" y="387.33" text-anchor="start">备注行数、标签换行都会撑高</text><text class="nt2" x="709" y="401.33" text-anchor="start">没备注的卡仍留着 33 的「—」那格</text></svg></div>
+</section>
+
+<div class="tables">
+  <div class="tblock">
+    <h3>骨架旋钮</h3>
+    <div class="tscroll"><table><thead><tr><th>名称</th><th>值</th><th>说明</th><th>规则</th><th>位置</th></tr></thead><tbody><tr><td class="d">卡片内边距</td><td class="v">14 ↕ / 16 ↔</td><td class="d">tr 的 padding，决定内容离卡边多远</td><td class="d">tbody tr</td><td class="ln">index.html:789</td></tr><tr><td class="d">网格行距</td><td class="v">6</td><td class="d">四行之间的固定间隙（备注行上面还要再加 4）</td><td class="d">tbody tr gap</td><td class="ln">index.html:795</td></tr><tr><td class="d">网格列距</td><td class="v">10</td><td class="d">列与列之间；封面、分类、中段、右栏共用</td><td class="d">tbody tr gap</td><td class="ln">index.html:795</td></tr><tr><td class="d">卡片圆角</td><td class="v">12</td><td class="d">var(--rlg)</td><td class="d">tbody tr</td><td class="ln">index.html:788</td></tr><tr><td class="d">卡间距</td><td class="v">8</td><td class="d">卡与卡之间；挂在滑动容器上</td><td class="d">.swipe-wrap-row</td><td class="ln">index.html:1452</td></tr><tr><td class="d">页边距</td><td class="v">14</td><td class="d">列表左右留白，内容宽 = 393 − 28</td><td class="d">.content</td><td class="ln">index.html:743</td></tr><tr><td class="d">封面尺寸</td><td class="v">46 × 62</td><td class="d">没填封面的行整列消失</td><td class="d">.cover</td><td class="ln">index.html:825</td></tr></tbody></table></div>
+  </div>
+  <div class="tblock">
+    <h3>文字与元素（字号 / 行高）</h3>
+    <div class="tscroll"><table><thead><tr><th>元素</th><th>字号 / 行高</th><th>说明</th><th>位置</th></tr></thead><tbody><tr><td class="d">标题 .cname</td><td class="v">15 / 19.5</td><td class="d">粗体；过长会换行，把卡片撑高</td><td class="ln">index.html:816</td></tr><tr><td class="d">作者 .csub</td><td class="v">13 / 20.8</td><td class="d">标题下一行，颜色 text-muted</td><td class="ln">index.html:817</td></tr><tr><td class="d">时间 td(8)</td><td class="v">13 / 20.8</td><td class="d">行内样式定的字号，改要去 render()</td><td class="ln">index.html:9781</td></tr><tr><td class="d">分类胶囊 .cbadge</td><td class="v">13 · 高 24</td><td class="d">手机端加高到 24</td><td class="ln">index.html:843</td></tr><tr><td class="d">标签胶囊 .ctag</td><td class="v">13 · 高 24 · 间距 4</td><td class="d">末行贴右排</td><td class="ln">index.html:844</td></tr><tr><td class="d">状态</td><td class="v">11</td><td class="d">第二行右侧，评分左边</td><td class="ln">index.html:9782</td></tr><tr><td class="d">评分</td><td class="v">13</td><td class="d">右栏，与时间同一列</td><td class="ln">—</td></tr><tr><td class="d">备注 .cnote</td><td class="v">15 / 21.75</td><td class="d">行高来自 --lh-relaxed</td><td class="ln">index.html:818</td></tr><tr><td class="d">「收起」胶囊</td><td class="v">13 · 59 × 25</td><td class="d">padding 6 ↕ / 12 ↔</td><td class="ln">index.html:848</td></tr></tbody></table></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>改之前先知道这几条</h3>
+  <div class="nitem"><span class="tag">GRID</span><p>四行是一整套 <code>grid-template-areas</code>：<code>name/watch</code> → <code>cat/status/score</code> → <code>note</code> → <code>tags/acts</code>。挪动某一格要连着 areas 一起改，<b>而且无封面的三列版本要同步改</b>（两处相邻，别只改一处）。</p></div>
+  <div class="nitem"><span class="tag">GAP</span><p>行距只有一个 <code>gap: 6</code> 管全部四行。想单独拉开某两行，别动 gap，给那一格加 <code>margin-top</code>——备注行现在就是这么干的（4 + 8 = 线上 4、线下 8）。</p></div>
+  <div class="nitem"><span class="tag">COL</span><p>右栏宽度 <b>73.2</b> 是被日期 <code>2026.8.12</code> 撑出来的，评分、「收起」都跟着它走。日期换长写法（<code>2026年8月12日</code> ≈ 100）会把标题挤到第二行，也会把标签往左推。</p></div>
+  <div class="nitem"><span class="tag">EMPTY</span><p>没填时间 / 没打标签的行，那两格是 <code>display:none</code>（<code>nowatch</code> / <code>notags</code>），不占位。<b>但没写备注的行仍会画一条分隔线加一个「—」，占掉 33</b>——图 3 第一张卡底部那块就是它，要清掉说一声。</p></div>
+  <div class="nitem"><span class="tag">EDGE</span><p>标签末尾到「收起」之间的 <b>26.2</b> 不是间距设定，是右栏 73.2 减掉胶囊 59 的余量。想让两者贴近，缩日期字号或缩「收起」的 padding 都行。</p></div>
+</div>
+</div>
