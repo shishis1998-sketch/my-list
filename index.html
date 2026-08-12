@@ -838,13 +838,6 @@ tr:hover .acts{opacity:1;}
   }
   .mbody{padding:var(--sp-14) var(--sp-20);}
   .mftr{padding:var(--sp-12) var(--sp-20);padding-bottom:calc(16px + env(safe-area-inset-bottom));}
-  /* 添加 / 编辑记录弹窗：手机端它是「整屏一页」，要一路铺到屏幕下沿。
-     下方那条给底栏留 64px + 安全区的通用规则会让整块白卡停在半空，底下露出被压暗的
-     底栏（搜索行 + 标签行），看着像悬空的对话框 —— 这里把那份留白清掉。
-     底栏 z-index:90 < 弹窗 100，直接被盖住即可；这个弹窗只从列表页打开
-     （日历里点记录会先 closeCalendar()），不会遇到 cal-open/sb-open 那档 z-index:115。
-     底部按钮的手势条留白由上面 .mftr 的 padding-bottom 负责。 */
-  #modal.moverlay{padding-bottom:0;}
   /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
   /* padding-bottom:0 覆盖下方为导航条留白的通用规则，让抽屉真正贴到屏幕底边，不悬空 */
   #noteModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
@@ -965,10 +958,21 @@ tr:hover .acts{opacity:1;}
   /* 笔记模式下隐藏分类条(此时显示 nfrow 子分类条) */
   body.notes-mode .catfrow{display:none !important;}
 
-  /* 手机端：弹窗给底部导航条让出高度，底部按钮就停在导航条上方，导航条依旧可见可点。
-     只有侧栏/日历打开时导航条会盖到弹窗上（z-index:115），那时它只剩 64px 高的标签行，
-     所以留出 64px + 手势条安全区即可精确避开，不必用 JS 实测。 */
-  .moverlay{padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));}
+  /* 手机端弹窗一律铺到屏幕下沿。
+     以前这里无条件给底栏留 64px + 安全区，本意是「导航条依旧可见可点」——可在列表页
+     底栏是 z-index:90，压在弹窗遮罩下面，点不动也看不清，留出来的只是一条被压暗的空档，
+     整块白卡看着像悬在半空（添加/编辑记录、分类管理、子分类、标签管理、章节编辑、
+     二维码、扫码都吃这一条）。所以默认改成贴底。
+     真正会盖到弹窗上的只有侧栏/日历打开那两档（.bottombar 提到 z-index:115，且此时
+     只剩 64px 高的标签行）——只在那两种页面下把留白加回来，导航条照旧可见可点，
+     64px + 手势条安全区即可精确避开，不必用 JS 实测。
+     底部抽屉那几个（#noteModal / #calNotePreviewModal / #icsColorModal / #icsDelModal /
+     #tlModal）各自钉着 #id.moverlay{padding-bottom:0}，优先级高于下面这条类选择器，
+     在日历页也照旧贴底——它们本就把 z-index 抬到 115/120 压过底栏。 */
+  .moverlay{padding-bottom:0;}
+  body.cal-open .moverlay,body.sb-open .moverlay{
+    padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));
+  }
 
   /* 云同步设置内容多，手机端做成一整页自然滚动（跟「全部/笔记/日历」一样）：
      整个 .mbox 是滚动容器，头/尾随内容一起滚，不再固定成三段夹一条。
@@ -3463,11 +3467,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   /* 从底部升起的独立抽屉：540px 就是手机的宽度，这里一并跟着屏幕放大
      （章节抽屉、经期记录抽屉、备忘单字段抽屉）*/
   .tlsheet,.pv-sheet,.mfsheet{max-width:var(--pop-w);}
-
-  /* 添加 / 编辑记录弹窗在手机端是整屏一页、贴着屏幕下沿（那边 padding-bottom:0）；
-     平板这里已经收回成居中对话框，底栏的留白要照通用规则加回来——#modal.moverlay
-     优先级高于上面那条 .moverlay，光靠书写顺序压不住。 */
-  #modal.moverlay{padding-bottom:calc(24px + 64px + env(safe-area-inset-bottom));}
 
   /* 3) 读书时间线（章节列表）：屏幕宽了就多排一列章节 */
   #tlModal.moverlay{padding-bottom:calc(24px + 64px + env(safe-area-inset-bottom));}
