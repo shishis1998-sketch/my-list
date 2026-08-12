@@ -421,6 +421,9 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* --- TABLE --- */
 .twrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;box-shadow:var(--shadow);}
 table{width:100%;border-collapse:collapse;table-layout:fixed;}
+/* 封面列整列不显示（表头 / colgroup / 单元格三处一起收）：列表不再显示封面缩略图。
+   格子本身留在 DOM 里，抽掉会让样式表里成片的 td:nth-child(n) 全部错位。 */
+col.c-cover,thead th:first-child,td.c-cover-td{display:none;}
 col.c-cover{width:42px;}
 col.c-name{width:180px;}col.c-note{width:auto;}
 col.c-cat{width:82px;}
@@ -440,7 +443,6 @@ tbody tr{border-bottom:1px solid var(--border-soft);transition:background .1s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:var(--bg);}
 td{padding:var(--sp-10) var(--sp-12);vertical-align:top;}
-td.c-cover-td{padding:var(--sp-10) var(--sp-4) var(--sp-10) var(--sp-12);vertical-align:middle;}
 
 .cname{font-weight:600;font-size:var(--fs-sub);color:var(--text-primary);line-height:var(--lh-tight);}
 .cyear{font-weight:500;color:var(--text-muted);font-family:var(--en);font-size:var(--fs-caption);margin-left:var(--sp-2);}
@@ -485,8 +487,6 @@ tr:hover .acts{opacity:1;}
 .ibt:hover{background:var(--border);color:var(--text-primary);}
 .ibt.del:hover{background:var(--danger-bg);color:var(--danger);}
 
-.cover{width:30px;height:40px;border-radius:var(--rsm);background:var(--border-soft);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;overflow:hidden;}
-.cover img{width:100%;height:100%;object-fit:cover;}
 
 .empty{text-align:center;padding:56px var(--sp-24);color:var(--text-muted);}
 .empty-ic{font-size:34px;margin-bottom:var(--sp-10);opacity:.4;}
@@ -788,39 +788,28 @@ tr:hover .acts{opacity:1;}
     border-radius:var(--rlg);box-shadow:var(--pop-sm);
     padding:var(--sp-14) var(--sp-16);margin-bottom:var(--sp-8);
     display:grid;
-    /* 4 列: 封面 / 分类(auto) / 中段(1fr,可挤压) / 右侧(时间+评分,贴右)
-       行 1 右侧＝观看/阅读时间（与标题同一行）；状态挪到行 2 跟评分并排；
-       标签下到最后一行，与「收起/展开」同一行、一起贴右 */
-    grid-template-columns:46px auto minmax(0,1fr) auto;
-    grid-template-areas:
-      "cover name name   watch"
-      "cover cat  status score"
-      "note  note note   note"
-      "tags  tags tags   acts";
-    gap:var(--sp-6) var(--sp-10);align-items:center;
-  }
-  /* 没有封面的行：整列去掉，文字从卡片左内边距直接起排，不留 46px 空档 */
-  tbody tr.nocover{
+    /* 3 列: 分类(auto) / 中段(1fr,可挤压) / 右侧(时间+评分,贴右)
+       行 1 右侧＝观看/阅读时间（与标题同一行）；状态在行 2 跟评分并排；
+       标签下到最后一行贴左，「收起/展开」在同一行贴右 */
     grid-template-columns:auto minmax(0,1fr) auto;
     grid-template-areas:
       "name name   watch"
       "cat  status score"
       "note note   note"
       "tags tags   acts";
+    gap:var(--sp-6) var(--sp-10);align-items:center;
   }
-  tbody tr.nocover td.c-cover-td{display:none;}
   /* 没填时间 / 没打标签的行：那两格在卡片上不画「—」占位，留白即可 */
   tbody tr.nowatch td:nth-child(8){display:none;}
   tbody tr.notags td:nth-child(5){display:none;}
   tbody tr:hover{background:var(--surface);}
   tbody tr td{padding:0;border:none;}
 
-  /* 按 td 顺序分配到 grid 区域 */
-  tbody tr td.c-cover-td{grid-area:cover;padding:0;}
+  /* 按 td 顺序分配到 grid 区域（封面格在上面已整列 display:none）*/
   tbody tr td:nth-child(2){grid-area:name;}      /* 名称+作者 */
   tbody tr td:nth-child(3){grid-area:note;border-top:1px solid var(--border);padding-top:var(--sp-8);margin-top:var(--sp-4);}      /* 备注: 顶部柔和分隔线(中性浅灰) */
   tbody tr td:nth-child(4){grid-area:cat;align-self:center;justify-self:start;}     /* 分类胶囊在 cat 列贴左 */
-  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:end;justify-content:flex-end;min-width:0;}/* 标签：末行贴右，与「收起」同一行 */
+  tbody tr td:nth-child(5){grid-area:tags;display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center;align-self:center;justify-self:start;justify-content:flex-start;min-width:0;}/* 标签：末行贴左，与「收起」同一行 */
   tbody tr td:nth-child(6){grid-area:score;justify-self:end;align-self:center;text-align:right;}/* 评分严格贴右 */
   tbody tr td:nth-child(7){display:none;}        /* 年份 隐藏 */
   /* 观看/阅读时间：右上角，与标题一行对齐（align-self:start 才是标题那行，
@@ -835,7 +824,6 @@ tr:hover .acts{opacity:1;}
   tbody tr td:nth-child(9){grid-area:status;justify-self:end;align-self:center;text-align:right;}/* 状态：与评分并排贴右 */
   tbody tr td:nth-child(10){grid-area:acts;justify-self:stretch;}/* 操作: 撑满整行,按钮靠右(见 .acts justify-content) */
 
-  .cover{width:46px;height:62px;border-radius:var(--rsm);font-size:20px;}
   .cname{font-size:var(--fs-body);font-weight:700;}
   .csub{font-size:var(--fs-caption);margin-top:var(--sp-2);}
   .cnote{font-size:var(--fs-body);}
@@ -2158,7 +2146,6 @@ thead th{background:var(--surface-2);border-bottom:var(--bd) solid var(--ink);fo
 /* 备忘卡片 / 锁按钮 / 自定义字段框（若有）—— 圆角描边统一 */
 .cf-row input,.cf-key,.cf-val{border-radius:var(--r);}
 /* —— 封面缩略图：圆角 + 描边 —— */
-.cover{border:1.5px solid var(--ink);border-radius:var(--rsm);background:var(--gold-soft);}
 
 /* ── 切换分类：卡片/行「上滑错落」入场 ── */
 @keyframes catStaggerIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
@@ -9747,12 +9734,6 @@ function render(){
     const st=SMAP[item.status]||SMAP.completed;
     const bbg=h2r(cat.color,.12);
     const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
-    // 没填封面就整块不画：以前退回一个 emoji 占位方块，一屏下来全是同一个图标，反而吵。
-    // 图片加载失败也一样处理（顺手给行加 nocover，手机端那 46px 的封面列跟着收掉）。
-    const coverH=item.cover
-      ?`<div class="cover"><img src="${esc(item.cover)}" onerror="this.closest('tr').classList.add('nocover');this.parentNode.remove();"></div>`
-      :'';
-
     // 备注：长内容（>40 字 或 含换行）才显示展开/收起胶囊，默认展开
     // 「剧集」分类备注一般很短，不显示胶囊，全部直接展开
     const noteRaw=item.note||'';
@@ -9764,14 +9745,16 @@ function render(){
       ? `<div class="cnote-wrap"><div class="cnote">💬 ${hl(noteRaw)}</div></div>`
       : '<span style="color:var(--text-muted)">—</span>';
 
-    // nocover / nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那几条）
+    // nowatch / notags：手机端卡片据此收掉对应的格子（详见样式表里那两条）
     const rowCls=['note-expanded'];
-    if(!item.cover) rowCls.push('nocover');
     if(!item.watchDate) rowCls.push('nowatch');
     if(!(item.tags||[]).length) rowCls.push('notags');
 
+    // 封面格留着不画内容：整表 10 列，抽掉一格会让样式表里成片的 td:nth-child(n)
+    // 全部错位。这一格连同表头、colgroup 一起在样式里 display:none（item.cover 仍
+    // 存在数据里，只是列表不再显示缩略图）。
     return `<tr data-id="${item.id}" class="${rowCls.join(' ')}">
-      <td class="c-cover-td">${coverH}</td>
+      <td class="c-cover-td"></td>
       <td>
         <div class="cname">${fmtTitle(item)}</div>
         ${item.creator?`<div class="csub">${hl(item.creator)}</div>`:''}
