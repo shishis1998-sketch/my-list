@@ -8830,22 +8830,41 @@ function migrateBookNotes(){
   const pending=(notes||[]).filter(n=>n.subCat==='读书笔记'&&!n.movedToMedia);
   const hasSub=(noteSubs||[]).includes('读书笔记');
   if(!pending.length&&!hasSub){localStorage.setItem(FLAG,'1');return;}   // 已收敛
-  let moved=0,left=0;
+  // 新建时落在哪个分类：名字带「书」的那个，找不到就退回第一个分类
+  const bookCat=(cats.find(c=>/书/.test(c.name||''))||cats[0]||{}).id;
+  const today=new Date().toISOString().slice(0,10);
+  let moved=0,made=0,skipped=0;
   pending.forEach(n=>{
-    const key=norm(n.title);
-    const it=key?data.find(d=>norm(d.name)===key):null;
-    if(!it){left++;return;}
-    // 目标已经有正文就不覆盖，两段接起来，谁的内容都不丢
-    const cur=(it.bookNote||'').trim(), add=(n.body||'').trim();
-    it.bookNote=cur?(add?cur+'\n\n'+add:cur):add;
+    const add=(n.body||'').trim();
+    const title=(n.title||'').trim();
+    if(!title&&!add){skipped++;return;}          // 空笔记，没什么可搬的，留着
+    const key=norm(title);
+    let it=key?data.find(d=>norm(d.name)===key):null;
+    if(it){
+      // 目标已经有正文就不覆盖，两段接起来，谁的内容都不丢
+      const cur=(it.bookNote||'').trim();
+      it.bookNote=cur?(add?cur+'\n\n'+add:cur):add;
+      moved++;
+    }else{
+      // 没有同名的书就新建一条：除了书名和正文，其余留空，等你自己补
+      // 状态给「进行中」——都写了读书笔记，至少是读过的；「已完成」不该替人下结论
+      it={id:uid(),name:title||'（未命名读书笔记）',type:bookCat,status:'in-progress',
+          score:null,year:null,startDate:null,watchDate:null,
+          creator:'',cover:'',note:'',bookNote:add,tags:(n.tags||[]).slice(),date:today,
+          createdAt:n.createdAt||undefined};   // 首次添加沿用笔记的创建时间，别显示成今天
+      if(!it.createdAt) delete it.createdAt;
+      data.unshift(it);
+      made++;
+    }
     n.movedToMedia=it.id; n.updatedAt=Date.now();
-    moved++;
   });
   // 分类本身收起来：以后读书笔记只在书的详情页里写
   if(hasSub){noteSubs=noteSubs.filter(s=>s!=='读书笔记');localStorage.setItem(NSUBK,JSON.stringify(noteSubs));}
-  if(moved){localStorage.setItem(SK,JSON.stringify(data));localStorage.setItem(NSK,JSON.stringify(notes));scheduleSyncPush();}
-  if(!left)localStorage.setItem(FLAG,'1');
-  if(moved||left)console.log(`[迁移] 读书笔记搬进媒体记录：成功 ${moved} 篇${left?`，另有 ${left} 篇没找到同名的书，仍留在笔记里`:''}`);
+  if(moved||made){localStorage.setItem(SK,JSON.stringify(data));localStorage.setItem(NSK,JSON.stringify(notes));scheduleSyncPush();}
+  // 剩下的只可能是空笔记（既没标题也没正文），它们永远搬不动，落地标记别每次启动重跑
+  const stillMigratable=(notes||[]).some(n=>n.subCat==='读书笔记'&&!n.movedToMedia&&((n.title||'').trim()||(n.body||'').trim()));
+  if(!stillMigratable)localStorage.setItem(FLAG,'1');
+  if(moved||made)console.log(`[迁移] 读书笔记搬进媒体记录：并入已有 ${moved} 篇，新建记录 ${made} 条${skipped?`，跳过 ${skipped} 篇空笔记`:''}`);
 }
 
 // 一次性迁移：新增「日记」子分类，把「收集」里带「随笔」标签的笔记移过去（并去掉随笔标签）。
