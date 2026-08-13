@@ -4047,10 +4047,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       </div>
     </div>
     <div class="fg">
-      <label>备注</label>
-      <textarea id="f-note" rows="3" placeholder="想说的话..."></textarea>
-    </div>
-    <div class="fg">
       <label>读书笔记正文（用「第一章」分段会排成时间线）</label>
       <textarea id="f-booknote" rows="6" placeholder="第一章 ...&#10;&#10;第二章 ..."></textarea>
     </div>
@@ -10065,7 +10061,7 @@ function renderDetail(){
     ${dtTab==='note'?`
       <div class="dt-sec">
         <div class="dt-seclbl">备注</div>
-        <div class="dt-card" onclick="tapNoteCard(event,'note')" data-edit="f-note">
+        <div class="dt-card" onclick="tapNoteCard(event,'note')">
           ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
         </div>
       </div>
@@ -10687,7 +10683,6 @@ function openAdd(){
   fillCreatedRow('f-created-row','f-created',null);   // 新增时没有首次添加可言
   document.getElementById('f-creator').value='';
   document.getElementById('f-cover').value='';
-  document.getElementById('f-note').value='';
   document.getElementById('f-booknote').value='';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value='';
@@ -10709,7 +10704,6 @@ function openEdit(id){
   fillCreatedRow('f-created-row','f-created',item);
   document.getElementById('f-creator').value=item.creator||'';
   document.getElementById('f-cover').value=item.cover||'';
-  document.getElementById('f-note').value=item.note||'';
   document.getElementById('f-booknote').value=item.bookNote||'';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value=item.score?String(item.score):'';
@@ -10733,7 +10727,8 @@ function saveRec(){
     watchDate:document.getElementById('f-watch').value||null,
     creator:document.getElementById('f-creator').value.trim(),
     cover:document.getElementById('f-cover').value.trim(),
-    note:document.getElementById('f-note').value.trim(),
+    // 备注不在这张表里：它有自己的弹窗（详情页点备注卡，见 openNoteSheet）。
+    // rec 里没有 note 这一项，下面的 {...data[i],...rec} 就不会覆盖已有的备注。
     bookNote:document.getElementById('f-booknote').value,
     tags:[...curTags], date:new Date().toISOString().slice(0,10)
   };
