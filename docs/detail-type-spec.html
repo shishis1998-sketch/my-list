@@ -111,7 +111,6 @@ body{
 .dt-body{display:flex;flex-direction:column;gap:var(--sp-10);padding:var(--sp-12) var(--sp-14) var(--sp-24);}
 .dt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:var(--sp-14);}
 .dt-hd{padding:var(--sp-16) var(--sp-14);}
-.dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
 .dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
 .dt-hdrow2{margin-top:var(--sp-6);}
 .dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
@@ -119,6 +118,13 @@ body{
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
 .score{color:var(--gold);font-weight:700;font-family:var(--en);font-size:var(--fs-caption);}
 .cstatus{font-size:var(--fs-caption);font-weight:700;color:var(--st-done);}
+.dt-tabs{padding:var(--sp-2) 0;}
+.cal-vtoggle{position:relative;display:flex;width:100%;background:var(--border);border-radius:999px;padding:3px;}
+.cal-vtoggle .cvt-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/3);
+  background:var(--surface);border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.14);}
+.cal-vtoggle .cvt{position:relative;z-index:1;flex:1;border:none;background:transparent;font-family:inherit;
+  font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);padding:4px 0;border-radius:999px;text-align:center;}
+.cal-vtoggle .cvt.on{color:var(--text-primary);}
 .dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 .dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
 .dt-k{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;}
@@ -158,12 +164,12 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
 <header class="masthead">
   <p class="kicker">MY-LIST · 详情页 · 字号与对齐 · 2026-08</p>
   <h1>详情页标注图</h1>
-  <p>下面这台「手机」是把 <code>index.html</code> 里 <code>.dt-*</code> 的字号、行高、间距逐条抄过来画的，图上量到多少，代码里就是多少。正文是四张卡：头部 / 时间 / 备注 / 标签，「首次添加」是卡外的一行小字。页面上没有任何按钮——返回交给系统返回手势，点任意一处从底部升起编辑面板，删除在列表里左滑。红色虚线是文字对齐线，绿色虚线是两条基线，圆点编号对应后面的表。</p>
+  <p>下面这台「手机」是把 <code>index.html</code> 里 <code>.dt-*</code> 的字号、行高、间距逐条抄过来画的，图上量到多少，代码里就是多少。书名卡下面是一条三栏切换：<b>概览</b>（时间＋标签）/ <b>备注</b> / <b>时间线</b>（读书笔记的章节）。下图画的是「概览」栏，另两栏的卡片尺寸与此完全相同。「首次添加」是卡外的一行小字。页面上没有任何按钮——返回交给系统返回手势，点任意一处从底部升起编辑面板，删除在列表里左滑。红色虚线是文字对齐线，绿色虚线是两条基线，圆点编号对应后面的表。</p>
   <div class="meta">
     <span>版式 <b>手机 390</b></span>
     <span>字号档 <b>中（--fs-scale = 1）</b></span>
     <span>用到的字号级 <b>5 级</b></span>
-    <span>版面 <b>4 张卡</b></span>
+    <span>版面 <b>3 栏切换</b></span>
   </div>
 </header>
 
@@ -181,7 +187,6 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
       <div class="phone" id="phone">
         <div class="dt-body">
           <div class="dt-card dt-hd">
-            <i class="dt-rule"></i>
             <div class="dt-hdrow">
               <h2 class="dt-name" id="elName" data-n="1">平凡的世界（第二部）</h2>
               <span class="dt-side"><span class="score" data-n="2" data-side="r">4.5/5</span></span>
@@ -191,18 +196,21 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
               <span class="dt-side cstatus" data-n="4" data-side="r">已完成</span>
             </div>
           </div>
-          <div class="dt-card">
-            <div class="dt-lbl" data-n="5">时间</div>
-            <div class="dt-kv">
-              <div><div class="dt-k" data-n="6">开始</div><div class="dt-v none">—</div></div>
-              <div><div class="dt-k">结束</div><div class="dt-v end" data-n="7">2026/6/10</div></div>
-              <div><div class="dt-k">用时</div><div class="dt-v none">—</div></div>
+          <div class="dt-tabs">
+            <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
+              <span class="cvt-thumb"></span>
+              <button class="cvt on" data-n="5">概览</button>
+              <button class="cvt">备注</button>
+              <button class="cvt">时间线</button>
             </div>
           </div>
           <div class="dt-card">
-            <div class="dt-lbl">备注</div>
-            <div class="dt-note" data-n="8">断断续续看了好几年了吧，总算看完了！
-上班摸鱼看完的嘿嘿嘿</div>
+            <div class="dt-lbl" data-n="6">时间</div>
+            <div class="dt-kv">
+              <div><div class="dt-k" data-n="7">开始</div><div class="dt-v none">—</div></div>
+              <div><div class="dt-k">结束</div><div class="dt-v end" data-n="8">2026/6/10</div></div>
+              <div><div class="dt-k">用时</div><div class="dt-v none">—</div></div>
+            </div>
           </div>
           <div class="dt-card">
             <div class="dt-lbl">标签</div>
@@ -233,10 +241,11 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
         <tr><td class="n">2</td><td class="el">评分</td><td class="tk">starsHtml()</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>700 · 数字字体</td><td class="tk">--gold #6B6B6B</td></tr>
         <tr><td class="n">3</td><td class="el">作者 · 年份</td><td class="tk">.dt-au</td><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">14</td><td class="px">15</td><td>400 / 1.45</td><td class="tk">--text-secondary</td></tr>
         <tr><td class="n">4</td><td class="el">状态</td><td class="tk">.cstatus</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>700</td><td class="tk">SMAP 的 c / cd</td></tr>
-        <tr class="hl"><td class="n">5</td><td class="el">节标签（时间 / 备注 / 标签）</td><td class="tk">.dt-lbl</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>700 · 字距 .1em</td><td class="tk">--text-muted</td></tr>
-        <tr class="hl"><td class="n">6</td><td class="el">键（开始 / 结束 / 用时）</td><td class="tk">.dt-k</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>400 · 字距 .06em</td><td class="tk">--text-muted</td></tr>
-        <tr><td class="n">7</td><td class="el">值（日期 / 天数）</td><td class="tk">.dt-v</td><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">14</td><td class="px">15</td><td>600 · 等宽数字</td><td class="tk">结束 --watch-c，空值 muted</td></tr>
-        <tr class="hl"><td class="n">8</td><td class="el">备注正文</td><td class="tk">.dt-note</td><td class="tk">--fs-body</td><td class="px"><b>15</b></td><td class="px">14</td><td class="px">16</td><td>400 / 1.6</td><td class="tk">--text-secondary</td></tr>
+        <tr><td class="n">5</td><td class="el">视图切换条</td><td class="tk">.cal-vtoggle</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>600 · 胶囊高约 30</td><td class="tk">选中 --text-primary</td></tr>
+        <tr class="hl"><td class="n">6</td><td class="el">节标签（时间 / 备注 / 标签）</td><td class="tk">.dt-lbl</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>700 · 字距 .1em</td><td class="tk">--text-muted</td></tr>
+        <tr class="hl"><td class="n">7</td><td class="el">键（开始 / 结束 / 用时）</td><td class="tk">.dt-k</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>400 · 字距 .06em</td><td class="tk">--text-muted</td></tr>
+        <tr><td class="n">8</td><td class="el">值（日期 / 天数）</td><td class="tk">.dt-v</td><td class="tk">--fs-sub</td><td class="px"><b>14</b></td><td class="px">14</td><td class="px">15</td><td>600 · 等宽数字</td><td class="tk">结束 --watch-c，空值 muted</td></tr>
+        <tr class="hl"><td class="n">—</td><td class="el">备注正文</td><td class="tk">.dt-note</td><td class="tk">--fs-body</td><td class="px"><b>15</b></td><td class="px">14</td><td class="px">16</td><td>400 / 1.6</td><td class="tk">--text-secondary</td></tr>
         <tr><td class="n">9</td><td class="el">标签</td><td class="tk">.ctag</td><td class="tk">--fs-caption</td><td class="px"><b>13</b></td><td class="px">13</td><td class="px">14</td><td>600 · 胶囊高 22（大档 26）</td><td class="tk">--text-secondary</td></tr>
         <tr><td class="n">10</td><td class="el">首次添加</td><td class="tk">.dt-foot</td><td class="tk">--fs-foot</td><td class="px"><b>11</b></td><td class="px">11</td><td class="px">12</td><td>400 · 等宽数字</td><td class="tk">--text-muted</td></tr>
       </tbody>
@@ -261,7 +270,7 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
         <tr><td class="el">卡片描边 / 圆角</td><td class="px">1 / 12</td><td class="tk">.dt-card</td><td>与列表页 <code>.twrap</code> 同一套，两页看着是一家</td></tr>
         <tr><td class="el">右侧对齐</td><td class="px">同左</td><td class="tk">.dt-side</td><td>评分和状态贴右边那条红线；左右两列最小间距 12</td></tr>
         <tr><td class="el">头部卡上下</td><td class="px">16</td><td class="tk">.dt-hd padding</td><td>比其余卡各多 2，书名有喘气的地方</td></tr>
-        <tr><td class="el">主题色短线</td><td class="px">26 × 2，下方 12</td><td class="tk">.dt-rule</td><td>宽高是图形尺寸，不跟字号阶梯缩放</td></tr>
+        <tr><td class="el">视图切换条</td><td class="px">上下 2 · 胶囊内衬 3</td><td class="tk">.dt-tabs / .cal-vtoggle</td><td>控件本体直接复用日历页那颗胶囊分段器，两处是同一个东西</td></tr>
         <tr><td class="el">书名行 → 作者行</td><td class="px">6</td><td class="tk">.dt-hdrow2 margin-top</td><td>两行按基线对齐，图上绿虚线就是这两条基线</td></tr>
 
         <tr><td class="el">节标签 → 内容</td><td class="px">8</td><td class="tk">.dt-lbl margin-bottom</td><td>—</td></tr>
@@ -301,6 +310,7 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
     <h3>这一页的三个手势</h3>
     <p><b>返回</b>：安卓边缘滑动 / iOS 左缘右滑 / 浏览器后退键。打开详情时往历史里压一条（<code>history.pushState</code>），退出时收界面并把那条退掉——不压这条的话，在详情页做返回手势会直接退出整个网页。</p>
     <p><b>编辑</b>：点任意一处，从底部升起编辑面板，并自动聚焦点中的那一项（点书名聚焦名称、点备注聚焦备注、点标签聚焦标签输入）。正在选文字时不触发，备注仍可长按选中复制。</p>
+    <p><b>读书笔记</b>：正文存在这条媒体记录上（<code>item.bookNote</code>），不再是「笔记」里的一条。正文里用「第一章」分段就会排成章节时间线，点章节从底部升起可编辑的章节抽屉（和笔记那边同一套）。</p>
     <p><b>删除</b>：只在列表里左滑。详情页和编辑面板里都没有删除——电脑端因此删不掉记录，需要的话再补一个入口。</p>
   </div>
   <div class="note">

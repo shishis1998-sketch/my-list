@@ -492,8 +492,6 @@ body.detail-open .content{display:none!important;}
 @media (hover:hover){.dt-card:hover{border-color:var(--accent-mid);}}
 /* 头部卡：书名要有喘气的地方，上下比其余卡各多 2 */
 .dt-hd{padding:var(--sp-16);}
-/* 主题色短线：整页唯一的装饰，跟着「设置 › 外观」的主题色走 */
-.dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
 /* 头部两行两列：左边书名 / 作者，右边评分 / 状态。
    按基线对齐而不是盒子居中——两侧字号差着 9px（22 对 13），居中会让评分
    浮在书名中腰上；眼睛读的是基线，对齐基线才看着在同一行。 */
@@ -513,6 +511,14 @@ body.detail-open .content{display:none!important;}
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .dt-tags .ctag{margin:0;}
+/* 视图切换：概览 / 备注 / 时间线。控件本体直接复用日历页那颗胶囊分段器
+   （.cal-vtoggle），两处是同一个东西，没必要各画一套。 */
+.dt-tabs{padding:var(--sp-2) 0;}
+/* 时间线：章节卡片沿用笔记那边的 .tl 网格 */
+.dt-tl-empty{font-size:var(--fs-body);color:var(--text-muted);line-height:var(--lh-loose);}
+.dt-tl-empty b{color:var(--text-secondary);font-weight:600;}
+.dt-tl-hint{font-size:var(--fs-caption);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal);}
+.dt-tl-text{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 /* 首次添加：卡外的一行小字，够得着但不占一张卡 */
 .dt-foot{padding:var(--sp-2) var(--sp-4);font-size:var(--fs-foot);color:var(--text-muted);
   font-family:var(--en);font-variant-numeric:tabular-nums;}
@@ -3997,6 +4003,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="fg">
       <label>备注</label>
       <textarea id="f-note" rows="3" placeholder="想说的话..."></textarea>
+    </div>
+    <div class="fg">
+      <label>读书笔记正文（用「第一章」分段会排成时间线）</label>
+      <textarea id="f-booknote" rows="6" placeholder="第一章 ...&#10;&#10;第二章 ..."></textarea>
     </div>
     <div class="fg fg-created" id="f-created-row" style="display:none">
       <label>首次添加</label>
@@ -8805,8 +8815,37 @@ function boot(){
   // 「日记」迁移：配了同步就等 pull 后按云端状态执行（syncPull 里会调），避免被云端覆盖；
   // 没配同步则直接在本机迁移。
   if(getToken()&&getGistId()) setTimeout(()=>syncPull(true),400);
-  else migrateDiary();
+  else { migrateDiary(); migrateBookNotes(); }
   updateSyncBadge();
+}
+
+// 一次性迁移：「读书笔记」从笔记搬到媒体记录里。
+// 一本书的读书笔记本来就属于那本书，分在两处只会两头找。按标题配对搬正文；
+// 数据不删只标记（movedToMedia），万一配错了还能捞回来，笔记列表里不再显示。
+// 配不上同名媒体记录的留在笔记里不动——宁可留着让人自己处理，也不能悄悄弄丢。
+function migrateBookNotes(){
+  const FLAG='my_list_migrate_booknote_v1';
+  if(localStorage.getItem(FLAG))return;
+  const norm=t=>String(t||'').replace(/[\s《》「」【】\[\]()（）]/g,'').toLowerCase();
+  const pending=(notes||[]).filter(n=>n.subCat==='读书笔记'&&!n.movedToMedia);
+  const hasSub=(noteSubs||[]).includes('读书笔记');
+  if(!pending.length&&!hasSub){localStorage.setItem(FLAG,'1');return;}   // 已收敛
+  let moved=0,left=0;
+  pending.forEach(n=>{
+    const key=norm(n.title);
+    const it=key?data.find(d=>norm(d.name)===key):null;
+    if(!it){left++;return;}
+    // 目标已经有正文就不覆盖，两段接起来，谁的内容都不丢
+    const cur=(it.bookNote||'').trim(), add=(n.body||'').trim();
+    it.bookNote=cur?(add?cur+'\n\n'+add:cur):add;
+    n.movedToMedia=it.id; n.updatedAt=Date.now();
+    moved++;
+  });
+  // 分类本身收起来：以后读书笔记只在书的详情页里写
+  if(hasSub){noteSubs=noteSubs.filter(s=>s!=='读书笔记');localStorage.setItem(NSUBK,JSON.stringify(noteSubs));}
+  if(moved){localStorage.setItem(SK,JSON.stringify(data));localStorage.setItem(NSK,JSON.stringify(notes));scheduleSyncPush();}
+  if(!left)localStorage.setItem(FLAG,'1');
+  if(moved||left)console.log(`[迁移] 读书笔记搬进媒体记录：成功 ${moved} 篇${left?`，另有 ${left} 篇没找到同名的书，仍留在笔记里`:''}`);
 }
 
 // 一次性迁移：新增「日记」子分类，把「收集」里带「随笔」标签的笔记移过去（并去掉随笔标签）。
@@ -9319,6 +9358,8 @@ async function syncPull(silent){
     migrateWatchDate();
     // 「日记」迁移按云端最新状态重跑：自身幂等收敛，未收敛则会再推一次
     migrateDiary();
+    // 「读书笔记 → 媒体记录」同理：云端可能还带着没搬的旧数据
+    migrateBookNotes();
     localStorage.setItem(SK,JSON.stringify(data));
     localStorage.setItem(CK,JSON.stringify(cats));
     localStorage.setItem(NSK,JSON.stringify(notes));
@@ -9700,7 +9741,8 @@ function renderMobileCatMgr(){
 
 // 从 .ics 导入的日历事件：只在日历页显示，不算作「笔记」
 function isCalEvent(n){return ('_ics' in n)||(n.tags||[]).includes('日历导入');}
-function userNotes(){return notes.filter(n=>!isCalEvent(n));}
+// 已搬进媒体记录的读书笔记不再露面（数据还留着，见 migrateBookNotes）
+function userNotes(){return notes.filter(n=>!isCalEvent(n)&&!n.movedToMedia);}
 function renderNotesSidebar(){
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
@@ -9779,10 +9821,14 @@ function render(){
 // 页面上没有返回按钮——打开时往历史里压一条，退出交给系统返回手势（安卓边缘滑动 /
 // iOS 左缘右滑 / 浏览器后退键）。不压这条的话，在详情页做返回手势会直接退出整个网页。
 let detailId=null, detailPushed=false;
+// 详情页的三栏视图。概览＝时间 + 标签；备注＝这条记录的备注；时间线＝读书笔记的章节
+const DT_TABS=[{id:'info',lbl:'概览'},{id:'note',lbl:'备注'},{id:'tl',lbl:'时间线'}];
+let dtTab='info';
+function setDetailTab(v){ dtTab=DT_TABS.some(t=>t.id===v)?v:'info'; renderDetail(); }
 
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
-  detailId=id;
+  detailId=id; dtTab='info';
   renderDetail();
   document.body.classList.add('detail-open');
   document.getElementById('detailRoot').classList.add('open');
@@ -9841,29 +9887,85 @@ function renderDetail(){
   const au=[item.creator,item.year].filter(Boolean).map(esc).join(' · ');
   const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
   const created=fmtCreated(createdAtOf(item));
+  const T=DT_TABS.map((t,i)=>`<button class="cvt${dtTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
+  const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===dtTab)]||'';
   box.innerHTML=`
     <div class="dt-card dt-hd" onclick="editFromDetail(event)" data-edit="f-name">
-      <i class="dt-rule"></i>
       <div class="dt-hdrow">
         <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
-        ${item.score?`<span class="dt-side">${starsHtml(item.score)}</span>`:''}
+        ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
       </div>
       <div class="dt-hdrow dt-hdrow2">
-        <div class="dt-au">${au}</div>
+        <div class="dt-au" data-edit="f-creator">${au}</div>
         <span class="dt-side cstatus" data-edit="f-status" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
       </div>
     </div>
-    <div class="dt-card" onclick="editFromDetail(event)" data-edit="f-watch">
-      <div class="dt-lbl">时间</div>
-      <div class="dt-kv">
-        <div data-edit="f-watch-start"><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
-        <div data-edit="f-watch"><div class="dt-k">结束</div><div class="dt-v${item.watchDate?' end':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
-        <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
+
+    <div class="dt-tabs">
+      <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
+        <span class="cvt-thumb ${thumbCls}"></span>
+        ${T}
       </div>
     </div>
-    ${item.note?`<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-note"><div class="dt-lbl">备注</div><div class="dt-note">${esc(item.note)}</div></div>`:''}
-    ${tagsH?`<div class="dt-card" onclick="editFromDetail(event)" data-edit="tinput"><div class="dt-lbl">标签</div><div class="dt-tags">${tagsH}</div></div>`:''}
+
+    ${dtTab==='info'?`
+      <div class="dt-card" onclick="editFromDetail(event)" data-edit="f-watch">
+        <div class="dt-lbl">时间</div>
+        <div class="dt-kv">
+          <div data-edit="f-watch-start"><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
+          <div data-edit="f-watch"><div class="dt-k">结束</div><div class="dt-v${item.watchDate?' end':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
+          <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
+        </div>
+      </div>
+      <div class="dt-card" onclick="editFromDetail(event)" data-edit="tinput">
+        <div class="dt-lbl">标签</div>
+        ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签</div>'}
+      </div>`:''}
+
+    ${dtTab==='note'?`
+      <div class="dt-card" onclick="editFromDetail(event)" data-edit="f-note">
+        <div class="dt-lbl">备注</div>
+        ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
+      </div>`:''}
+
+    ${dtTab==='tl'?renderDetailTL(item):''}
+
     ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
+}
+
+// 时间线一栏：读书笔记正文（item.bookNote）解析出的章节。
+// 正文和章节都存在这条媒体记录上——读书笔记不再是「笔记」里的一条，见 migrateBookNotes。
+function renderDetailTL(item){
+  const body=(item.bookNote||'').trim();
+  // 「读书笔记」只对书成立，电影剧集那边就叫「笔记正文」
+  const lbl=/书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文';
+  if(!body){
+    return `<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-booknote">
+      <div class="dt-lbl">${lbl}</div>
+      <div class="dt-tl-empty">还没有正文，点这里开始写。</div>
+      <div class="dt-tl-hint">正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，这里就会自动排成章节时间线。</div>
+    </div>`;
+  }
+  const chs=parseChapters(item.bookNote);
+  if(!chs.length){
+    return `<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-booknote">
+      <div class="dt-lbl">${lbl}</div>
+      <div class="dt-tl-text">${esc(item.bookNote)}</div>
+      <div class="dt-tl-hint">没识别到章节。用 <b>第一章</b> 这样的格式分段就会排成时间线。</div>
+    </div>`;
+  }
+  return `<div class="dt-card" style="cursor:default">
+    <div class="dt-lbl">${lbl} · 共 ${chs.length} 章</div>
+    <div class="tl">${chs.map((c,i)=>`<div class="tl-item has-paras" data-idx="${i}" onclick="openDetailChapter(${i})">
+      <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(c.title)}</div></div></div>
+    </div>`).join('')}</div>
+  </div>`;
+}
+
+// 点章节 → 复用笔记那套章节抽屉，只是宿主换成这条媒体记录（见 tlHostMedia）
+function openDetailChapter(idx){
+  tlHostMedia=detailId; tlCurId=null;
+  openChapterSheet(idx);
 }
 
 function renderStats(){
@@ -10290,6 +10392,7 @@ function openAdd(){
   document.getElementById('f-creator').value='';
   document.getElementById('f-cover').value='';
   document.getElementById('f-note').value='';
+  document.getElementById('f-booknote').value='';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value='';
   renderChips();
@@ -10311,6 +10414,7 @@ function openEdit(id){
   document.getElementById('f-creator').value=item.creator||'';
   document.getElementById('f-cover').value=item.cover||'';
   document.getElementById('f-note').value=item.note||'';
+  document.getElementById('f-booknote').value=item.bookNote||'';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value=item.score?String(item.score):'';
   renderChips();
@@ -10334,6 +10438,7 @@ function saveRec(){
     creator:document.getElementById('f-creator').value.trim(),
     cover:document.getElementById('f-cover').value.trim(),
     note:document.getElementById('f-note').value.trim(),
+    bookNote:document.getElementById('f-booknote').value,
     tags:[...curTags], date:new Date().toISOString().slice(0,10)
   };
   if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新','success');}
@@ -11964,11 +12069,27 @@ function parseParagraphs(content){
 }
 
 let tlCurId=null;  // 当前时间线弹窗对应的笔记 id（供保存后重渲染）
+// 章节抽屉的宿主：读书笔记搬进媒体记录之后，同一套抽屉要能改两种东西——
+// 笔记的 body（旧数据仍在笔记里）或媒体记录的 bookNote。谁非空就写谁。
+let tlHostMedia=null;
+function tlHostBody(){
+  if(tlHostMedia){const it=data.find(d=>d.id===tlHostMedia);return it?(it.bookNote||''):null;}
+  const n=(notes||[]).find(x=>x.id===tlCurId);return n?(n.body||''):null;
+}
+function tlHostSave(body){
+  if(tlHostMedia){
+    const it=data.find(d=>d.id===tlHostMedia); if(!it) return false;
+    it.bookNote=body; persist(); return true;
+  }
+  const n=(notes||[]).find(x=>x.id===tlCurId); if(!n) return false;
+  n.body=body; n.updatedAt=Date.now(); persistNotes(); return true;
+}
+function tlHostRerender(){ if(tlHostMedia){ if(detailId) renderDetail(); } else { renderTimelineBody(tlCurId); } }
 
 function openTimeline(id){
   const n=(notes||[]).find(x=>x.id===id);
   if(!n) return;
-  tlCurId=id;
+  tlCurId=id; tlHostMedia=null;
   renderTimelineBody(id);
   document.getElementById('tlModal').classList.add('open');
 }
@@ -12042,9 +12163,9 @@ function tlSegType(line){
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
 function openChapterSheet(idx){
-  const n=(notes||[]).find(x=>x.id===tlCurId);
-  if(!n) return;
-  const c=parseChapters(n.body)[idx];
+  const body=tlHostBody();
+  if(body==null) return;
+  const c=parseChapters(body)[idx];
   if(!c) return;
   tlSheetIdx=idx; tlSheetEdit=-1;
   // c.raw 可能含章前空行（正则 \s* 吃进换行），拆分时先剥掉、保存时原样补回
@@ -12121,12 +12242,10 @@ function commitChapterSheet(){
   if(tlSheetIdx==null) return;
   const newRaw=buildChapterRaw(tlSheetSegs);   // 保留段间空行地拼回本章
   if(newRaw===tlSheetOrigRaw) return;
-  const n=(notes||[]).find(x=>x.id===tlCurId);
-  if(!n) return;
-  n.body=replaceChapterInBody(n.body, tlSheetIdx, newRaw);
-  n.updatedAt=Date.now();
-  persistNotes();
-  renderTimelineBody(tlCurId);
+  const body=tlHostBody();
+  if(body==null) return;
+  if(!tlHostSave(replaceChapterInBody(body, tlSheetIdx, newRaw))) return;
+  tlHostRerender();
   toast('已保存');
 }
 
@@ -12735,7 +12854,7 @@ function openNoteEdit(id){
   document.getElementById('nm-title').textContent='编辑笔记';
   document.getElementById('nf-title').value=n.title||'';
   document.getElementById('nf-body').value=n.body||'';
-  renderNoteSubSelect();
+  renderNoteSubSelect(n.subCat);
   document.getElementById('nf-sub').value=n.subCat||noteSubs[0]||'灵感';
   document.getElementById('ntinput').value='';
   // 备忘字段加载
@@ -12783,8 +12902,13 @@ function closeNoteModal(){
   document.getElementById('noteModal').classList.remove('open');
 }
 
-function renderNoteSubSelect(){
-  document.getElementById('nf-sub').innerHTML=noteSubs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+// cur：这条笔记自己的子分类。它可能已经不在 noteSubs 里了（比如「读书笔记」搬进
+// 媒体记录后分类被收起，但没配上同名书的那几篇还留着）——不把它补进选项，
+// 一存就会被悄悄改成列表里的第一项。
+function renderNoteSubSelect(cur){
+  const subs=noteSubs.slice();
+  if(cur&&!subs.includes(cur)) subs.push(cur);
+  document.getElementById('nf-sub').innerHTML=subs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
 }
 
 function saveNote(){
