@@ -1693,14 +1693,8 @@ body.cal-searching .cal-searchresults{display:flex;}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
 /* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
-/* 复用 .tlsheet 的滑起/下拉/遮罩，只多一行标题右侧的「完成」和一块铺满的输入框 */
-.tlsheet-hdrow{display:flex;align-items:center;gap:var(--sp-12);}
-.tlsheet-hdrow .tlsheet-title{flex:1;min-width:0;}
-.notesheet-done{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:700;color:var(--on-accent);
-  background:var(--on-accent-faint);border:0;border-radius:999px;padding:5px 14px;cursor:pointer;
-  touch-action:manipulation;}
-.notesheet-done:active{opacity:.7;}
-/* 备注是一整段话，不像章节要拆段，直接给一块够写的输入框 */
+/* 复用 .tlsheet 的滑起/下拉/遮罩，只多一块铺满的输入框。
+   没有保存/取消按钮：关掉就是存好了，同章节抽屉 */
 .notesheet-ta{width:100%;min-height:34vh;font-family:var(--zh);font-size:var(--fs-input);
   line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);
   border:1.5px solid var(--border);border-radius:var(--r);padding:var(--sp-10) var(--sp-12);
@@ -4370,10 +4364,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 <div class="tlsheet" id="noteSheet" role="dialog" aria-modal="true" aria-label="编辑备注">
   <div class="tlsheet-head" id="noteSheetHead">
     <div class="tlsheet-grip"></div>
-    <div class="tlsheet-hdrow">
-      <div class="tlsheet-title" id="noteSheetTitle">备注</div>
-      <button type="button" class="notesheet-done" onclick="closeNoteSheet()">完成</button>
-    </div>
+    <div class="tlsheet-title" id="noteSheetTitle">备注</div>
   </div>
   <div class="tlsheet-body">
     <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
@@ -10106,9 +10097,7 @@ function initNoteSheetDrag(){
         sheet=document.getElementById('noteSheet'),
         mask=document.getElementById('noteSheetMask');
   let sy=null,dy=0,drag=false;
-  head.addEventListener('pointerdown',e=>{
-    if(e.target.closest('.notesheet-done')) return;   // 「完成」按钮不参与下拉，否则指针捕获会吃掉这一下点击
-    sy=e.clientY;dy=0;drag=true;
+  head.addEventListener('pointerdown',e=>{sy=e.clientY;dy=0;drag=true;
     sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
   head.addEventListener('pointermove',e=>{if(!drag)return;dy=Math.max(0,e.clientY-sy);
     sheet.style.transform='translateY('+dy+'px)';mask.style.opacity=String(Math.max(0,1-dy/300));});
