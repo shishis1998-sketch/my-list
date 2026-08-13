@@ -509,6 +509,11 @@ body.detail-open .content{display:none!important;}
 .dt-v.none{color:var(--text-muted);font-weight:500;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
+/* 备注 / 人物：标题挪到卡外面当小节名。卡里只剩正文，
+   一张卡就是一段内容，标题不再占掉卡内顶上那一行 */
+.dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
+.dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
+  line-height:var(--lh-tight);padding-left:var(--sp-2);}
 /* 人物：一行一个人，名字加粗在前、身份跟在后面。名字列不定宽——
    中文名两到五个字不等，定宽要么挤要么留一大截白，跟着内容走最省地方 */
 .dt-people{display:flex;flex-direction:column;gap:var(--sp-8);}
@@ -10003,13 +10008,17 @@ function renderDetail(){
       </div>`:''}
 
     ${dtTab==='note'?`
-      <div class="dt-card" onclick="tapNoteCard(event,'note')" data-edit="f-note">
-        <div class="dt-lbl">备注</div>
-        ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
+      <div class="dt-sec">
+        <div class="dt-seclbl">备注</div>
+        <div class="dt-card" onclick="tapNoteCard(event,'note')" data-edit="f-note">
+          ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
+        </div>
       </div>
-      <div class="dt-card" onclick="tapNoteCard(event,'people')">
-        <div class="dt-lbl">人物</div>
-        ${item.people?renderPeople(item.people):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
+      <div class="dt-sec">
+        <div class="dt-seclbl">人物</div>
+        <div class="dt-card" onclick="tapNoteCard(event,'people')">
+          ${item.people?renderPeople(item.people):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
+        </div>
       </div>`:''}
 
     ${dtTab==='tl'?renderDetailTL(item):''}
