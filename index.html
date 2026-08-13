@@ -486,7 +486,15 @@ body.detail-open .content{display:none!important;}
    分节靠卡与卡之间的空隙，不再需要发丝线；没填备注/标签的条目直接少一张卡，
    不会像原来那样留下一段空白的节。 */
 .dt-body{display:flex;flex-direction:column;gap:var(--sp-10);
-  padding:var(--sp-12) var(--sp-16) var(--sp-24);}
+  --dt-padx:var(--sp-16);--dt-padt:var(--sp-12);
+  padding:var(--dt-padt) var(--dt-padx) var(--sp-24);}
+/* 书名卡 + 三栏切换钉在顶上，底下的内容从它下面滑过去。三个栏目都一样。
+   负边距把这一块撑到容器留白之外，钉住时背景才铺满整宽、上边不漏出滑过的卡；
+   负的 margin-bottom 抵掉父级那道 gap，不滚的时候间距和原来一模一样 */
+.dt-top{position:sticky;top:0;z-index:5;background:var(--bg);
+  display:flex;flex-direction:column;gap:var(--sp-10);
+  margin:calc(-1 * var(--dt-padt)) calc(-1 * var(--dt-padx)) calc(-1 * var(--sp-10));
+  padding:var(--dt-padt) var(--dt-padx) var(--sp-10);}
 .dt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:var(--sp-14) var(--sp-16);cursor:pointer;transition:border-color .12s;}
 @media (hover:hover){.dt-card:hover{border-color:var(--accent-mid);}}
@@ -842,7 +850,7 @@ body.detail-open .content{display:none!important;}
   /* 详情页：跟随 body 滚动（同 .content，手机端不做内部滚动容器）*/
   .detail-view.open{overflow:visible;flex:none;min-height:100vh;}
   /* 详情页没有顶栏，刘海那圈由第一张卡上面的留白让开 */
-  .dt-body{padding:calc(var(--sp-12) + env(safe-area-inset-top)) var(--sp-14) var(--sp-24);}
+  .dt-body{--dt-padx:var(--sp-14);--dt-padt:calc(var(--sp-12) + env(safe-area-inset-top));}
   .dt-card{padding:var(--sp-14);}
   .dt-hd{padding:var(--sp-16) var(--sp-14);}
 
@@ -2105,8 +2113,13 @@ mark.shl{
 /* —— 列表容器：圆角 + 描边（电脑端双栏）—— */
 @media(min-width:1025px) and (pointer:fine){
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
+  /* 详情页交给页面滚，不自己开滚动容器：.app 只有 min-height，内部滚动本来
+     也没真生效，而 overflow 非 visible 的祖先会把粘顶的 .dt-top 锁在那个盒子里，
+     跟着一起滑走。.main 只在详情页打开时放开，列表页那套照旧 */
+  .detail-view.open{overflow:visible;}
+  body.detail-open .main{overflow:visible;}
   /* 详情正文：宽屏上收窄居中，行长控制在 60 字上下，别横铺满整屏 */
-  .dt-body{max-width:760px;margin:0 auto;padding-top:var(--sp-20);}
+  .dt-body{max-width:760px;margin:0 auto;--dt-padt:var(--sp-20);}
   .dt-card{box-shadow:var(--pop-sm);}
 }
 
@@ -10029,21 +10042,23 @@ function renderDetail(){
   const T=DT_TABS.map((t,i)=>`<button class="cvt${dtTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
   const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===dtTab)]||'';
   box.innerHTML=`
-    <div class="dt-card dt-hd" onclick="editFromDetail(event)" data-edit="f-name">
-      <div class="dt-hdrow">
-        <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
-        ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
+    <div class="dt-top">
+      <div class="dt-card dt-hd" onclick="editFromDetail(event)" data-edit="f-name">
+        <div class="dt-hdrow">
+          <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
+          ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
+        </div>
+        <div class="dt-hdrow dt-hdrow2">
+          <div class="dt-au" data-edit="f-creator">${au}</div>
+          <span class="dt-side cstatus" data-edit="f-status" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
+        </div>
       </div>
-      <div class="dt-hdrow dt-hdrow2">
-        <div class="dt-au" data-edit="f-creator">${au}</div>
-        <span class="dt-side cstatus" data-edit="f-status" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
-      </div>
-    </div>
 
-    <div class="dt-tabs">
-      <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
-        <span class="cvt-thumb ${thumbCls}"></span>
-        ${T}
+      <div class="dt-tabs">
+        <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
+          <span class="cvt-thumb ${thumbCls}"></span>
+          ${T}
+        </div>
       </div>
     </div>
 
