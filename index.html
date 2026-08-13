@@ -518,6 +518,8 @@ body.detail-open .content{display:none!important;}
 .dt-tl-empty{font-size:var(--fs-body);color:var(--text-muted);line-height:var(--lh-loose);}
 .dt-tl-empty b{color:var(--text-secondary);font-weight:600;}
 .dt-tl-hint{font-size:var(--fs-caption);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal);}
+.dt-tl-since{font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--en);
+  font-variant-numeric:tabular-nums;margin-top:var(--sp-12);}
 .dt-tl-text{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 /* 首次添加：卡外的一行小字，够得着但不占一张卡 */
 .dt-foot{padding:var(--sp-2) var(--sp-4);font-size:var(--fs-foot);color:var(--text-muted);
@@ -9952,12 +9954,28 @@ function renderDetail(){
     ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
 }
 
+// 搬进这条记录的读书笔记，自己最早是什么时候建的。
+// 「首次添加」讲的是这本书什么时候记进清单，和「笔记什么时候开始写」是两件事，
+// 合成一个反而丢信息，所以时间线那栏单挂一行。一条记录可能并进过多篇笔记，取最早的。
+function noteOriginOf(item){
+  if(!item) return null;
+  let t=null;
+  (notes||[]).forEach(n=>{
+    if(n.movedToMedia===item.id&&n.createdAt&&(t===null||n.createdAt<t)) t=n.createdAt;
+  });
+  return t?new Date(t):null;
+}
+
 // 时间线一栏：读书笔记正文（item.bookNote）解析出的章节。
 // 正文和章节都存在这条媒体记录上——读书笔记不再是「笔记」里的一条，见 migrateBookNotes。
 function renderDetailTL(item){
   const body=(item.bookNote||'').trim();
   // 「读书笔记」只对书成立，电影剧集那边就叫「笔记正文」
   const lbl=/书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文';
+  // 与「首次添加」同一时刻就不画了——迁移新建的那些记录两个时间本来就是同一个
+  const sinceTxt=fmtCreated(noteOriginOf(item));
+  const since=(sinceTxt&&sinceTxt!==fmtCreated(createdAtOf(item)))
+    ? `<div class="dt-tl-since">笔记始于 ${esc(sinceTxt)}</div>` : '';
   if(!body){
     return `<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-booknote">
       <div class="dt-lbl">${lbl}</div>
@@ -9971,6 +9989,7 @@ function renderDetailTL(item){
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-text">${esc(item.bookNote)}</div>
       <div class="dt-tl-hint">没识别到章节。用 <b>第一章</b> 这样的格式分段就会排成时间线。</div>
+      ${since}
     </div>`;
   }
   return `<div class="dt-card" style="cursor:default">
@@ -9978,6 +9997,7 @@ function renderDetailTL(item){
     <div class="tl">${chs.map((c,i)=>`<div class="tl-item has-paras" data-idx="${i}" onclick="openDetailChapter(${i})">
       <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(c.title)}</div></div></div>
     </div>`).join('')}</div>
+    ${since}
   </div>`;
 }
 
