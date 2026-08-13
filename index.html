@@ -463,10 +463,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .created-val{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);padding:var(--sp-6) 0;}
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:500;background:var(--bg);color:var(--text-secondary);white-space:nowrap;line-height:1;border:1px solid var(--border-soft);box-sizing:border-box;margin:var(--sp-2) var(--sp-2) var(--sp-2) 0;}
 
-/* 详情页顶部那一排小按钮（编辑 / 删除）也用它 */
-.ibt{background:none;border:none;cursor:pointer;padding:var(--sp-6) var(--sp-10);border-radius:var(--r);color:var(--text-muted);transition:all .1s;display:flex;align-items:center;font-size:var(--fs-caption);font-family:var(--zh);}
-.ibt:hover{background:var(--border);color:var(--text-primary);}
-.ibt.del:hover{background:var(--danger-bg);color:var(--danger);}
 
 
 .empty{text-align:center;padding:56px var(--sp-24);color:var(--text-muted);}
@@ -486,20 +482,14 @@ body.detail-open .frow,
 body.detail-open .catfrow,
 body.detail-open .nfrow,
 body.detail-open .content{display:none!important;}
-/* 顶部返回条：左返回，右编辑/删除 */
-.dt-nav{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-10) var(--sp-16);
-  background:var(--surface);border-bottom:1px solid var(--border-soft);position:sticky;top:0;z-index:3;}
-.dt-back{background:none;border:none;cursor:pointer;font-family:var(--zh);
-  font-size:var(--fs-sub);font-weight:600;color:var(--accent);padding:var(--sp-4) 0;
-  display:inline-flex;align-items:center;gap:var(--sp-4);}
-.dt-nav .sp{flex:1;}
 /* 详情正文：一节一张卡，浮在页面底色上（卡的描边圆角与列表页 .twrap 同一套）。
    分节靠卡与卡之间的空隙，不再需要发丝线；没填备注/标签的条目直接少一张卡，
    不会像原来那样留下一段空白的节。 */
 .dt-body{display:flex;flex-direction:column;gap:var(--sp-10);
   padding:var(--sp-12) var(--sp-16) var(--sp-24);}
 .dt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:var(--sp-14) var(--sp-16);}
+  padding:var(--sp-14) var(--sp-16);cursor:pointer;transition:border-color .12s;}
+@media (hover:hover){.dt-card:hover{border-color:var(--accent-mid);}}
 /* 头部卡：书名要有喘气的地方，上下比其余卡各多 2 */
 .dt-hd{padding:var(--sp-16);}
 /* 主题色短线：整页唯一的装饰，跟着「设置 › 外观」的主题色走 */
@@ -512,18 +502,13 @@ body.detail-open .content{display:none!important;}
 .dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
 .dt-au{font-size:var(--fs-sub);color:var(--text-secondary);flex:1;min-width:0;}
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
-.dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
+.dt-lbl{font-size:var(--fs-caption);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 /* 时间：开始 / 结束 / 用时 三列 */
 .dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
-.dt-k{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;}
+.dt-k{font-size:var(--fs-caption);color:var(--text-muted);letter-spacing:.06em;}
 .dt-v{font-size:var(--fs-sub);font-weight:600;font-family:var(--en);font-variant-numeric:tabular-nums;margin-top:var(--sp-2);}
 .dt-v.end{color:var(--watch-c);}
 .dt-v.none{color:var(--text-muted);font-weight:500;}
-/* 读了多久：一条从开始到结束的细条，纯示意 */
-.dt-span{display:flex;align-items:center;gap:var(--sp-8);margin-top:var(--sp-12);}
-.dt-span .bar{flex:1;height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden;}
-.dt-span .bar i{display:block;height:100%;background:var(--accent);opacity:.7;border-radius:2px;}
-.dt-span small{font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--en);font-variant-numeric:tabular-nums;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
@@ -825,15 +810,10 @@ body.detail-open .content{display:none!important;}
 
   /* 详情页：跟随 body 滚动（同 .content，手机端不做内部滚动容器）*/
   .detail-view.open{overflow:visible;flex:none;min-height:100vh;}
-  /* 返回条粘在视口顶部（列表页的 topbar 此时不渲染，所以 top 就是 0），
-     刘海那圈由它自己的 padding-top 让开 */
-  .dt-nav{position:sticky;top:0;
-    padding:calc(var(--sp-10) + env(safe-area-inset-top)) var(--sp-14) var(--sp-10);
-    box-shadow:0 1px 0 var(--border);}
-  .dt-body{padding-left:var(--sp-14);padding-right:var(--sp-14);}
+  /* 详情页没有顶栏，刘海那圈由第一张卡上面的留白让开 */
+  .dt-body{padding:calc(var(--sp-12) + env(safe-area-inset-top)) var(--sp-14) var(--sp-24);}
   .dt-card{padding:var(--sp-14);}
   .dt-hd{padding:var(--sp-16) var(--sp-14);}
-  .ibt{padding:var(--sp-6) var(--sp-12);}
 
   /* 弹窗 - 手机端全屏 */
   .moverlay{padding:0;align-items:stretch;justify-content:stretch;}
@@ -850,6 +830,25 @@ body.detail-open .content{display:none!important;}
   }
   .mbody{padding:var(--sp-14) var(--sp-20);}
   .mftr{padding:var(--sp-12) var(--sp-20);padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  /* 媒体编辑弹窗：和笔记同一套，从底部升起的抽屉。
+     详情页现在是「点任意一处 → 从底部升起改这一项」，弹窗贴着底边升上来，
+     手指落点和面板出现的地方才是同一侧；整屏盖下来会看不出跟点了哪儿有关。 */
+  /* z-index 120：详情页打开时底栏被提到 115（见 body.detail-open 那条），
+     不越过它的话，从详情页点出来的这张面板底部「取消 / 保存」会被底栏盖住。
+     同 #icsColorModal 的处理。 */
+  #modal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
+  #modal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  #modal .mbox{
+    width:100%;max-width:100%;height:auto;max-height:min(88vh,100%);
+    border-radius:var(--rxl) var(--rxl) 0 0;
+    box-shadow:0 -4px 24px rgba(0,0,0,.18);
+    transform:translateZ(0);            /* 同 #noteModal：安卓 Chrome 的圆角裁剪 */
+  }
+  /* 抽屉顶部小抓手；贴底的面板不需要给刘海让位，把通用规则那份 padding-top 收回来 */
+  #modal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #modal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    width:36px;height:4px;border-radius:2px;background:var(--border);}
+
   /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
   /* padding-bottom:0 覆盖下方为导航条留白的通用规则，让抽屉真正贴到屏幕底边，不悬空 */
   #noteModal.moverlay{align-items:flex-end;justify-content:center;padding-bottom:0;}
@@ -3710,12 +3709,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 
   <!-- ===== DETAIL VIEW：点列表某一行进来，同样与 .content 平级 ===== -->
   <div class="detail-view" id="detailRoot">
-    <div class="dt-nav">
-      <button class="dt-back" onclick="closeDetail()">‹ 返回</button>
-      <span class="sp"></span>
-      <button class="ibt" id="dtEdit" onclick="editDetail()">编辑</button>
-      <button class="ibt del" id="dtDel" onclick="delDetail()">删除</button>
-    </div>
     <div class="dt-body" id="dtBody"></div>
   </div>
 
@@ -9783,7 +9776,9 @@ function render(){
 
 // ── 详情页 ────────────────────────────────────────────────────────
 // 与 .content 平级的同级视图（同日历页），不是浮层：打开时列表整块不渲染。
-let detailId=null;
+// 页面上没有返回按钮——打开时往历史里压一条，退出交给系统返回手势（安卓边缘滑动 /
+// iOS 左缘右滑 / 浏览器后退键）。不压这条的话，在详情页做返回手势会直接退出整个网页。
+let detailId=null, detailPushed=false;
 
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
@@ -9792,15 +9787,41 @@ function openDetail(id){
   document.body.classList.add('detail-open');
   document.getElementById('detailRoot').classList.add('open');
   window.scrollTo(0,0);
+  if(!detailPushed){ try{history.pushState({dt:1},'');}catch(e){} detailPushed=true; }
 }
+// 页面内主动关闭（点分类、进日历……）：把压进去的那条历史一并退掉，
+// 否则用户之后按返回会先「退回一条已经关掉的详情」，白按一次。
 function closeDetail(){
   if(!detailId) return;
+  hideDetail();
+  if(detailPushed){ detailPushed=false; try{history.back();}catch(e){} }
+}
+function hideDetail(){
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
   document.body.classList.remove('detail-open');
 }
-function editDetail(){ if(detailId) openEdit(detailId); }
-function delDetail(){ if(detailId) askDel(detailId); }
+// 系统返回手势 / 后退键：这时历史已经退过了，只收界面，别再 back 一次
+window.addEventListener('popstate',()=>{
+  if(detailId){ detailPushed=false; hideDetail(); }
+});
+
+// 点详情页任意一处 → 从底部升起编辑面板，并聚焦点中的那一项。
+// 正在选文字时不触发：备注是最常想复制的一段，长按选中之后的收尾点击不该弹出编辑。
+function editFromDetail(ev){
+  if(!detailId) return;
+  const sel=window.getSelection&&window.getSelection().toString();
+  if(sel&&sel.length>0) return;
+  const hit=ev.target.closest('[data-edit]');
+  openEdit(detailId);
+  const fid=hit?hit.dataset.edit:'f-name';
+  setTimeout(()=>{
+    const el=document.getElementById(fid);
+    if(!el) return;
+    el.focus({preventScroll:false});
+    if(el.select&&el.tagName==='INPUT'&&el.type==='text') el.select();
+  },80);
+}
 
 // 天数：含首尾两天（7.20 → 8.2 记 14 天里的 13 个整日，这里按「读了 13 天」算）
 function daysBetween(a,b){
@@ -9820,35 +9841,28 @@ function renderDetail(){
   const au=[item.creator,item.year].filter(Boolean).map(esc).join(' · ');
   const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
   const created=fmtCreated(createdAtOf(item));
-  // 时间条：只是「读了多久」的示意，没有起止刻度，所以整条铺满
-  const spanH=days!==null?`<div class="dt-span">
-      <small>${fmtWatchShort(item.startDate)}</small>
-      <span class="bar"><i style="width:100%"></i></span>
-      <small>${fmtWatchShort(item.watchDate)}</small>
-    </div>`:'';
   box.innerHTML=`
-    <div class="dt-card dt-hd">
+    <div class="dt-card dt-hd" onclick="editFromDetail(event)" data-edit="f-name">
       <i class="dt-rule"></i>
       <div class="dt-hdrow">
-        <h2 class="dt-name">${esc(item.name)}</h2>
+        <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
         ${item.score?`<span class="dt-side">${starsHtml(item.score)}</span>`:''}
       </div>
       <div class="dt-hdrow dt-hdrow2">
         <div class="dt-au">${au}</div>
-        <span class="dt-side cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
+        <span class="dt-side cstatus" data-edit="f-status" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
       </div>
     </div>
-    <div class="dt-card">
+    <div class="dt-card" onclick="editFromDetail(event)" data-edit="f-watch">
       <div class="dt-lbl">时间</div>
       <div class="dt-kv">
-        <div><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
-        <div><div class="dt-k">结束</div><div class="dt-v${item.watchDate?' end':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
+        <div data-edit="f-watch-start"><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
+        <div data-edit="f-watch"><div class="dt-k">结束</div><div class="dt-v${item.watchDate?' end':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
         <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
       </div>
-      ${spanH}
     </div>
-    ${item.note?`<div class="dt-card"><div class="dt-lbl">备注</div><div class="dt-note">${esc(item.note)}</div></div>`:''}
-    ${tagsH?`<div class="dt-card"><div class="dt-lbl">标签</div><div class="dt-tags">${tagsH}</div></div>`:''}
+    ${item.note?`<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-note"><div class="dt-lbl">备注</div><div class="dt-note">${esc(item.note)}</div></div>`:''}
+    ${tagsH?`<div class="dt-card" onclick="editFromDetail(event)" data-edit="tinput"><div class="dt-lbl">标签</div><div class="dt-tags">${tagsH}</div></div>`:''}
     ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
 }
 
