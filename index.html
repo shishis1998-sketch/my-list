@@ -10161,7 +10161,7 @@ function renderPeopleEditor(focusIdx,delay){
         <button type="button" class="pe-del" data-del="${i}" aria-label="删掉这一个">✕</button>
       </div>
       <input class="pe-in pe-info" placeholder="信息，比如身份、和主角的关系" value="${esc(p.info)}">
-      <textarea class="pe-in pe-note" rows="1" placeholder="备注，自己想说的（可留空）">${esc(p.note)}</textarea>
+      <textarea class="pe-in pe-note" rows="1" placeholder="可留空">${esc(p.note)}</textarea>
     </div>`).join('')
     +`<button type="button" class="tlseg-add pe-add" id="peAdd">＋ 加一个人</button>`;
   box.querySelectorAll('.pe-note').forEach(t=>{ autosizeTl(t); t.addEventListener('input',()=>autosizeTl(t)); });
