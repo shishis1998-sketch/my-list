@@ -514,26 +514,21 @@ body.detail-open .content{display:none!important;}
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
 .dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
-/* 人物：一行一个人，名字加粗在前、身份跟在后面。名字列不定宽——
-   中文名两到五个字不等，定宽要么挤要么留一大截白，跟着内容走最省地方 */
-/* 人物：两列对齐。左列名字定宽排成一条竖轴，右列是信息 + 这个人的备注，
-   人与人之间一道发丝线。名字超过五个字就折到第二行——截断成「哈伯德太…」
-   省下的那点整齐不值得把字吃掉 */
+/* 人物：分行式。名字独占一行，信息、备注依次往下缩字号、退一档颜色，
+   人与人之间一道发丝线。三行都是整屏宽，谁也不用为了对齐去折行——
+   两列对齐（比稿方案 C）正是折在这一点上 */
 .dt-people{display:flex;flex-direction:column;}
-.dt-pitem{display:flex;gap:var(--sp-12);padding:var(--sp-10) 0;}
+.dt-pitem{padding:var(--sp-12) 0;}
 .dt-pitem+.dt-pitem{border-top:1px solid var(--border-soft);}
 .dt-pitem:first-child{padding-top:0;}
 .dt-pitem:last-child{padding-bottom:0;}
-/* keep-all 把汉字连成一整块（默认中文哪两个字之间都能断），断点交给 nameHtml()
-   插在符号后面的 <wbr>；break-word 兜底：整块没符号、一行又塞不下时才按字断 */
-/* min-width:0 是必需的：flex 项默认最小宽＝内容宽，keep-all 之下「阿巴思诺特上校」
-   这种没符号的整块会把这一列撑开、把右边那列顶歪，竖轴就断了 */
-.dt-pname{flex:0 0 5em;min-width:0;font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
-  line-height:var(--lh-normal);word-break:keep-all;overflow-wrap:break-word;}
-.dt-pcol{flex:1;min-width:0;}
-.dt-pdesc{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-normal);}
+/* keep-all：名字真长到要折行时，断点交给 nameHtml() 插在符号处，不按字硬切 */
+.dt-pname{font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
+  line-height:var(--lh-tight);word-break:keep-all;overflow-wrap:break-word;}
+.dt-pdesc{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-normal);
+  margin-top:var(--sp-2);}
 .dt-pnote{font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-normal);
-  white-space:pre-wrap;margin-top:var(--sp-2);}
+  white-space:pre-wrap;margin-top:var(--sp-4);}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .dt-tags .ctag{margin:0;}
 /* 视图切换：概览 / 备注 / 时间线。控件本体直接复用日历页那颗胶囊分段器
@@ -10002,16 +9997,15 @@ function nameHtml(s){
   }
   return out;
 }
-// 排版走「两列对齐」（见 docs/people-card-layouts.html 方案 C）：名字固定一列，
-// 信息和备注在右边自成一栏。名字排成一条竖轴，找某个人时眼睛不用左右扫。
+// 排版走「分行式」（见 docs/people-card-layouts.html 方案 B）：名字独占一行，
+// 信息、备注依次往下缩字号，人与人之间一道发丝线。三栏各写多长都不打架，
+// 名字也不用为了对齐去折行——两列对齐（方案 C）就是折在这一点上。
 function renderPeople(list){
   return `<div class="dt-people">${list.map(p=>
     `<div class="dt-pitem">
       <div class="dt-pname">${nameHtml(p.name)}</div>
-      <div class="dt-pcol">
-        ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
-        ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
-      </div>
+      ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
+      ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
     </div>`).join('')}</div>`;
 }
 
