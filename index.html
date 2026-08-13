@@ -524,8 +524,12 @@ body.detail-open .content{display:none!important;}
 .dt-pitem+.dt-pitem{border-top:1px solid var(--border-soft);}
 .dt-pitem:first-child{padding-top:0;}
 .dt-pitem:last-child{padding-bottom:0;}
-.dt-pname{flex:0 0 5em;font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
-  line-height:var(--lh-normal);overflow-wrap:anywhere;}
+/* keep-all 把汉字连成一整块（默认中文哪两个字之间都能断），断点交给 nameHtml()
+   插在符号后面的 <wbr>；break-word 兜底：整块没符号、一行又塞不下时才按字断 */
+/* min-width:0 是必需的：flex 项默认最小宽＝内容宽，keep-all 之下「阿巴思诺特上校」
+   这种没符号的整块会把这一列撑开、把右边那列顶歪，竖轴就断了 */
+.dt-pname{flex:0 0 5em;min-width:0;font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
+  line-height:var(--lh-normal);word-break:keep-all;overflow-wrap:break-word;}
 .dt-pcol{flex:1;min-width:0;}
 .dt-pdesc{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-normal);}
 .dt-pnote{font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-normal);
@@ -9983,12 +9987,27 @@ function normPeople(v){
 function peopleText(v){
   return normPeople(v).map(p=>[p.name,p.info,p.note].filter(Boolean).join('：')).join('\n');
 }
+// 名字太长要折行时，只在符号后面断：「玛丽·德贝纳姆」断成「玛丽· / 德贝纳姆」，
+// 而不是数着宽度切成「玛丽·德贝 / 纳姆」。做法是给每个符号后面塞一个 <wbr>（零宽断点），
+// 配合 CSS 的 word-break:keep-all 把汉字连成整块。什么符号都算——中点、连字符、
+// 括号、点号都行，反正断在符号后面读着都对。整块没符号又塞不下时才退回按字断。
+// 只有开括号 / 前引号反过来——断点插在它前面，不然行尾会孤零零挂一个「（」。
+function nameHtml(s){
+  let out='';
+  for(const ch of String(s||'')){
+    const open=/[\p{Ps}\p{Pi}]/u.test(ch);
+    if(open) out+='<wbr>';
+    out+=esc(ch);
+    if(!open&&/[\p{P}\p{S}]/u.test(ch)) out+='<wbr>';
+  }
+  return out;
+}
 // 排版走「两列对齐」（见 docs/people-card-layouts.html 方案 C）：名字固定一列，
 // 信息和备注在右边自成一栏。名字排成一条竖轴，找某个人时眼睛不用左右扫。
 function renderPeople(list){
   return `<div class="dt-people">${list.map(p=>
     `<div class="dt-pitem">
-      <div class="dt-pname">${esc(p.name)}</div>
+      <div class="dt-pname">${nameHtml(p.name)}</div>
       <div class="dt-pcol">
         ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
         ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
