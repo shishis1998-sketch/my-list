@@ -1692,6 +1692,21 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlseg-add:active{background:var(--tint);border-color:var(--accent-mid);}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
+/* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
+/* 复用 .tlsheet 的滑起/下拉/遮罩，只多一行标题右侧的「完成」和一块铺满的输入框 */
+.tlsheet-hdrow{display:flex;align-items:center;gap:var(--sp-12);}
+.tlsheet-hdrow .tlsheet-title{flex:1;min-width:0;}
+.notesheet-done{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:700;color:var(--on-accent);
+  background:var(--on-accent-faint);border:0;border-radius:999px;padding:5px 14px;cursor:pointer;
+  touch-action:manipulation;}
+.notesheet-done:active{opacity:.7;}
+/* 备注是一整段话，不像章节要拆段，直接给一块够写的输入框 */
+.notesheet-ta{width:100%;min-height:34vh;font-family:var(--zh);font-size:var(--fs-input);
+  line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);
+  border:1.5px solid var(--border);border-radius:var(--r);padding:var(--sp-10) var(--sp-12);
+  outline:none;resize:none;transition:border-color .15s,box-shadow .15s;}
+.notesheet-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
 #tlEditModal .mhdr{flex:0 0 auto;margin:0;padding:var(--sp-20) var(--sp-24) var(--sp-14);background:var(--surface);}
@@ -4348,6 +4363,21 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="tlsheet-title" id="tlSheetTitle"></div>
   </div>
   <div class="tlsheet-body" id="tlSheetBody"></div>
+</div>
+
+<!-- ===== 备注底部弹窗（详情页点备注卡打开，直接可编辑，关闭即保存） ===== -->
+<div class="tlsheet-mask" id="noteSheetMask" onclick="closeNoteSheet()"></div>
+<div class="tlsheet" id="noteSheet" role="dialog" aria-modal="true" aria-label="编辑备注">
+  <div class="tlsheet-head" id="noteSheetHead">
+    <div class="tlsheet-grip"></div>
+    <div class="tlsheet-hdrow">
+      <div class="tlsheet-title" id="noteSheetTitle">备注</div>
+      <button type="button" class="notesheet-done" onclick="closeNoteSheet()">完成</button>
+    </div>
+  </div>
+  <div class="tlsheet-body">
+    <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
+  </div>
 </div>
 
 <!-- ===== NOTE SUBCATS MANAGER ===== -->
@@ -9864,12 +9894,20 @@ function closeDetail(){
   if(detailPushed){ detailPushed=false; try{history.back();}catch(e){} }
 }
 function hideDetail(){
+  if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
   document.body.classList.remove('detail-open');
 }
 // 系统返回手势 / 后退键：这时历史已经退过了，只收界面，别再 back 一次
 window.addEventListener('popstate',()=>{
+  // 备注抽屉开着：这一下返回只收抽屉（内容照存），详情页留着——
+  // 抽屉开的时候用户想退的是抽屉。详情那条历史刚被这一下吃掉，补压回去。
+  if(noteSheetId!=null){
+    closeNoteSheet();
+    if(detailId&&detailPushed){ try{history.pushState({dt:1},'');}catch(e){} }
+    return;
+  }
   if(detailId){ detailPushed=false; hideDetail(); }
 });
 
@@ -9888,6 +9926,15 @@ function editFromDetail(ev){
     el.focus({preventScroll:false});
     if(el.select&&el.tagName==='INPUT'&&el.type==='text') el.select();
   },80);
+}
+
+// 点备注卡 → 只弹备注这一栏的编辑抽屉（见 openNoteSheet），不再端出整张表单。
+// 选文字时不触发，理由同 editFromDetail：备注是最常被长按复制的一段。
+function tapNoteCard(ev){
+  if(!detailId) return;
+  const sel=window.getSelection&&window.getSelection().toString();
+  if(sel&&sel.length>0) return;
+  openNoteSheet(detailId);
 }
 
 // 天数：含首尾两天（7.20 → 8.2 记 14 天里的 13 个整日，这里按「读了 13 天」算）
@@ -9944,7 +9991,7 @@ function renderDetail(){
       </div>`:''}
 
     ${dtTab==='note'?`
-      <div class="dt-card" onclick="editFromDetail(event)" data-edit="f-note">
+      <div class="dt-card" onclick="tapNoteCard(event)" data-edit="f-note">
         <div class="dt-lbl">备注</div>
         ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
       </div>`:''}
@@ -10005,6 +10052,71 @@ function renderDetailTL(item){
 function openDetailChapter(idx){
   tlHostMedia=detailId; tlCurId=null;
   openChapterSheet(idx);
+}
+
+// ── 备注底部弹窗：详情页点备注卡打开，直接可编辑，关闭即保存 ────────
+// 备注是最常回头改的一栏。走 editFromDetail 会把名称/时间/评分/标签整张表单端出来，
+// 改一行字得先在一屏控件里找到备注框；这里只端备注本身，交互沿用章节抽屉那套滑起。
+let noteSheetId=null, noteSheetOrig='', noteSheetDragInit=false;
+function openNoteSheet(id){
+  const it=data.find(d=>d.id===(id!=null?id:detailId));
+  if(!it) return;
+  noteSheetId=it.id; noteSheetOrig=it.note||'';
+  const ta=document.getElementById('noteSheetTa');
+  ta.value=noteSheetOrig;
+  const sheet=document.getElementById('noteSheet');
+  sheet.classList.remove('dragging'); sheet.style.transform='';
+  document.getElementById('noteSheetMask').classList.add('show');
+  requestAnimationFrame(()=>sheet.classList.add('show'));
+  initNoteSheetDrag();
+  // 点进来就是要写字，直接进输入态；等滑起动画走完再聚焦，免得键盘和动画抢位置
+  setTimeout(()=>{
+    if(noteSheetId==null) return;
+    ta.focus({preventScroll:true});
+    try{ ta.selectionStart=ta.selectionEnd=ta.value.length; }catch(_){}
+  },260);
+}
+// 落盘（关闭前走一遍）；没改动就什么都不做，不弹「已保存」
+function commitNoteSheet(){
+  if(noteSheetId==null) return;
+  const ta=document.getElementById('noteSheetTa');
+  const v=(ta?ta.value:'').trim();
+  if(v===noteSheetOrig) return;
+  const it=data.find(d=>d.id===noteSheetId);
+  if(!it) return;
+  it.note=v; noteSheetOrig=v;
+  persist();
+  if(detailId) renderDetail();
+  render();
+  toast('已保存');
+}
+function closeNoteSheet(){
+  if(noteSheetId==null) return;
+  commitNoteSheet();
+  const ta=document.getElementById('noteSheetTa');
+  if(ta) ta.blur();                       // 先收键盘，再让抽屉滑下去
+  document.getElementById('noteSheetMask').classList.remove('show');
+  document.getElementById('noteSheet').classList.remove('show');
+  noteSheetId=null;
+}
+// 下拉标题带关闭（同章节抽屉：松手超过阈值即关，含自动保存）
+function initNoteSheetDrag(){
+  if(noteSheetDragInit) return; noteSheetDragInit=true;
+  const head=document.getElementById('noteSheetHead'),
+        sheet=document.getElementById('noteSheet'),
+        mask=document.getElementById('noteSheetMask');
+  let sy=null,dy=0,drag=false;
+  head.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.notesheet-done')) return;   // 「完成」按钮不参与下拉，否则指针捕获会吃掉这一下点击
+    sy=e.clientY;dy=0;drag=true;
+    sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
+  head.addEventListener('pointermove',e=>{if(!drag)return;dy=Math.max(0,e.clientY-sy);
+    sheet.style.transform='translateY('+dy+'px)';mask.style.opacity=String(Math.max(0,1-dy/300));});
+  const end=()=>{if(!drag)return;drag=false;sheet.classList.remove('dragging');
+    sheet.style.transform='';mask.style.opacity='';
+    if(dy>100) closeNoteSheet();};
+  head.addEventListener('pointerup',end);
+  head.addEventListener('pointercancel',end);
 }
 
 function renderStats(){
