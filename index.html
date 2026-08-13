@@ -514,17 +514,21 @@ body.detail-open .content{display:none!important;}
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
 .dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
-/* 人物：一行一个人，名字加粗在前、身份跟在后面。名字列不定宽——
-   中文名两到五个字不等，定宽要么挤要么留一大截白，跟着内容走最省地方 */
-.dt-people{display:flex;flex-direction:column;gap:var(--sp-10);}
-.dt-prow{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp-2) var(--sp-8);
-  font-size:var(--fs-body);line-height:var(--lh-normal);}
-.dt-pname{font-weight:700;color:var(--text-primary);}
-.dt-pdesc{color:var(--text-secondary);flex:1;min-width:0;}
-/* 这个人的备注：自己写的话，另起一行、退一格，和身份那行区分开 */
-.dt-pnote{font-size:var(--fs-sub);color:var(--text-muted);line-height:var(--lh-normal);
-  white-space:pre-wrap;margin-top:var(--sp-2);padding-left:var(--sp-10);
-  border-left:2px solid var(--border-soft);}
+/* 人物：分行式。名字独占一行，信息、备注依次往下缩字号、退一档颜色，
+   人与人之间一道发丝线。三行都是整屏宽，谁也不用为了对齐去折行——
+   两列对齐（比稿方案 C）正是折在这一点上 */
+.dt-people{display:flex;flex-direction:column;}
+.dt-pitem{padding:var(--sp-12) 0;}
+.dt-pitem+.dt-pitem{border-top:1px solid var(--border-soft);}
+.dt-pitem:first-child{padding-top:0;}
+.dt-pitem:last-child{padding-bottom:0;}
+/* keep-all：名字真长到要折行时，断点交给 nameHtml() 插在符号处，不按字硬切 */
+.dt-pname{font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
+  line-height:var(--lh-tight);word-break:keep-all;overflow-wrap:break-word;}
+.dt-pdesc{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-normal);
+  margin-top:var(--sp-2);}
+.dt-pnote{font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-normal);
+  white-space:pre-wrap;margin-top:var(--sp-4);}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .dt-tags .ctag{margin:0;}
 /* 视图切换：概览 / 备注 / 时间线。控件本体直接复用日历页那颗胶囊分段器
@@ -9978,10 +9982,29 @@ function normPeople(v){
 function peopleText(v){
   return normPeople(v).map(p=>[p.name,p.info,p.note].filter(Boolean).join('：')).join('\n');
 }
+// 名字太长要折行时，只在符号后面断：「玛丽·德贝纳姆」断成「玛丽· / 德贝纳姆」，
+// 而不是数着宽度切成「玛丽·德贝 / 纳姆」。做法是给每个符号后面塞一个 <wbr>（零宽断点），
+// 配合 CSS 的 word-break:keep-all 把汉字连成整块。什么符号都算——中点、连字符、
+// 括号、点号都行，反正断在符号后面读着都对。整块没符号又塞不下时才退回按字断。
+// 只有开括号 / 前引号反过来——断点插在它前面，不然行尾会孤零零挂一个「（」。
+function nameHtml(s){
+  let out='';
+  for(const ch of String(s||'')){
+    const open=/[\p{Ps}\p{Pi}]/u.test(ch);
+    if(open) out+='<wbr>';
+    out+=esc(ch);
+    if(!open&&/[\p{P}\p{S}]/u.test(ch)) out+='<wbr>';
+  }
+  return out;
+}
+// 排版走「分行式」（见 docs/people-card-layouts.html 方案 B）：名字独占一行，
+// 信息、备注依次往下缩字号，人与人之间一道发丝线。三栏各写多长都不打架，
+// 名字也不用为了对齐去折行——两列对齐（方案 C）就是折在这一点上。
 function renderPeople(list){
   return `<div class="dt-people">${list.map(p=>
     `<div class="dt-pitem">
-      <div class="dt-prow">${p.name?`<span class="dt-pname">${esc(p.name)}</span>`:''}${p.info?`<span class="dt-pdesc">${esc(p.info)}</span>`:''}</div>
+      <div class="dt-pname">${nameHtml(p.name)}</div>
+      ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
       ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
     </div>`).join('')}</div>`;
 }

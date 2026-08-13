@@ -1,0 +1,318 @@
+<title>人物卡排版比稿</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   文稿外壳：沿用 docs/ 已有的「图版」语汇（纸色 + 发丝线 + 等宽眉标）
+   屏幕内部：直接搬 index.html 的 :root token，保证示意图＝真机观感
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3; --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4;
+  --stage:#EDEDE7;
+  /* App（= index.html 浅色 token） */
+  --a-bg:#F7F7F5; --a-surface:#FFFFFF; --a-surface2:#F2F2F0;
+  --a-border:#ECECEA; --a-border-soft:#F2F2F0;
+  --a-t1:#1A1A1A; --a-t2:#6B6B6B; --a-t3:#9B9B9B;
+  --a-accent:#2B4D3F; --a-accent-light:#E8EEEB; --a-on-accent:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+    --stage:#15151A;
+    --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+    --a-border:#2E2E33; --a-border-soft:#26262A;
+    --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+    --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-on-accent:#10201A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+  --stage:#15151A;
+  --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+  --a-border:#2E2E33; --a-border-soft:#26262A;
+  --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+  --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-on-accent:#10201A;
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:52px 20px 100px;display:flex;flex-direction:column;gap:46px;}
+
+/* ── 页头 ── */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+.kicker{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.2em;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-family:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+  font-size:clamp(30px,5.4vw,44px);line-height:1.15;margin:0 0 10px;letter-spacing:.02em;text-wrap:balance;font-weight:600;}
+.masthead p{margin:0;color:var(--ink-2);max-width:72ch;}
+
+/* ── 比稿网格 ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:34px;}
+.spec{display:flex;flex-direction:column;gap:12px;}
+.spec h2{font-size:17px;margin:0;letter-spacing:.02em;display:flex;align-items:baseline;gap:10px;}
+.spec h2 .no{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.14em;
+  color:var(--dim);border:1px solid var(--dim);border-radius:2px;padding:2px 6px;}
+.spec .why{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.65;}
+.spec .why b{color:var(--ink);font-weight:600;}
+.tradeoff{margin:0;font-size:12.5px;color:var(--ink-3);line-height:1.6;
+  border-left:2px solid var(--hair);padding-left:10px;}
+
+/* ── 手机舞台：卡片直接用 App 的 token 画 ── */
+.stage{background:var(--stage);border:1px solid var(--hair);border-radius:4px;padding:18px 16px;}
+.screen{background:var(--a-bg);border-radius:10px;padding:12px;}
+.seclbl{font-size:15px;font-weight:700;color:var(--a-t2);line-height:1.3;padding-left:2px;margin-bottom:6px;}
+.card{background:var(--a-surface);border:1px solid var(--a-border);border-radius:14px;padding:14px 16px;}
+
+/* A 现在这版 */
+.a-list{display:flex;flex-direction:column;gap:10px;}
+.a-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:14px;line-height:1.45;}
+.a-name{font-weight:700;color:var(--a-t1);}
+.a-info{color:var(--a-t2);}
+.a-note{font-size:13px;color:var(--a-t3);line-height:1.45;margin-top:2px;
+  padding-left:10px;border-left:2px solid var(--a-border-soft);}
+
+/* B 分行 + 发丝线 */
+.b-item{padding:11px 0;border-top:1px solid var(--a-border-soft);}
+.b-item:first-child{border-top:0;padding-top:0;}
+.b-item:last-child{padding-bottom:0;}
+.b-name{font-size:15px;font-weight:700;color:var(--a-t1);line-height:1.35;}
+.b-info{font-size:13.5px;color:var(--a-t2);margin-top:3px;line-height:1.45;}
+.b-note{font-size:12.5px;color:var(--a-t3);margin-top:4px;line-height:1.5;}
+
+/* C 两列对齐 */
+.c-item{display:flex;gap:12px;padding:9px 0;}
+.c-item+.c-item{border-top:1px solid var(--a-border-soft);}
+.c-item:first-child{padding-top:0;}
+.c-item:last-child{padding-bottom:0;}
+.c-name{flex:0 0 4.6em;font-size:14px;font-weight:700;color:var(--a-t1);line-height:1.45;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.c-col{flex:1;min-width:0;}
+.c-info{font-size:14px;color:var(--a-t2);line-height:1.45;}
+.c-note{font-size:12.5px;color:var(--a-t3);line-height:1.5;margin-top:3px;}
+
+/* D 首字圆点 */
+.d-item{display:flex;gap:11px;align-items:flex-start;padding:9px 0;}
+.d-item:first-child{padding-top:0;}
+.d-item:last-child{padding-bottom:0;}
+.d-av{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--a-accent-light);
+  color:var(--a-accent);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  margin-top:1px;}
+.d-col{flex:1;min-width:0;}
+.d-name{font-size:14px;font-weight:700;color:var(--a-t1);line-height:1.4;}
+.d-info{font-size:13px;color:var(--a-t2);line-height:1.45;}
+.d-note{font-size:12.5px;color:var(--a-t3);line-height:1.5;margin-top:2px;}
+
+/* E 胶囊名 */
+.e-list{display:flex;flex-direction:column;gap:10px;}
+.e-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.e-chip{display:inline-flex;align-items:center;height:24px;padding:0 11px;border-radius:999px;
+  background:var(--a-surface2);color:var(--a-t1);font-size:13px;font-weight:600;line-height:1;white-space:nowrap;}
+.e-info{font-size:13.5px;color:var(--a-t2);line-height:1.45;}
+.e-note{font-size:12.5px;color:var(--a-t3);line-height:1.5;margin-top:4px;padding-left:2px;}
+
+/* F 备注当引用块 */
+.f-item+.f-item{margin-top:12px;}
+.f-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:14px;line-height:1.45;}
+.f-name{font-weight:700;color:var(--a-t1);}
+.f-info{color:var(--a-t2);}
+.f-note{margin-top:6px;background:var(--a-surface2);border-radius:8px;padding:8px 10px;
+  font-size:12.5px;color:var(--a-t2);line-height:1.55;}
+
+/* ── 尾注 ── */
+.notes{border-top:1px solid var(--hair);padding-top:22px;display:flex;flex-direction:column;gap:16px;}
+.notes h3{font-size:16px;margin:0;letter-spacing:.02em;}
+.nitem{display:flex;gap:12px;align-items:flex-start;}
+.nitem .tag{flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 7px;margin-top:3px;white-space:nowrap;}
+.nitem p{margin:0;color:var(--ink-2);font-size:14px;max-width:70ch;}
+.nitem p b{color:var(--ink);font-weight:600;}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;background:var(--chip);
+  border-radius:2px;padding:1px 5px;color:var(--ink);}
+</style>
+
+<div class="wrap">
+
+<div class="masthead">
+  <p class="kicker">DETAIL / 人物卡</p>
+  <h1>人物卡排版比稿</h1>
+  <p>同一批人物数据（四个人，两个带备注），六种排法。屏幕内部用的是 index.html 里那套浅色 token，
+     所以这里看到的间距、字号、颜色就是真机上的样子。A 是现在线上这版。</p>
+</div>
+
+<div class="grid">
+
+  <!-- A -->
+  <section class="spec">
+    <h2><span class="no">A</span>现在这版 · 名字接信息</h2>
+    <div class="stage"><div class="screen">
+      <div class="seclbl">人物</div>
+      <div class="card"><div class="a-list">
+        <div>
+          <div class="a-row"><span class="a-name">波洛</span><span class="a-info">比利时侦探</span></div>
+          <div class="a-note">八字胡，秩序癖；这次是搭车回国顺手办案</div>
+        </div>
+        <div><div class="a-row"><span class="a-name">鲍克先生</span><span class="a-info">国际客车公司董事</span></div></div>
+        <div>
+          <div class="a-row"><span class="a-name">雷切特</span><span class="a-info">化名的绑架犯，死者</span></div>
+          <div class="a-note">第一晚就被捅了十二刀</div>
+        </div>
+        <div><div class="a-row"><span class="a-name">哈伯德太太</span><span class="a-info">美国人，话很多</span></div></div>
+      </div></div>
+    </div></div>
+    <p class="why">名字和信息挤在一行，备注退一格、挂一条竖线。<b>最省高度</b>，四个人只占四五行。</p>
+    <p class="tradeoff">名字长短不一，左边那列看着是毛的；信息一长就折行，折下来的半句和名字对不齐。</p>
+  </section>
+
+  <!-- B -->
+  <section class="spec">
+    <h2><span class="no">B</span>分行式 · 每人三行</h2>
+    <div class="stage"><div class="screen">
+      <div class="seclbl">人物</div>
+      <div class="card">
+        <div class="b-item">
+          <div class="b-name">波洛</div>
+          <div class="b-info">比利时侦探</div>
+          <div class="b-note">八字胡，秩序癖；这次是搭车回国顺手办案</div>
+        </div>
+        <div class="b-item">
+          <div class="b-name">鲍克先生</div>
+          <div class="b-info">国际客车公司董事</div>
+        </div>
+        <div class="b-item">
+          <div class="b-name">雷切特</div>
+          <div class="b-info">化名的绑架犯，死者</div>
+          <div class="b-note">第一晚就被捅了十二刀</div>
+        </div>
+        <div class="b-item">
+          <div class="b-name">哈伯德太太</div>
+          <div class="b-info">美国人，话很多</div>
+        </div>
+      </div>
+    </div></div>
+    <p class="why">名字独占一行，信息、备注依次往下缩字号，人与人之间一道发丝线。
+       <b>三栏各归各位</b>，写多长都不打架。</p>
+    <p class="tradeoff">最占高度：人一多就得滑好几屏。适合每人都写满三栏的用法。</p>
+  </section>
+
+  <!-- C -->
+  <section class="spec">
+    <h2><span class="no">C</span>两列对齐 · 名字成轴</h2>
+    <div class="stage"><div class="screen">
+      <div class="seclbl">人物</div>
+      <div class="card">
+        <div class="c-item"><div class="c-name">波洛</div>
+          <div class="c-col"><div class="c-info">比利时侦探</div>
+            <div class="c-note">八字胡，秩序癖；这次是搭车回国顺手办案</div></div></div>
+        <div class="c-item"><div class="c-name">鲍克先生</div>
+          <div class="c-col"><div class="c-info">国际客车公司董事</div></div></div>
+        <div class="c-item"><div class="c-name">雷切特</div>
+          <div class="c-col"><div class="c-info">化名的绑架犯，死者</div>
+            <div class="c-note">第一晚就被捅了十二刀</div></div></div>
+        <div class="c-item"><div class="c-name">哈伯德太太</div>
+          <div class="c-col"><div class="c-info">美国人，话很多</div></div></div>
+      </div>
+    </div></div>
+    <p class="why">名字固定一列（约五个字宽），信息和备注在右边自己成一栏。
+       <b>左边是条直线</b>，扫名字最快，也是详情页「开始 / 结束 / 用时」那套 kv 的同一语汇。</p>
+    <p class="tradeoff">超过五个字的名字要截断成「哈伯德太…」；右边的可用宽度也窄了一截。</p>
+  </section>
+
+  <!-- D -->
+  <section class="spec">
+    <h2><span class="no">D</span>首字圆点 · 联系人式</h2>
+    <div class="stage"><div class="screen">
+      <div class="seclbl">人物</div>
+      <div class="card">
+        <div class="d-item"><div class="d-av">波</div>
+          <div class="d-col"><div class="d-name">波洛</div><div class="d-info">比利时侦探</div>
+            <div class="d-note">八字胡，秩序癖；这次是搭车回国顺手办案</div></div></div>
+        <div class="d-item"><div class="d-av">鲍</div>
+          <div class="d-col"><div class="d-name">鲍克先生</div><div class="d-info">国际客车公司董事</div></div></div>
+        <div class="d-item"><div class="d-av">雷</div>
+          <div class="d-col"><div class="d-name">雷切特</div><div class="d-info">化名的绑架犯，死者</div>
+            <div class="d-note">第一晚就被捅了十二刀</div></div></div>
+        <div class="d-item"><div class="d-av">哈</div>
+          <div class="d-col"><div class="d-name">哈伯德太太</div><div class="d-info">美国人，话很多</div></div></div>
+      </div>
+    </div></div>
+    <p class="why">左边一个圆点写名字头一个字，右边三行文字。<b>看着最像「一个个人」</b>，
+       一屏里数得清有几位。</p>
+    <p class="tradeoff">这套 App 通篇是纯文字审美，圆点是唯一的图形元素，可能显得吵；圆点还吃掉 40px 宽。</p>
+  </section>
+
+  <!-- E -->
+  <section class="spec">
+    <h2><span class="no">E</span>胶囊名 · 借标签的语汇</h2>
+    <div class="stage"><div class="screen">
+      <div class="seclbl">人物</div>
+      <div class="card"><div class="e-list">
+        <div>
+          <div class="e-row"><span class="e-chip">波洛</span><span class="e-info">比利时侦探</span></div>
+          <div class="e-note">八字胡，秩序癖；这次是搭车回国顺手办案</div>
+        </div>
+        <div class="e-row"><span class="e-chip">鲍克先生</span><span class="e-info">国际客车公司董事</span></div>
+        <div>
+          <div class="e-row"><span class="e-chip">雷切特</span><span class="e-info">化名的绑架犯，死者</span></div>
+          <div class="e-note">第一晚就被捅了十二刀</div>
+        </div>
+        <div class="e-row"><span class="e-chip">哈伯德太太</span><span class="e-info">美国人，话很多</span></div>
+      </div></div>
+    </div></div>
+    <p class="why">名字做成胶囊，和概览栏的标签是同一个零件。<b>名字边界最清楚</b>，
+       长名字短名字都不会和后面的信息糊在一起。</p>
+    <p class="tradeoff">胶囊在这个 App 里代表「标签」（可筛选的东西），拿来装人名可能引起误会；行高也被撑到 24px。</p>
+  </section>
+
+  <!-- F -->
+  <section class="spec">
+    <h2><span class="no">F</span>备注当引用块</h2>
+    <div class="stage"><div class="screen">
+      <div class="seclbl">人物</div>
+      <div class="card">
+        <div class="f-item">
+          <div class="f-head"><span class="f-name">波洛</span><span class="f-info">比利时侦探</span></div>
+          <div class="f-note">八字胡，秩序癖；这次是搭车回国顺手办案</div>
+        </div>
+        <div class="f-item">
+          <div class="f-head"><span class="f-name">鲍克先生</span><span class="f-info">国际客车公司董事</span></div>
+        </div>
+        <div class="f-item">
+          <div class="f-head"><span class="f-name">雷切特</span><span class="f-info">化名的绑架犯，死者</span></div>
+          <div class="f-note">第一晚就被捅了十二刀</div>
+        </div>
+        <div class="f-item">
+          <div class="f-head"><span class="f-name">哈伯德太太</span><span class="f-info">美国人，话很多</span></div>
+        </div>
+      </div>
+    </div></div>
+    <p class="why">头一行还是 A 的样子，备注换成一块浅底色的引用块。
+       <b>备注写得长也不乱</b>，一眼能分清哪句是身份、哪句是自己写的。</p>
+    <p class="tradeoff">底色块比竖线重，只有一两条备注时整张卡显得斑驳；备注多的人越多越好看。</p>
+  </section>
+
+</div>
+
+<div class="notes">
+  <h3>几句取舍</h3>
+  <div class="nitem"><span class="tag">密度</span>
+    <p>从省地方到占地方：<b>A ＜ F ≈ E ＜ C ＜ D ＜ B</b>。人物一般三五个，密度不是硬约束；
+       真要记满一车厢（东方快车十三个嫌疑人）时 A 和 C 才明显占便宜。</p></div>
+  <div class="nitem"><span class="tag">扫读</span>
+    <p>想「快速找到某个人」，<b>C</b> 最好——名字在同一条竖轴上，眼睛不用左右找。
+       想「一个人一个人读过去」，<b>B</b> 最好。</p></div>
+  <div class="nitem"><span class="tag">调性</span>
+    <p>App 通篇是纯文字、发丝线、无图形的路子，<b>B / C / F</b> 最贴；
+       <b>D</b> 的圆点和 <b>E</b> 的胶囊都会给这一栏加一个别处没有的视觉零件。</p></div>
+  <div class="nitem"><span class="tag">改动</span>
+    <p>六种都只动 <code>renderPeople()</code> 和几条 CSS，数据结构 <code>{name, info, note}</code> 不变，
+       编辑弹窗也不用动。换哪套都是十几行的事，随时可以再换。</p></div>
+</div>
+
+</div>
