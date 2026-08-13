@@ -493,9 +493,15 @@ body.detail-open .content{display:none!important;}
   font-size:var(--fs-sub);font-weight:600;color:var(--accent);padding:var(--sp-4) 0;
   display:inline-flex;align-items:center;gap:var(--sp-4);}
 .dt-nav .sp{flex:1;}
-/* 详情正文：一张白卡从头铺到尾，节与节之间一条发丝线 */
-.dt-body{background:var(--surface);}
-.dt-hd{padding:var(--sp-20) var(--sp-16) var(--sp-16);border-bottom:1px solid var(--border-soft);}
+/* 详情正文：一节一张卡，浮在页面底色上（卡的描边圆角与列表页 .twrap 同一套）。
+   分节靠卡与卡之间的空隙，不再需要发丝线；没填备注/标签的条目直接少一张卡，
+   不会像原来那样留下一段空白的节。 */
+.dt-body{display:flex;flex-direction:column;gap:var(--sp-10);
+  padding:var(--sp-12) var(--sp-16) var(--sp-24);}
+.dt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
+  padding:var(--sp-14) var(--sp-16);}
+/* 头部卡：书名要有喘气的地方，上下比其余卡各多 2 */
+.dt-hd{padding:var(--sp-16);}
 /* 主题色短线：整页唯一的装饰，跟着「设置 › 外观」的主题色走 */
 .dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
 /* 头部两行两列：左边书名 / 作者，右边评分 / 状态。
@@ -506,7 +512,6 @@ body.detail-open .content{display:none!important;}
 .dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
 .dt-au{font-size:var(--fs-sub);color:var(--text-secondary);flex:1;min-width:0;}
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
-.dt-sec{padding:var(--sp-14) var(--sp-16);border-bottom:1px solid var(--border-soft);}
 .dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 /* 时间：开始 / 结束 / 用时 三列 */
 .dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
@@ -523,7 +528,8 @@ body.detail-open .content{display:none!important;}
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .dt-tags .ctag{margin:0;}
-.dt-foot{padding:var(--sp-14) var(--sp-16);font-size:var(--fs-foot);color:var(--text-muted);
+/* 首次添加：卡外的一行小字，够得着但不占一张卡 */
+.dt-foot{padding:var(--sp-2) var(--sp-4);font-size:var(--fs-foot);color:var(--text-muted);
   font-family:var(--en);font-variant-numeric:tabular-nums;}
 
 /* ===== MODAL ===== */
@@ -824,8 +830,9 @@ body.detail-open .content{display:none!important;}
   .dt-nav{position:sticky;top:0;
     padding:calc(var(--sp-10) + env(safe-area-inset-top)) var(--sp-14) var(--sp-10);
     box-shadow:0 1px 0 var(--border);}
-  .dt-hd{padding:var(--sp-20) var(--sp-14) var(--sp-16);}
-  .dt-sec,.dt-foot{padding-left:var(--sp-14);padding-right:var(--sp-14);}
+  .dt-body{padding-left:var(--sp-14);padding-right:var(--sp-14);}
+  .dt-card{padding:var(--sp-14);}
+  .dt-hd{padding:var(--sp-16) var(--sp-14);}
   .ibt{padding:var(--sp-6) var(--sp-12);}
 
   /* 弹窗 - 手机端全屏 */
@@ -2044,10 +2051,9 @@ mark.shl{
 /* —— 列表容器：圆角 + 描边（电脑端双栏）—— */
 @media(min-width:1025px) and (pointer:fine){
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
-  /* 详情正文：宽屏上收成一张居中的卡，行长控制在 60 字上下，别横铺满整屏 */
-  .dt-body{max-width:760px;margin:var(--sp-20) auto var(--sp-24);border-radius:var(--rlg);
-    overflow:hidden;box-shadow:var(--pop-sm);}
-  .dt-body>*:last-child{border-bottom:none;}
+  /* 详情正文：宽屏上收窄居中，行长控制在 60 字上下，别横铺满整屏 */
+  .dt-body{max-width:760px;margin:0 auto;padding-top:var(--sp-20);}
+  .dt-card{box-shadow:var(--pop-sm);}
 }
 
 /* —— 标签胶囊：圆 + 无描边 —— */
@@ -9821,7 +9827,7 @@ function renderDetail(){
       <small>${fmtWatchShort(item.watchDate)}</small>
     </div>`:'';
   box.innerHTML=`
-    <div class="dt-hd">
+    <div class="dt-card dt-hd">
       <i class="dt-rule"></i>
       <div class="dt-hdrow">
         <h2 class="dt-name">${esc(item.name)}</h2>
@@ -9832,7 +9838,7 @@ function renderDetail(){
         <span class="dt-side cstatus" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
       </div>
     </div>
-    <div class="dt-sec">
+    <div class="dt-card">
       <div class="dt-lbl">时间</div>
       <div class="dt-kv">
         <div><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
@@ -9841,8 +9847,8 @@ function renderDetail(){
       </div>
       ${spanH}
     </div>
-    ${item.note?`<div class="dt-sec"><div class="dt-lbl">备注</div><div class="dt-note">${esc(item.note)}</div></div>`:''}
-    ${tagsH?`<div class="dt-sec"><div class="dt-lbl">标签</div><div class="dt-tags">${tagsH}</div></div>`:''}
+    ${item.note?`<div class="dt-card"><div class="dt-lbl">备注</div><div class="dt-note">${esc(item.note)}</div></div>`:''}
+    ${tagsH?`<div class="dt-card"><div class="dt-lbl">标签</div><div class="dt-tags">${tagsH}</div></div>`:''}
     ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
 }
 

@@ -113,8 +113,9 @@ body{
 .dt-back{font-size:var(--fs-sub);font-weight:600;color:var(--accent);}
 .dt-nav .sp{flex:1;}
 .ibt{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-6) var(--sp-12);}
-.dt-body{background:var(--surface);}
-.dt-hd{padding:var(--sp-20) var(--sp-14) var(--sp-16);border-bottom:1px solid var(--border-soft);}
+.dt-body{display:flex;flex-direction:column;gap:var(--sp-10);padding:var(--sp-12) var(--sp-14) var(--sp-24);}
+.dt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:var(--sp-14);}
+.dt-hd{padding:var(--sp-16) var(--sp-14);}
 .dt-rule{display:block;width:26px;height:2px;border-radius:1px;background:var(--accent);margin-bottom:var(--sp-12);}
 .dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
 .dt-hdrow2{margin-top:var(--sp-6);}
@@ -123,7 +124,6 @@ body{
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
 .score{color:var(--gold);font-weight:700;font-family:var(--en);font-size:var(--fs-caption);}
 .cstatus{font-size:var(--fs-caption);font-weight:700;color:var(--st-done);}
-.dt-sec{padding:var(--sp-14);border-bottom:1px solid var(--border-soft);}
 .dt-lbl{font-size:var(--fs-foot);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 .dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
 .dt-k{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;}
@@ -138,7 +138,7 @@ body{
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:999px;
   font-size:var(--fs-caption);font-weight:600;background:var(--surface-2);color:var(--text-secondary);line-height:1;}
-.dt-foot{padding:var(--sp-14);font-size:var(--fs-foot);color:var(--text-muted);
+.dt-foot{padding:var(--sp-2) var(--sp-4);font-size:var(--fs-foot);color:var(--text-muted);
   font-family:var(--en);font-variant-numeric:tabular-nums;}
 
 /* 表 */
@@ -167,12 +167,12 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
 <header class="masthead">
   <p class="kicker">MY-LIST · 详情页 · 字号与对齐 · 2026-08</p>
   <h1>详情页标注图</h1>
-  <p>下面这台「手机」是把 <code>index.html</code> 里 <code>.dt-*</code> 的字号、行高、间距逐条抄过来画的，图上量到多少，代码里就是多少。红色虚线是左右留白线，绿色虚线是两条基线，圆点编号对应后面的表。</p>
+  <p>下面这台「手机」是把 <code>index.html</code> 里 <code>.dt-*</code> 的字号、行高、间距逐条抄过来画的，图上量到多少，代码里就是多少。正文是四张卡：头部 / 时间 / 备注 / 标签，「首次添加」是卡外的一行小字。红色虚线是文字对齐线，绿色虚线是两条基线，圆点编号对应后面的表。</p>
   <div class="meta">
     <span>版式 <b>手机 390</b></span>
     <span>字号档 <b>中（--fs-scale = 1）</b></span>
     <span>用到的字号级 <b>4 级</b></span>
-    <span>左右留白 <b>14</b></span>
+    <span>版面 <b>4 张卡</b></span>
   </div>
 </header>
 
@@ -195,7 +195,7 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
           <span class="ibt">删除</span>
         </div>
         <div class="dt-body">
-          <div class="dt-hd">
+          <div class="dt-card dt-hd">
             <i class="dt-rule"></i>
             <div class="dt-hdrow">
               <h2 class="dt-name" id="elName" data-n="3">平凡的世界（第二部）</h2>
@@ -206,7 +206,7 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
               <span class="dt-side cstatus" data-n="6" data-side="r">已完成</span>
             </div>
           </div>
-          <div class="dt-sec">
+          <div class="dt-card">
             <div class="dt-lbl" data-n="7">时间</div>
             <div class="dt-kv">
               <div><div class="dt-k" data-n="8">开始</div><div class="dt-v none">—</div></div>
@@ -215,12 +215,12 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
             </div>
             <div class="dt-span"><small data-n="10">2026/5/28</small><span class="bar"><i style="width:100%"></i></span><small>2026/6/10</small></div>
           </div>
-          <div class="dt-sec">
+          <div class="dt-card">
             <div class="dt-lbl">备注</div>
             <div class="dt-note" data-n="11">断断续续看了好几年了吧，总算看完了！
 上班摸鱼看完的嘿嘿嘿</div>
           </div>
-          <div class="dt-sec">
+          <div class="dt-card">
             <div class="dt-lbl">标签</div>
             <div class="dt-tags"><span class="ctag" data-n="12">中国</span><span class="ctag">文学</span></div>
           </div>
@@ -229,7 +229,7 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
       </div>
       <div class="guides" id="guides"></div>
     </div>
-    <p class="legend"><i class="lg-v"></i>左右留白线（14）　<i class="lg-h"></i>基线：上一条串起书名和评分，下一条串起作者和状态　<i class="lg-n">7</i>编号对应下面的表</p>
+    <p class="legend"><i class="lg-v"></i>文字线（卡外 14 + 卡内 14）　<i class="lg-h"></i>基线：上一条串起书名和评分，下一条串起作者和状态　<i class="lg-n">7</i>编号对应下面的表</p>
   </div>
 </section>
 
@@ -274,20 +274,23 @@ tr.hl td{background:color-mix(in srgb,var(--acc) 7%,transparent);}
     <table>
       <thead><tr><th>位置</th><th>值</th><th>写在哪</th><th>说明</th></tr></thead>
       <tbody>
-        <tr class="hl"><td class="el">左右留白</td><td class="px"><b>14</b>（电脑 16）</td><td class="tk">.dt-nav / .dt-hd / .dt-sec / .dt-foot</td><td>四处必须一致，图上那条红虚线就是它——书名、作者、节标签、键值、备注、标签、页脚全都咬着这条线起笔</td></tr>
-        <tr><td class="el">右侧对齐</td><td class="px"><b>同上</b></td><td class="tk">.dt-side</td><td>评分和状态贴右边那条红线；左右两列最小间距 12</td></tr>
-        <tr><td class="el">返回条上下</td><td class="px">10 / 10</td><td class="tk">.dt-nav padding</td><td>手机端上边再加刘海安全区</td></tr>
-        <tr><td class="el">头部上 / 下</td><td class="px">20 / 16</td><td class="tk">.dt-hd padding</td><td>上边比下边多 4，让书名从分隔线上「站起来」</td></tr>
+        <tr class="hl"><td class="el">卡外留白</td><td class="px"><b>14</b>（电脑 16）</td><td class="tk">.dt-body padding</td><td>卡片到屏幕边的距离</td></tr>
+        <tr class="hl"><td class="el">卡内留白</td><td class="px"><b>14</b>（头部卡上下 16）</td><td class="tk">.dt-card / .dt-hd padding</td><td>文字到卡边的距离。14 + 14 = 图上那条红虚线，书名、作者、节标签、键值、备注、标签全都咬着它起笔</td></tr>
+        <tr><td class="el">卡片间距</td><td class="px">10</td><td class="tk">.dt-body gap</td><td>分节靠这道空隙，不再画发丝线</td></tr>
+        <tr><td class="el">卡片描边 / 圆角</td><td class="px">1 / 12</td><td class="tk">.dt-card</td><td>与列表页 <code>.twrap</code> 同一套，两页看着是一家</td></tr>
+        <tr><td class="el">右侧对齐</td><td class="px">同左</td><td class="tk">.dt-side</td><td>评分和状态贴右边那条红线；左右两列最小间距 12</td></tr>
+        <tr><td class="el">返回条</td><td class="px">上下 10 · 左右 14</td><td class="tk">.dt-nav padding</td><td>返回条不是卡，左右只有 14——所以图上「返回」比下面的书名更靠左一档；手机端上边再加刘海安全区</td></tr>
+        <tr><td class="el">头部卡上下</td><td class="px">16</td><td class="tk">.dt-hd padding</td><td>比其余卡各多 2，书名有喘气的地方</td></tr>
         <tr><td class="el">主题色短线</td><td class="px">26 × 2，下方 12</td><td class="tk">.dt-rule</td><td>宽高是图形尺寸，不跟字号阶梯缩放</td></tr>
         <tr><td class="el">书名行 → 作者行</td><td class="px">6</td><td class="tk">.dt-hdrow2 margin-top</td><td>两行按基线对齐，图上绿虚线就是这两条基线</td></tr>
-        <tr><td class="el">节上下</td><td class="px">14 / 14</td><td class="tk">.dt-sec padding</td><td>时间 / 备注 / 标签三节同一套</td></tr>
+
         <tr><td class="el">节标签 → 内容</td><td class="px">8</td><td class="tk">.dt-lbl margin-bottom</td><td>—</td></tr>
         <tr><td class="el">三列 列距 / 行距</td><td class="px">12 / 10</td><td class="tk">.dt-kv gap</td><td>三列等宽 <code>repeat(3,1fr)</code></td></tr>
         <tr><td class="el">键 → 值</td><td class="px">2</td><td class="tk">.dt-v margin-top</td><td>—</td></tr>
         <tr><td class="el">时间条</td><td class="px">上 12 · 条高 4 · 间距 8</td><td class="tk">.dt-span</td><td>条高是图形尺寸，不跟字号走</td></tr>
         <tr><td class="el">标签之间</td><td class="px">6</td><td class="tk">.dt-tags gap</td><td>—</td></tr>
-        <tr><td class="el">分隔线</td><td class="px">1</td><td class="tk">--border-soft</td><td>节与节之间那条发丝线</td></tr>
-        <tr><td class="el">电脑端正文卡</td><td class="px">最宽 760 · 圆角 12</td><td class="tk">.dt-body（≥1025px）</td><td>居中，上 20 下 24；手机端整屏铺开不收窄</td></tr>
+        <tr><td class="el">首次添加</td><td class="px">上下 2 · 左右 4</td><td class="tk">.dt-foot</td><td>卡外的一行小字，不单独占一张卡</td></tr>
+        <tr><td class="el">电脑端</td><td class="px">最宽 760</td><td class="tk">.dt-body（≥1025px）</td><td>整列卡片居中收窄，卡片本身另加一层浅投影；手机端不收窄</td></tr>
       </tbody>
     </table>
   </div>
@@ -342,10 +345,13 @@ function drawSpec(){
   laneL.innerHTML=''; laneR.innerHTML=''; guides.innerHTML='';
   const F=fig.getBoundingClientRect(), P=phone.getBoundingClientRect();
 
-  // 左右留白线：直接读 .dt-hd 的实际内边距，不写死数字
-  const hd=phone.querySelector('.dt-hd');
-  const pad=parseFloat(getComputedStyle(hd).paddingLeft);
-  [[pad,'左 '+pad],[P.width-pad,'右 '+pad]].forEach(([x,lbl])=>{
+  // 文字对齐线：卡外留白 + 卡的描边 + 卡内留白，全部按实际量，不写死数字
+  const hd=phone.querySelector('.dt-hd'), body=phone.querySelector('.dt-body');
+  const cs=getComputedStyle(hd), H=hd.getBoundingClientRect();
+  const bl=parseFloat(cs.borderLeftWidth)||0, br=parseFloat(cs.borderRightWidth)||0;
+  const pl=parseFloat(cs.paddingLeft), pr=parseFloat(cs.paddingRight);
+  const out=parseFloat(getComputedStyle(body).paddingLeft);
+  [[H.left-P.left+bl+pl,'左 '+out+'+'+pl],[H.right-P.left-br-pr,'右 '+out+'+'+pr]].forEach(([x,lbl])=>{
     const v=document.createElement('i');
     v.className='gv'; v.style.left=(P.left-F.left+x)+'px';
     v.innerHTML='<span>'+lbl+'</span>';
