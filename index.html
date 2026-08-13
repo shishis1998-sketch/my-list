@@ -509,6 +509,13 @@ body.detail-open .content{display:none!important;}
 .dt-v.none{color:var(--text-muted);font-weight:500;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
+/* 人物：一行一个人，名字加粗在前、身份跟在后面。名字列不定宽——
+   中文名两到五个字不等，定宽要么挤要么留一大截白，跟着内容走最省地方 */
+.dt-people{display:flex;flex-direction:column;gap:var(--sp-8);}
+.dt-prow{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp-2) var(--sp-8);
+  font-size:var(--fs-body);line-height:var(--lh-normal);}
+.dt-pname{font-weight:700;color:var(--text-primary);}
+.dt-pdesc{color:var(--text-secondary);flex:1;min-width:0;}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .dt-tags .ctag{margin:0;}
 /* 视图切换：概览 / 备注 / 时间线。控件本体直接复用日历页那颗胶囊分段器
@@ -9713,7 +9720,8 @@ function filtered(){
   if(curFilterTags.length) L=L.filter(d=>{const tg=d.tags||[];return curFilterTags.every(t=>tg.includes(t));});
   if(curSearch){const q=curSearch.toLowerCase();L=L.filter(d=>
     d.name.toLowerCase().includes(q)||(d.creator||'').toLowerCase().includes(q)||
-    (d.note||'').toLowerCase().includes(q)||(d.tags||[]).some(t=>t.toLowerCase().includes(q)));
+    (d.note||'').toLowerCase().includes(q)||(d.people||'').toLowerCase().includes(q)||
+    (d.tags||[]).some(t=>t.toLowerCase().includes(q)));
   }
   L.sort((a,b)=>{
     if(curSort==='date-desc') return (b.id||'')>(a.id||'')?1:-1;
@@ -9919,13 +9927,26 @@ function editFromDetail(ev){
   },80);
 }
 
-// 点备注卡 → 只弹备注这一栏的编辑抽屉（见 openNoteSheet），不再端出整张表单。
-// 选文字时不触发，理由同 editFromDetail：备注是最常被长按复制的一段。
-function tapNoteCard(ev){
+// 点备注 / 人物卡 → 只弹这一栏的编辑抽屉（见 openNoteSheet），不再端出整张表单。
+// 选文字时不触发，理由同 editFromDetail：这两栏是最常被长按复制的段落。
+function tapNoteCard(ev,key){
   if(!detailId) return;
   const sel=window.getSelection&&window.getSelection().toString();
   if(sel&&sel.length>0) return;
-  openNoteSheet(detailId);
+  openNoteSheet(detailId,key||'note');
+}
+
+// 人物：存的是一段自由文本，一行一个人。行内用「：」「:」「-」「—」隔开的话，
+// 前半截当名字加粗、后半截当身份，读起来是一张人物表；没有分隔符就整行当名字。
+// 不做成结构化字段是有意的——记人物时想写多细每本书都不一样，一行字最不挡路。
+function renderPeople(txt){
+  const rows=String(txt||'').split('\n').map(s=>s.trim()).filter(Boolean).map(l=>{
+    const m=l.match(/^(.{1,14}?)\s*[：:—–-]\s*(.+)$/);
+    return m
+      ? `<div class="dt-prow"><span class="dt-pname">${esc(m[1])}</span><span class="dt-pdesc">${esc(m[2])}</span></div>`
+      : `<div class="dt-prow"><span class="dt-pname">${esc(l)}</span></div>`;
+  }).join('');
+  return `<div class="dt-people">${rows}</div>`;
 }
 
 // 天数：含首尾两天（7.20 → 8.2 记 14 天里的 13 个整日，这里按「读了 13 天」算）
@@ -9982,9 +10003,13 @@ function renderDetail(){
       </div>`:''}
 
     ${dtTab==='note'?`
-      <div class="dt-card" onclick="tapNoteCard(event)" data-edit="f-note">
+      <div class="dt-card" onclick="tapNoteCard(event,'note')" data-edit="f-note">
         <div class="dt-lbl">备注</div>
         ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
+      </div>
+      <div class="dt-card" onclick="tapNoteCard(event,'people')">
+        <div class="dt-lbl">人物</div>
+        ${item.people?renderPeople(item.people):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
       </div>`:''}
 
     ${dtTab==='tl'?renderDetailTL(item):''}
@@ -10045,16 +10070,24 @@ function openDetailChapter(idx){
   openChapterSheet(idx);
 }
 
-// ── 备注底部弹窗：详情页点备注卡打开，直接可编辑，关闭即保存 ────────
+// ── 备注 / 人物底部弹窗：详情页点卡片打开，直接可编辑，关闭即保存 ────
 // 备注是最常回头改的一栏。走 editFromDetail 会把名称/时间/评分/标签整张表单端出来，
-// 改一行字得先在一屏控件里找到备注框；这里只端备注本身，交互沿用章节抽屉那套滑起。
-let noteSheetId=null, noteSheetOrig='', noteSheetDragInit=false;
-function openNoteSheet(id){
+// 改一行字得先在一屏控件里找到备注框；这里只端这一栏本身，交互沿用章节抽屉那套滑起。
+// 备注和人物是同一种东西（这条记录上的一段自由文本），共用一张抽屉，只换标题和落点字段。
+const SHEET_FIELDS={
+  note:  {lbl:'备注', ph:'想说的话…'},
+  people:{lbl:'人物', ph:'一行一个人物，比如「波洛：比利时侦探」'}
+};
+let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=false;
+function openNoteSheet(id,key){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
-  noteSheetId=it.id; noteSheetOrig=it.note||'';
+  const k=SHEET_FIELDS[key]?key:'note';
+  noteSheetId=it.id; noteSheetKey=k; noteSheetOrig=it[k]||'';
   const ta=document.getElementById('noteSheetTa');
   ta.value=noteSheetOrig;
+  ta.placeholder=SHEET_FIELDS[k].ph;
+  document.getElementById('noteSheetTitle').textContent=SHEET_FIELDS[k].lbl;
   const sheet=document.getElementById('noteSheet');
   sheet.classList.remove('dragging'); sheet.style.transform='';
   document.getElementById('noteSheetMask').classList.add('show');
@@ -10075,7 +10108,7 @@ function commitNoteSheet(){
   if(v===noteSheetOrig) return;
   const it=data.find(d=>d.id===noteSheetId);
   if(!it) return;
-  it.note=v; noteSheetOrig=v;
+  it[noteSheetKey]=v; noteSheetOrig=v;
   persist();
   if(detailId) renderDetail();
   render();
@@ -10797,10 +10830,10 @@ function exportJSON(){
   dl(b,'我的清单_'+today()+'.json'); toast('已导出 JSON');
 }
 function exportCSV(){
-  const hdr=['名称','分类','作品年份','开始时间','结束时间','导演/作者','评分','状态','标签','备注','添加日期'];
+  const hdr=['名称','分类','作品年份','开始时间','结束时间','导演/作者','评分','状态','标签','备注','人物','添加日期'];
   const rows=data.map(d=>[
     d.name,getCat(d.type).name,d.year||'',d.startDate||'',d.watchDate||'',d.creator||'',
-    d.score||'',SMAP[d.status]?.lbl||'',(d.tags||[]).join('|'),d.note||'',d.date||''
+    d.score||'',SMAP[d.status]?.lbl||'',(d.tags||[]).join('|'),d.note||'',d.people||'',d.date||''
   ]);
   const csv=[hdr,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
@@ -11477,7 +11510,7 @@ function calSearchItems(){
     const c=getCat(r.type);
     items.push({date:r.watchDate,uid:'',title:r.name||'(未命名)',dayLabel:'',
       meta:c.name+(r.creator?(' · '+r.creator):''),color:c.color,
-      hay:[r.name,r.creator,r.note,(r.tags||[]).join(' ')].join(' ').toLowerCase()});
+      hay:[r.name,r.creator,r.note,r.people,(r.tags||[]).join(' ')].join(' ').toLowerCase()});
   });
   const re=/^(\d{4})\/(\d{2})\/(\d{2})$/;
   notes.forEach(n=>{
