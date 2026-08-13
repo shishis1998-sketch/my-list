@@ -589,6 +589,9 @@ body.detail-open .content{display:none!important;}
   line-height:normal;-webkit-tap-highlight-color:transparent;
 }
 .fg textarea{height:auto;min-height:80px;padding:var(--sp-10) var(--sp-12);resize:vertical;line-height:var(--lh-normal);}
+/* 读书笔记正文是这张表里唯一要成段写的框：给它四成屏高，跟笔记页的正文框
+   （.note-body.is-book，42vh）差不多一档。用 id 压过下面窄屏那条 .fg textarea */
+#f-booknote{min-height:40vh;line-height:var(--lh-loose);}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent-mid);background:var(--surface);}
 .fg input::placeholder,.fg textarea::placeholder{color:var(--text-muted);}
 /* select 关掉默认外观后,补一个墨绿 SVG 下拉箭头 */
