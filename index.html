@@ -769,14 +769,12 @@ body.detail-open .content{display:none!important;}
      换序后第一节是「数据」，不再是分类——留在 .nsec-cats 上就会在页面中间
      多出一道 48px 的缝（其余节间距都是 24px）。 */
   .sidebar .nsec-data{margin-top:var(--sp-24);}
-  .sidebar .nlbl{
-    padding:0 var(--sp-8) var(--sp-10);margin-bottom:0;
-    font-size:var(--fs-headline);font-weight:600;letter-spacing:.01em;
-    text-transform:none;color:var(--text-secondary);font-family:var(--zh);
-  }
-  /* 分类组:桌面导航隐藏,显示手机端「分类管理」标题+管理列表 */
-  .sidebar .nsec-cats .nlbl-desktop{display:none;}
-  .sidebar .nlbl.nlbl-mobile{display:block;}
+  /* 整屏「设置」页不要分组标题：五张卡之间隔着 24，本来就分得开；
+     标题那一行只是把页面又拉长 35.6，还多带出一个 22 的左沿。
+     桌面端侧栏照旧——那边的标题是主导航的一部分，不能动。
+     两个变体（nlbl-desktop / nlbl-mobile）一起收在这条里。 */
+  .sidebar .nlbl{display:none;}
+  /* 分类组:桌面导航隐藏,显示手机端的管理列表 */
   .sidebar .ncard-cats-desktop{display:none;}
   .sidebar .ncard-cats-mobile{display:block;}
   /* 去掉设置页里的「日历看板」——日历入口已在底部导航 */
@@ -787,13 +785,29 @@ body.detail-open .content{display:none!important;}
     border-radius:var(--rlg);overflow:hidden;
   }
   .sidebar .ncard .nitem{
-    padding:var(--sp-12) var(--sp-14);font-size:var(--fs-body);
+    padding:var(--sp-12) 15px;font-size:var(--fs-body);
     min-height:48px;border-radius:0;
     border-bottom:1px solid var(--border-soft);
   }
   .sidebar .ncard .nitem:last-child{border-bottom:none;}
   .sidebar .ncard .nitem:active{background:var(--bg);}
   .sidebar .ncard .nitem.on{background:var(--accent-light);color:var(--accent);}
+  /* 卡内一切从 30 起排：页边距 14 + 卡片描边 1 + 15 = 30。
+     15 是凑出来的数，不走 --sp-* 那把尺——尺上没有能补掉描边那 1px 的档。
+     行的 padding 在上面那条里，这里收拾的是自带 padding 的几块：
+     经期参数行、说明小字、「高级」、色块网格，它们原本都是 10，左沿落在 25。
+     只在手机版式里改；桌面侧栏窄，那边整套 padding 是另一档。 */
+  .sidebar .novu-opt,
+  .sidebar .novu-adv,
+  .sidebar .novu-note,
+  .sidebar .novu-hint,
+  .sidebar .theme-sws{padding-left:15px;padding-right:15px;}
+  /* 十个主题色排成一行（原来 32px 定死，一行只放得下 8 个，剩两个折到第二行）。
+     宽度改成按容器均分：393 的机子上每块 26，窄机子自己再缩，宽的封顶在原来的 32，
+     不会像早先 auto-fit 那样在平板上摊成一排大方块。间距仍是 8，
+     选中态那圈 4px 描边正好填满这 8，不会压到隔壁。 */
+  .sidebar .theme-sws{flex-wrap:nowrap;}
+  .sidebar .theme-sw{flex:1 1 0;width:auto;min-width:0;max-width:32px;height:auto;aspect-ratio:1;}
   /* 分类管理行右侧的编辑图标 */
   .sidebar .cat-edit-ic{margin-left:auto;color:var(--text-muted);display:flex;flex-shrink:0;}
   .sidebar .nitem-add{color:var(--accent-mid);font-weight:600;}
