@@ -802,12 +802,23 @@ body.detail-open .content{display:none!important;}
   .sidebar .novu-note,
   .sidebar .novu-hint,
   .sidebar .theme-sws{padding-left:15px;padding-right:15px;}
+  /* 外观卡三行等高 52 = 10 + 32 + 10。32 是「主题」那颗圆钮定的，另两行的
+     方块比它小一点，靠 min-height 把三行拉平、内容各自垂直居中。
+     带分隔线的两行下留白写 9：那条 1px 也算在 52 里（box-sizing:border-box），
+     不扣的话前两行会各高出 1，三行就又不齐了。 */
+  .sidebar #themeRow .nitem{min-height:52px;padding:10px 15px 9px;}
+  .sidebar #themeRow .theme-sws{min-height:52px;align-items:center;padding:10px 15px;}
+  /* 字号三段与主题色块同一种方块：28 见方、间距 4、圆角同一档。
+     段里原来的 min-width 38 / padding 5·10 全部让位，字仍按档位大小显示。 */
+  .sidebar .nfs-segs{gap:4px;}
+  .sidebar .nfs-seg{width:28px;height:28px;min-width:0;padding:0;border-radius:var(--r);
+    display:flex;align-items:center;justify-content:center;}
   /* 十个主题色排成一行（原来 32px 定死，一行只放得下 8 个，剩两个折到第二行）。
-     宽度改成按容器均分：393 的机子上每块 26，窄机子自己再缩，宽的封顶在原来的 32，
-     不会像早先 auto-fit 那样在平板上摊成一排大方块。间距仍是 8，
-     选中态那圈 4px 描边正好填满这 8，不会压到隔壁。 */
-  .sidebar .theme-sws{flex-wrap:nowrap;}
-  .sidebar .theme-sw{flex:1 1 0;width:auto;min-width:0;max-width:32px;height:auto;aspect-ratio:1;}
+     宽度按容器均分、封顶 28 —— 与上一行的字号方块同宽；窄机子自己再缩。
+     间距 4 之后选中态那圈从 4px 收到 3px，否则会顶到隔壁色块。 */
+  .sidebar .theme-sws{flex-wrap:nowrap;gap:4px;}
+  .sidebar .theme-sw{flex:1 1 0;width:auto;min-width:0;max-width:28px;height:auto;aspect-ratio:1;}
+  .sidebar .theme-sw.on{box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--sw);}
   /* 分类管理行右侧的编辑图标 */
   .sidebar .cat-edit-ic{margin-left:auto;color:var(--text-muted);display:flex;flex-shrink:0;}
   .sidebar .nitem-add{color:var(--accent-mid);font-weight:600;}
