@@ -595,6 +595,12 @@ body.detail-open .content{display:none!important;}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
 .mclose{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-6) var(--sp-10);cursor:pointer;color:var(--text-secondary);font-size:15px;line-height:1;transition:all .1s;}
 .mclose:hover{background:var(--border);}
+/* 编辑笔记抽屉：没有底部按钮条了，删除挪到标题栏右边，✕ 就是「保存并关闭」 */
+.nm-hdr-acts{display:flex;align-items:center;gap:var(--sp-8);flex:0 0 auto;}
+.nm-del-btn{background:var(--danger-bg);color:var(--danger);border:1px solid transparent;border-radius:var(--r);padding:var(--sp-6) var(--sp-12);cursor:pointer;font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);line-height:1.2;transition:all .1s;}
+.nm-del-btn:hover{background:var(--danger-bg-hover);}
+/* 底部没有按钮条兜着了，正文自己留出手势条的余量 */
+#noteModal .mbody{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
 
 .fg{margin-bottom:var(--sp-14);}
 .fg label{display:block;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);letter-spacing:.04em;margin-bottom:var(--sp-6);}
@@ -4325,7 +4331,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
       <div class="mtitle" id="nm-title">新建笔记</div>
-      <button class="mclose" onclick="closeNoteModal()">✕</button>
+      <!-- 底部那条「删除/取消/保存」已经去掉：关抽屉即保存，删除挪到标题右边 -->
+      <div class="nm-hdr-acts" id="nm-hdr-acts">
+        <button class="nm-del-btn" onclick="askDelNote()" id="nm-del-btn">删除</button>
+        <button class="mclose" onclick="closeNoteModal()">✕</button>
+      </div>
     </div>
     <div class="mbody">
     <div class="fg">
@@ -4400,12 +4410,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       </div>
     </div>
     </div><!-- /mbody -->
-    <div class="mftr">
-      <!-- 「删除」由 syncNoteDelBtn() 直接从 DOM 里增删：新建笔记、以及读书笔记(卡片列表里已有删除)都不出现 -->
-      <button class="btn btn-d" onclick="askDelNote()" id="nm-del-btn" style="margin-right:auto">删除</button>
-      <button class="btn btn-g" onclick="closeNoteModal()">取消</button>
-      <button class="btn btn-p" onclick="saveNote()">保存</button>
-    </div>
   </div>
 </div>
 
@@ -13119,16 +13123,16 @@ function applyMemoEditorMode(){
   syncNoteDelBtn();
 }
 
-// 编辑弹窗底部的「删除」：新建笔记时没得删；读书笔记的卡片列表里已经有删除按钮，
+// 编辑弹窗标题栏的「删除」：新建笔记时没得删；读书笔记的卡片列表里已经有删除按钮，
 // 弹窗里不再重复给一个。这里是把按钮从 DOM 里摘掉/装回去，不是 display:none。
 let nmDelBtn=null;   // 摘下来时暂存按钮节点，装回去时复用（事件绑在 onclick 上，节点原样可用）
 function syncNoteDelBtn(){
-  const ftr=document.querySelector('#noteModal .mftr');
-  if(!ftr)return;
+  const acts=document.getElementById('nm-hdr-acts');
+  if(!acts)return;
   const want=!!editNoteId&&document.getElementById('nf-sub').value!=='读书笔记';
   const cur=document.getElementById('nm-del-btn');
   if(want){
-    if(!cur&&nmDelBtn)ftr.insertBefore(nmDelBtn,ftr.firstChild);
+    if(!cur&&nmDelBtn)acts.insertBefore(nmDelBtn,acts.firstChild);
   }else if(cur){
     nmDelBtn=cur;
     cur.remove();
@@ -13330,6 +13334,7 @@ function openNoteEdit(id){
   applyMemoEditorMode();
   renderNoteChips2();
   fillCreatedRow('nf-created-row','nf-created',n);
+  nmOpenSnap=noteFormSnap();
   document.getElementById('noteModal').classList.add('open');
   setTimeout(()=>setupNfThumb(document.getElementById('nf-sub').value==='读书笔记'),120);
 }
@@ -13355,11 +13360,33 @@ function openNoteNew(){
   document.getElementById('memoLocalToggle').classList.toggle('on',curMemoLocal);
   applyMemoEditorMode();
   renderNoteChips2();
+  nmOpenSnap=noteFormSnap();
   document.getElementById('noteModal').classList.add('open');
   setTimeout(()=>document.getElementById('nf-title').focus(),60);
 }
 
-function closeNoteModal(){
+// ── 关抽屉即保存 ────────────────────────────────────────────
+// 抽屉底部不再有「取消 / 保存」，点 ✕ 关掉就把改动落盘。打开时先记一份表单快照，
+// 关的时候只在真的动过时才存：否则每次点开看一眼都会 bump updatedAt、白推一次云同步。
+let nmOpenSnap='';
+function noteFormSnap(){
+  return JSON.stringify({
+    title:document.getElementById('nf-title').value,
+    sub:document.getElementById('nf-sub').value,
+    body:document.getElementById('nf-body').value,
+    username:document.getElementById('mf-username').value,
+    password:document.getElementById('mf-password').value,
+    note:document.getElementById('mf-note').value,
+    custom:curMemoCustom.map(cf=>[cf.key||'',cf.value||'']),
+    localOnly:!!curMemoLocal,
+    tags:curNoteTags.slice()
+  });
+}
+
+// save=false：删除之后关窗，别把刚删掉的笔记又存回来
+function closeNoteModal(save=true){
+  if(save&&noteFormSnap()!==nmOpenSnap) saveNote();
+  nmOpenSnap='';
   document.getElementById('noteModal').classList.remove('open');
 }
 
@@ -13443,7 +13470,7 @@ function askDelNote(){
   if(!confirm('删除这条笔记？此操作不可撤销。'))return;
   notes=notes.filter(x=>x.id!==editNoteId);
   persistNotes();
-  closeNoteModal();
+  closeNoteModal(false);
   render();
   toast('已删除','delete');
 }
