@@ -3763,6 +3763,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       </button>
     </div>
     <select class="ssort" onchange="onSort(this.value)">
+      <option value="upd-desc">最近修改</option>
       <option value="date-desc">最近添加</option>
       <option value="date-asc">最早添加</option>
       <option value="watch-desc">最新看完</option>
@@ -8576,7 +8577,7 @@ const RO_KEY='my_list_readonly_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:all', curSearch='', curSort='date-desc', curStatus='all', curScore='all';
+let curCat='notes:all', curSearch='', curSort='upd-desc', curStatus='all', curScore='all';
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
 let curNoteSub='all'; // 笔记子分类筛选
@@ -8614,6 +8615,22 @@ function createdAtOf(item){
   if(!isFinite(t)) return null;
   const d=new Date(t);
   return (d.getFullYear()>=2015 && t<=Date.now()+864e5) ? d : null;   // 兜底：导入的自定义 id 解不出就不显示
+}
+// 最后修改时间（毫秒），给「最近修改」排序用。
+// 新改动都会由 touchRec() 打上 updatedAt；老数据没有，就退回 date —— 它是 saveRec()
+// 每次保存都会重写的「最后保存日」，只精确到天，但仍比首次添加时间贴近事实。
+function updatedAtOf(item){
+  if(!item) return 0;
+  if(item.updatedAt){const t=+new Date(item.updatedAt);if(isFinite(t))return t;}
+  if(/^\d{4}-\d{2}-\d{2}$/.test(item.date||'')){const t=+new Date(item.date+'T12:00:00');if(isFinite(t))return t;}
+  const c=createdAtOf(item);
+  return c?+c:0;
+}
+// 改动一条媒体记录后打个时间戳。传 id 或记录本身都行。
+function touchRec(ref){
+  const it=(ref&&typeof ref==='object')?ref:data.find(d=>d.id===ref);
+  if(it) it.updatedAt=Date.now();
+  return it;
 }
 function fmtCreated(d){
   if(!d) return '';
@@ -9843,6 +9860,7 @@ function filtered(){
     (d.tags||[]).some(t=>t.toLowerCase().includes(q)));
   }
   L.sort((a,b)=>{
+    if(curSort==='upd-desc')  return updatedAtOf(b)-updatedAtOf(a);
     if(curSort==='date-desc') return (b.id||'')>(a.id||'')?1:-1;
     if(curSort==='date-asc')  return (a.id||'')>(b.id||'')?1:-1;
     if(curSort==='watch-desc')return cmpDateField(a,b,'watchDate',true);
@@ -10368,6 +10386,7 @@ function commitNoteSheet(){
     if(noteSheetKey==='booknote') it.bookNote=v; else it.note=v;
     noteSheetOrig=v;
   }
+  touchRec(it);
   persist();
   if(detailId) renderDetail();
   render();
@@ -10557,7 +10576,7 @@ function applyModeUI(){
   }else{
     if(ssort.dataset.noteMode){
       ssort.innerHTML=ssort.dataset.mediaHTML;
-      ssort.value=ssort.dataset.mediaVal||'date-desc';
+      ssort.value=ssort.dataset.mediaVal||'upd-desc';
       curSort=ssort.value;
       delete ssort.dataset.noteMode;
     }
@@ -10666,6 +10685,7 @@ function syncBottomTabs(){
 // ── 底部栏排序抽屉 ────────────────────────────────────────────────
 // 媒体模式 / 笔记模式各自的排序选项
 const SORT_OPTS_MEDIA=[
+  ['upd-desc','最近修改'],
   ['date-desc','最近添加'],['date-asc','最早添加'],
   ['watch-desc','最新看完'],['watch-asc','最早看完'],['start-desc','最近开始'],
   ['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']
@@ -10872,6 +10892,7 @@ function saveRec(){
     // 就不会覆盖已经写好的内容。
     tags:[...curTags], date:new Date().toISOString().slice(0,10)
   };
+  rec.updatedAt=Date.now();   // 「最近修改」排序要用
   if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新','success');}
   else{data.unshift({id:uid(),...rec});toast('已添加记录','success');}
   persist(); closeModal(); render();
@@ -12554,7 +12575,7 @@ function tlHostBody(){
 function tlHostSave(body){
   if(tlHostMedia){
     const it=data.find(d=>d.id===tlHostMedia); if(!it) return false;
-    it.bookNote=body; persist(); return true;
+    it.bookNote=body; touchRec(it); persist(); return true;
   }
   const n=(notes||[]).find(x=>x.id===tlCurId); if(!n) return false;
   n.body=body; n.updatedAt=Date.now(); persistNotes(); return true;
