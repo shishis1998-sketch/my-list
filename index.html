@@ -1194,7 +1194,9 @@ body.detail-open .content{display:none!important;}
      旁边的「筛选」仍是整屏抽屉：它有状态/评分/标签三组，标签胶囊塞不进这么窄的卡片。 */
   #bbSortSheet{background:rgba(10,8,6,.16);}
   #bbSortSheet .bb-sortpanel{
-    left:auto;right:12px;bottom:auto;width:168px;padding:var(--sp-6);
+    /* 宽度交给内容：最长那项（名称 A→Z）说多宽就多宽，不用勾之后又省了一截 */
+    left:auto;right:12px;bottom:auto;width:max-content;min-width:118px;max-width:min(56vw,220px);
+    padding:var(--sp-6);
     border-radius:14px;border:1px solid var(--border-soft);
     box-shadow:0 10px 30px rgba(0,0,0,.2);
     max-height:min(62vh,460px);
@@ -10725,11 +10727,11 @@ function openSortSheet(){
   const sheet=document.getElementById('bbSortSheet');
   const panel=document.getElementById('bbSortPanel');
   const groups=isNoteMode()?SORT_GROUPS_NOTE:SORT_GROUPS_MEDIA;
-  const ck='<span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>';
+  // 当前项不打勾，只用绿底+绿字标出来：省下一个勾的宽度，卡片能再窄一截
   panel.innerHTML=groups.map(([g,opts],gi)=>
     (g?`<div class="bb-sortgrp${gi?' sep':''}">${g}</div>`:'')+
     opts.map(([v,lbl])=>
-      `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">${lbl}${ck}</button>`
+      `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">${lbl}</button>`
     ).join('')
   ).join('');
   sheet.classList.add('open');
