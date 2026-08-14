@@ -3765,7 +3765,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <select class="ssort" onchange="onSort(this.value)">
       <option value="date-desc">最近添加</option>
       <option value="date-asc">最早添加</option>
-      <option value="watch-desc">最近观看</option>
+      <option value="watch-desc">最新看完</option>
+      <option value="watch-asc">最早看完</option>
+      <option value="start-desc">最近开始</option>
       <option value="name-asc">名称 A→Z</option>
       <option value="score-desc">评分最高</option>
       <option value="year-desc">年份最新</option>
@@ -9815,6 +9817,17 @@ function checkIncomingSyncLink(){
 
 
 // ── Filter & Sort ─────────────────────────────────────────────────
+// 按日期字段排序（watchDate=看完 / startDate=开始）。日期是 YYYY-MM-DD，直接比字符串。
+// 没填日期的（还没看完、没记开始时间）一律沉底：正序时它们也不该顶在最前面。
+function cmpDateField(a,b,key,desc){
+  const x=a[key]||'', y=b[key]||'';
+  if(!x&&!y) return 0;
+  if(!x) return 1;
+  if(!y) return -1;
+  if(x===y) return 0;
+  return (x>y?1:-1)*(desc?-1:1);
+}
+
 function filtered(){
   let L=[...data];
   if(curCat!=='all') L=L.filter(d=>d.type===curCat);
@@ -9832,7 +9845,9 @@ function filtered(){
   L.sort((a,b)=>{
     if(curSort==='date-desc') return (b.id||'')>(a.id||'')?1:-1;
     if(curSort==='date-asc')  return (a.id||'')>(b.id||'')?1:-1;
-    if(curSort==='watch-desc')return (b.watchDate||'')>(a.watchDate||'')?1:-1;
+    if(curSort==='watch-desc')return cmpDateField(a,b,'watchDate',true);
+    if(curSort==='watch-asc') return cmpDateField(a,b,'watchDate',false);
+    if(curSort==='start-desc')return cmpDateField(a,b,'startDate',true);
     if(curSort==='name-asc')  return a.name.localeCompare(b.name,'zh');
     if(curSort==='score-desc')return (b.score||0)-(a.score||0);
     if(curSort==='year-desc') return (b.year||0)-(a.year||0);
@@ -10651,7 +10666,8 @@ function syncBottomTabs(){
 // ── 底部栏排序抽屉 ────────────────────────────────────────────────
 // 媒体模式 / 笔记模式各自的排序选项
 const SORT_OPTS_MEDIA=[
-  ['date-desc','最近添加'],['date-asc','最早添加'],['watch-desc','最近观看'],
+  ['date-desc','最近添加'],['date-asc','最早添加'],
+  ['watch-desc','最新看完'],['watch-asc','最早看完'],['start-desc','最近开始'],
   ['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']
 ];
 const SORT_OPTS_NOTE=[
