@@ -1189,6 +1189,23 @@ body.detail-open .content{display:none!important;}
   .bb-sortopt.on{color:var(--accent);font-weight:700;background:var(--accent-light);}
   .bb-sortopt .ck{margin-left:auto;color:var(--accent);opacity:0;}
   .bb-sortopt.on .ck{opacity:1;}
+
+  /* 排序选择器不用整屏抽屉，改成贴着「排序」按钮上方弹出的小卡片（位置见 placeSortPanel）。
+     旁边的「筛选」仍是整屏抽屉：它有状态/评分/标签三组，标签胶囊塞不进这么窄的卡片。 */
+  #bbSortSheet{background:rgba(10,8,6,.16);}
+  #bbSortSheet .bb-sortpanel{
+    left:auto;right:12px;bottom:auto;width:168px;padding:var(--sp-6);
+    border-radius:14px;border:1px solid var(--border-soft);
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+    max-height:min(62vh,460px);
+    animation:bbPopIn .14s var(--nav-ease);transform-origin:bottom right;
+  }
+  @keyframes bbPopIn{from{opacity:0;transform:scale(.96) translateY(6px)}to{opacity:1;transform:none}}
+  #bbSortPanel .bb-sortopt{padding:var(--sp-8) var(--sp-10);font-size:14.5px;border-radius:9px;gap:var(--sp-6);}
+  #bbSortPanel .bb-sortgrp{font-size:11px;font-family:var(--en);font-weight:600;letter-spacing:.08em;
+    color:var(--text-muted);padding:var(--sp-8) var(--sp-10) var(--sp-4);}
+  #bbSortPanel .bb-sortgrp.sep{border-top:1px solid var(--border-soft);
+    margin-top:var(--sp-4);padding-top:var(--sp-8);}
 }
 
 /* ===== CALENDAR：与 .content 平级的同级视图 =====
@@ -10682,28 +10699,45 @@ function syncBottomTabs(){
   notes.classList.toggle('on', isNotes);
 }
 
-// ── 底部栏排序抽屉 ────────────────────────────────────────────────
-// 媒体模式 / 笔记模式各自的排序选项
-const SORT_OPTS_MEDIA=[
-  ['upd-desc','最近修改'],
-  ['date-desc','最近添加'],['date-asc','最早添加'],
-  ['watch-desc','最新看完'],['watch-asc','最早看完'],['start-desc','最近开始'],
-  ['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']
+// ── 底部栏排序小卡片 ──────────────────────────────────────────────
+// 媒体模式 / 笔记模式各自的排序选项。媒体那九项按「时间 / 其他」分两组，
+// 一眼能看出前六项都是按日期排的；笔记只有四项，不分组。
+const SORT_GROUPS_MEDIA=[
+  ['时间',[['upd-desc','最近修改'],['date-desc','最近添加'],['date-asc','最早添加'],
+           ['watch-desc','最新看完'],['watch-asc','最早看完'],['start-desc','最近开始']]],
+  ['其他',[['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']]]
 ];
-const SORT_OPTS_NOTE=[
-  ['n-updated','最近修改'],['n-created','最新创建'],['n-title-asc','标题 A→Z'],['n-title-desc','标题 Z→A']
+const SORT_GROUPS_NOTE=[
+  ['',[['n-updated','最近修改'],['n-created','最新创建'],['n-title-asc','标题 A→Z'],['n-title-desc','标题 Z→A']]]
 ];
+// 小卡片贴着底栏「排序」按钮上方弹出：右边缘和按钮对齐。位置得实时量——
+// 底栏在键盘跟随（body.vv-track）和 tab 收起时高度会变，写死 bottom 会错位。
+function placeSortPanel(){
+  const btn=document.querySelector('.bb-actions .bb-sortbtn');
+  const panel=document.getElementById('bbSortPanel');
+  if(!btn||!panel) return;
+  const r=btn.getBoundingClientRect();
+  if(!r.width) return;          // 底栏没显示（宽屏用顶部下拉），位置交给 CSS
+  panel.style.bottom=(window.innerHeight-r.top+8)+'px';
+  panel.style.right=Math.max(8,window.innerWidth-r.right)+'px';
+}
 function openSortSheet(){
   const sheet=document.getElementById('bbSortSheet');
   const panel=document.getElementById('bbSortPanel');
-  const opts=isNoteMode()?SORT_OPTS_NOTE:SORT_OPTS_MEDIA;
-  panel.innerHTML='<div class="bb-sorthd">排序方式</div>'+opts.map(([v,lbl])=>
-    `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">`+
-    `${lbl}<span class="ck"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span></button>`
+  const groups=isNoteMode()?SORT_GROUPS_NOTE:SORT_GROUPS_MEDIA;
+  const ck='<span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>';
+  panel.innerHTML=groups.map(([g,opts],gi)=>
+    (g?`<div class="bb-sortgrp${gi?' sep':''}">${g}</div>`:'')+
+    opts.map(([v,lbl])=>
+      `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">${lbl}${ck}</button>`
+    ).join('')
   ).join('');
   sheet.classList.add('open');
+  placeSortPanel();
+  window.addEventListener('resize',placeSortPanel);
 }
 function closeSortSheet(){
+  window.removeEventListener('resize',placeSortPanel);
   document.getElementById('bbSortSheet').classList.remove('open');
 }
 function pickSort(v){
