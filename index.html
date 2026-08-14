@@ -606,9 +606,6 @@ body.detail-open .content{display:none!important;}
   line-height:normal;-webkit-tap-highlight-color:transparent;
 }
 .fg textarea{height:auto;min-height:80px;padding:var(--sp-10) var(--sp-12);resize:vertical;line-height:var(--lh-normal);}
-/* 读书笔记正文是这张表里唯一要成段写的框：给它四成屏高，跟笔记页的正文框
-   （.note-body.is-book，42vh）差不多一档。用 id 压过下面窄屏那条 .fg textarea */
-#f-booknote{min-height:40vh;line-height:var(--lh-loose);}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent-mid);background:var(--surface);}
 .fg input::placeholder,.fg textarea::placeholder{color:var(--text-muted);}
 /* select 关掉默认外观后,补一个墨绿 SVG 下拉箭头 */
@@ -1782,6 +1779,11 @@ body.cal-searching .cal-searchresults{display:flex;}
   border:1.5px solid var(--border);border-radius:var(--r);padding:var(--sp-10) var(--sp-12);
   outline:none;resize:none;transition:border-color .15s,box-shadow .15s;}
 .notesheet-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+/* 正文那一栏：整本书的笔记都在这个框里，比备注给得更高（抽屉自己封顶 88vh） */
+.notesheet-ta.tall{min-height:56vh;}
+.ns-hint{font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-normal);
+  margin-top:var(--sp-10);}
+.ns-hint b{color:var(--text-secondary);font-weight:600;}
 /* 人物：抽屉里一次只编辑一个人，三栏「名字 / 信息 / 备注」竖着排。
    不用再给这一组套灰底外框——抽屉本身就是框，里面只有他一个 */
 .pe-list{display:flex;flex-direction:column;gap:var(--sp-12);}
@@ -4112,10 +4114,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <div class="tsugg-list" id="tsuggList"></div>
       </div>
     </div>
-    <div class="fg">
-      <label>读书笔记正文（用「第一章」分段会排成时间线）</label>
-      <textarea id="f-booknote" rows="6" placeholder="第一章 ...&#10;&#10;第二章 ..."></textarea>
-    </div>
     <div class="fg fg-created" id="f-created-row" style="display:none">
       <label>首次添加</label>
       <div class="created-val" id="f-created"></div>
@@ -4465,6 +4463,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   </div>
   <div class="tlsheet-body">
     <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
+    <div id="noteSheetHint" class="ns-hint" style="display:none">用 <b>第一章</b> 分段会排成时间线；书分部就把 <b>第一部 事实</b> 单独写一行，放在它管的那些章前面。</div>
     <div id="noteSheetPeople" class="pe-list" style="display:none"></div>
   </div>
 </div>
@@ -10169,18 +10168,19 @@ function noteOriginOf(item){
   return t?new Date(t):null;
 }
 
+// 「读书笔记」只对书成立，电影剧集那边就叫「笔记正文」
+function bookNoteLbl(item){ return /书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文'; }
 // 时间线一栏：读书笔记正文（item.bookNote）解析出的章节。
 // 正文和章节都存在这条媒体记录上——读书笔记不再是「笔记」里的一条，见 migrateBookNotes。
 function renderDetailTL(item){
   const body=(item.bookNote||'').trim();
-  // 「读书笔记」只对书成立，电影剧集那边就叫「笔记正文」
-  const lbl=/书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文';
+  const lbl=bookNoteLbl(item);
   // 与「首次添加」同一时刻就不画了——迁移新建的那些记录两个时间本来就是同一个
   const sinceTxt=fmtCreated(noteOriginOf(item));
   const since=(sinceTxt&&sinceTxt!==fmtCreated(createdAtOf(item)))
     ? `<div class="dt-tl-since">笔记始于 ${esc(sinceTxt)}</div>` : '';
   if(!body){
-    return `<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-booknote">
+    return `<div class="dt-card" onclick="tapNoteCard(event,'booknote')">
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-empty">还没有正文，点这里开始写。</div>
       <div class="dt-tl-hint">正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，这里就会自动排成章节时间线。<br>书要是分部，把 <b>第一部 事实</b> 单独写一行、放在它管的那些章前面，时间线就会按部分组。</div>
@@ -10188,7 +10188,7 @@ function renderDetailTL(item){
   }
   const chs=parseChapters(item.bookNote);
   if(!chs.length){
-    return `<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-booknote">
+    return `<div class="dt-card" onclick="tapNoteCard(event,'booknote')">
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-text">${esc(item.bookNote)}</div>
       <div class="dt-tl-hint">没识别到章节。用 <b>第一章</b> 这样的格式分段就会排成时间线。</div>
@@ -10202,7 +10202,7 @@ function renderDetailTL(item){
   return `<div class="dt-card" style="cursor:default">
     <div class="dt-lbl-row">
       <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
-      <button type="button" class="dt-lnk" data-edit="f-booknote" onclick="editFromDetail(event)">编辑全文</button>
+      <button type="button" class="dt-lnk" onclick="tapNoteCard(event,'booknote')">编辑全文</button>
     </div>
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openDetailChapter(${x.i})">
@@ -10232,9 +10232,12 @@ let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=f
 function openNoteSheet(id,key,pidx){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
-  const k=(key==='people')?'people':'note';
+  const k=(key==='people'||key==='booknote')?key:'note';
   noteSheetId=it.id; noteSheetKey=k;
-  const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople');
+  const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople'),
+        hint=document.getElementById('noteSheetHint');
+  hint.style.display=(k==='booknote')?'':'none';       // 分章分部的写法提示，只有正文那一栏用得上
+  ta.classList.toggle('tall',k==='booknote');          // 正文是整本书的笔记，框子给足
   if(k==='people'){
     peRows=normPeople(it.people);
     noteSheetOrig=JSON.stringify(peRows);
@@ -10247,13 +10250,15 @@ function openNoteSheet(id,key,pidx){
     // 抽屉里只剩这一个人，点进来就是冲着改他来的，直接进输入态
     renderPeopleEditor(260);
   }else{
-    document.getElementById('noteSheetTitle').textContent='备注';
-    noteSheetOrig=it.note||'';
+    const bn=(k==='booknote');
+    document.getElementById('noteSheetTitle').textContent=bn?bookNoteLbl(it):'备注';
+    ta.placeholder=bn?'第一章 ...\n\n第二章 ...':'想说的话…';
+    noteSheetOrig=(bn?it.bookNote:it.note)||'';
     ta.value=noteSheetOrig;
     box.style.display='none'; ta.style.display='';
     // 点进来就是要写字，直接进输入态；等滑起动画走完再聚焦，免得键盘和动画抢位置
     setTimeout(()=>{
-      if(noteSheetId==null||noteSheetKey!=='note') return;
+      if(noteSheetId==null||noteSheetKey==='people') return;
       ta.focus({preventScroll:true});
       try{ ta.selectionStart=ta.selectionEnd=ta.value.length; }catch(_){}
     },260);
@@ -10327,7 +10332,8 @@ function commitNoteSheet(){
     const ta=document.getElementById('noteSheetTa');
     const v=(ta?ta.value:'').trim();
     if(v===noteSheetOrig) return;
-    it.note=v; noteSheetOrig=v;
+    if(noteSheetKey==='booknote') it.bookNote=v; else it.note=v;
+    noteSheetOrig=v;
   }
   persist();
   if(detailId) renderDetail();
@@ -10785,7 +10791,6 @@ function openAdd(){
   fillCreatedRow('f-created-row','f-created',null);   // 新增时没有首次添加可言
   document.getElementById('f-creator').value='';
   document.getElementById('f-cover').value='';
-  document.getElementById('f-booknote').value='';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value='';
   renderChips();
@@ -10806,7 +10811,6 @@ function openEdit(id){
   fillCreatedRow('f-created-row','f-created',item);
   document.getElementById('f-creator').value=item.creator||'';
   document.getElementById('f-cover').value=item.cover||'';
-  document.getElementById('f-booknote').value=item.bookNote||'';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value=item.score?String(item.score):'';
   renderChips();
@@ -10829,9 +10833,9 @@ function saveRec(){
     watchDate:document.getElementById('f-watch').value||null,
     creator:document.getElementById('f-creator').value.trim(),
     cover:document.getElementById('f-cover').value.trim(),
-    // 备注不在这张表里：它有自己的弹窗（详情页点备注卡，见 openNoteSheet）。
-    // rec 里没有 note 这一项，下面的 {...data[i],...rec} 就不会覆盖已有的备注。
-    bookNote:document.getElementById('f-booknote').value,
+    // 备注和正文都不在这张表里：各自有自己的弹窗（详情页点备注卡 / 时间线「编辑全文」，
+    // 见 openNoteSheet）。rec 里没有 note、bookNote 这两项，下面的 {...data[i],...rec}
+    // 就不会覆盖已经写好的内容。
     tags:[...curTags], date:new Date().toISOString().slice(0,10)
   };
   if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新','success');}
