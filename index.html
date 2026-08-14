@@ -1735,6 +1735,16 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 6px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* 标题带右侧留一个常驻按钮位：人物那么多时，「加一个人」不该沉在列表最底下，
+   否则加一个人要先滑到底、加完再滑回来。按钮钉在标题带上，滑到哪都够得着 */
+.tlsheet-titlerow{display:flex;align-items:center;gap:var(--sp-12);}
+.tlsheet-titlerow .tlsheet-title{flex:1;min-width:0;}
+/* 描边胶囊而不是实心：标题带的底色跟着主题走（深绿、浅杏都有），
+   只有 --on-accent 这一档前景色在每套主题里都保证看得清 */
+.head-add{flex-shrink:0;font-family:var(--zh);font-size:13px;font-weight:600;color:var(--on-accent);
+  background:none;border:1.5px solid var(--on-accent-faint);border-radius:999px;
+  padding:6px 12px;line-height:1;white-space:nowrap;cursor:pointer;transition:opacity .15s;}
+.head-add:active{opacity:.55;}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
@@ -4443,7 +4453,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 <div class="tlsheet" id="noteSheet" role="dialog" aria-modal="true" aria-label="编辑备注">
   <div class="tlsheet-head" id="noteSheetHead">
     <div class="tlsheet-grip"></div>
-    <div class="tlsheet-title" id="noteSheetTitle">备注</div>
+    <div class="tlsheet-titlerow">
+      <div class="tlsheet-title" id="noteSheetTitle">备注</div>
+      <button type="button" class="head-add" id="peHeadAdd" style="display:none">＋ 加一个人</button>
+    </div>
   </div>
   <div class="tlsheet-body">
     <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
@@ -10193,6 +10206,8 @@ function openNoteSheet(id,key){
   const k=(key==='people')?'people':'note';
   noteSheetId=it.id; noteSheetKey=k;
   document.getElementById('noteSheetTitle').textContent=(k==='people')?'人物':'备注';
+  const headAdd=document.getElementById('peHeadAdd');
+  if(headAdd) headAdd.style.display=(k==='people')?'':'none';   // 备注只有一块输入框，不需要这个按钮
   const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople');
   if(k==='people'){
     peRows=normPeople(it.people);
@@ -10219,8 +10234,9 @@ function openNoteSheet(id,key){
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initNoteSheetDrag();
 }
-// 人物编辑列表。focusIdx≥0 = 渲染完聚焦第几组的名字栏；delay = 聚焦前等多久（等滑起动画）
-function renderPeopleEditor(focusIdx,delay){
+// 人物编辑列表。focusIdx≥0 = 渲染完聚焦第几组的名字栏；delay = 聚焦前等多久（等滑起动画）；
+// scroll = 聚焦前先把那一组滚到眼前（新加的一组在列表最底下，光 focus 是看不见的）
+function renderPeopleEditor(focusIdx,delay,scroll){
   const box=document.getElementById('noteSheetPeople');
   if(!box) return;
   box.innerHTML=peRows.map((p,i)=>`
@@ -10241,15 +10257,23 @@ function renderPeopleEditor(focusIdx,delay){
     renderPeopleEditor(-1,0);
   }));
   const add=document.getElementById('peAdd');
-  if(add) add.addEventListener('click',()=>{
-    readPeopleEditor();
-    peRows.push({name:'',info:'',note:''});
-    renderPeopleEditor(peRows.length-1,0);
-  });
+  if(add) add.addEventListener('click',addPeopleRow);
   if(focusIdx>=0){
     const el=box.querySelector('.pe-row[data-i="'+focusIdx+'"] .pe-name');
-    if(el) setTimeout(()=>{ if(noteSheetId!=null) el.focus({preventScroll:true}); },delay||0);
+    if(el) setTimeout(()=>{
+      if(noteSheetId==null) return;
+      const row=el.closest('.pe-row');
+      if(scroll&&row&&row.scrollIntoView) row.scrollIntoView({block:'center'});
+      el.focus({preventScroll:true});
+    },delay||0);
   }
+}
+// 加一个人：标题带上的常驻按钮和列表末尾那颗共用这一套
+function addPeopleRow(){
+  if(noteSheetId==null||noteSheetKey!=='people') return;
+  readPeopleEditor();                          // 先把手上改的收进来，否则会被这次重绘丢掉
+  peRows.push({name:'',info:'',note:''});
+  renderPeopleEditor(peRows.length-1,0,true);
 }
 // 把列表里当前填的内容收回 peRows（增删、落盘前都要先走一遍）
 function readPeopleEditor(){
@@ -10298,6 +10322,12 @@ function initNoteSheetDrag(){
   const head=document.getElementById('noteSheetHead'),
         sheet=document.getElementById('noteSheet'),
         mask=document.getElementById('noteSheetMask');
+  const headAdd=document.getElementById('peHeadAdd');
+  if(headAdd){
+    // 按钮坐在标题带上，而标题带按下就开始拖：不拦住的话按一下会被当成下拉手势
+    headAdd.addEventListener('pointerdown',e=>e.stopPropagation());
+    headAdd.addEventListener('click',addPeopleRow);
+  }
   let sy=null,dy=0,drag=false;
   head.addEventListener('pointerdown',e=>{sy=e.clientY;dy=0;drag=true;
     sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
