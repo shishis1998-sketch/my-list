@@ -1781,6 +1781,9 @@ body.cal-searching .cal-searchresults{display:flex;}
 .notesheet-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
 /* 正文那一栏：整本书的笔记都在这个框里，比备注给得更高（抽屉自己封顶 88vh） */
 .notesheet-ta.tall{min-height:56vh;}
+/* 格式按钮钉在正文框上沿：框有 56vh 高，按钮要是摆在框下面，写到一半就滑出屏幕了 */
+.ns-fmt{position:sticky;top:0;z-index:1;background:var(--surface);
+  margin:0 0 var(--sp-8);padding-bottom:var(--sp-6);}
 .ns-hint{font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-normal);
   margin-top:var(--sp-10);}
 .ns-hint b{color:var(--text-secondary);font-weight:600;}
@@ -4462,6 +4465,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="tlsheet-title" id="noteSheetTitle">备注</div>
   </div>
   <div class="tlsheet-body">
+    <div class="fmt-bar ns-fmt" id="noteSheetFmt" style="display:none">
+      <button type="button" class="fmt-btn" onclick="sheetFmt('h')" title="标题">H</button>
+      <button type="button" class="fmt-btn" onclick="sheetFmt('b')" title="粗体"><b>B</b></button>
+      <button type="button" class="fmt-btn" onclick="sheetFmt('li')" title="列点">•</button>
+      <span class="fmt-hint">选中文字后点按钮加格式</span>
+    </div>
     <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
     <div id="noteSheetHint" class="ns-hint" style="display:none">用 <b>第一章</b> 分段会排成时间线；书分部就把 <b>第一部 事实</b> 单独写一行，放在它管的那些章前面。</div>
     <div id="noteSheetPeople" class="pe-list" style="display:none"></div>
@@ -10238,6 +10247,8 @@ function openNoteSheet(id,key,pidx){
         hint=document.getElementById('noteSheetHint');
   hint.style.display=(k==='booknote')?'':'none';       // 分章分部的写法提示，只有正文那一栏用得上
   ta.classList.toggle('tall',k==='booknote');          // 正文是整本书的笔记，框子给足
+  // H/B/• 也只给正文：备注在详情页是照原样显示的（pre-wrap），加了标记也不会渲染成格式
+  document.getElementById('noteSheetFmt').style.display=(k==='booknote')?'':'none';
   if(k==='people'){
     peRows=normPeople(it.people);
     noteSheetOrig=JSON.stringify(peRows);
@@ -10269,6 +10280,8 @@ function openNoteSheet(id,key,pidx){
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initNoteSheetDrag();
 }
+// 正文抽屉的 H/B/• ：和笔记页那三颗是同一套（noteFmt），只是作用在抽屉自己的框上
+function sheetFmt(kind){ noteFmt(kind,document.getElementById('noteSheetTa')); }
 // 正在编辑的那个人：名字 / 信息 / 备注三栏 + 一颗删除。
 // delay = 聚焦名字栏前等多久（等抽屉滑起的动画走完，免得键盘和动画抢位置）
 function renderPeopleEditor(delay){
@@ -13438,8 +13451,11 @@ function askDelNoteById(id){
 }
 
 // 格式按钮
-function noteFmt(kind){
-  const ta=document.getElementById('nf-body');
+// kind = h(标题，循环 #/##/###/无) / b(**粗体**) / li(- 列点)。
+// el 不传就是笔记页那张表的正文框；正文抽屉把自己的框传进来（见 sheetFmt）
+function noteFmt(kind,el){
+  const ta=el||document.getElementById('nf-body');
+  if(!ta) return;
   const start=ta.selectionStart,end=ta.selectionEnd;
   const before=ta.value.slice(0,start);
   const sel=ta.value.slice(start,end);
