@@ -522,7 +522,7 @@ body.detail-open .content{display:none!important;}
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
 .dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
-/* 小节名那一行右边挂一颗「＋ 加一个人」。加人是常做的事，不该藏在弹窗最底下：
+/* 小节名那一行右边挂一颗「＋ 添加」。加人是常做的事，不该藏在弹窗最底下：
    放在卡外面就永远在这，人物列表滑到哪都不影响 */
 .dt-seclbl-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
 .dt-secadd{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:600;color:var(--accent-mid);
@@ -10135,7 +10135,7 @@ function renderDetail(){
         ${(()=>{const ppl=normPeople(item.people);
           return `<div class="dt-seclbl-row">
             <div class="dt-seclbl">人物</div>
-            ${ppl.length?'<button type="button" class="dt-secadd" onclick="tapPerson(event,-1)">＋ 加一个人</button>':''}
+            ${ppl.length?'<button type="button" class="dt-secadd" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
           </div>
           <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
             ${ppl.length?renderPeople(ppl):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
@@ -10223,7 +10223,8 @@ function openNoteSheet(id,key,pidx){
     const fresh=!(pidx>=0&&pidx<peRows.length);   // 没指到人（或指歪了）就是「加一个」
     if(fresh){ peRows.push({name:'',info:'',note:''}); peIdx=peRows.length-1; }
     else peIdx=pidx;
-    document.getElementById('noteSheetTitle').textContent=fresh?'加一个人':(peRows[peIdx].name||'人物');
+    // 标题带：加人时写「添加人物」（光「添加」在标题上说不清添的是什么），改人时写他的名字
+    document.getElementById('noteSheetTitle').textContent=fresh?'添加人物':(peRows[peIdx].name||'人物');
     ta.style.display='none'; box.style.display='';
     // 抽屉里只剩这一个人，点进来就是冲着改他来的，直接进输入态
     renderPeopleEditor(260);
