@@ -1676,8 +1676,10 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-10);margin-top:var(--sp-6);}
 /* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
    竖条和章节卡那道 .tl-bar 同族，只是更深更实——大条管小条，层级一眼看得出来 */
+/* 上下留白不对称是故意的：上面 24 是「和上一部的卡拉开」，下面 6（加 .tl 自己的
+   6 共 12）是「和自己管的卡贴紧」。一疏一密，部名归属哪一堆一眼看得出来 */
 .tl-part{display:flex;align-items:center;gap:var(--sp-8);font-size:14px;font-weight:700;
-  color:var(--accent-mid);margin:var(--sp-18) 0 var(--sp-10);
+  color:var(--accent-mid);margin:var(--sp-24) 0 var(--sp-6);
   word-break:keep-all;overflow-wrap:break-word;}
 .tl-part::before{content:'';flex:0 0 3px;height:14px;border-radius:2px;background:var(--accent-mid);}
 .dt-lbl + .tl-part{margin-top:var(--sp-6);}     /* 紧跟在「N 部 · M 章」那行下面的第一个部名不用留这么多 */
