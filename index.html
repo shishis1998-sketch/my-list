@@ -1784,9 +1784,6 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* 格式按钮钉在正文框上沿：框有 56vh 高，按钮要是摆在框下面，写到一半就滑出屏幕了 */
 .ns-fmt{position:sticky;top:0;z-index:1;background:var(--surface);
   margin:0 0 var(--sp-8);padding-bottom:var(--sp-6);}
-.ns-hint{font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-normal);
-  margin-top:var(--sp-10);}
-.ns-hint b{color:var(--text-secondary);font-weight:600;}
 /* 人物：抽屉里一次只编辑一个人，三栏「名字 / 信息 / 备注」竖着排。
    不用再给这一组套灰底外框——抽屉本身就是框，里面只有他一个 */
 .pe-list{display:flex;flex-direction:column;gap:var(--sp-12);}
@@ -4476,7 +4473,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <span class="fmt-hint">选中文字后点按钮加格式</span>
     </div>
     <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
-    <div id="noteSheetHint" class="ns-hint" style="display:none">用 <b>第一章</b> 分段会排成时间线；书分部就把 <b>第一部 事实</b> 单独写一行，放在它管的那些章前面。</div>
     <div id="noteSheetPeople" class="pe-list" style="display:none"></div>
   </div>
 </div>
@@ -10255,9 +10251,7 @@ function openNoteSheet(id,key,pidx){
   if(!it) return;
   const k=(key==='people'||key==='booknote')?key:'note';
   noteSheetId=it.id; noteSheetKey=k;
-  const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople'),
-        hint=document.getElementById('noteSheetHint');
-  hint.style.display=(k==='booknote')?'':'none';       // 分章分部的写法提示，只有正文那一栏用得上
+  const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople');
   ta.classList.toggle('tall',k==='booknote');          // 正文是整本书的笔记，框子给足
   // H/B/• 也只给正文：备注在详情页是照原样显示的（pre-wrap），加了标记也不会渲染成格式
   document.getElementById('noteSheetFmt').style.display=(k==='booknote')?'':'none';
