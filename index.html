@@ -1674,6 +1674,16 @@ body.cal-searching .cal-searchresults{display:flex;}
 /* ── 时间线「每章一张卡片」：一行两张，点整卡从底部滑起章节弹窗 ── */
 /* 章节列表：一行两张。minmax(0,1fr) 让列可收缩，长章名才能正常省略号截断 */
 .tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-10);margin-top:var(--sp-6);}
+/* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
+   竖条和章节卡那道 .tl-bar 同族，只是更深更实——大条管小条，层级一眼看得出来 */
+/* 上下留白不对称是故意的：上面 24 是「和上一部的卡拉开」，下面 6（加 .tl 自己的
+   6 共 12）是「和自己管的卡贴紧」。一疏一密，部名归属哪一堆一眼看得出来 */
+.tl-part{display:flex;align-items:center;gap:var(--sp-8);font-size:14px;font-weight:700;
+  color:var(--accent-mid);margin:var(--sp-24) 0 var(--sp-6);
+  word-break:keep-all;overflow-wrap:break-word;}
+.tl-part::before{content:'';flex:0 0 3px;height:14px;border-radius:2px;background:var(--accent-mid);}
+.dt-lbl + .tl-part{margin-top:var(--sp-6);}     /* 紧跟在「N 部 · M 章」那行下面的第一个部名不用留这么多 */
+#tl-body > .tl-part:first-child{margin-top:0;}
 
 /* 左滑露出绿色「编辑」（与笔记卡左滑删除同款交互） */
 .tl-swipe{position:relative;overflow:hidden;border-radius:var(--rlg);}
@@ -10173,7 +10183,7 @@ function renderDetailTL(item){
     return `<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-booknote">
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-empty">还没有正文，点这里开始写。</div>
-      <div class="dt-tl-hint">正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，这里就会自动排成章节时间线。</div>
+      <div class="dt-tl-hint">正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，这里就会自动排成章节时间线。<br>书要是分部，把 <b>第一部 事实</b> 单独写一行、放在它管的那些章前面，时间线就会按部分组。</div>
     </div>`;
   }
   const chs=parseChapters(item.bookNote);
@@ -10185,11 +10195,14 @@ function renderDetailTL(item){
       ${since}
     </div>`;
   }
+  const groups=parseParts(item.bookNote,chs);
+  const np=groups.filter(g=>g.part).length;
   return `<div class="dt-card" style="cursor:default">
-    <div class="dt-lbl">${lbl} · 共 ${chs.length} 章</div>
-    <div class="tl">${chs.map((c,i)=>`<div class="tl-item has-paras" data-idx="${i}" onclick="openDetailChapter(${i})">
-      <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(c.title)}</div></div></div>
-    </div>`).join('')}</div>
+    <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
+    ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
+      +`<div class="tl">${g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openDetailChapter(${x.i})">
+        <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
+      </div>`).join('')}</div>`).join('')}
     ${since}
   </div>`;
 }
@@ -12395,26 +12408,70 @@ function toggleCollectCard(id, ev){
 }
 
 // ── 读书笔记时间线 ────────────────────────────────────────────
-// 章节正则：可选 markdown #/##/###，第X章（中文数字/阿拉伯数字均可）
-const TL_CH_RE=/^#{0,3}\s*第[一二三四五六七八九十百零0-9]+章[^\n]*/gm;
+// 章节正则：可选 markdown #/##/###，第X章（中文数字/阿拉伯数字均可）。
+// 章号前面可以带一个部名（「第一部第一章 …」这种一行写完的写法也认），显示时会摘掉。
+const TL_CH_RE=/^#{0,3}\s*(?:第[一二三四五六七八九十百零0-9]+[部卷篇][\s·:：—–-]*)?第[一二三四五六七八九十百零0-9]+章[^\n]*/gm;
+// 部/卷/篇：书分「第一部 事实 / 第二部 证词」时，章号往往每部重来一遍，光靠章号分不清谁是谁。
+// 这一行单独占一行、写在它管的那些章前面就算数。
+const TL_PART_RE=/^#{0,3}\s*(?:第[一二三四五六七八九十百零0-9]+[部卷篇]|卷[一二三四五六七八九十百零0-9]+)[^\n]*/gm;
+const TL_PART_MAX=24;          // 部名是标题不是句子；太长的行按正文放过，免得把「第一部电影是…」认成分部
+const TL_PART_PREFIX=/^(?:第[一二三四五六七八九十百零0-9]+[部卷篇])[\s·:：—–-]*(?=第[一二三四五六七八九十百零0-9]+章)/;
 
 function isBookNote(n){return n&&n.subCat==='读书笔记';}
+
+// 正文里所有的部名行：{idx 起点, title 部名}
+function partMarks(text){
+  return [...String(text||'').matchAll(TL_PART_RE)].map(m=>{
+    const line=m[0].replace(/^#{0,3}\s*/,'').trim();
+    // 「第一部第一章 甲」这种一行写完的：部名只取「第一部」，后面那截是章，不是部名
+    const pm=line.match(TL_PART_PREFIX);
+    return {idx:m.index, title:pm?pm[0].replace(/[\s·:：—–-]+$/,''):line, inline:!!pm};
+  }).filter(p=>p.inline||p.title.length<=TL_PART_MAX);
+}
 
 function parseChapters(text){
   if(!text) return [];
   const matches=[...text.matchAll(TL_CH_RE)];
   if(!matches.length) return [];
+  const parts=partMarks(text);
   const chs=[];
   for(let i=0;i<matches.length;i++){
     const m=matches[i];
     const start=m.index+m[0].length;
-    const end=i+1<matches.length?matches[i+1].index:text.length;
-    const title=m[0].replace(/^#{0,3}\s*/,'').trim();
+    // 本章到下一章为止；中间要是横着一行部名，就在部名前收住——那一行是分组标记，
+    // 不属于上一章。不然点开上一章的最后一章会在正文里看见「第二部 证词」，
+    // 编辑时还可能把它一起改没了（章节保存是按 chStart/chEnd 整段替换的）
+    let end=i+1<matches.length?matches[i+1].index:text.length;
+    for(const p of parts) if(p.idx>m.index&&p.idx<end) end=p.idx;
+    // 一行写完的「第一部第一章 …」：卡片上只显示章那一截，部名交给分组去显示
+    const title=m[0].replace(/^#{0,3}\s*/,'').trim().replace(TL_PART_PREFIX,'').trim();
     const body=text.slice(start,end).trim();
     // chStart/chEnd：本章原文（含「第X章」标题行）在 body 中的字符区间，供精准替换
     chs.push({title,body,chStart:m.index,chEnd:end,raw:text.slice(m.index,end)});
   }
   return chs;
+}
+
+// 按部分组：每组 {part 部名（没有分部时为空）, chs:[{c 章, i 原始序号}]}。
+// 章的原始序号得原样带着——点开章节抽屉是按它在整篇里的第几章定位的。
+function parseParts(text,chs){
+  const ps=partMarks(text);
+  if(!ps.length) return [{part:'',chs:chs.map((c,i)=>({c,i}))}];
+  const lead={part:'',chs:[]};                  // 部名之前就写着的章（序、楔子那种）
+  const gs=ps.map(p=>({part:p.title,idx:p.idx,chs:[]}));
+  chs.forEach((c,i)=>{
+    let g=null;
+    for(const x of gs){ if(x.idx<=c.chStart) g=x; else break; }
+    (g||lead).chs.push({c,i});
+  });
+  // 「第一部第一章 / 第一部第二章」是一章一行各带一次部名的，同名相邻的合成一组
+  const merged=[];
+  for(const g of gs){
+    const last=merged[merged.length-1];
+    if(last&&last.part===g.part) last.chs=last.chs.concat(g.chs);
+    else merged.push(g);
+  }
+  return (lead.chs.length?[lead]:[]).concat(merged);
 }
 
 // 段落正则：行首「数字+点」算编号段落（章内连续编号）
@@ -12474,27 +12531,28 @@ function renderTimelineBody(id){
   const n=(notes||[]).find(x=>x.id===id);
   if(!n) return;
   const chs=parseChapters(n.body);
+  const groups=parseParts(n.body,chs);
+  const np=groups.filter(g=>g.part).length;
   document.getElementById('tl-title').textContent=n.title||'（无标题）';
-  document.getElementById('tl-sub').textContent=chs.length?`共 ${chs.length} 章`:'未识别到章节';
+  document.getElementById('tl-sub').textContent=chs.length?(np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`):'未识别到章节';
   const body=document.getElementById('tl-body');
   const allbtn=document.getElementById('tl-allbtn');
   if(!chs.length){
-    body.innerHTML=`<div class="tl-nochap">这篇笔记里没有识别到章节标记。<br><br>在正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，时间线就会自动出现。</div>`;
+    body.innerHTML=`<div class="tl-nochap">这篇笔记里没有识别到章节标记。<br><br>在正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，时间线就会自动出现。<br><br>书分部的话，<b>第一部 事实</b> 单独占一行、写在它管的那些章前面，时间线会按部分组。</div>`;
     if(allbtn) allbtn.style.display='none';
   }else{
     if(allbtn){allbtn.style.display='';allbtn.textContent='⇅ 展开全部';}
-    body.innerHTML='<div class="tl">'+chs.map((c,idx)=>{
-      // 一行两张、只显章名：预览行和右侧箭头都去掉，窄卡里它们既占高度又没信息量
-      // 点整卡 → 从底部滑起可编辑弹窗（openChapterSheet）
-      return `<div class="tl-item has-paras" data-idx="${idx}" onclick="openChapterSheet(${idx})">
+    // 一行两张、只显章名：预览行和右侧箭头都去掉，窄卡里它们既占高度又没信息量
+    // 点整卡 → 从底部滑起可编辑弹窗（openChapterSheet）。分了部就按部分组，每组一个小标题
+    body.innerHTML=groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
+      +'<div class="tl">'+g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openChapterSheet(${x.i})">
         <div class="tl-head">
           <span class="tl-bar"></span>
           <div class="tl-main">
-            <div class="tl-ch">${esc(c.title)}</div>
+            <div class="tl-ch">${esc(x.c.title)}</div>
           </div>
         </div>
-      </div>`;
-    }).join('')+'</div>';
+      </div>`).join('')+'</div>').join('');
   }
 }
 
