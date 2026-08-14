@@ -522,13 +522,13 @@ body.detail-open .content{display:none!important;}
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
 .dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
-/* 小节名那一行右边挂一颗「＋ 添加」。加人是常做的事，不该藏在弹窗最底下：
-   放在卡外面就永远在这，人物列表滑到哪都不影响 */
-.dt-seclbl-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
-.dt-secadd{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:600;color:var(--accent-mid);
+/* 标题那一行右边挂一颗小字按钮：人物那边是「＋ 添加」，时间线那边是「编辑全文」。
+   常做的事不该藏在别的页面里，放在标题行上就永远在这，列表滑到哪都不影响 */
+.dt-seclbl-row,.dt-lbl-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
+.dt-lnk{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:600;color:var(--accent-mid);
   background:none;border:0;padding:var(--sp-2) var(--sp-4);line-height:var(--lh-tight);
   cursor:pointer;transition:opacity .15s;}
-.dt-secadd:active{opacity:.5;}
+.dt-lnk:active{opacity:.5;}
 /* 人物：分行式。名字独占一行，信息、备注依次往下缩字号、退一档颜色，
    人与人之间一道发丝线。三行都是整屏宽，谁也不用为了对齐去折行——
    两列对齐（比稿方案 C）正是折在这一点上 */
@@ -10145,7 +10145,7 @@ function renderDetail(){
         ${(()=>{const ppl=normPeople(item.people);
           return `<div class="dt-seclbl-row">
             <div class="dt-seclbl">人物</div>
-            ${ppl.length?'<button type="button" class="dt-secadd" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
+            ${ppl.length?'<button type="button" class="dt-lnk" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
           </div>
           <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
             ${ppl.length?renderPeople(ppl):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
@@ -10197,8 +10197,13 @@ function renderDetailTL(item){
   }
   const groups=parseParts(item.bookNote,chs);
   const np=groups.filter(g=>g.part).length;
+  // 时间线本身是拿来读的：点章节卡只进那一章的抽屉，改章名、加一章、动部名都得改原文。
+  // 所以这里给一颗直通原文大框的按钮，省得为了改一行标题绕回概览页
   return `<div class="dt-card" style="cursor:default">
-    <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
+    <div class="dt-lbl-row">
+      <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
+      <button type="button" class="dt-lnk" data-edit="f-booknote" onclick="editFromDetail(event)">编辑全文</button>
+    </div>
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openDetailChapter(${x.i})">
         <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
