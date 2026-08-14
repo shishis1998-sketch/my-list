@@ -522,11 +522,20 @@ body.detail-open .content{display:none!important;}
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
 .dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
+/* 小节名那一行右边挂一颗「＋ 加一个人」。加人是常做的事，不该藏在弹窗最底下：
+   放在卡外面就永远在这，人物列表滑到哪都不影响 */
+.dt-seclbl-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
+.dt-secadd{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:600;color:var(--accent-mid);
+  background:none;border:0;padding:var(--sp-2) var(--sp-4);line-height:var(--lh-tight);
+  cursor:pointer;transition:opacity .15s;}
+.dt-secadd:active{opacity:.5;}
 /* 人物：分行式。名字独占一行，信息、备注依次往下缩字号、退一档颜色，
    人与人之间一道发丝线。三行都是整屏宽，谁也不用为了对齐去折行——
    两列对齐（比稿方案 C）正是折在这一点上 */
 .dt-people{display:flex;flex-direction:column;}
-.dt-pitem{padding:var(--sp-12) 0;}
+/* 一个人就是一个点击目标：点谁就只弹谁那一组，不用在整张名单里滑着找 */
+.dt-pitem{padding:var(--sp-12) 0;cursor:pointer;transition:opacity .15s;}
+.dt-pitem:active{opacity:.55;}
 .dt-pitem+.dt-pitem{border-top:1px solid var(--border-soft);}
 .dt-pitem:first-child{padding-top:0;}
 .dt-pitem:last-child{padding-bottom:0;}
@@ -1735,16 +1744,6 @@ body.cal-searching .cal-searchresults{display:flex;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 6px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* 标题带右侧留一个常驻按钮位：人物那么多时，「加一个人」不该沉在列表最底下，
-   否则加一个人要先滑到底、加完再滑回来。按钮钉在标题带上，滑到哪都够得着 */
-.tlsheet-titlerow{display:flex;align-items:center;gap:var(--sp-12);}
-.tlsheet-titlerow .tlsheet-title{flex:1;min-width:0;}
-/* 描边胶囊而不是实心：标题带的底色跟着主题走（深绿、浅杏都有），
-   只有 --on-accent 这一档前景色在每套主题里都保证看得清 */
-.head-add{flex-shrink:0;font-family:var(--zh);font-size:13px;font-weight:600;color:var(--on-accent);
-  background:none;border:1.5px solid var(--on-accent-faint);border-radius:999px;
-  padding:6px 12px;line-height:1;white-space:nowrap;cursor:pointer;transition:opacity .15s;}
-.head-add:active{opacity:.55;}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
@@ -1773,10 +1772,10 @@ body.cal-searching .cal-searchresults{display:flex;}
   border:1.5px solid var(--border);border-radius:var(--r);padding:var(--sp-10) var(--sp-12);
   outline:none;resize:none;transition:border-color .15s,box-shadow .15s;}
 .notesheet-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
-/* 人物：一人一组「名字 / 信息 / 备注」，成组框起来，组与组之间靠间距分开 */
+/* 人物：抽屉里一次只编辑一个人，三栏「名字 / 信息 / 备注」竖着排。
+   不用再给这一组套灰底外框——抽屉本身就是框，里面只有他一个 */
 .pe-list{display:flex;flex-direction:column;gap:var(--sp-12);}
-.pe-row{display:flex;flex-direction:column;gap:var(--sp-6);padding:var(--sp-12);
-  background:var(--bg);border:1px solid var(--border-soft);border-radius:var(--rlg);}
+.pe-row{display:flex;flex-direction:column;gap:var(--sp-6);}
 .pe-line{display:flex;align-items:center;gap:var(--sp-8);}
 .pe-line .pe-name{flex:1;min-width:0;font-weight:700;}
 .pe-in{width:100%;box-sizing:border-box;font-family:var(--zh);font-size:var(--fs-input);
@@ -1787,7 +1786,6 @@ body.cal-searching .cal-searchresults{display:flex;}
 .pe-del{flex-shrink:0;width:32px;height:32px;padding:0;border:0;border-radius:50%;
   background:var(--surface-2);color:var(--text-muted);font-size:13px;line-height:1;cursor:pointer;}
 .pe-del:active{background:var(--tint);color:var(--text-secondary);}
-.pe-add{width:100%;text-align:center;}
 
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
@@ -4453,10 +4451,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 <div class="tlsheet" id="noteSheet" role="dialog" aria-modal="true" aria-label="编辑备注">
   <div class="tlsheet-head" id="noteSheetHead">
     <div class="tlsheet-grip"></div>
-    <div class="tlsheet-titlerow">
-      <div class="tlsheet-title" id="noteSheetTitle">备注</div>
-      <button type="button" class="head-add" id="peHeadAdd" style="display:none">＋ 加一个人</button>
-    </div>
+    <div class="tlsheet-title" id="noteSheetTitle">备注</div>
   </div>
   <div class="tlsheet-body">
     <textarea id="noteSheetTa" class="notesheet-ta" placeholder="想说的话…"></textarea>
@@ -10021,6 +10016,14 @@ function tapNoteCard(ev,key){
   if(sel&&sel.length>0) return;
   openNoteSheet(detailId,key||'note');
 }
+// 点某一个人 → 只弹他这一组；idx<0 = 加一个新的（小节名旁那颗按钮、空名单那张卡）
+function tapPerson(ev,idx){
+  if(!detailId) return;
+  const sel=window.getSelection&&window.getSelection().toString();
+  if(sel&&sel.length>0) return;
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
+  openNoteSheet(detailId,'people',idx);
+}
 
 // 人物：一人一条 {name 名字, info 信息, note 备注}。
 // 早先存的是一整段自由文本（一行一个人），这里统一收口：读到字符串就按老规矩
@@ -10058,8 +10061,8 @@ function nameHtml(s){
 // 信息、备注依次往下缩字号，人与人之间一道发丝线。三栏各写多长都不打架，
 // 名字也不用为了对齐去折行——两列对齐（方案 C）就是折在这一点上。
 function renderPeople(list){
-  return `<div class="dt-people">${list.map(p=>
-    `<div class="dt-pitem">
+  return `<div class="dt-people">${list.map((p,i)=>
+    `<div class="dt-pitem" onclick="tapPerson(event,${i})">
       <div class="dt-pname">${nameHtml(p.name)}</div>
       ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
       ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
@@ -10129,11 +10132,14 @@ function renderDetail(){
         </div>
       </div>
       <div class="dt-sec">
-        <div class="dt-seclbl">人物</div>
-        <div class="dt-card" onclick="tapNoteCard(event,'people')">
-          ${(()=>{const ppl=normPeople(item.people);
-            return ppl.length?renderPeople(ppl):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>';})()}
-        </div>
+        ${(()=>{const ppl=normPeople(item.people);
+          return `<div class="dt-seclbl-row">
+            <div class="dt-seclbl">人物</div>
+            ${ppl.length?'<button type="button" class="dt-secadd" onclick="tapPerson(event,-1)">＋ 加一个人</button>':''}
+          </div>
+          <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
+            ${ppl.length?renderPeople(ppl):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
+          </div>`;})()}
       </div>`:''}
 
     ${dtTab==='tl'?renderDetailTL(item):''}
@@ -10198,26 +10204,31 @@ function openDetailChapter(idx){
 // 备注是最常回头改的一栏。走 editFromDetail 会把名称/时间/评分/标签整张表单端出来，
 // 改一行字得先在一屏控件里找到备注框；这里只端这一栏本身，交互沿用章节抽屉那套滑起。
 // 两栏共用一张抽屉，只换标题和抽屉里那块内容：备注是一整块输入框，
-// 人物是一人一组「名字 / 信息 / 备注」的列表，能加能删。
-let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=false, peRows=[];
-function openNoteSheet(id,key){
+// 人物是一个人的「名字 / 信息 / 备注」三栏。
+//
+// 人物这边早先是把整份名单端进抽屉里编辑的，名单一长就不好用了：要改第 12 个人得在
+// 抽屉里滑半天找他，加一个人还得滑到最底下。现在改成一次只编辑一个人——详情页点谁
+// 就弹谁，加人的按钮挪到详情页小节名旁边（见 tapPerson），抽屉里永远只有三栏。
+let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=false,
+    peRows=[], peIdx=-1;
+function openNoteSheet(id,key,pidx){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
   const k=(key==='people')?'people':'note';
   noteSheetId=it.id; noteSheetKey=k;
-  document.getElementById('noteSheetTitle').textContent=(k==='people')?'人物':'备注';
-  const headAdd=document.getElementById('peHeadAdd');
-  if(headAdd) headAdd.style.display=(k==='people')?'':'none';   // 备注只有一块输入框，不需要这个按钮
   const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople');
   if(k==='people'){
     peRows=normPeople(it.people);
     noteSheetOrig=JSON.stringify(peRows);
-    const fresh=!peRows.length;                 // 一个人都还没记：先摆一组空栏，直接能写
-    if(fresh) peRows.push({name:'',info:'',note:''});
+    const fresh=!(pidx>=0&&pidx<peRows.length);   // 没指到人（或指歪了）就是「加一个」
+    if(fresh){ peRows.push({name:'',info:'',note:''}); peIdx=peRows.length-1; }
+    else peIdx=pidx;
+    document.getElementById('noteSheetTitle').textContent=fresh?'加一个人':(peRows[peIdx].name||'人物');
     ta.style.display='none'; box.style.display='';
-    // 已经有人物时不自动弹键盘——这一屏先是拿来看的，键盘会顶掉半张表
-    renderPeopleEditor(fresh?0:-1, 260);
+    // 抽屉里只剩这一个人，点进来就是冲着改他来的，直接进输入态
+    renderPeopleEditor(260);
   }else{
+    document.getElementById('noteSheetTitle').textContent='备注';
     noteSheetOrig=it.note||'';
     ta.value=noteSheetOrig;
     box.style.display='none'; ta.style.display='';
@@ -10234,56 +10245,53 @@ function openNoteSheet(id,key){
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initNoteSheetDrag();
 }
-// 人物编辑列表。focusIdx≥0 = 渲染完聚焦第几组的名字栏；delay = 聚焦前等多久（等滑起动画）；
-// scroll = 聚焦前先把那一组滚到眼前（新加的一组在列表最底下，光 focus 是看不见的）
-function renderPeopleEditor(focusIdx,delay,scroll){
+// 正在编辑的那个人：名字 / 信息 / 备注三栏 + 一颗删除。
+// delay = 聚焦名字栏前等多久（等抽屉滑起的动画走完，免得键盘和动画抢位置）
+function renderPeopleEditor(delay){
   const box=document.getElementById('noteSheetPeople');
-  if(!box) return;
-  box.innerHTML=peRows.map((p,i)=>`
-    <div class="pe-row" data-i="${i}">
+  if(!box||!peRows[peIdx]) return;
+  const p=peRows[peIdx];
+  box.innerHTML=`
+    <div class="pe-row">
       <div class="pe-line">
         <input class="pe-in pe-name" placeholder="名字" value="${esc(p.name)}">
-        <button type="button" class="pe-del" data-del="${i}" aria-label="删掉这一个">✕</button>
+        <button type="button" class="pe-del" id="peDel" aria-label="删掉这个人">✕</button>
       </div>
       <input class="pe-in pe-info" placeholder="信息，比如身份、和主角的关系" value="${esc(p.info)}">
       <textarea class="pe-in pe-note" rows="1" placeholder="可留空">${esc(p.note)}</textarea>
-    </div>`).join('')
-    +`<button type="button" class="tlseg-add pe-add" id="peAdd">＋ 加一个人</button>`;
-  box.querySelectorAll('.pe-note').forEach(t=>{ autosizeTl(t); t.addEventListener('input',()=>autosizeTl(t)); });
-  box.querySelectorAll('.pe-del').forEach(b=>b.addEventListener('click',()=>{
-    readPeopleEditor();                          // 删之前先把手上改的收进来，否则会被这次重绘丢掉
-    peRows.splice(+b.dataset.del,1);
-    if(!peRows.length) peRows.push({name:'',info:'',note:''});
-    renderPeopleEditor(-1,0);
-  }));
-  const add=document.getElementById('peAdd');
-  if(add) add.addEventListener('click',addPeopleRow);
-  if(focusIdx>=0){
-    const el=box.querySelector('.pe-row[data-i="'+focusIdx+'"] .pe-name');
-    if(el) setTimeout(()=>{
-      if(noteSheetId==null) return;
-      const row=el.closest('.pe-row');
-      if(scroll&&row&&row.scrollIntoView) row.scrollIntoView({block:'center'});
-      el.focus({preventScroll:true});
-    },delay||0);
-  }
+    </div>`;
+  const ta=box.querySelector('.pe-note');
+  if(ta){ autosizeTl(ta); ta.addEventListener('input',()=>autosizeTl(ta)); }
+  const del=document.getElementById('peDel');
+  if(del) del.addEventListener('click',delPerson);
+  const nm=box.querySelector('.pe-name');
+  if(nm) setTimeout(()=>{
+    if(noteSheetId==null||noteSheetKey!=='people') return;
+    nm.focus({preventScroll:true});
+    try{ nm.selectionStart=nm.selectionEnd=nm.value.length; }catch(_){}
+  },delay||0);
 }
-// 加一个人：标题带上的常驻按钮和列表末尾那颗共用这一套
-function addPeopleRow(){
-  if(noteSheetId==null||noteSheetKey!=='people') return;
-  readPeopleEditor();                          // 先把手上改的收进来，否则会被这次重绘丢掉
-  peRows.push({name:'',info:'',note:''});
-  renderPeopleEditor(peRows.length-1,0,true);
+// 删掉正在编辑的这个人：抽屉里只有他，删完就没什么可留的了，直接关掉落盘
+function delPerson(){
+  if(noteSheetId==null||noteSheetKey!=='people'||!peRows[peIdx]) return;
+  readPeopleEditor();
+  const p=peRows[peIdx];
+  if((p.name||p.info||p.note)&&!confirm('删掉「'+(p.name||'这个人')+'」？')) return;
+  peRows.splice(peIdx,1);
+  peIdx=-1;                                    // 置空，别让 readPeopleEditor 再往回写
+  closeNoteSheet();
 }
-// 把列表里当前填的内容收回 peRows（增删、落盘前都要先走一遍）
+// 把三栏当前填的内容收回 peRows（删人、落盘前都要先走一遍）
 function readPeopleEditor(){
   const box=document.getElementById('noteSheetPeople');
-  if(!box) return;
-  peRows=[...box.querySelectorAll('.pe-row')].map(r=>({
+  if(!box||!peRows[peIdx]) return;
+  const r=box.querySelector('.pe-row');
+  if(!r) return;
+  peRows[peIdx]={
     name:(r.querySelector('.pe-name')||{}).value?.trim()||'',
     info:(r.querySelector('.pe-info')||{}).value?.trim()||'',
     note:(r.querySelector('.pe-note')||{}).value?.trim()||''
-  }));
+  };
 }
 // 落盘（关闭前走一遍）；没改动就什么都不做，不弹「已保存」
 function commitNoteSheet(){
@@ -10310,8 +10318,9 @@ function commitNoteSheet(){
 function closeNoteSheet(){
   if(noteSheetId==null) return;
   commitNoteSheet();
-  const act=document.activeElement;       // 先收键盘，再让抽屉滑下去（人物那边聚焦的是列表里的某一栏）
+  const act=document.activeElement;       // 先收键盘，再让抽屉滑下去（人物那边聚焦的是三栏里的某一栏）
   if(act&&act.blur&&document.getElementById('noteSheet').contains(act)) act.blur();
+  peIdx=-1;
   document.getElementById('noteSheetMask').classList.remove('show');
   document.getElementById('noteSheet').classList.remove('show');
   noteSheetId=null;
@@ -10322,12 +10331,6 @@ function initNoteSheetDrag(){
   const head=document.getElementById('noteSheetHead'),
         sheet=document.getElementById('noteSheet'),
         mask=document.getElementById('noteSheetMask');
-  const headAdd=document.getElementById('peHeadAdd');
-  if(headAdd){
-    // 按钮坐在标题带上，而标题带按下就开始拖：不拦住的话按一下会被当成下拉手势
-    headAdd.addEventListener('pointerdown',e=>e.stopPropagation());
-    headAdd.addEventListener('click',addPeopleRow);
-  }
   let sy=null,dy=0,drag=false;
   head.addEventListener('pointerdown',e=>{sy=e.clientY;dy=0;drag=true;
     sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
