@@ -4342,12 +4342,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="fg" id="nf-body-group">
       <label>正文</label>
       <div class="nf-body-wrap" id="nf-body-wrap">
-        <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;- 列表项"></textarea>
+        <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;*斜体文字*&#10;__下划线文字__&#10;- 列表项"></textarea>
         <div class="nf-thumb" id="nf-thumb"></div>
       </div>
       <div class="fmt-bar">
         <button type="button" class="fmt-btn" onclick="noteFmt('h')" title="标题">H</button>
         <button type="button" class="fmt-btn" onclick="noteFmt('b')" title="粗体"><b>B</b></button>
+        <button type="button" class="fmt-btn" onclick="noteFmt('i')" title="斜体"><i>I</i></button>
+        <button type="button" class="fmt-btn" onclick="noteFmt('u')" title="下划线"><u>U</u></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
         <span class="fmt-hint">选中文字后点按钮加格式</span>
       </div>
@@ -4468,6 +4470,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="fmt-bar ns-fmt" id="noteSheetFmt" style="display:none">
       <button type="button" class="fmt-btn" onclick="sheetFmt('h')" title="标题">H</button>
       <button type="button" class="fmt-btn" onclick="sheetFmt('b')" title="粗体"><b>B</b></button>
+      <button type="button" class="fmt-btn" onclick="sheetFmt('i')" title="斜体"><i>I</i></button>
+      <button type="button" class="fmt-btn" onclick="sheetFmt('u')" title="下划线"><u>U</u></button>
       <button type="button" class="fmt-btn" onclick="sheetFmt('li')" title="列点">•</button>
       <span class="fmt-hint">选中文字后点按钮加格式</span>
     </div>
@@ -8643,8 +8647,16 @@ function hl(s){
   return out+esc(s.slice(i));
 }
 
-// ── 富文本渲染:支持 #/##/### 标题 + **加粗** + -/* 列表 ──
-function inlineBold(s){return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');}
+// ── 富文本渲染:支持 #/##/### 标题 + **加粗** + *斜体* + __下划线__ + -/* 列表 ──
+// 三条替换的先后顺序是有讲究的：**粗体** 必须先吃掉，不然会被单星号那条拆成
+// 「一对斜体 + 两颗孤星」。下划线用双下划线，跟星号井水不犯河水，夹在中间无所谓。
+// 单星号那条要求星号后面紧跟非空白非星号，免得把正文里当乘号/脚注用的孤星配成对。
+function inlineFmt(s){
+  return String(s)
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/__(.+?)__/g,'<u>$1</u>')
+    .replace(/\*([^\s*][^*\n]*?)\*/g,'<em>$1</em>');
+}
 function renderRich(text){
   if(!text) return '';
   const lines=String(text).split('\n');
@@ -8652,14 +8664,14 @@ function renderRich(text){
   let listBuf=null,paraBuf=null;
   function flushList(){if(listBuf){out.push('<ul class="rt-ul">'+listBuf.join('')+'</ul>');listBuf=null;}}
   // 段内先按 <br> 拼好再套加粗，让 **…** 可以跨行（只要没被空行断开段落）
-  function flushPara(){if(paraBuf){out.push('<p class="rt-p">'+inlineBold(paraBuf.join('<br>'))+'</p>');paraBuf=null;}}
+  function flushPara(){if(paraBuf){out.push('<p class="rt-p">'+inlineFmt(paraBuf.join('<br>'))+'</p>');paraBuf=null;}}
   for(const raw of lines){
     const line=raw.replace(/\s+$/,'');
     if(!line.trim()){flushList();flushPara();continue;}
     let m=/^(#{1,3})\s+(.+)$/.exec(line);
-    if(m){flushList();flushPara();const lvl=m[1].length;out.push(`<h${lvl} class="rt-h${lvl}">`+inlineBold(hl(m[2]))+`</h${lvl}>`);continue;}
+    if(m){flushList();flushPara();const lvl=m[1].length;out.push(`<h${lvl} class="rt-h${lvl}">`+inlineFmt(hl(m[2]))+`</h${lvl}>`);continue;}
     m=/^[-*]\s+(.+)$/.exec(line);
-    if(m){flushPara();if(!listBuf)listBuf=[];listBuf.push('<li>'+inlineBold(hl(m[1]))+'</li>');continue;}
+    if(m){flushPara();if(!listBuf)listBuf=[];listBuf.push('<li>'+inlineFmt(hl(m[1]))+'</li>');continue;}
     flushList();if(!paraBuf)paraBuf=[];paraBuf.push(hl(line));
   }
   flushList();flushPara();
@@ -8671,10 +8683,10 @@ function renderRichInline(text){
   const lines=String(text).split('\n').map(s=>s.trim()).filter(Boolean);
   return lines.map(line=>{
     let m=/^(#{1,3})\s+(.+)$/.exec(line);
-    if(m) return `<span class="pv-h pv-h${m[1].length}">`+inlineBold(hl(m[2]))+`</span>`;
+    if(m) return `<span class="pv-h pv-h${m[1].length}">`+inlineFmt(hl(m[2]))+`</span>`;
     m=/^[-*]\s+(.+)$/.exec(line);
-    if(m) return `<span class="pv-li">`+inlineBold(hl(m[1]))+`</span>`;
-    return inlineBold(hl(line));
+    if(m) return `<span class="pv-li">`+inlineFmt(hl(m[1]))+`</span>`;
+    return inlineFmt(hl(line));
   }).join(' · ');
 }
 function getCat(id){return cats.find(c=>c.id===id)||{name:id,color:'#888',emoji:'📌'};}
@@ -12202,7 +12214,7 @@ function bookNotePreview(body){
   if(!numBlocks.length) return notePreviewInline(body);
   return numBlocks.slice(0,2).map(p=>{
     const t=p.text.length>60?p.text.slice(0,60)+'…':p.text;
-    return `<div class="pv-pg"><span class="pv-pnum">${p.num}.</span> ${inlineBold(hl(t))}</div>`;
+    return `<div class="pv-pg"><span class="pv-pnum">${p.num}.</span> ${inlineFmt(hl(t))}</div>`;
   }).join('');
 }
 
@@ -12654,7 +12666,7 @@ function renderChapterSheet(){
     }
     if(type==='heading'){
       return `<div class="tl-para tl-hd"><div class="tl-pdot"></div>`+
-        `<div class="tl-phead tlseg-tap" data-tap="${i}">${inlineBold(esc(line))}</div></div>`;
+        `<div class="tl-phead tlseg-tap" data-tap="${i}">${inlineFmt(esc(line))}</div></div>`;
     }
     if(type==='num'){
       return `<div class="tl-para"><div class="tl-pdot"></div>`+
@@ -13460,8 +13472,10 @@ function noteFmt(kind,el){
   const before=ta.value.slice(0,start);
   const sel=ta.value.slice(start,end);
   const after=ta.value.slice(end);
-  if(kind==='b'){
-    const ins='**'+(sel||'粗体文字')+'**';
+  if(kind==='b'||kind==='i'||kind==='u'){
+    const M={b:'**',i:'*',u:'__'}[kind];
+    const PH={b:'粗体文字',i:'斜体文字',u:'下划线文字'}[kind];
+    const ins=M+(sel||PH)+M;
     ta.value=before+ins+after;
     ta.selectionStart=ta.selectionEnd=start+ins.length;
   }else if(kind==='h'){
