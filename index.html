@@ -808,19 +808,22 @@ body.detail-open .content{display:none!important;}
      不扣的话前两行会各高出 1，三行就又不齐了。 */
   .sidebar #themeRow .nitem{min-height:52px;padding:10px 15px 9px;}
   .sidebar #themeRow .theme-sws{min-height:52px;align-items:center;padding:10px 15px;}
-  /* 字号那行与色块那行共用同一张十列网格（列宽 1fr、列距 4），
+  /* 字号那行与色块那行共用同一张十列网格（列宽 1fr、列距 8），
      两行的方块因此永远同宽、同节距，小 / 中 / 大正对着最后三个色块。
-     不写死尺寸：393 上一列 29.6，窄机子整排一起缩，宽的一起长——
-     十列均分，不会像早先 auto-fit 那样在平板上摊成一排大方块。
+     列距用 8 不用 4：十个色块挨着 4 的缝会糊成一条彩带，看不出是十颗。
+     方块尺寸不写死，是列距之外剩下的那份：393 上一列 26，窄机子整排一起缩、
+     宽的一起长——十列均分，不会像早先 auto-fit 那样在平板上摊成一排大方块。
      「字号」二字占前七列（它只是个标签，占多少列不影响右边三格）。 */
-  .sidebar .nitem-fs{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;align-items:center;}
+  .sidebar .nitem-fs{display:grid;grid-template-columns:repeat(10,1fr);gap:var(--sp-8);align-items:center;}
   .sidebar .nfs-lbl{grid-column:1 / 8;}
   .sidebar .nfs-segs{display:contents;}     /* 三段直接落进上面那张网格 */
-  .sidebar .nfs-seg{width:auto;height:auto;aspect-ratio:1;min-width:0;padding:0;
+  /* line-height 1：段里的字默认继承行的 24 行高，窄机子上列宽比 24 还小时
+     那个高度会把方块顶成竖长条（三段还各高各的）。压到字号本身，方块就一直是方的。 */
+  .sidebar .nfs-seg{width:auto;height:auto;aspect-ratio:1;min-width:0;padding:0;line-height:1;
     border-radius:var(--r);display:flex;align-items:center;justify-content:center;}
   /* 十个主题色排成一行（原来 32px 定死，一行只放得下 8 个，剩两个折到第二行）。
      选中态那圈从 4px 收到 3px，否则会顶到隔壁色块。 */
-  .sidebar .theme-sws{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;}
+  .sidebar .theme-sws{display:grid;grid-template-columns:repeat(10,1fr);gap:var(--sp-8);}
   .sidebar .theme-sw{width:auto;height:auto;aspect-ratio:1;min-width:0;}
   .sidebar .theme-sw.on{box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--sw);}
   /* 分类管理行右侧的编辑图标 */
