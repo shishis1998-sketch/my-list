@@ -3362,6 +3362,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .pv-row[aria-checked="true"] .novu-sw::after{transform:translateX(16px);}
 /* 关掉的行整行淡一档：一列 13 行里，光看滑块位置分不快「哪几张收起来了」 */
 #calViewPeriod .pv-row[aria-checked="false"] .pv-row-l{color:var(--faint);}
+/* 这张抽屉比记录抽屉矮一截（记录抽屉 92vh）：它是个设置清单，13 行怎么都滚得动，
+   没必要占满整屏——留出上面那截年历，才看得出「改的是背后那一页」。
+   520 是给桌面/平板的上限，不然 62vh 在高窗口里又长回去了。 */
+#pvCardsSheet{max-height:min(62vh,520px);}
+#calViewPeriod .pv-btn-alt{flex:1;background:var(--surface);color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--line);}
 /* 整理操作条：贴在标题栏下面，左说明右「完成」 */
 #calViewPeriod .pv-arrangebar{display:none;}
 #calViewPeriod.pv-arranging .pv-arrangebar{display:flex;align-items:center;gap:10px;
@@ -4064,6 +4070,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
             <button class="pv-sheet-close" onclick="PV.closeCardsSheet()" aria-label="关闭">✕</button>
           </div>
           <div class="pv-sheet-body" id="pvCardsBody"></div>
+          <!-- 两个动作钉在底下、不跟着列表滚：抽屉压到 62vh 之后，
+               排序入口要是排在 13 行开关后面，就得先滑到底才看得见 -->
+          <div class="pv-sheet-actions">
+            <button class="pv-btn pv-btn-alt" onclick="PV.startArrangeFromSheet()">拖动排序</button>
+            <button class="pv-btn pv-btn-done" onclick="PV.closeCardsSheet()">完成</button>
+          </div>
         </div>
       </div><!-- /#calViewPeriod -->
 
@@ -7345,23 +7357,20 @@ window.PV = (function(){
         '<div class="pv-ghd">月份卡片</div>' +
         '<div class="pv-group">' + CARD_IDS.filter(id => id !== 'trend').map(swRow).join('') + '</div>' +
         `<div class="pv-gfoot">关掉开关只是把卡片从年历里收起，记录一条都不会少，随时可以再打开。${hidden ? `当前收起了 ${hidden} 张。` : ''}</div>` +
-        '<div class="pv-ghd">排列</div>' +
-        '<div class="pv-group">' +
-          '<button type="button" class="pv-row" data-act="arrange">' +
-            '<span class="pv-row-l">拖动排序</span><span class="pv-row-v">周期趋势也能挪</span>' +
-            '<span class="pv-row-ar">›</span></button>' +
-          (isDefaultLayout() ? ''
-            : '<button type="button" class="pv-row link" data-act="reset"><span class="pv-row-l">恢复默认排列</span></button>') +
-        '</div>' +
+        // 「恢复默认」只在真的改过时出现，没改过时列一行灰按钮只是噪音
+        (isDefaultLayout() ? '' :
+          '<div class="pv-ghd">排列</div><div class="pv-group">' +
+          '<button type="button" class="pv-row link" data-act="reset">' +
+            '<span class="pv-row-l">恢复默认（顺序 + 全部显示）</span></button></div>') +
         '<div class="pv-gfoot">排序和收起只记在这台设备上，不会同步到云端。</div>';
       body.querySelectorAll('.pv-row[data-card]').forEach(r => {
         r.addEventListener('click', () => toggleCard(r.dataset.card));
       });
-      const arr = body.querySelector('[data-act="arrange"]');
-      if (arr) arr.addEventListener('click', () => { closeCardsSheet(); enterArrange(); });
       const rst = body.querySelector('[data-act="reset"]');
       if (rst) rst.addEventListener('click', resetCardLayout);
     }
+    // 抽屉底下的「拖动排序」：关掉抽屉、直接进整理模式（卡片角上出把手那套）
+    function startArrangeFromSheet() { closeCardsSheet(); enterArrange(); }
 
     function enterArrange() {
       if (homeView !== 'year' || arranging) return;
@@ -8955,7 +8964,7 @@ window.PV = (function(){
     navPrev, navNext, heatShift,
     closeDaySheet, clearDayRecord,
     // 年视图卡片：设置抽屉（显示/收起）+ 拖动排序
-    openCardsSheet, closeCardsSheet,
+    openCardsSheet, closeCardsSheet, startArrangeFromSheet,
     toggleArrange, exitArrange, showCard, hideCard, resetCardLayout,
     // 设置 › 经期：排卵期推算的开关与参数
     getOvuCfg, setOvuCfg, resetOvuCfg, loadOvuCfg, getOvuRange, getOvuDefault, getCycleInfo
