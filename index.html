@@ -7419,25 +7419,36 @@ window.PV = (function(){
 
         const apply = () => { el.style.transform = `translate(${px - sx}px, ${py - sy}px)`; };
 
-        // 手指底下是哪张卡：整行的趋势卡按上下半边判断插前插后，半宽月卡按左右半边。
-        // 自己量兄弟节点的矩形，不用 elementFromPoint——被拖的那张就浮在手指底下，
+        // 该插到第几位：数一遍「按阅读顺序排在手指前面」的卡有几张。
+        // 两个轴都要算 —— 只按左右半边判断的话，竖着往上拖时手指落在上一行右半格
+        // 会被判成「插到那一行的两张中间」，位置纹丝不动，用起来就是「只能往下拖」。
+        // 自己量兄弟节点的矩形，不用 elementFromPoint：被拖的那张就浮在手指底下，
         // 命中测试永远先撞上它，得靠 pointer-events 之类的把戏躲开，而那又会跟
-        // setPointerCapture 打架。13 个矩形直接算，稳当也不慢。
+        // setPointerCapture 打架。13 个矩形直接算，稳当也不慢，手指落在卡片
+        // 之间的缝里也照样有判断。
         const probe = () => {
-          let hit = null, r = null;
-          const kids = list.children;
-          for (let i = 0; i < kids.length; i++) {
-            const k = kids[i];
+          const kids = [];
+          for (let i = 0; i < list.children.length; i++) {
+            const k = list.children[i];
             if (k === el || !k.dataset.card) continue;
-            const kr = k.getBoundingClientRect();
-            if (px >= kr.left && px <= kr.right && py >= kr.top && py <= kr.bottom) { hit = k; r = kr; break; }
+            kids.push({ el: k, r: k.getBoundingClientRect() });
           }
-          if (!hit) return;
-          const after = hit.classList.contains('pv-fullrow')
-            ? py > r.top + r.height / 2
-            : px > r.left + r.width / 2;
-          const ref = after ? hit.nextSibling : hit;
-          if (ref === el || ref === el.nextSibling) return;   // 已经在那个位置了
+          if (!kids.length) return;
+          let idx = 0;
+          kids.forEach(k => {
+            const r = k.r;
+            // 整行卡（周期趋势）自己占一行，按上下半分；半宽月卡先看行——手指在它
+            // 上方/下方就是整行之差，同一行内才比左右半边
+            const before = k.el.classList.contains('pv-fullrow')
+              ? py > r.top + r.height / 2
+              : (py > r.bottom ? true : (py < r.top ? false : px > r.left + r.width / 2));
+            if (before) idx++;
+          });
+          // 整行卡只能落在行与行之间：插进某一行两张月卡的中间的话，那一行会空出
+          // 半格、后面整片跟着错位，看着像排版坏了。取偶数位 = 贴着行边界。
+          if (el.classList.contains('pv-fullrow')) idx = Math.round(idx / 2) * 2;
+          const ref = kids[idx] ? kids[idx].el : null;
+          if (ref === el.nextElementSibling) return;   // 已经在那个位置了（都是 null = 排最后）
           const r0 = el.getBoundingClientRect();
           list.insertBefore(el, ref);
           const r1 = el.getBoundingClientRect();
