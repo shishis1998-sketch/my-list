@@ -3337,6 +3337,80 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    标题栏内容右缘在 369，往里收 2 → 盒子右端 367，差 0.2。
    只给年视图；经期月视图那条按月视图列宽算的 calc 不动。 */
 #calViewPeriod.pv-year .home-header-right{order:3;margin-right:2px;}
+
+/* ── 年视图「整理卡片」：周期趋势 + 12 张月卡可拖动排序、可隐藏 ──────────────
+   排序队列只有一条：年视图里把 #pvTrend 搬进 12 宫格当一整行（grid-column:1/-1），
+   于是「趋势」和「月」是同一个网格里的 13 个块，一套拖拽逻辑通吃，
+   趋势卡想插到几月后面都行。离开年视图时 JS 再把它搬回标题栏上方的老位置。 */
+#calViewPeriod.pv-year .calendar-container.year-view>#pvTrend{margin:0;grid-column:1/-1;position:relative;}
+#calViewPeriod.pv-year .calendar-container.year-view>#pvTrend:empty{display:none;}
+/* 标题栏最右边的「⋯」键：只有年视图出现，尺寸/描边与旁边的筛选键一致 */
+#calViewPeriod .pv-morebtn{display:none;}
+#calViewPeriod.pv-year .pv-morebtn{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;padding:0;border-radius:50%;border:1px solid var(--border);background:transparent;
+  color:var(--text-primary);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+#calViewPeriod.pv-year .pv-morebtn svg{width:16px;height:16px;}
+#calViewPeriod.pv-year .pv-morebtn.on{color:var(--accent);border-color:var(--accent);}
+/* 有卡片被隐藏时右上角点一颗红点——不然隐藏完关掉设置，就没人记得东西去哪了 */
+#calViewPeriod .pv-morebtn .pv-more-ind{display:none;position:absolute;top:-1px;right:-1px;
+  width:6px;height:6px;border-radius:50%;background:var(--brand);}
+#calViewPeriod .pv-morebtn.has-hidden .pv-more-ind{display:block;}
+/* 卡片设置抽屉里的开关行：壳子是全站通用的 .pv-row，滑块借设置页排卵开关那颗 .novu-sw。
+   .novu-sw 的选中态原本只认 .nitem-ovu，这里给 .pv-row 补一条同样的 */
+#calViewPeriod .pv-row[role="switch"]{cursor:pointer;}
+#calViewPeriod .pv-row[aria-checked="true"] .novu-sw{background:var(--accent);}
+#calViewPeriod .pv-row[aria-checked="true"] .novu-sw::after{transform:translateX(16px);}
+/* 关掉的行整行淡一档：一列 13 行里，光看滑块位置分不快「哪几张收起来了」 */
+#calViewPeriod .pv-row[aria-checked="false"] .pv-row-l{color:var(--faint);}
+/* 这张抽屉比记录抽屉矮一截（记录抽屉 92vh）：它是个设置清单，13 行怎么都滚得动，
+   没必要占满整屏——留出上面那截年历，才看得出「改的是背后那一页」。
+   520 是给桌面/平板的上限，不然 62vh 在高窗口里又长回去了。 */
+#pvCardsSheet{max-height:min(62vh,520px);}
+#calViewPeriod .pv-btn-alt{flex:1;background:var(--surface);color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--line);}
+/* 整理操作条：贴在标题栏下面，左说明右「完成」 */
+#calViewPeriod .pv-arrangebar{display:none;}
+#calViewPeriod.pv-arranging .pv-arrangebar{display:flex;align-items:center;gap:10px;
+  margin:0 14px 10px;padding:8px 12px;background:var(--accent-light);border-radius:var(--r-md);}
+#calViewPeriod .pv-arrangebar .tip{flex:1;min-width:0;font-size:var(--fs-footnote);color:var(--muted);}
+#calViewPeriod .pv-arrangebar .tip b{font-weight:700;color:var(--ink-2);}
+#calViewPeriod .pv-arrange-done{flex:0 0 auto;border:none;background:var(--accent);color:#fff;
+  font-size:var(--fs-footnote);font-weight:600;padding:6px 14px;border-radius:var(--r-full);cursor:pointer;}
+/* 卡片角上的两个控件：左上「−」隐藏、右上「⠿」拖动把手。平时不渲染，整理中才出现 */
+#calViewPeriod .pv-cardctl{display:none;}
+#calViewPeriod.pv-arranging .pv-cardctl{display:block;}
+#calViewPeriod.pv-arranging .calendar-container.year-view>.month{position:relative;}
+#calViewPeriod .pv-cardhide{position:absolute;left:-7px;top:-7px;width:22px;height:22px;z-index:3;
+  display:flex;align-items:center;justify-content:center;padding:0;line-height:1;
+  border:1px solid var(--border);border-radius:50%;background:var(--surface);color:var(--ink);
+  font-size:16px;cursor:pointer;box-shadow:var(--shadow-sm);-webkit-tap-highlight-color:transparent;}
+/* 把手自己吃掉触摸手势（touch-action:none），拖它时页面不跟着滚；
+   卡片其余部分照常可滚——整块卡都能拖的话，13 张卡的长列表就没法用手指滑了 */
+#calViewPeriod .pv-cardgrip{position:absolute;right:6px;top:8px;z-index:3;padding:5px;cursor:grab;
+  display:grid;grid-template-columns:repeat(2,3px);gap:3px;touch-action:none;-webkit-tap-highlight-color:transparent;}
+#calViewPeriod .pv-cardgrip i{width:3px;height:3px;border-radius:50%;background:var(--faint);}
+#calViewPeriod .pv-cardgrip:active{cursor:grabbing;}
+#calViewPeriod.pv-arranging .calendar-container.year-view>#pvTrend .pv-cardgrip{right:10px;top:12px;}
+#calViewPeriod.pv-arranging .calendar-container.year-view>.month{cursor:default;}
+/* 拖动中的那张：抬起来（阴影 + 墨绿描边），其余卡直接换位、不做补间动画——
+   网格换位是重排不是位移，硬加 transition 只会让拖动看起来发黏 */
+#calViewPeriod .pv-drag{z-index:20;box-shadow:var(--shadow-lg);border-color:var(--accent) !important;}
+/* 已隐藏卡片的收纳区：一行胶囊，点一下放回去 */
+#calViewPeriod .pv-hiddenbox{display:none;}
+#calViewPeriod.pv-arranging .pv-hiddenbox{display:block;margin:0 14px 12px;}
+#calViewPeriod .pv-hiddenbox-hd{display:flex;align-items:center;gap:8px;margin:0 2px 8px;
+  font-size:var(--fs-footnote);color:var(--muted);}
+#calViewPeriod .pv-hiddenbox-reset{margin-left:auto;border:none;background:transparent;padding:2px 0;
+  font-size:var(--fs-footnote);color:var(--accent);font-weight:600;cursor:pointer;}
+#calViewPeriod .pv-hiddenchips{display:flex;flex-wrap:wrap;gap:8px;}
+#calViewPeriod .pv-hiddenchip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;
+  border:1px dashed var(--border);border-radius:var(--r-full);background:var(--surface);
+  color:var(--ink-2);font-family:inherit;font-size:var(--fs-footnote);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;}
+#calViewPeriod .pv-hiddenchip b{font-weight:700;color:var(--accent);font-size:14px;line-height:1;}
+/* 13 张卡全隐藏了：网格是空的，给句话别只剩一片空白 */
+#calViewPeriod .pv-allhidden{grid-column:1/-1;padding:28px 0;text-align:center;
+  color:var(--faint);font-size:var(--fs-footnote);}
 /* 标题：字号 18px、字距 .03em、内边距 0 2px，与普通日历 .cal-title 完全一致 */
 #calViewPeriod .pv-navlabel{font-size:18px !important;font-weight:700;color:var(--text-primary);
   font-family:var(--zh);letter-spacing:.02em;padding:0 2px;cursor:pointer;user-select:none;white-space:nowrap;}
@@ -3937,7 +4011,19 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
               </button>
               <div class="home-filter-menu" id="homeFilterMenu"></div>
             </div>
+            <!-- 「⋯」卡片设置：只在年视图出现（CSS 里靠 .pv-year 控制显隐）。
+                 右上角小红点 = 当前有卡片被隐藏，提示「东西还在，只是收起来了」 -->
+            <button class="pv-morebtn" id="pvCardsBtn" onclick="PV.openCardsSheet()" aria-label="卡片设置">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+              <span class="pv-more-ind"></span>
+            </button>
           </div>
+        </div>
+        <!-- 整理模式的操作条：只在整理中显示（#calViewPeriod.pv-arranging） -->
+        <div class="pv-arrangebar" id="pvArrangeBar">
+          <!-- 说明只用文字描述位置，不放 ⠿ 之类的字符：那类字形在部分系统里缺字，会变成豆腐块 -->
+          <span class="tip">按住右上角圆点拖动排序 · 点左上角 <b>−</b> 隐藏</span>
+          <button class="pv-arrange-done" onclick="PV.exitArrange()">完成</button>
         </div>
         <div class="pv-cardwrap">
           <div id="calendar" class="calendar-container"></div>
@@ -3950,6 +4036,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
             <span><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
           </div>
         </div>
+        <!-- 已隐藏的卡片放这儿（只在整理模式出现），点一下放回原位 -->
+        <div class="pv-hiddenbox" id="pvHiddenBox"></div>
         <div id="pvExtras"></div>
         <div id="bottomLegend">
           <div style="text-align:center;font-size:var(--fs-micro);color:var(--muted);margin-top:12px;margin-bottom:3px;letter-spacing:1px;">VOLUMEN</div>
@@ -3969,6 +4057,24 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
             <!-- 「清除」这天没记录时置灰而不是抽走：按钮位置钉死，手指不用重新找 -->
             <button class="pv-btn pv-btn-clear" id="pvBtnClear" onclick="PV.clearDayRecord()">清除</button>
             <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
+          </div>
+        </div>
+
+        <!-- 年历卡片设置 · 底部弹窗（标题栏「⋯」打开）：一行一张卡，开关控制显示/收起。
+             壳子直接复用经期记录抽屉那套 .pv-sheet/.pv-group/.pv-row，样式与全站一致 -->
+        <div class="pv-sheet-scrim" id="pvCardsScrim" onclick="PV.closeCardsSheet()"></div>
+        <div class="pv-sheet" id="pvCardsSheet" role="dialog" aria-modal="true" aria-label="年历卡片设置">
+          <div class="pv-sheet-grab"></div>
+          <div class="pv-sheet-head">
+            <span class="pv-sheet-date">年历卡片</span>
+            <button class="pv-sheet-close" onclick="PV.closeCardsSheet()" aria-label="关闭">✕</button>
+          </div>
+          <div class="pv-sheet-body" id="pvCardsBody"></div>
+          <!-- 两个动作钉在底下、不跟着列表滚：抽屉压到 62vh 之后，
+               排序入口要是排在 13 行开关后面，就得先滑到底才看得见 -->
+          <div class="pv-sheet-actions">
+            <button class="pv-btn pv-btn-alt" onclick="PV.startArrangeFromSheet()">拖动排序</button>
+            <button class="pv-btn pv-btn-done" onclick="PV.closeCardsSheet()">完成</button>
           </div>
         </div>
       </div><!-- /#calViewPeriod -->
@@ -7058,6 +7164,350 @@ window.PV = (function(){
       return html + `</div></div>`;
     }
 
+    // ══ 年视图卡片布局：13 个块（周期趋势 + 12 个月）可拖动排序、可单独隐藏 ══════
+    //
+    // 只有一条排序队列：年视图会把 #pvTrend 从标题栏上方搬进 12 宫格里当一整行
+    // （CSS: grid-column:1/-1），于是「趋势」和「月」是同一个网格的兄弟节点，
+    // 一套拖拽逻辑通吃，趋势卡能插到任意两个月之间。离开年视图再搬回老位置。
+    //
+    // 布局只存本机（localStorage），不进 periodData、不上 Gist——它是「这台设备
+    // 想怎么看」，跟经期记录不是一类东西，同步过去反而会互相覆盖。
+    const CARDS_KEY = 'my_list_year_cards_v1';
+    const CARD_IDS = ['trend', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11', 'm12'];
+    const cardLabel = id => id === 'trend' ? '周期趋势' : `${+id.slice(1)} 月`;
+
+    let cardOrder = CARD_IDS.slice();
+    let cardHidden = [];
+    let arranging = false;      // 是否在整理模式
+    let trendHome = null;       // #pvTrend 的老位置（父节点 + 后一个兄弟），搬回去要用
+
+    function isCardHidden(id) { return cardHidden.indexOf(id) !== -1; }
+
+    // 读本机布局。存的东西可能是旧版本/被改坏的：只认识白名单里的 id、去重，
+    // 缺的按默认顺序补到队尾——将来加卡片也不会因为老数据而消失。
+    function loadCardLayout() {
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(CARDS_KEY)); } catch (e) {}
+      const seen = new Set(), order = [];
+      if (raw && Array.isArray(raw.order)) raw.order.forEach(id => {
+        if (CARD_IDS.indexOf(id) !== -1 && !seen.has(id)) { seen.add(id); order.push(id); }
+      });
+      CARD_IDS.forEach(id => { if (!seen.has(id)) order.push(id); });
+      cardOrder = order;
+      cardHidden = (raw && Array.isArray(raw.hidden) ? raw.hidden : [])
+        .filter(id => CARD_IDS.indexOf(id) !== -1);
+    }
+    function saveCardLayout() {
+      try { localStorage.setItem(CARDS_KEY, JSON.stringify({ order: cardOrder, hidden: cardHidden })); } catch (e) {}
+    }
+    function isDefaultLayout() {
+      return cardHidden.length === 0 && cardOrder.join() === CARD_IDS.join();
+    }
+    loadCardLayout();
+
+    // #pvTrend 平时住在标题栏上方；年视图把它搬进网格，其它视图搬回去。
+    // 第一次调用时记下老位置——HTML 里它就在那儿，之后谁都不许再改。
+    function restoreTrendHome() {
+      const t = document.getElementById('pvTrend');
+      if (!t) return null;
+      const inGrid = t.parentNode && t.parentNode.id === 'calendar';
+      if (!trendHome && !inGrid) trendHome = { parent: t.parentNode, next: t.nextSibling };
+      if (trendHome && inGrid) trendHome.parent.insertBefore(t, trendHome.next);
+      t.classList.remove('pv-sortitem', 'pv-fullrow');
+      t.removeAttribute('data-card');
+      return t;
+    }
+
+    // 年视图：按 cardOrder 重排月卡、把趋势卡插进队列，隐藏的直接不进 DOM。
+    // （月视图不走这里——藏起来的是「年历里的那张卡」，不是那个月的数据。）
+    function applyYearLayout(cal) {
+      const months = {};
+      Array.prototype.forEach.call(cal.children, el => {
+        if (el.classList.contains('month')) months['m' + el.dataset.month] = el;
+      });
+      const t = document.getElementById('pvTrend');
+      const frag = document.createDocumentFragment();
+      cardOrder.forEach(id => {
+        if (isCardHidden(id)) return;
+        const el = id === 'trend' ? t : months[id];
+        if (!el) return;
+        el.classList.add('pv-sortitem');
+        if (id === 'trend') el.classList.add('pv-fullrow');
+        el.dataset.card = id;
+        // 趋势卡是常驻节点（月卡每次重建、它不是），拖动残留的位移要在这儿抹掉，
+        // 万一上一次拖拽收尾没跑完（比如中途切了视图），它不会歪在那儿
+        el.style.transform = '';
+        el.classList.remove('pv-drag');
+        frag.appendChild(el);   // 从 cal / 老位置摘出来，排好队再一次性放回
+      });
+      CARD_IDS.forEach(id => { if (isCardHidden(id) && months[id]) months[id].remove(); });
+      cal.appendChild(frag);
+      if (!cal.children.length)
+        cal.innerHTML = '<div class="pv-allhidden">卡片都被隐藏了 · 点右上角「⋯」放回来</div>';
+    }
+
+    // 每次重画后给每张卡补上角上的两个控件（平时 CSS 藏着，整理中才显形）。
+    // 卡片每次 render 都是新节点，所以只需保证「有就不重复加」。
+    function mountArrangeCtls() {
+      const cal = document.getElementById('calendar');
+      if (!cal || homeView !== 'year') return;
+      Array.prototype.forEach.call(cal.children, el => {
+        if (!el.classList.contains('pv-sortitem')) return;
+        if (el.querySelector('.pv-cardctl')) return;
+        const id = el.dataset.card;
+        const box = document.createElement('div');
+        box.className = 'pv-cardctl';
+        box.innerHTML =
+          `<button type="button" class="pv-cardhide" aria-label="隐藏${cardLabel(id)}">−</button>` +
+          `<span class="pv-cardgrip" aria-label="拖动${cardLabel(id)}"><i></i><i></i><i></i><i></i><i></i><i></i></span>`;
+        box.querySelector('.pv-cardhide').addEventListener('click', e => {
+          e.stopPropagation(); hideCard(id);
+        });
+        bindCardDrag(box.querySelector('.pv-cardgrip'), el);
+        el.appendChild(box);
+        // #pvTrend 是常驻节点（不像月卡每次重建），长按只绑一次，否则会越叠越多
+        if (!el._lpBound) { el._lpBound = 1; bindLongPressArrange(el); }
+      });
+    }
+
+    // 隐藏区：整理模式下列出被藏起来的卡，点一下放回原来的位置
+    function renderHiddenBox() {
+      const box = document.getElementById('pvHiddenBox');
+      if (!box) return;
+      if (homeView !== 'year' || !arranging) { box.innerHTML = ''; return; }
+      const chips = cardOrder.filter(isCardHidden);
+      box.innerHTML =
+        '<div class="pv-hiddenbox-hd">' +
+          (chips.length ? `已隐藏 ${chips.length} 张 · 点一下放回去` : '没有隐藏的卡片') +
+          (isDefaultLayout() ? '' : '<button type="button" class="pv-hiddenbox-reset">恢复默认</button>') +
+        '</div>' +
+        (chips.length
+          ? '<div class="pv-hiddenchips">' + chips.map(id =>
+              `<button type="button" class="pv-hiddenchip" data-card="${id}"><b>+</b>${cardLabel(id)}</button>`).join('') + '</div>'
+          : '');
+      box.querySelectorAll('.pv-hiddenchip').forEach(c => {
+        c.addEventListener('click', () => showCard(c.dataset.card));
+      });
+      const rb = box.querySelector('.pv-hiddenbox-reset');
+      if (rb) rb.addEventListener('click', resetCardLayout);
+    }
+
+    function hideCard(id) {
+      if (isCardHidden(id)) return;
+      cardHidden.push(id);
+      saveCardLayout();
+      if (typeof window.haptic === 'function') window.haptic('tap');
+      render();
+      if (cardsSheetOpen()) renderCardsSheet();
+    }
+    function showCard(id) {
+      if (!isCardHidden(id)) return;
+      cardHidden = cardHidden.filter(x => x !== id);
+      saveCardLayout();
+      if (typeof window.haptic === 'function') window.haptic('tap');
+      render();
+      if (cardsSheetOpen()) renderCardsSheet();
+    }
+    function toggleCard(id) { isCardHidden(id) ? showCard(id) : hideCard(id); }
+    function resetCardLayout() {
+      cardOrder = CARD_IDS.slice();
+      cardHidden = [];
+      saveCardLayout();
+      showToast('已恢复默认排列');
+      render();
+      if (cardsSheetOpen()) renderCardsSheet();
+    }
+
+    // ── 卡片设置抽屉（标题栏「⋯」）───────────────────────────────
+    // 一行一张卡 + 开关，关掉就从年历里收起、随时能再打开；底下另给「拖动排序」入口。
+    // 卡片本身也能长按直接拖，这里是「看得见全部、能一次调完」的那条路。
+    function openCardsSheet() {
+      const sheet = document.getElementById('pvCardsSheet');
+      const scrim = document.getElementById('pvCardsScrim');
+      if (!sheet || !scrim) return;
+      closeHomeFilter();
+      renderCardsSheet();
+      document.body.classList.add('pv-sheet-open');
+      scrim.classList.add('open');
+      requestAnimationFrame(() => sheet.classList.add('open'));
+    }
+    function closeCardsSheet() {
+      const sheet = document.getElementById('pvCardsSheet');
+      const scrim = document.getElementById('pvCardsScrim');
+      if (sheet) sheet.classList.remove('open');
+      if (scrim) scrim.classList.remove('open');
+      document.body.classList.remove('pv-sheet-open');
+    }
+    function cardsSheetOpen() {
+      const sheet = document.getElementById('pvCardsSheet');
+      return !!sheet && sheet.classList.contains('open');
+    }
+    function renderCardsSheet() {
+      const body = document.getElementById('pvCardsBody');
+      if (!body) return;
+      const swRow = id =>
+        `<button type="button" class="pv-row" role="switch" data-card="${id}"` +
+        ` aria-checked="${isCardHidden(id) ? 'false' : 'true'}"` +
+        ` aria-label="${cardLabel(id)}，点击${isCardHidden(id) ? '显示' : '收起'}">` +
+        `<span class="pv-row-l">${cardLabel(id)}</span><span class="novu-sw"></span></button>`;
+      const hidden = cardHidden.length;
+      body.innerHTML =
+        '<div class="pv-ghd">图表</div>' +
+        `<div class="pv-group">${swRow('trend')}</div>` +
+        '<div class="pv-ghd">月份卡片</div>' +
+        '<div class="pv-group">' + CARD_IDS.filter(id => id !== 'trend').map(swRow).join('') + '</div>' +
+        `<div class="pv-gfoot">关掉开关只是把卡片从年历里收起，记录一条都不会少，随时可以再打开。${hidden ? `当前收起了 ${hidden} 张。` : ''}</div>` +
+        // 「恢复默认」只在真的改过时出现，没改过时列一行灰按钮只是噪音
+        (isDefaultLayout() ? '' :
+          '<div class="pv-ghd">排列</div><div class="pv-group">' +
+          '<button type="button" class="pv-row link" data-act="reset">' +
+            '<span class="pv-row-l">恢复默认（顺序 + 全部显示）</span></button></div>') +
+        '<div class="pv-gfoot">排序和收起只记在这台设备上，不会同步到云端。</div>';
+      body.querySelectorAll('.pv-row[data-card]').forEach(r => {
+        r.addEventListener('click', () => toggleCard(r.dataset.card));
+      });
+      const rst = body.querySelector('[data-act="reset"]');
+      if (rst) rst.addEventListener('click', resetCardLayout);
+    }
+    // 抽屉底下的「拖动排序」：关掉抽屉、直接进整理模式（卡片角上出把手那套）
+    function startArrangeFromSheet() { closeCardsSheet(); enterArrange(); }
+
+    function enterArrange() {
+      if (homeView !== 'year' || arranging) return;
+      arranging = true;
+      if (typeof window.haptic === 'function') window.haptic('tap');
+      render();
+    }
+    function exitArrange() {
+      if (!arranging) return;
+      arranging = false;
+      render();
+    }
+    function toggleArrange() { arranging ? exitArrange() : enterArrange(); }
+
+    // 长按任意一张卡进整理模式（触屏；鼠标端用标题栏那个键就行）。
+    // 手指一滑就取消——不然整页滚动会被误判成长按。
+    function bindLongPressArrange(el) {
+      let timer = 0, sx = 0, sy = 0;
+      const stop = () => { if (timer) { clearTimeout(timer); timer = 0; } };
+      el.addEventListener('pointerdown', e => {
+        if (arranging || e.pointerType === 'mouse') return;
+        sx = e.clientX; sy = e.clientY;
+        stop();
+        timer = setTimeout(() => { timer = 0; enterArrange(); }, 550);
+      });
+      el.addEventListener('pointermove', e => {
+        if (timer && (Math.abs(e.clientX - sx) > 8 || Math.abs(e.clientY - sy) > 8)) stop();
+      });
+      el.addEventListener('pointerup', stop);
+      el.addEventListener('pointercancel', stop);
+    }
+
+    // 拖动排序：只有把手 .pv-cardgrip 能拖（它 touch-action:none 吃掉手势），
+    // 卡片其余部分照常滚页面——整块卡都能拖的话，13 张卡的长列表就滑不动了。
+    function bindCardDrag(grip, el) {
+      grip.addEventListener('pointerdown', e => {
+        if (!arranging || (e.button != null && e.button > 0)) return;
+        const list = el.parentNode;
+        if (!list) return;
+        e.preventDefault();
+        // sx/sy 是「基点」：卡片当前排版位置对应的手指位置。换位或页面滚动会让
+        // 排版位置跳，这时同步挪基点，卡片在屏幕上就始终跟着手指、不闪。
+        let sx = e.clientX, sy = e.clientY, px = sx, py = sy;
+        let moved = false, edge = 0, raf = 0;
+        const pid = e.pointerId;
+
+        const apply = () => { el.style.transform = `translate(${px - sx}px, ${py - sy}px)`; };
+
+        // 手指底下是哪张卡：整行的趋势卡按上下半边判断插前插后，半宽月卡按左右半边。
+        // 自己量兄弟节点的矩形，不用 elementFromPoint——被拖的那张就浮在手指底下，
+        // 命中测试永远先撞上它，得靠 pointer-events 之类的把戏躲开，而那又会跟
+        // setPointerCapture 打架。13 个矩形直接算，稳当也不慢。
+        const probe = () => {
+          let hit = null, r = null;
+          const kids = list.children;
+          for (let i = 0; i < kids.length; i++) {
+            const k = kids[i];
+            if (k === el || !k.dataset.card) continue;
+            const kr = k.getBoundingClientRect();
+            if (px >= kr.left && px <= kr.right && py >= kr.top && py <= kr.bottom) { hit = k; r = kr; break; }
+          }
+          if (!hit) return;
+          const after = hit.classList.contains('pv-fullrow')
+            ? py > r.top + r.height / 2
+            : px > r.left + r.width / 2;
+          const ref = after ? hit.nextSibling : hit;
+          if (ref === el || ref === el.nextSibling) return;   // 已经在那个位置了
+          const r0 = el.getBoundingClientRect();
+          list.insertBefore(el, ref);
+          const r1 = el.getBoundingClientRect();
+          sx += r1.left - r0.left; sy += r1.top - r0.top;
+          apply();
+          if (typeof window.haptic === 'function') window.haptic('tap');
+        };
+
+        // 拖到屏幕上下边缘时自动滚页（整页滚动，日历页没有内层滚动容器）
+        const tick = () => {
+          raf = 0;
+          if (!edge) return;
+          const y0 = window.scrollY;
+          window.scrollBy(0, edge * 14);
+          const d = window.scrollY - y0;
+          if (d) { sy -= d; apply(); probe(); }
+          raf = requestAnimationFrame(tick);
+        };
+
+        const onMove = ev => {
+          if (ev.pointerId !== pid) return;
+          px = ev.clientX; py = ev.clientY;
+          if (!moved) {
+            if (Math.abs(px - sx) < 5 && Math.abs(py - sy) < 5) return;
+            moved = true;
+            el.classList.add('pv-drag');
+            if (typeof window.haptic === 'function') window.haptic('tap');
+          }
+          apply();
+          probe();
+          edge = py < 100 ? -1 : (py > window.innerHeight - 100 ? 1 : 0);
+          if (edge && !raf) raf = requestAnimationFrame(tick);
+        };
+        const onUp = ev => {
+          if (ev && ev.pointerId !== pid) return;
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          document.removeEventListener('pointercancel', onUp);
+          edge = 0;
+          if (raf) { cancelAnimationFrame(raf); raf = 0; }
+          el.style.transform = '';
+          el.classList.remove('pv-drag');
+          if (moved) { commitOrderFromDom(list); renderHiddenBox(); }
+        };
+        // 监听挂在 document 上，不挂把手、也不用 setPointerCapture：
+        // 排序要把被拖的卡在 DOM 里搬来搬去，而「元素被移出文档」会让浏览器
+        // 隐式解除指针捕获（把手是它的子节点，一起遭殃）——捕获一断，后续
+        // pointermove/up 就按命中测试派发到别的元素，拖动会卡在第一次换位上。
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      });
+    }
+
+    // 拖完把 DOM 现状写回 cardOrder。隐藏的卡不在 DOM 里，按它原本「跟在谁后面」
+    // 贴回队列——不然取消隐藏时它会莫名其妙跑到最后。
+    function commitOrderFromDom(list) {
+      const visible = Array.prototype.map.call(list.children, el => el.dataset.card).filter(Boolean);
+      const tail = { __head: [] };
+      let prev = '__head';
+      cardOrder.forEach(id => {
+        if (isCardHidden(id)) (tail[prev] = tail[prev] || []).push(id);
+        else prev = id;
+      });
+      const out = (tail.__head || []).slice();
+      visible.forEach(id => { out.push(id); (tail[id] || []).forEach(h => out.push(h)); });
+      cardOrder = out;
+      saveCardLayout();
+    }
+
     function render() {
       closeDaySheet();   // 翻月/切视图/切年 等任何重画都收起底部弹窗
       buildFert();       // 排卵期现算：改过经期后重画就是最新结果
@@ -7065,8 +7515,19 @@ window.PV = (function(){
       const yl = document.getElementById('yearLabel');
       if (yl) yl.textContent = year;
       updateNavLabel();   // 同步顶部「‹ 年 月 ›」导航文字
+      // 整理模式只属于年视图；顺手把趋势卡搬回老位置——下面 cal.innerHTML 会清空
+      // 网格，它要是还在里面就被一起冲掉了
+      if (homeView !== 'year') arranging = false;
+      restoreTrendHome();
       const pvRoot = document.getElementById('calViewPeriod');
       if (pvRoot) pvRoot.classList.toggle('pv-year', homeView === 'year');   // 年视图去卡片壳
+      if (pvRoot) pvRoot.classList.toggle('pv-arranging', arranging);
+      if (homeView !== 'year') closeCardsSheet();
+      const moreBtn = document.getElementById('pvCardsBtn');
+      if (moreBtn) {
+        moreBtn.classList.toggle('on', arranging);
+        moreBtn.classList.toggle('has-hidden', cardHidden.length > 0);
+      }
       // 底部 VOLUMEN 图例只在年视图显示(月视图下方色板已是图例,避免重复)
       const bl = document.getElementById('bottomLegend');
       if (bl) bl.style.display = homeView === 'year' ? '' : 'none';
@@ -7081,6 +7542,7 @@ window.PV = (function(){
         cal.innerHTML = html;
         cal.classList.add('year-view');
         cal.classList.remove('month-view', 'one-col');
+        applyYearLayout(cal);   // 按本机保存的顺序重排 + 摘掉隐藏的 + 把趋势卡插进队列
       } else {
         cal.innerHTML = generateMonth(viewMonth, true);
         cal.classList.add('month-view');
@@ -7100,6 +7562,10 @@ window.PV = (function(){
       renderHomeChips();
       updateViewToggleUI();
       if (typeof afterRender === 'function') afterRender();
+      // 角上的隐藏/拖动控件要等 afterRender 里的 renderCycleTrend() 填完趋势卡再挂，
+      // 那一步是整块 innerHTML 重写，挂早了会被冲掉
+      mountArrangeCtls();
+      renderHiddenBox();
     }
 
     function updateViewToggleUI() {
@@ -7475,7 +7941,9 @@ window.PV = (function(){
       const scrim = document.getElementById('pvSheetScrim');
       if (sheet) sheet.classList.remove('open');
       if (scrim) scrim.classList.remove('open');
-      document.body.classList.remove('pv-sheet-open');
+      // 底栏让位这件事是两个抽屉共用的：卡片设置还开着就不能撤（改一张卡会重画整页，
+      // 顺带走这条路，撤了底栏就会从抽屉底下冒出来）
+      document.body.classList.toggle('pv-sheet-open', cardsSheetOpen());
       selectedView = null;
       updateSelectedHighlight();
     }
@@ -7569,15 +8037,17 @@ window.PV = (function(){
       const extras = document.getElementById('pvExtras');
       if (extras) extras.innerHTML = '';   // 卡片外的 状态/信息/本月记录 每次重建
 
-      // 周期趋势柱状图：只在年度视图显示（月度视图不再重复）
-      if (homeView === 'year') { renderCycleTrend(); }
+      // 周期趋势柱状图：只在年度视图显示（月度视图不再重复）；被隐藏时也不画——
+      // 那时它已被搬回标题栏上方的老位置，填了内容就会重新冒出来
+      if (homeView === 'year' && !isCardHidden('trend')) { renderCycleTrend(); }
       else { const _t = document.getElementById('pvTrend'); if (_t) _t.innerHTML = ''; }
 
       if (homeView === 'year') {
         cal.querySelectorAll('.month').forEach(card => {
           const m = +card.dataset.month;
-          card.onclick = () => openMonthView(m);
-        });
+          // 整理模式里点卡片不进月视图（长按刚触发时那一下 click 也在这儿被挡掉）
+          card.onclick = () => { if (!arranging) openMonthView(m); };
+        });   // 长按进整理模式在 mountArrangeCtls() 里统一绑（那里连趋势卡一起管）
         return;
       }
 
@@ -8395,6 +8865,7 @@ window.PV = (function(){
       posKept = true;
     }
     homeView = (view === 'year') ? 'year' : 'month';
+    arranging = false;   // 每次重新进来都是普通浏览状态，不接着上次的整理模式
     render();
   }
   // 重新打开日历页时调用：下次进经期视图重新回到当前年月（与「日历」重置到今天一致）
@@ -8492,6 +8963,9 @@ window.PV = (function(){
     toggleHomeFilter, setHomeView, changeViewMonth,
     navPrev, navNext, heatShift,
     closeDaySheet, clearDayRecord,
+    // 年视图卡片：设置抽屉（显示/收起）+ 拖动排序
+    openCardsSheet, closeCardsSheet, startArrangeFromSheet,
+    toggleArrange, exitArrange, showCard, hideCard, resetCardLayout,
     // 设置 › 经期：排卵期推算的开关与参数
     getOvuCfg, setOvuCfg, resetOvuCfg, loadOvuCfg, getOvuRange, getOvuDefault, getCycleInfo
   };
