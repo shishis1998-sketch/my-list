@@ -596,8 +596,10 @@ body.detail-open .content{display:none!important;}
   padding:var(--sp-16);margin-bottom:var(--sp-16);
   display:flex;flex-direction:column;gap:var(--sp-10);}
 .cnp-days-k{font-size:var(--fs-foot);letter-spacing:.1em;color:var(--on-accent-soft);line-height:1;}
+/* 手写笔记的标题取自正文里的加粗段，长度不可控——最多三行，再长就省略，
+   免得一整段加粗把卡片撑成半屏（正文里那段仍然完整显示，这里只是抄一份当标题）*/
 .cnp-days-t{font-size:calc(18px * var(--fs-scale));font-weight:700;line-height:var(--lh-tight);
-  overflow-wrap:break-word;}
+  overflow-wrap:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;}
 .cnp-days-n{display:flex;align-items:baseline;gap:var(--sp-6);
   font-size:calc(44px * var(--fs-scale));font-weight:700;line-height:1;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;}
@@ -12485,13 +12487,22 @@ function calNoteSpan(note){
 }
 function _fmtMD(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 // 事件名：只有「导入的日历事件」才有这一说——doImportICS 写正文时第一行固定是
-// **事件名**，所以整行加粗才算数，挪进卡片再从正文删掉是安全的。
-// 手写的笔记（日记 / 收集 / 备忘）正文是整段自由文字，加粗随处可能出现（甚至在
-// 最后一行），一律不认作标题、一个字都不动——动了就是把人写的字弄没了。
+// **事件名**，所以整行加粗才算数，挪进卡片再从正文删掉是安全的（那一行是机器写的）。
 const _CAL_LEAD_RE=/^\s*\*\*([^*\n]+)\*\*[ \t]*(?:\n|$)/;
 function calEventLead(note){
   if(!note||!(('_ics' in note)||note.subCat==='日历'))return '';
   const m=String(note.body||'').match(_CAL_LEAD_RE);
+  return m&&m[1].trim()?m[1].trim():'';
+}
+// 卡片上那行标题。两种来源，区别在「搬」还是「抄」：
+//   导入的日历事件 → 搬：事件名那一行是机器生成的，进卡片后从正文摘掉，不重复
+//   手写的笔记     → 抄：拿正文里加粗的那段当标题，正文原样保留一个字不动。
+//                      加粗可能在任何位置（甚至最后一行），搬走就是把人写的字弄没了
+// 没有加粗的笔记就不给标题——宁可少一行，也不猜「首行大概是标题」。
+function calCardTitle(note){
+  const lead=calEventLead(note);
+  if(lead)return lead;
+  const m=String(note&&note.body||'').match(/\*\*([^*]+)\*\*/);
   return m&&m[1].trim()?m[1].trim():'';
 }
 // 正文去掉已经进了卡片的那行事件名，剩下的时间 / 地点 / 描述留在卡片下面
@@ -12514,7 +12525,7 @@ function calNoteBodyRest(note){
 function calGapCard(note){
   const sp=calNoteSpan(note);
   if(!sp)return '';                       // 标题不是 YYYY/MM/DD 的笔记（正常不会走到这）
-  const lead=calEventLead(note);          // 手写笔记没有事件名，卡里就少这一行
+  const cardTitle=calCardTitle(note);     // 没有加粗的笔记取不到标题，卡里就少这一行
   const n=new Date(),today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   const D=(a,b)=>Math.round((b-a)/864e5);
   // 一律以「第一天」为准：跨天事件从开始那天算起，不从结束那天算，
@@ -12539,7 +12550,7 @@ function calGapCard(note){
   }
   return `<div class="cnp-days ${cls}">`+
          `<div class="cnp-days-k">${key}</div>`+
-         (lead?`<div class="cnp-days-t">${esc(lead)}</div>`:'')+
+         (cardTitle?`<div class="cnp-days-t">${esc(cardTitle)}</div>`:'')+
          `<div class="cnp-days-n">${num}</div>`+
          `<div class="cnp-days-s">${esc(meta)}</div></div>`;
 }
