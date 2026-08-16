@@ -9925,6 +9925,36 @@ function refreshUploadLocalRow(){
 }
 
 
+// ── 读云端那份 JSON ────────────────────────────────────────────
+// GitHub 的 Gist API 对大文件只回前面一段 content、把 truncated 置真，完整内容
+// 得另走 raw_url。不管这件事的话，JSON.parse 会在断口处炸成
+// 「Unterminated string in JSON at position 921600」——看着像云端数据坏了，
+// 其实 Gist 本身好好的，只是这一次响应被砍了。整份加密后密文是一整个巨长的
+// 字符串，一旦被砍必然断在字符串中间，所以这条路早晚会踩到。
+async function fetchGistRawText(url,token){
+  // 私密 Gist 的 raw_url 自带哈希，通常不带 Authorization 也能取；
+  // 取不到再补上鉴权头重试一次（跨域时这一次可能被 CORS 挡掉，所以放在后面）。
+  let r=null;
+  try{r=await fetch(url,{cache:'no-store'});}catch(e){r=null;}
+  if(!r||!r.ok){
+    r=await fetch(url,{cache:'no-store',headers:{'Authorization':'Bearer '+token}});
+  }
+  if(!r.ok)throw new Error(`读取云端完整内容失败（HTTP ${r.status}）`);
+  return await r.text();
+}
+async function readGistPayload(f,token){
+  const truncated=!!f.truncated||!f.content;
+  if(!truncated){
+    try{return JSON.parse(f.content);}
+    catch(e){
+      // 没标 truncated 却确实断了：只要有 raw_url 就再试一次，别急着报错
+      if(!f.raw_url)throw e;
+    }
+  }
+  if(!f.raw_url)throw new Error('云端文件超出接口返回上限，且没有 raw_url 可取完整内容');
+  return JSON.parse(await fetchGistRawText(f.raw_url,token));
+}
+
 async function syncPull(silent){
   const token=getToken(),gistId=getGistId();
   if(!token||!gistId){if(!silent)toast('请先配置 token 和 Gist ID');return false;}
@@ -9942,7 +9972,7 @@ async function syncPull(silent){
     // 否则用户只会看到一个空页面，还以为数据丢了。
     let remote;
     try{
-      remote=await openPayload(JSON.parse(f.content));
+      remote=await openPayload(await readGistPayload(f,token));
       _cloudEncLocked=false;
     }catch(e){
       _cloudEncLocked=true;
