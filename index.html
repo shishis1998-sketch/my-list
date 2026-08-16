@@ -587,23 +587,21 @@ body.detail-open .content{display:none!important;}
    设置 › 外观 › 字号的小/中/大三档照常生效，中档即 16。 */
 #calNotePreviewModal .mtitle,
 #calNotePreviewModal .cnp-text{font-size:calc(16px * var(--fs-scale));}
-/* 日历事件预览顶上的「离今天多久」：左边一句话说清是过去还是未来，右边一个大数字。
-   数字用等宽字形，连着看几条时那一列不会跳。未来 / 进行中用主题色，过去用正文色——
-   靠位置和字重区分，不靠红绿，夜间和色觉障碍都读得出。 */
-.cnp-days{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-14);
-  background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:var(--sp-12) var(--sp-16);margin-bottom:var(--sp-16);}
-.cnp-days-k{font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);line-height:var(--lh-tight);}
-.cnp-days-s{font-size:var(--fs-foot);color:var(--text-muted);line-height:var(--lh-tight);margin-top:var(--sp-4);
+/* 日历事件预览顶上的「离今天多久」：整张主题色卡，一句话 + 一个大数字 + 一行原始日期。
+   这是打开弹窗第一眼要看的东西，所以给它整块底色，不跟下面的正文抢也不被正文淹没。
+   数字用等宽字形，连着点几条时那一列不跳。 */
+.cnp-days{background:var(--accent);color:var(--on-accent);border-radius:var(--rlg);
+  padding:var(--sp-16);margin-bottom:var(--sp-16);
+  display:flex;flex-direction:column;gap:var(--sp-10);}
+.cnp-days-k{font-size:var(--fs-foot);letter-spacing:.1em;color:var(--on-accent-soft);line-height:1;}
+.cnp-days-n{display:flex;align-items:baseline;gap:var(--sp-6);
+  font-size:calc(44px * var(--fs-scale));font-weight:600;line-height:1;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;}
-.cnp-days-n{flex:0 0 auto;font-size:calc(28px * var(--fs-scale));font-weight:700;line-height:1;
-  color:var(--text-primary);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
-.cnp-days-n small{font-size:var(--fs-caption);font-weight:500;color:var(--text-muted);margin-left:var(--sp-4);
-  letter-spacing:0;}
-.cnp-days.soon .cnp-days-n,
-.cnp-days.now .cnp-days-n{color:var(--accent);}
-/* 正好是今天时右边没有数字，主题色落到左边那句话上，卡片不至于一片灰 */
-.cnp-days.now .cnp-days-k{color:var(--accent);}
+.cnp-days-n .u{font-size:calc(15px * var(--fs-scale));font-weight:500;color:var(--on-accent-soft);letter-spacing:0;}
+/* 正好是今天：没有数字可写，那句「今天」自己占大字位，字号收一档免得撑破卡片 */
+.cnp-days.now-only .cnp-days-n{font-size:calc(30px * var(--fs-scale));}
+.cnp-days-s{font-size:var(--fs-foot);color:var(--on-accent-soft);line-height:1;
+  font-variant-numeric:tabular-nums;}
 /* 二维码 / 扫码取景框：内容就那么大，任何屏幕上都刻意保持小 */
 #qrModal .mbox{max-width:340px;}
 #scanModal .mbox{max-width:360px;}
@@ -12455,29 +12453,30 @@ function calGapCard(note){
   if(!sp)return '';                       // 标题不是 YYYY/MM/DD 的笔记（正常不会走到这）
   const n=new Date(),today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   const D=(a,b)=>Math.round((b-a)/864e5);
+  // 一律以「第一天」为准：跨天事件从开始那天算起，不从结束那天算，
+  // 也不从被点开的那一天算（导入时拆成了每天一条，中间那天减一减没有意义）
   const multi=sp.total>1;
+  const f2=v=>String(v).padStart(2,'0');
+  const dateStr=`${sp.start.getFullYear()}/${f2(sp.start.getMonth()+1)}/${f2(sp.start.getDate())}`;
   const wk='周'+_WEEKCN[sp.start.getDay()];
-  // 单日事件不重复写日期——弹窗标题栏就是那天的日期，这里只补一个星期几
-  const range=multi?`${_fmtMD(sp.start)}–${_fmtMD(sp.end)} · 共 ${sp.total} 天`:wk;
+  const meta=multi?`${dateStr} – ${_fmtMD(sp.end)} · 共 ${sp.total} 天`:`${dateStr} · ${wk}`;
   let cls='',key='',num='';
   if(today<sp.start){                      // 还没开始
-    const d=D(today,sp.start);
-    cls='soon';key=multi?'还没开始':'还没到';
-    num=`${d}<small>天后</small>`;
-  }else if(today>sp.end){                  // 已经结束：单日从那天算，跨天从结束那天算
-    const d=D(sp.end,today);
-    cls='';key=multi?'已经结束':'已经过去';
-    num=`${d}<small>天</small>`;
+    key=multi?'还没开始':'还没到';
+    num=`${D(today,sp.start)}<span class="u">天后</span>`;
+  }else if(today>sp.end){                  // 整段都结束了
+    key='已经过去';
+    num=`${D(sp.start,today)}<span class="u">天</span>`;
   }else if(multi){                         // 正在进行中的跨天事件
-    cls='now';key='进行中';
-    num=`${D(sp.start,today)+1}<small>/${sp.total} 天</small>`;
+    key='进行中';
+    num=`${D(sp.start,today)+1}<span class="u">/${sp.total} 天</span>`;
   }else{
-    // 正好是今天：右边不再重复写一遍「今天」，整张卡缩成一行
-    cls='now';key='就是今天';num='';
+    cls='now-only';key='这一天';num='就是今天';
   }
-  return `<div class="cnp-days ${cls}"><div><div class="cnp-days-k">${key}</div>`+
-         `<div class="cnp-days-s">${esc(range)}</div></div>`+
-         (num?`<div class="cnp-days-n">${num}</div>`:'')+`</div>`;
+  return `<div class="cnp-days ${cls}">`+
+         `<div class="cnp-days-k">${key}</div>`+
+         `<div class="cnp-days-n">${num}</div>`+
+         `<div class="cnp-days-s">${esc(meta)}</div></div>`;
 }
 function closeCalNotePreview(){
   document.getElementById('calNotePreviewModal').classList.remove('open');
