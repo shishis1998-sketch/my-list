@@ -587,6 +587,21 @@ body.detail-open .content{display:none!important;}
    设置 › 外观 › 字号的小/中/大三档照常生效，中档即 16。 */
 #calNotePreviewModal .mtitle,
 #calNotePreviewModal .cnp-text{font-size:calc(16px * var(--fs-scale));}
+/* 日历事件预览顶上的「离今天多久」：整张主题色卡，一句话 + 一个大数字 + 一行原始日期。
+   这是打开弹窗第一眼要看的东西，所以给它整块底色，不跟下面的正文抢也不被正文淹没。
+   数字用等宽字形，连着点几条时那一列不跳。 */
+.cnp-days{background:var(--accent);color:var(--on-accent);border-radius:var(--rlg);
+  padding:var(--sp-16);margin-bottom:var(--sp-16);
+  display:flex;flex-direction:column;gap:var(--sp-10);}
+.cnp-days-k{font-size:var(--fs-foot);letter-spacing:.1em;color:var(--on-accent-soft);line-height:1;}
+.cnp-days-n{display:flex;align-items:baseline;gap:var(--sp-6);
+  font-size:calc(44px * var(--fs-scale));font-weight:600;line-height:1;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;}
+.cnp-days-n .u{font-size:calc(15px * var(--fs-scale));font-weight:500;color:var(--on-accent-soft);letter-spacing:0;}
+/* 正好是今天：没有数字可写，那句「今天」自己占大字位，字号收一档免得撑破卡片 */
+.cnp-days.now-only .cnp-days-n{font-size:calc(30px * var(--fs-scale));}
+.cnp-days-s{font-size:var(--fs-foot);color:var(--on-accent-soft);line-height:1;
+  font-variant-numeric:tabular-nums;}
 /* 二维码 / 扫码取景框：内容就那么大，任何屏幕上都刻意保持小 */
 #qrModal .mbox{max-width:340px;}
 #scanModal .mbox{max-width:360px;}
@@ -12409,9 +12424,59 @@ function showCalNotePreview(id){
   const tagsHtml=(note.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
   document.getElementById('cnp-title').textContent=note.title||'';
   document.getElementById('cnp-body').innerHTML=
+    calGapCard(note)+
     `<div class="cnp-text" style="color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>`+
     (tagsHtml?`<div style="display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-14)">${tagsHtml}</div>`:'');
   document.getElementById('calNotePreviewModal').classList.add('open');
+}
+
+// ── 「离今天多久」：预览弹窗顶上那张小卡 ──────────────────────────
+// 跨天事件在导入时已被拆成每天一条（正文带「第X/Y天」），所以这里先把这一条
+// 还原成整段起止日，再判断今天落在段前 / 段中 / 段后——否则点开一趟旅行的
+// 中间某天，会算出「已过去 3 天」这种没人看得懂的数。
+const _WEEKCN=['日','一','二','三','四','五','六'];
+function calNoteSpan(note){
+  const m=String(note&&note.title||'').match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if(!m)return null;
+  const day=new Date(+m[1],+m[2]-1,+m[3]);
+  const dm=(note.body||'').match(/第(\d+)\/(\d+)天/);
+  if(!dm)return {start:day,end:day,total:1};
+  const x=+dm[1],y=+dm[2];
+  if(!(x>=1&&y>=x))return {start:day,end:day,total:1};
+  const start=new Date(day.getFullYear(),day.getMonth(),day.getDate()-(x-1));
+  const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+(y-1));
+  return {start,end,total:y};
+}
+function _fmtMD(d){return `${d.getMonth()+1}/${d.getDate()}`;}
+function calGapCard(note){
+  const sp=calNoteSpan(note);
+  if(!sp)return '';                       // 标题不是 YYYY/MM/DD 的笔记（正常不会走到这）
+  const n=new Date(),today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  const D=(a,b)=>Math.round((b-a)/864e5);
+  // 一律以「第一天」为准：跨天事件从开始那天算起，不从结束那天算，
+  // 也不从被点开的那一天算（导入时拆成了每天一条，中间那天减一减没有意义）
+  const multi=sp.total>1;
+  const f2=v=>String(v).padStart(2,'0');
+  const dateStr=`${sp.start.getFullYear()}/${f2(sp.start.getMonth()+1)}/${f2(sp.start.getDate())}`;
+  const wk='周'+_WEEKCN[sp.start.getDay()];
+  const meta=multi?`${dateStr} – ${_fmtMD(sp.end)} · 共 ${sp.total} 天`:`${dateStr} · ${wk}`;
+  let cls='',key='',num='';
+  if(today<sp.start){                      // 还没开始
+    key=multi?'还没开始':'还没到';
+    num=`${D(today,sp.start)}<span class="u">天后</span>`;
+  }else if(today>sp.end){                  // 整段都结束了
+    key='已经过去';
+    num=`${D(sp.start,today)}<span class="u">天</span>`;
+  }else if(multi){                         // 正在进行中的跨天事件
+    key='进行中';
+    num=`${D(sp.start,today)+1}<span class="u">/${sp.total} 天</span>`;
+  }else{
+    cls='now-only';key='这一天';num='就是今天';
+  }
+  return `<div class="cnp-days ${cls}">`+
+         `<div class="cnp-days-k">${key}</div>`+
+         `<div class="cnp-days-n">${num}</div>`+
+         `<div class="cnp-days-s">${esc(meta)}</div></div>`;
 }
 function closeCalNotePreview(){
   document.getElementById('calNotePreviewModal').classList.remove('open');
