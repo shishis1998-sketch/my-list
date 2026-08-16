@@ -12454,20 +12454,21 @@ function calNoteSpan(note){
   return {start,end,total:y};
 }
 function _fmtMD(d){return `${d.getMonth()+1}/${d.getDate()}`;}
-// 正文去掉「已经被 calNoteTitle 拿去当事件名」的那一段，剩下的时间 / 地点 / 描述
-// 留在卡片下面。取法必须和 calNoteTitle 一一对应：它拿的是加粗段就删加粗段，
-// 它退回首行就删首行，否则会漏删或多删。
+// 事件名：只有「导入的日历事件」才有这一说——doImportICS 写正文时第一行固定是
+// **事件名**，所以整行加粗才算数，挪进卡片再从正文删掉是安全的。
+// 手写的笔记（日记 / 收集 / 备忘）正文是整段自由文字，加粗随处可能出现（甚至在
+// 最后一行），一律不认作标题、一个字都不动——动了就是把人写的字弄没了。
+const _CAL_LEAD_RE=/^\s*\*\*([^*\n]+)\*\*[ \t]*(?:\n|$)/;
+function calEventLead(note){
+  if(!note||!(('_ics' in note)||note.subCat==='日历'))return '';
+  const m=String(note.body||'').match(_CAL_LEAD_RE);
+  return m&&m[1].trim()?m[1].trim():'';
+}
+// 正文去掉已经进了卡片的那行事件名，剩下的时间 / 地点 / 描述留在卡片下面
 function calNoteBodyRest(note){
   const body=note.body||'';
-  const m=body.match(/\*\*([^*]+)\*\*/);
-  let rest;
-  if(m&&m[1].trim()){
-    rest=body.replace(m[0],'');
-  }else{
-    const lines=body.split('\n');
-    const i=lines.findIndex(s=>s.trim());
-    rest=i<0?'':lines.slice(i+1).join('\n');
-  }
+  if(!calEventLead(note))return body;          // 不是日历事件：原样显示
+  let rest=body.replace(_CAL_LEAD_RE,'');
   // 「第X/Y天」这一小段已经被天数卡完整表达（进行中 36/51 天 · 共 51 天），
   // 留在正文里就是同一件事说两遍。它在导入时是和时间/地点用「 · 」串在一行的，
   // 所以拆掉后还得把落单的分隔点收干净。
@@ -12483,6 +12484,7 @@ function calNoteBodyRest(note){
 function calGapCard(note){
   const sp=calNoteSpan(note);
   if(!sp)return '';                       // 标题不是 YYYY/MM/DD 的笔记（正常不会走到这）
+  const lead=calEventLead(note);          // 手写笔记没有事件名，卡里就少这一行
   const n=new Date(),today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   const D=(a,b)=>Math.round((b-a)/864e5);
   // 一律以「第一天」为准：跨天事件从开始那天算起，不从结束那天算，
@@ -12507,7 +12509,7 @@ function calGapCard(note){
   }
   return `<div class="cnp-days ${cls}">`+
          `<div class="cnp-days-k">${key}</div>`+
-         `<div class="cnp-days-t">${esc(calNoteTitle(note))}</div>`+
+         (lead?`<div class="cnp-days-t">${esc(lead)}</div>`:'')+
          `<div class="cnp-days-n">${num}</div>`+
          `<div class="cnp-days-s">${esc(meta)}</div></div>`;
 }
