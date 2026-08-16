@@ -1,0 +1,619 @@
+<title>纪念日效果图</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   文稿外壳：沿用 docs/ 已有的「图版」语汇（纸色 + 发丝线 + 等宽眉标）
+   屏幕内部：直接搬 index.html 的 :root token，浅色/夜间两套都钉死，
+             不跟随看图人的系统主题——两台机器要能并排比。
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3; --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4;
+  --stage:#EDEDE7;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+    --stage:#15151A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+  --stage:#15151A;
+}
+
+/* App token：浅色（= index.html :root） */
+.app-light{
+  --a-bg:#F7F7F5; --a-surface:#FFFFFF; --a-surface2:#F2F2F0;
+  --a-border:#ECECEA; --a-border-soft:#F2F2F0;
+  --a-t1:#1A1A1A; --a-t2:#6B6B6B; --a-t3:#9B9B9B;
+  --a-accent:#2B4D3F; --a-accent-light:#E8EEEB; --a-accent-mid:#4A7B68;
+  --a-on-accent:#fff; --a-on-accent-soft:rgba(255,255,255,.7); --a-on-accent-faint:rgba(255,255,255,.45);
+}
+/* App token：夜间（= index.html :root[data-mode="dark"]） */
+.app-dark{
+  --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+  --a-border:#2E2E33; --a-border-soft:#26262A;
+  --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+  --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-accent-mid:#8CC7AC;
+  --a-on-accent:#10201A; --a-on-accent-soft:rgba(16,32,26,.55); --a-on-accent-faint:rgba(16,32,26,.38);
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:52px 20px 104px;display:flex;flex-direction:column;gap:52px;}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+
+/* ── 页头 ── */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+.kicker{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.2em;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-family:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+  font-size:clamp(30px,5.4vw,44px);line-height:1.15;margin:0 0 10px;letter-spacing:.02em;text-wrap:balance;font-weight:600;}
+.masthead p{margin:0;color:var(--ink-2);max-width:72ch;}
+.meta{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:18px;}
+.meta span{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;letter-spacing:.04em;
+  color:var(--ink-2);background:var(--sheet);border:1px solid var(--hair);border-radius:2px;padding:4px 9px;}
+.meta span b{color:var(--ink);font-weight:600;}
+
+/* ── 章节 ── */
+.sec{display:flex;flex-direction:column;gap:18px;}
+.sec-hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--hair);padding-bottom:10px;}
+.eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.18em;color:var(--dim);}
+.sec-hd h2{font-size:20px;margin:0;letter-spacing:.02em;}
+.sec-hd .sub{font-size:13px;color:var(--ink-3);}
+.lede{margin:0;color:var(--ink-2);max-width:74ch;font-size:14.5px;}
+.lede b{color:var(--ink);font-weight:600;}
+
+/* ── 取数示意 ── */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+.fbox{background:var(--sheet);border:1px solid var(--hair);border-radius:3px;padding:14px 16px;display:flex;flex-direction:column;gap:7px;}
+.fbox .ft{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.14em;color:var(--acc);}
+.fbox h3{margin:0;font-size:15px;letter-spacing:.01em;}
+.fbox p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.6;}
+.fbox code{font-size:12px;}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;background:var(--chip);
+  border-radius:2px;padding:1px 5px;color:var(--ink);}
+.formula{background:var(--sheet);border:1px solid var(--hair);border-left:3px solid var(--acc);border-radius:3px;
+  padding:12px 16px;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13px;color:var(--ink-2);
+  line-height:1.9;overflow-x:auto;}
+.formula b{color:var(--ink);font-weight:600;}
+
+/* ── 手机舞台 ── */
+.stages{display:flex;flex-wrap:wrap;gap:30px;}
+.stage{flex:0 1 392px;min-width:0;display:flex;flex-direction:column;gap:10px;}
+.stage-cap{display:flex;align-items:baseline;gap:9px;font-size:12.5px;color:var(--ink-3);}
+.stage-cap b{font-size:13.5px;color:var(--ink);font-weight:600;}
+/* 屏幕按真机宽度封顶（iPhone 逻辑宽 390），不然卡片被拉宽，比例就不是手机上的样子 */
+.phone{background:var(--stage);border:1px solid var(--hair);border-radius:6px;padding:16px 14px;
+  max-width:392px;}
+.screen{background:var(--a-bg);border-radius:14px;padding:12px 12px 0;color:var(--a-t1);
+  font-size:14px;line-height:1.45;display:flex;flex-direction:column;gap:12px;overflow:hidden;}
+
+/* 视图切换条：index.html .cal-vtoggle 的 5 段版 */
+.vtoggle{position:relative;display:flex;width:100%;background:var(--a-border);border-radius:999px;padding:3px;}
+.vthumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/5);
+  background:var(--a-surface);border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.14);transform:translateX(400%);}
+.vtoggle button{position:relative;z-index:1;flex:1;min-width:0;border:0;background:transparent;font-family:inherit;
+  font-size:11px;font-weight:600;color:var(--a-t2);padding:4px 0;border-radius:999px;text-align:center;cursor:default;}
+.vtoggle button.on{color:var(--a-t1);}
+
+/* 今天那行 */
+.todayline{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 2px;}
+.todayline .d{font-size:17px;font-weight:600;letter-spacing:.01em;}
+.todayline .w{font-size:11px;color:var(--a-t3);}
+
+/* 焦点卡：accent 填充 */
+.focus{background:var(--a-accent);color:var(--a-on-accent);border-radius:12px;padding:16px;
+  display:flex;flex-direction:column;gap:10px;}
+.focus .flabel{font-size:11px;letter-spacing:.1em;color:var(--a-on-accent-soft);}
+.focus .ftitle{font-size:18px;font-weight:600;line-height:1.3;}
+.focus .fnum{display:flex;align-items:baseline;gap:7px;}
+.focus .fnum .n{font-size:44px;font-weight:600;line-height:1;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum";}
+.focus .fnum .u{font-size:15px;color:var(--a-on-accent-soft);}
+.focus .fmeta{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--a-on-accent-soft);}
+.focus .fmeta .dot{width:6px;height:6px;border-radius:50%;background:var(--a-on-accent-faint);}
+
+/* 分组标题 */
+.grp{display:flex;align-items:baseline;gap:8px;padding:0 2px;}
+.grp .t{font-size:13px;font-weight:600;color:var(--a-t2);}
+.grp .c{font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums;}
+
+/* 事件卡：一条一行，左色条 + 右大数字 */
+.evlist{background:var(--a-surface);border:1px solid var(--a-border);border-radius:12px;padding:2px 14px;}
+.ev{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--a-border-soft);}
+.ev:first-child{border-top:0;}
+.ev .bar{flex:0 0 auto;width:3px;align-self:stretch;border-radius:2px;background:var(--a-t3);}
+.ev .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.ev .nm{font-size:14px;font-weight:600;color:var(--a-t1);line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev .sub{font-size:11px;color:var(--a-t3);font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev .num{flex:0 0 auto;text-align:right;display:flex;flex-direction:column;gap:1px;line-height:1.1;}
+.ev .num .n{font-size:19px;font-weight:600;color:var(--a-t1);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+.ev .num .n small{font-size:11px;font-weight:500;color:var(--a-t3);margin-left:2px;letter-spacing:0;}
+.ev .num .k{font-size:10px;color:var(--a-t3);}
+.ev.soon .num .n{color:var(--a-accent);}
+.ev .pin{font-size:10px;color:var(--a-t3);}
+
+/* 底部 tab 条（照 index.html .bb-tabs 意思画） */
+.bbtabs{display:flex;margin:4px -12px 0;border-top:1px solid var(--a-border);background:var(--a-surface);}
+.bbtabs span{flex:1;text-align:center;font-size:10px;color:var(--a-t3);padding:8px 0 10px;}
+.bbtabs span.on{color:var(--a-accent);font-weight:600;}
+
+/* ── 卡片解剖 ── */
+.anat{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start;}
+.anat .demo{background:var(--stage);border:1px solid var(--hair);border-radius:4px;padding:20px 16px;}
+.anno{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none;}
+.anno li{display:flex;gap:11px;align-items:flex-start;}
+.anno .no{flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--dim);border:1px solid var(--dim);border-radius:2px;padding:2px 6px;margin-top:2px;}
+.anno p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.6;}
+.anno p b{color:var(--ink);font-weight:600;}
+
+/* ── 比稿 ── */
+.pitch{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;}
+.opt{display:flex;flex-direction:column;gap:11px;}
+.opt h3{margin:0;font-size:16px;letter-spacing:.02em;display:flex;align-items:baseline;gap:9px;}
+.opt h3 .no{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.14em;
+  color:var(--dim);border:1px solid var(--dim);border-radius:2px;padding:2px 6px;}
+.opt h3 .rec{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 6px;}
+.opt .why{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.65;}
+.opt .why b{color:var(--ink);font-weight:600;}
+.opt .tradeoff{margin:0;font-size:12.5px;color:var(--ink-3);line-height:1.6;border-left:2px solid var(--hair);padding-left:10px;}
+.mini{background:var(--stage);border:1px solid var(--hair);border-radius:4px;padding:16px 14px;}
+
+/* 比稿 B：两列胶囊 */
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.btile{background:var(--a-surface);border:1px solid var(--a-border);border-radius:12px;padding:12px;
+  display:flex;flex-direction:column;gap:5px;}
+.btile .n{font-size:24px;font-weight:600;color:var(--a-t1);line-height:1;font-variant-numeric:tabular-nums;}
+.btile .n small{font-size:11px;color:var(--a-t3);font-weight:500;margin-left:3px;}
+.btile .nm{font-size:12.5px;font-weight:600;color:var(--a-t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btile .sub{font-size:10.5px;color:var(--a-t3);font-variant-numeric:tabular-nums;}
+.btile.up .n{color:var(--a-accent);}
+
+/* 比稿 C：时间轴 */
+.tl{position:relative;padding-left:18px;}
+.tl::before{content:"";position:absolute;left:4px;top:6px;bottom:6px;width:1px;background:var(--a-border);}
+.tlrow{position:relative;padding:8px 0;display:flex;align-items:baseline;gap:9px;}
+.tlrow::before{content:"";position:absolute;left:-17px;top:14px;width:7px;height:7px;border-radius:50%;
+  background:var(--a-t3);border:2px solid var(--a-bg);}
+.tlrow.now::before{background:var(--a-accent);}
+.tlrow .nm{font-size:13.5px;font-weight:600;color:var(--a-t1);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tlrow .n{font-size:12.5px;color:var(--a-t2);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.tlrow.now{border-top:1px dashed var(--a-accent);border-bottom:1px dashed var(--a-accent);}
+.tlrow.now .nm{color:var(--a-accent);}
+
+/* ── 规则卡 ── */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+.rule{background:var(--sheet);border:1px solid var(--hair);border-radius:3px;padding:14px 16px;display:flex;flex-direction:column;gap:7px;}
+.rule .rk{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.14em;color:var(--dim);}
+.rule h3{margin:0;font-size:14.5px;}
+.rule p{margin:0;font-size:13px;color:var(--ink-2);line-height:1.6;}
+
+/* ── 空状态 ── */
+.emptydemo{max-width:340px;}
+.emptycard{background:var(--a-bg);border-radius:14px;padding:36px 20px;text-align:center;display:flex;
+  flex-direction:column;gap:8px;align-items:center;}
+.emptycard .ic{font-size:30px;opacity:.4;}
+.emptycard h4{margin:0;font-size:14px;font-weight:500;color:var(--a-t2);}
+.emptycard p{margin:0;font-size:13px;color:var(--a-t3);line-height:1.6;max-width:26ch;}
+
+/* ── 尾注 ── */
+.notes{border-top:1px solid var(--hair);padding-top:24px;display:flex;flex-direction:column;gap:16px;}
+.notes h3{font-size:16px;margin:0;letter-spacing:.02em;}
+.nitem{display:flex;gap:12px;align-items:flex-start;}
+.nitem .tag{flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10.5px;letter-spacing:.1em;
+  color:var(--acc);border:1px solid var(--acc);border-radius:2px;padding:2px 7px;margin-top:3px;white-space:nowrap;}
+.nitem p{margin:0;color:var(--ink-2);font-size:14px;max-width:74ch;}
+.nitem p b{color:var(--ink);font-weight:600;}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">DOCS / 新屏提案</p>
+    <h1>纪念日：把日历里已经发生的事，换算成天数</h1>
+    <p>日历页现在只回答「那天有什么」。这一屏回答另一个问题——<b>那天离今天多久了</b>。
+       数据一条不新增：媒体记录的观看日期、日期笔记、导入的 .ics 事件，全部照原样读，只是把日期减一下再排个序。</p>
+    <div class="meta">
+      <span>入口 <b>日历 › 第 5 段「纪念」</b></span>
+      <span>数据源 <b>日历页现有三类记录</b></span>
+      <span>新增字段 <b>仅一个置顶标记</b></span>
+      <span>示意日期 <b class="mono">2026-08-16</b></span>
+    </div>
+  </header>
+
+  <!-- ═══ 1 取数 ═══ -->
+  <section class="sec">
+    <div class="sec-hd">
+      <span class="eyebrow">01 / 数据从哪来</span>
+      <h2>三类记录，一个日期字段</h2>
+      <span class="sub">与 renderCal() 收集当月项的口径完全一致</span>
+    </div>
+    <p class="lede">日历网格现在就是靠这三类东西铺出来的。纪念页不另起炉灶，<b>同一套取数、同一套配色、同一套图例筛选</b>——
+      日历页把某本日历关掉，这一屏也跟着不出现。</p>
+    <div class="flow">
+      <div class="fbox">
+        <span class="ft">SOURCE A</span>
+        <h3>导入的日历事件</h3>
+        <p>subCat 为「日历」的笔记，标题就是 <code>YYYY/MM/DD</code>，正文首行加粗的那句是事件名。<br>
+          <b>「上个月的飞机」就是这一类。</b></p>
+      </div>
+      <div class="fbox">
+        <span class="ft">SOURCE B</span>
+        <h3>日期笔记</h3>
+        <p>手写的日记 / 备忘，只要标题是 <code>YYYY/MM/DD</code> 就算数，取正文首个加粗段当标题。</p>
+      </div>
+      <div class="fbox">
+        <span class="ft">SOURCE C</span>
+        <h3>媒体记录</h3>
+        <p>有 <code>watchDate</code> 的影视书剧。「看完《XX》那天」也能当纪念日，颜色沿用分类色。</p>
+      </div>
+    </div>
+    <div class="formula">
+      已过去 = <b>今天 − 记录日期</b>　　例：2026/07/16 的「飞往东京 HND」 → <b>31 天</b><br>
+      还　有 = <b>记录日期 − 今天</b>　　例：2026/08/28 的「年度体检」 → <b>12 天</b><br>
+      周　年 = <b>同月同日的下一次</b>　　例：2023/09/07 起算 → <b>3 周年，还有 22 天</b>
+    </div>
+  </section>
+
+  <!-- ═══ 2 主屏 ═══ -->
+  <section class="sec">
+    <div class="sec-hd">
+      <span class="eyebrow">02 / 效果图</span>
+      <h2>整屏</h2>
+      <span class="sub">浅色 / 夜间，两套 token 都跑过</span>
+    </div>
+    <p class="lede">顶上一张焦点卡是<b>你自己置顶的那件事</b>，剩下按「就要到」「刚过去」「周年」三段排。
+      数字一律右对齐、等宽数字，扫一眼就是一列数。</p>
+
+    <div class="stages">
+      <!-- 浅色 -->
+      <div class="stage">
+        <div class="stage-cap"><b>浅色</b><span>默认主题 · 墨绿</span></div>
+        <div class="phone">
+          <div class="screen app-light">
+            <div class="vtoggle">
+              <span class="vthumb"></span>
+              <button type="button">日历</button>
+              <button type="button">经期</button>
+              <button type="button">年度</button>
+              <button type="button">标签</button>
+              <button type="button" class="on">纪念</button>
+            </div>
+
+            <div class="todayline">
+              <span class="d">今天 8 月 16 日</span>
+              <span class="w mono">周日 · 2026</span>
+            </div>
+
+            <div class="focus">
+              <div class="flabel">已经过去</div>
+              <div class="ftitle">飞往东京 HND</div>
+              <div class="fnum"><span class="n">31</span><span class="u">天</span></div>
+              <div class="fmeta"><span>2026/07/16</span><span class="dot"></span><span>旅行日历</span><span class="dot"></span><span>已置顶</span></div>
+            </div>
+
+            <div class="grp"><span class="t">就要到了</span><span class="c">3</span></div>
+            <div class="evlist">
+              <div class="ev soon">
+                <span class="bar" style="background:#4F7A5B"></span>
+                <span class="col"><span class="nm">年度体检</span><span class="sub">2026/08/28 · 周五 · 生活</span></span>
+                <span class="num"><span class="n">12<small>天</small></span><span class="k">还有</span></span>
+              </div>
+              <div class="ev soon">
+                <span class="bar" style="background:#A0568C"></span>
+                <span class="col"><span class="nm">在一起 · 3 周年</span><span class="sub">2023/09/07 起算 · 每年</span></span>
+                <span class="num"><span class="n">22<small>天</small></span><span class="k">还有</span></span>
+              </div>
+              <div class="ev soon">
+                <span class="bar" style="background:#3E5C99"></span>
+                <span class="col"><span class="nm">《春日之地》上映</span><span class="sub">2026/10/01 · 电影</span></span>
+                <span class="num"><span class="n">46<small>天</small></span><span class="k">还有</span></span>
+              </div>
+            </div>
+
+            <div class="grp"><span class="t">刚过去</span><span class="c">3</span></div>
+            <div class="evlist">
+              <div class="ev">
+                <span class="bar" style="background:#2C6E7F"></span>
+                <span class="col"><span class="nm">飞往东京 HND</span><span class="sub">2026/07/16 · 旅行日历</span></span>
+                <span class="num"><span class="n">31<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+              <div class="ev">
+                <span class="bar" style="background:#B5533C"></span>
+                <span class="col"><span class="nm">看完《漫长的季节》</span><span class="sub">2026/07/29 · 剧集</span></span>
+                <span class="num"><span class="n">18<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+              <div class="ev">
+                <span class="bar" style="background:#C0803A"></span>
+                <span class="col"><span class="nm">换了新工牌</span><span class="sub">2026/08/03 · 日记</span></span>
+                <span class="num"><span class="n">13<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+            </div>
+
+            <div class="grp"><span class="t">长跑</span><span class="c">2</span></div>
+            <div class="evlist">
+              <div class="ev">
+                <span class="bar" style="background:#7A5C99"></span>
+                <span class="col"><span class="nm">搬进现在这间屋子</span><span class="sub">2025/03/02 · 1 年 5 个月</span></span>
+                <span class="num"><span class="n">532<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+              <div class="ev">
+                <span class="bar" style="background:#A09A8E"></span>
+                <span class="col"><span class="nm">毕业</span><span class="sub">2024/05/20 · 2 年 2 个月</span></span>
+                <span class="num"><span class="n">818<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+            </div>
+
+            <div class="bbtabs">
+              <span>全部</span><span>笔记</span><span class="on">日历</span><span>设置</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 夜间 -->
+      <div class="stage">
+        <div class="stage-cap"><b>夜间</b><span>data-mode=dark</span></div>
+        <div class="phone">
+          <div class="screen app-dark">
+            <div class="vtoggle">
+              <span class="vthumb"></span>
+              <button type="button">日历</button>
+              <button type="button">经期</button>
+              <button type="button">年度</button>
+              <button type="button">标签</button>
+              <button type="button" class="on">纪念</button>
+            </div>
+
+            <div class="todayline">
+              <span class="d">今天 8 月 16 日</span>
+              <span class="w mono">周日 · 2026</span>
+            </div>
+
+            <div class="focus">
+              <div class="flabel">已经过去</div>
+              <div class="ftitle">飞往东京 HND</div>
+              <div class="fnum"><span class="n">31</span><span class="u">天</span></div>
+              <div class="fmeta"><span>2026/07/16</span><span class="dot"></span><span>旅行日历</span><span class="dot"></span><span>已置顶</span></div>
+            </div>
+
+            <div class="grp"><span class="t">就要到了</span><span class="c">3</span></div>
+            <div class="evlist">
+              <div class="ev soon">
+                <span class="bar" style="background:#4F7A5B"></span>
+                <span class="col"><span class="nm">年度体检</span><span class="sub">2026/08/28 · 周五 · 生活</span></span>
+                <span class="num"><span class="n">12<small>天</small></span><span class="k">还有</span></span>
+              </div>
+              <div class="ev soon">
+                <span class="bar" style="background:#A0568C"></span>
+                <span class="col"><span class="nm">在一起 · 3 周年</span><span class="sub">2023/09/07 起算 · 每年</span></span>
+                <span class="num"><span class="n">22<small>天</small></span><span class="k">还有</span></span>
+              </div>
+              <div class="ev soon">
+                <span class="bar" style="background:#3E5C99"></span>
+                <span class="col"><span class="nm">《春日之地》上映</span><span class="sub">2026/10/01 · 电影</span></span>
+                <span class="num"><span class="n">46<small>天</small></span><span class="k">还有</span></span>
+              </div>
+            </div>
+
+            <div class="grp"><span class="t">刚过去</span><span class="c">3</span></div>
+            <div class="evlist">
+              <div class="ev">
+                <span class="bar" style="background:#2C6E7F"></span>
+                <span class="col"><span class="nm">飞往东京 HND</span><span class="sub">2026/07/16 · 旅行日历</span></span>
+                <span class="num"><span class="n">31<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+              <div class="ev">
+                <span class="bar" style="background:#B5533C"></span>
+                <span class="col"><span class="nm">看完《漫长的季节》</span><span class="sub">2026/07/29 · 剧集</span></span>
+                <span class="num"><span class="n">18<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+              <div class="ev">
+                <span class="bar" style="background:#C0803A"></span>
+                <span class="col"><span class="nm">换了新工牌</span><span class="sub">2026/08/03 · 日记</span></span>
+                <span class="num"><span class="n">13<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+            </div>
+
+            <div class="grp"><span class="t">长跑</span><span class="c">2</span></div>
+            <div class="evlist">
+              <div class="ev">
+                <span class="bar" style="background:#7A5C99"></span>
+                <span class="col"><span class="nm">搬进现在这间屋子</span><span class="sub">2025/03/02 · 1 年 5 个月</span></span>
+                <span class="num"><span class="n">532<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+              <div class="ev">
+                <span class="bar" style="background:#A09A8E"></span>
+                <span class="col"><span class="nm">毕业</span><span class="sub">2024/05/20 · 2 年 2 个月</span></span>
+                <span class="num"><span class="n">818<small>天</small></span><span class="k">已过去</span></span>
+              </div>
+            </div>
+
+            <div class="bbtabs">
+              <span>全部</span><span>笔记</span><span class="on">日历</span><span>设置</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 3 卡片解剖 ═══ -->
+  <section class="sec">
+    <div class="sec-hd">
+      <span class="eyebrow">03 / 一条长什么样</span>
+      <h2>事件行拆开看</h2>
+      <span class="sub">40px 行高，一屏能站 8 条</span>
+    </div>
+    <div class="anat">
+      <div class="demo">
+        <div class="evlist app-light" style="background:var(--a-surface)">
+          <div class="ev">
+            <span class="bar" style="background:#2C6E7F"></span>
+            <span class="col"><span class="nm">飞往东京 HND</span><span class="sub">2026/07/16 · 旅行日历</span></span>
+            <span class="num"><span class="n">31<small>天</small></span><span class="k">已过去</span></span>
+          </div>
+          <div class="ev soon">
+            <span class="bar" style="background:#4F7A5B"></span>
+            <span class="col"><span class="nm">年度体检</span><span class="sub">2026/08/28 · 周五 · 生活</span></span>
+            <span class="num"><span class="n">12<small>天</small></span><span class="k">还有</span></span>
+          </div>
+        </div>
+      </div>
+      <ul class="anno">
+        <li><span class="no">01</span><p><b>左侧 3px 色条</b>：直接取 calNoteColor() —— 导入日历用它那本日历的颜色，
+          媒体记录用分类色。日历页什么色，这里就什么色，不新造一套。</p></li>
+        <li><span class="no">02</span><p><b>标题</b>：日历事件取正文首个 <code>**加粗**</code> 段，跟日历页格子里显示的完全同源。单行截断，不换行。</p></li>
+        <li><span class="no">03</span><p><b>副行</b>：原始日期 + 来源。未来的事补一个星期几（「周五」比「08/28」更有用）；
+          超过一年的补一句「1 年 5 个月」，因为 532 天这个数人脑换算不了。</p></li>
+        <li><span class="no">04</span><p><b>右侧数字</b>：等宽数字右对齐，未来的事用主题色、过去的事用正文色——
+          不靠红绿区分，夜间和色盲都读得出。</p></li>
+        <li><span class="no">05</span><p><b>点一条</b>：跳回日历页那一天，跟搜索结果的落点行为一致，不新开详情页。</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══ 4 比稿 ═══ -->
+  <section class="sec">
+    <div class="sec-hd">
+      <span class="eyebrow">04 / 排版比稿</span>
+      <h2>三种画法</h2>
+      <span class="sub">同一批数据，挑一个</span>
+    </div>
+    <div class="pitch">
+      <div class="opt">
+        <h3><span class="no">A</span>清单式<span class="rec">建议</span></h3>
+        <div class="mini">
+          <div class="evlist app-light">
+            <div class="ev soon">
+              <span class="bar" style="background:#4F7A5B"></span>
+              <span class="col"><span class="nm">年度体检</span><span class="sub">2026/08/28 · 周五</span></span>
+              <span class="num"><span class="n">12<small>天</small></span><span class="k">还有</span></span>
+            </div>
+            <div class="ev">
+              <span class="bar" style="background:#2C6E7F"></span>
+              <span class="col"><span class="nm">飞往东京 HND</span><span class="sub">2026/07/16</span></span>
+              <span class="num"><span class="n">31<small>天</small></span><span class="k">已过去</span></span>
+            </div>
+            <div class="ev">
+              <span class="bar" style="background:#7A5C99"></span>
+              <span class="col"><span class="nm">搬进现在这间屋子</span><span class="sub">2025/03/02</span></span>
+              <span class="num"><span class="n">532<small>天</small></span><span class="k">已过去</span></span>
+            </div>
+          </div>
+        </div>
+        <p class="why">数字成列，<b>扫一眼就是排序结果</b>。长标题有整行可用，「搬进现在这间屋子」不会被挤掉。
+          和列表页、笔记页是同一种行结构，学习成本为零。</p>
+        <p class="tradeoff">代价：单条不够「有仪式感」，所以才配一张焦点卡在顶上补。</p>
+      </div>
+
+      <div class="opt">
+        <h3><span class="no">B</span>方砖式</h3>
+        <div class="mini">
+          <div class="bgrid app-light">
+            <div class="btile up"><span class="n">12<small>天</small></span><span class="nm">年度体检</span><span class="sub">08/28 还有</span></div>
+            <div class="btile"><span class="n">31<small>天</small></span><span class="nm">飞往东京 HND</span><span class="sub">07/16 已过去</span></div>
+            <div class="btile"><span class="n">532<small>天</small></span><span class="nm">搬进现在这间…</span><span class="sub">03/02 已过去</span></div>
+            <div class="btile up"><span class="n">22<small>天</small></span><span class="nm">在一起 3 周年</span><span class="sub">09/07 还有</span></div>
+          </div>
+        </div>
+        <p class="why">数字最大最抢眼，像市面上的倒数日 App。适合<b>只盯五六件大事</b>的用法。</p>
+        <p class="tradeoff">代价：一屏只放得下 6 块，标题一长就要截；数字不成列，反而不好比大小。导入几百条事件后翻不动。</p>
+      </div>
+
+      <div class="opt">
+        <h3><span class="no">C</span>时间轴式</h3>
+        <div class="mini">
+          <div class="tl app-light" style="background:var(--a-bg);border-radius:10px;padding:10px 12px 10px 26px">
+            <div class="tlrow"><span class="nm">搬进现在这间屋子</span><span class="n">532 天前</span></div>
+            <div class="tlrow"><span class="nm">飞往东京 HND</span><span class="n">31 天前</span></div>
+            <div class="tlrow now"><span class="nm">今天</span><span class="n">08/16</span></div>
+            <div class="tlrow"><span class="nm">年度体检</span><span class="n">12 天后</span></div>
+            <div class="tlrow"><span class="nm">在一起 3 周年</span><span class="n">22 天后</span></div>
+          </div>
+        </div>
+        <p class="why">过去和未来串成一条，<b>「今天」那条虚线就是当下的位置</b>。前后关系最直观。</p>
+        <p class="tradeoff">代价：过去的事天然比未来多得多，轴会严重偏向上半截；而且 532 天和 31 天在轴上距离一样，间距不表达真实跨度，容易误读。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 5 选谁上榜 ═══ -->
+  <section class="sec">
+    <div class="sec-hd">
+      <span class="eyebrow">05 / 挑哪些事件</span>
+      <h2>导入几百条，不能全铺出来</h2>
+      <span class="sub">这一屏成不成立，全看这一步</span>
+    </div>
+    <p class="lede">一份 Google 日历导进来可能是几百上千条，「牙医复诊」和「毕业」混在一起，页面就废了。
+      默认<b>自动挑一批</b>保证第一次打开不是空的，再让你手动置顶／移除来收敛。</p>
+    <div class="rules">
+      <div class="rule">
+        <span class="rk">RULE 1</span>
+        <h3>置顶的永远在</h3>
+        <p>日历页点开某一天，记录右上角多一个「📌 设为纪念日」。置顶过的排最前，永不被规则刷掉。
+          这是<b>唯一新增的数据</b>：一个 id 列表，跟着 Gist 一起同步。</p>
+      </div>
+      <div class="rule">
+        <span class="rk">RULE 2</span>
+        <h3>近处的自动上</h3>
+        <p>未来 <b>60 天内</b>、过去 <b>90 天内</b> 的事件自动进榜。「上个月的飞机」不用手动标就在里面。</p>
+      </div>
+      <div class="rule">
+        <span class="rk">RULE 3</span>
+        <h3>整年的自动上</h3>
+        <p>今天往前推，正好满 <b>1 / 2 / 3…周年</b>（±7 天）的老事件自动浮上来，归到「周年」段。
+          去年今天的飞机会自己冒出来提醒你。</p>
+      </div>
+      <div class="rule">
+        <span class="rk">RULE 4</span>
+        <h3>能整段关掉</h3>
+        <p>沿用日历页的图例筛选：关掉「工作日历」，这一屏的工作事件同时消失。不做第二套筛选界面。</p>
+      </div>
+    </div>
+
+    <div class="emptydemo" style="margin-top:8px">
+      <div class="stage-cap" style="margin-bottom:8px"><b>空状态</b><span>还没导入日历、也没置顶过</span></div>
+      <div class="phone">
+        <div class="emptycard app-light">
+          <span class="ic">📌</span>
+          <h4>还没有纪念日</h4>
+          <p>在日历里点开任意一天，把记录设为纪念日，这里就会自动算天数。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 尾注 ═══ -->
+  <section class="notes">
+    <h3>做之前要拍板的几件事</h3>
+    <div class="nitem"><span class="tag">切换条</span>
+      <p><b>第 5 段挤不挤。</b>现有 <code>.cvt4</code> 是四等分、11px 字。加到五段后每段约 66px 宽，「纪念」两个字放得下，
+        但 iPhone SE 那种 320px 屏会贴得比较满。备选：把这一屏做成日历页顶部的一张卡，不占切换条。</p></div>
+    <div class="nitem"><span class="tag">跨天事件</span>
+      <p><b>算哪一天。</b>导入时跨天事件被拆成了每天一条（「第 2/5 天」）。纪念页应当只认<b>第一天</b>，
+        否则一趟五天的旅行会在榜上占五行。按 <code>_ics</code> UID 去重取最早那条即可。</p></div>
+    <div class="nitem"><span class="tag">周年</span>
+      <p><b>2 月 29 日怎么办。</b>平年退到 2 月 28 日，只影响极少数记录，但要写死免得算出 NaN。</p></div>
+    <div class="nitem"><span class="tag">经期</span>
+      <p><b>不掺进来。</b>经期记录有自己的两屏，天数口径也不一样（周期第几天），纪念页不读那份数据。</p></div>
+    <div class="nitem"><span class="tag">工作量</span>
+      <p><b>约一屏代码。</b>取数直接复用 renderCal() 里那段收集逻辑，纯前端计算，不动同步、不动数据结构，
+        新增的只有「置顶 id 列表」这一个字段。</p></div>
+  </section>
+
+</div>
