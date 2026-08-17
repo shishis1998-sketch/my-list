@@ -600,6 +600,8 @@ body.detail-open .content{display:none!important;}
    免得一整段加粗把卡片撑成半屏（正文里那段仍然完整显示，这里只是抄一份当标题）*/
 .cnp-days-t{font-size:calc(18px * var(--fs-scale));font-weight:700;line-height:var(--lh-tight);
   overflow-wrap:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;}
+/* 「已经过去」是数字的定语，两句要连着读，所以贴紧数字——容器那档 gap 是给其它行的 */
+.cnp-days-k+.cnp-days-n{margin-top:calc(var(--sp-4) - var(--sp-10));}
 .cnp-days-n{display:flex;align-items:baseline;gap:var(--sp-6);
   font-size:calc(44px * var(--fs-scale));font-weight:700;line-height:1;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;}
@@ -12546,11 +12548,15 @@ function calGapCard(note){
     key='进行中';
     num=`${D(sp.start,today)+1}<span class="u">/${sp.total} 天</span>`;
   }else{
-    cls='now-only';key='这一天';num='就是今天';
+    // 「就是今天」自己已经说全了，上面不必再压一行小字
+    cls='now-only';key='';num='就是今天';
   }
+  // 顺序：事件名 → 已经过去 / 还没到 → 数字 → 原始日期。
+  // 那行小字是数字的定语（「已经过去」+「365 天」连起来读），所以贴着数字放，
+  // 不放在最顶上——顶上第一眼该是「这是什么事」。
   return `<div class="cnp-days ${cls}">`+
-         `<div class="cnp-days-k">${key}</div>`+
          (cardTitle?`<div class="cnp-days-t">${esc(cardTitle)}</div>`:'')+
+         (key?`<div class="cnp-days-k">${key}</div>`:'')+
          `<div class="cnp-days-n">${num}</div>`+
          `<div class="cnp-days-s">${esc(meta)}</div></div>`;
 }
