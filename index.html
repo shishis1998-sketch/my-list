@@ -983,8 +983,12 @@ body.detail-open .content{display:none!important;}
     border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);
     transform:translateZ(0);
   }
-  #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-20);}
-  #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
+  /* 这条标题栏只有一个日期和一颗 ✕，原来 62px 里大半是空的，收到 51px：
+     上 14（抓手跟着挪到 top:6，留 4px 呼吸）、下 10、内容行由 ✕ 的 26px 定高
+     （日期文字 25.6px，正好在同一档，谁也不会顶出去）。 */
+  #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-14);padding-bottom:var(--sp-10);}
+  #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
+  #calNotePreviewModal .mclose{height:26px;padding:0 var(--sp-10);display:inline-flex;align-items:center;justify-content:center;}
   #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
   /* 日历导入配色弹窗：同款底部抽屉，随内容高度、贴到屏幕底边、顶部圆角 + 抓手 */
   /* 设置页/日历页会把底栏抬到 z-index:115，抽屉得比它高，否则底部按钮被压住 */
