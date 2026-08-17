@@ -597,8 +597,9 @@ body.detail-open .content{display:none!important;}
   display:flex;flex-direction:column;gap:var(--sp-10);}
 .cnp-days-k{font-size:var(--fs-foot);letter-spacing:.1em;color:var(--on-accent-soft);line-height:1;}
 /* 手写笔记的标题取自正文里的加粗段，长度不可控——最多三行，再长就省略，
-   免得一整段加粗把卡片撑成半屏（正文里那段仍然完整显示，这里只是抄一份当标题）*/
-.cnp-days-t{font-size:calc(18px * var(--fs-scale));font-weight:700;line-height:var(--lh-tight);
+   免得一整段加粗把卡片撑成半屏（正文里那段仍然完整显示，这里只是抄一份当标题）。
+   字号走 --fs-headline（手机/电脑 16、平板 17），不写死数字，平板那档整梯上抬时能跟上 */
+.cnp-days-t{font-size:var(--fs-headline);font-weight:700;line-height:var(--lh-tight);
   overflow-wrap:break-word;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;}
 /* 「已经过去」是数字的定语，两句要连着读，所以贴紧数字——容器那档 gap 是给其它行的 */
 .cnp-days-k+.cnp-days-n{margin-top:calc(var(--sp-4) - var(--sp-10));}
