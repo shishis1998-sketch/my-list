@@ -988,7 +988,9 @@ body.detail-open .content{display:none!important;}
      （日期文字 25.6px，正好在同一档，谁也不会顶出去）。 */
   #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-14);padding-bottom:var(--sp-10);}
   #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
-  #calNotePreviewModal .mclose{height:26px;padding:0 var(--sp-10);display:inline-flex;align-items:center;justify-content:center;}
+  /* ✕ 去掉描边，只留一块淡底：这一屏是纯阅读界面，一个关闭按钮不用画框强调。
+     height 是 border-box，去掉那 1px 边框不影响栏高 */
+  #calNotePreviewModal .mclose{height:26px;padding:0 var(--sp-10);display:inline-flex;align-items:center;justify-content:center;border:0;}
   #calNotePreviewModal .mbody{padding-bottom:calc(var(--sp-20) + env(safe-area-inset-bottom));}
   /* 日历导入配色弹窗：同款底部抽屉，随内容高度、贴到屏幕底边、顶部圆角 + 抓手 */
   /* 设置页/日历页会把底栏抬到 z-index:115，抽屉得比它高，否则底部按钮被压住 */
