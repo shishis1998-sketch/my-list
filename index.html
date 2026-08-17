@@ -9684,6 +9684,15 @@ async function decryptPendingMemos(){
   return ok;
 }
 
+// fetch 断网/被拦时抛的是 TypeError，message 就是浏览器那句生硬的「Failed to fetch」。
+// 它会原样进 lastSyncErr，显示在同步徽标和云同步设置里，看着像数据出了事，
+// 其实只是这一次没连上。翻成人话，顺手说明本机数据没动。
+function syncErrText(e){
+  const m=(e&&e.message)||String(e||'');
+  if(/failed to fetch|networkerror|load failed/i.test(m))return '网络不通，这次没连上云端（本机数据没动，网络恢复后会自动重试）';
+  return m||'未知错误';
+}
+
 function updateSyncBadge(){
   const b=document.getElementById('sync-badge');if(!b)return;
   if(!getToken()){b.textContent='未配置';b.style.background='';b.style.color='';return;}
@@ -9832,7 +9841,7 @@ async function syncPush(allowCreate){
     isSyncing=false;updateSyncBadge();
     return true;
   }catch(e){
-    isSyncing=false;lastSyncErr=e.message||String(e);updateSyncBadge();
+    isSyncing=false;lastSyncErr=syncErrText(e);updateSyncBadge();
     console.error('[Sync push failed]',e);
     // 推送失败 → pendingCloud 保持，syncPull 不会把这些笔记删掉
     // 不弹 toast 骚扰用户;只在状态徽章和配置弹窗显示
@@ -9948,7 +9957,11 @@ async function fetchGistRawText(url,token){
   let r=null;
   try{r=await fetch(url,{cache:'no-store'});}catch(e){r=null;}
   if(!r||!r.ok){
-    r=await fetch(url,{cache:'no-store',headers:{'Authorization':'Bearer '+token}});
+    // 这一次也可能被 CORS / 断网掐掉。不包住的话，fetch 抛的裸 TypeError
+    // 「Failed to fetch」会一路冒到 syncPull，在那里被当成解密失败报成
+    // 「🔒 主密码不对」——把网络问题说成密码问题，还会连带锁掉上传。
+    try{r=await fetch(url,{cache:'no-store',headers:{'Authorization':'Bearer '+token}});}
+    catch(e){throw new Error('取云端完整内容失败：网络不通或被 CORS 拦下');}
   }
   if(!r.ok)throw new Error(`读取云端完整内容失败（HTTP ${r.status}）`);
   return await r.text();
@@ -9978,12 +9991,18 @@ async function syncPull(silent){
     const j=await res.json();
     const f=j.files&&j.files[GIST_FILE];
     if(!f){isSyncing=false;updateSyncBadge();if(!silent)toast('云端无数据,首次保存后会自动创建');return false;}
-    // 先解封：v2 是整份密文，解不开就地终止——本机数据一个字都不动，
+    // 取内容和解封分两步写，因为两种失败的后果完全不同。
+    // 取不到内容（断网 / CORS / HTTP 错误）不能说明云端是密文，所以不走下面那道闸门，
+    // 直接交给外层 catch：只记 lastSyncErr，下次推送前照旧会先拉一次，网络好了自己就恢复。
+    const rawPayload=await readGistPayload(f,token);
+    // 解封：v2 是整份密文，解不开就地终止——本机数据一个字都不动，
     // 同时把 _cloudEncLocked 立起来挡住后续推送。这类错误再静默也要出声，
     // 否则用户只会看到一个空页面，还以为数据丢了。
+    // 注意这道闸门在 syncPush 开头就 return，连「先拉一次对齐」都走不到，
+    // 所以只有真的「云端是密文而本机解不开」才配触发它，否则上传会一直停着。
     let remote;
     try{
-      remote=await openPayload(await readGistPayload(f,token));
+      remote=await openPayload(rawPayload);
       _cloudEncLocked=false;
     }catch(e){
       _cloudEncLocked=true;
@@ -10094,8 +10113,8 @@ async function syncPull(silent){
     if(!silent)toast('✓ 已从云端同步 '+data.length+' 条记录、'+notes.length+' 条笔记');
     return true;
   }catch(e){
-    isSyncing=false;lastSyncErr=e.message||String(e);updateSyncBadge();
-    if(!silent)toast('拉取失败: '+(e.message||'未知错误'));
+    isSyncing=false;lastSyncErr=syncErrText(e);updateSyncBadge();
+    if(!silent)toast('拉取失败: '+lastSyncErr);
     console.error('[Sync pull failed]',e);
     return false;
   }
