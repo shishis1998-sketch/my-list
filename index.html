@@ -110,6 +110,27 @@
   --accent-dark:#27272A;--accent-rgb:61,61,66;
 }
 
+/* === 中文字体（设置 › 外观 › 字体）。只换 --zh 一个变量，别的一律不动 ===
+   全站中文都走 --zh，所以改这一处就是改全站。数字与拉丁字母走 --en，
+   刻意不跟着换：日期、天数、金额那些都靠 --en 的等宽数字对齐，换成楷体/宋体
+   会一列参差不齐。
+   都是系统自带字体，不外挂 webfont —— 一份中文字体动辄十几 MB，
+   这个页面是单文件直接开的，为了换个字体等半天下载不划算。
+   每档都以 --zh 的默认那串收尾兜底：装不到该字体的设备（安卓、部分 Windows）
+   自动落回系统黑体，不会掉进衬线渲染的兜底字体里。 */
+:root[data-font="yuan"]{        /* 圆体：苹果自带 Yuanti SC，圆头收笔，最软 */
+  --zh:'Yuanti SC','YuanTi SC',ui-rounded,'Hiragino Maru Gothic ProN',
+      -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+}
+:root[data-font="kai"]{         /* 楷体：手写骨架，笔锋清楚，适合当日记正文 */
+  --zh:'Kaiti SC','STKaiti','KaiTi','楷体','TW-Kai',
+      -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+}
+:root[data-font="song"]{        /* 宋体：横细竖粗的老式排版体，最像印出来的书 */
+  --zh:'Songti SC','STSong','SimSun','宋体','Noto Serif CJK SC',
+      -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+}
+
 /* === 夜间模式（设置 › 外观）。只换配色变量，版式/间距/圆角一律不动 ===
    深底上 accent 必须提亮才看得清，所以填充按钮里的文字改用 --on-accent（深色）。
    --accent-dark 在夜间是「更亮」的那一档，:active 按下去仍有反馈。 */
@@ -248,6 +269,22 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .nfs-seg:nth-child(3){font-size:16px;}
 .nfs-seg.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
 .nfs-seg:active{transform:scale(.94);}
+/* 设置 › 外观：卡片第三行「字体」，右侧默认 / 圆体 / 楷体 / 宋体四段。
+   壳子复用字号那行（同一套 .nfs-seg 外观），只是段里放的是字体名，
+   而且每段用它自己代表的那款字体写——不用点进去试也能看出四款长什么样。
+   段宽不定死：四个中文词等宽排不下，让它按字宽自然撑。 */
+.nitem-ft{cursor:default;}
+.nitem-ft .nft-lbl{color:var(--text-primary);font-weight:500;}
+.nft-segs{margin-left:auto;flex-shrink:0;display:flex;gap:3px;}
+.nft-seg{
+  padding:5px var(--sp-8);border:1px solid var(--border);
+  background:none;color:var(--text-secondary);border-radius:var(--rchip);
+  font-size:13px;font-weight:600;cursor:pointer;line-height:1.25;white-space:nowrap;
+  -webkit-appearance:none;-webkit-tap-highlight-color:transparent;
+  transition:background .15s,color .15s,border-color .15s,transform .1s;
+}
+.nft-seg.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+.nft-seg:active{transform:scale(.94);}
 /* 设置 › 经期：排卵期推算的总开关 + 全部推算参数。
    开关用滑块（是/否），参数一律用 ± 步进按钮——每项的合理范围跨度都不小
    （周期 10–90 天、黄体期 8–20 天），几个固定档位盖不住真实情况。
@@ -854,6 +891,13 @@ body.detail-open .content{display:none!important;}
      那个高度会把方块顶成竖长条（三段还各高各的）。压到字号本身，方块就一直是方的。 */
   .sidebar .nfs-seg{width:auto;height:auto;aspect-ratio:1;min-width:0;padding:0;line-height:1;
     border-radius:var(--r);display:flex;align-items:center;justify-content:center;}
+  /* 「字体」那行不进上面那张十列网格：四个中文词塞不进 26px 的方格，
+     照旧是「标签靠左、四段靠右」的一行。左右留白与同卡其它行对齐到 15。
+     窄机子上四段会顶到标签，所以段的左右内距收到 6、间距收到 2：
+     393 上量下来「默认 圆体 楷体 宋体」四段共 172，右边还剩得下。 */
+  .sidebar .nitem-ft{padding-left:15px;padding-right:15px;}
+  .sidebar .nft-segs{gap:2px;}
+  .sidebar .nft-seg{padding:5px var(--sp-6);}
   /* 十个主题色排成一行（原来 32px 定死，一行只放得下 8 个，剩两个折到第二行）。
      选中态那圈从 4px 收到 3px，否则会顶到隔壁色块。 */
   .sidebar .theme-sws{display:grid;grid-template-columns:repeat(10,1fr);gap:var(--sp-8);}
@@ -3759,6 +3803,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   // 字号档位同理：晚一帧写上去，整页文字会先按「中」排一遍再跳一下
   var f=localStorage.getItem('my_list_fontsize_v1');
   if(f==='s'||f==='l')document.documentElement.setAttribute('data-fontsize',f);
+  // 中文字体同理，而且换字体连字宽都变，晚一帧写会整页重排一次，比字号还显眼
+  var ff=localStorage.getItem('my_list_font_v1');
+  if(ff==='yuan'||ff==='kai'||ff==='song')document.documentElement.setAttribute('data-font',ff);
   }catch(e){}})();
 </script>
 </head>
@@ -9336,6 +9383,49 @@ function applyFontSize(id,save){
   }
   renderThemeRow();
 }
+// ── 中文字体（设置 › 外观）────────────────────────────
+// 只切 <html data-font>，具体字体栈全在 CSS 的 :root[data-font=...] 里，JS 不写字体名。
+// 跟主题色一样进云同步载荷：这是「这个 App 长什么样」的偏好，不是屏幕的人体工学
+// 设置（字号才是），换台设备该保持一致。
+const FONT_KEY='my_list_font_v1';
+const FONTS=[   // css=段里预览用的字体栈，与 CSS 里那几档一一对应
+  {id:'sans',name:'默认',css:"-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif"},
+  {id:'yuan',name:'圆体',css:"'Yuanti SC','YuanTi SC',ui-rounded,'Hiragino Maru Gothic ProN',sans-serif"},
+  {id:'kai', name:'楷体',css:"'Kaiti SC','STKaiti','KaiTi','楷体','TW-Kai',serif"},
+  {id:'song',name:'宋体',css:"'Songti SC','STSong','SimSun','宋体','Noto Serif CJK SC',serif"},
+];
+let curFont='sans';
+function getFont(){
+  let f=null;try{f=localStorage.getItem(FONT_KEY);}catch(e){}
+  return FONTS.some(x=>x.id===f)?f:'sans';
+}
+// save=写入 localStorage；quiet=不弹提示、不推同步（同步拉取时用，同 applyTheme）
+function applyFont(id,save,quiet){
+  const f=FONTS.some(x=>x.id===id)?id:'sans';
+  curFont=f;
+  // 「默认」= 不写属性，走 :root 里的 --zh 原值
+  if(f==='sans')document.documentElement.removeAttribute('data-font');
+  else document.documentElement.setAttribute('data-font',f);
+  if(save){
+    try{localStorage.setItem(FONT_KEY,f);}catch(e){}
+    if(!quiet){
+      haptic('tap');
+      toast('字体已换成'+(FONTS.find(x=>x.id===f)||{}).name);
+      scheduleSyncPush();   // 同 applyTheme：不推的话下次拉取会把它刷回旧值
+    }
+  }
+  renderThemeRow();
+}
+function fontRowHTML(){
+  return `<div class="nitem nitem-ft" role="radiogroup" aria-label="字体">`+
+    `<span class="nft-lbl">字体</span><span class="nft-segs">`+
+    FONTS.map(f=>
+      `<button type="button" class="nft-seg${f.id===curFont?' on':''}" role="radio"`+
+      ` aria-checked="${f.id===curFont}" style="font-family:${f.css}"`+
+      ` onclick="applyFont('${f.id}',true)">${f.name}</button>`
+    ).join('')+`</span></div>`;
+}
+
 function fontSizeRowHTML(){
   return `<div class="nitem nitem-fs" role="radiogroup" aria-label="字号">`+
     `<span class="nfs-lbl">字号</span><span class="nfs-segs">`+
@@ -9362,7 +9452,7 @@ function renderThemeRow(){
   const tick='<svg width="18" height="18" viewBox="0 0 24 24" fill="none"'+
     ' stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+
     '<polyline points="20 6 9 17 4 12"/></svg>';
-  row.innerHTML=modeRowHTML()+fontSizeRowHTML()+
+  row.innerHTML=modeRowHTML()+fontSizeRowHTML()+fontRowHTML()+
     '<div class="theme-sws" role="radiogroup" aria-label="主题色">'+
     THEMES.map(t=>
       `<button type="button" class="theme-sw${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
@@ -9469,8 +9559,9 @@ function stepOvu(key,delta){
 function boot(){
   applyTheme(getTheme(),false);
   applyMode(getMode(),false);
-  // 属性首帧脚本已经写过了，这里只是把 curFontSize 对齐，好让设置页画出选中态
+  // 属性首帧脚本已经写过了，这里只是把 curFontSize / curFont 对齐，好让设置页画出选中态
   applyFontSize(getFontSize(),false);
+  applyFont(getFont(),false);
   loadPeriod();
   // 设置页要显示「按你的记录推出 X–Y 天」，得先让 PV 拿到经期数据——
   // 否则没进过经期视图时那行只能显示「还没有足够记录」。
@@ -9804,7 +9895,8 @@ async function syncPush(allowCreate){
       data, categories:cats,
       notes:notesToSync, noteSubs,
       period: periodData,
-      theme: getTheme()
+      theme: getTheme(),
+      font: getFont()
     };
     // 有主密码 → 整份加密上云，Gist 里只剩一团密文（媒体、笔记、经期一并盖住）；
     // 没有主密码 → 维持老的明文格式，功能不受影响。
@@ -10027,6 +10119,8 @@ async function syncPull(silent){
     if(Array.isArray(remote.categories)&&remote.categories.length)cats=remote.categories;
     // 主题色跟着同步走；旧 Gist 没这个字段时保持本机选择
     if(typeof remote.theme==='string')applyTheme(remote.theme,true,true);
+    // 字体同理（字号不跟：那是各屏幕各调的，见 FS_KEY 上面那段）
+    if(typeof remote.font==='string')applyFont(remote.font,true,true);
     // 笔记数据兼容:旧 Gist 没有 notes/noteSubs 字段时保持现状
     // 合并策略：保留本机的 🔒 仅本机笔记，云端覆盖云端同步的笔记
     if(Array.isArray(remote.notes)){
