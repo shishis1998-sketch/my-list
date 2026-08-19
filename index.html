@@ -1094,6 +1094,11 @@ body.detail-open .content{display:none!important;}
   body.cal-open .moverlay,body.sb-open .moverlay{
     padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));
   }
+  /* 回收站是从设置页（body.sb-open）打开的，会吃到上面那条 64px 留白：白卡停在半空，
+     下面露出一条被压暗的空档和底栏，看着像没开全。它是整屏弹窗、不是抽屉，
+     所以直接铺到底并抬过底栏（同 #icsColorModal 那套：z-index 要大于 115）。
+     底部按钮的安全区留白在 .mftr 那条里已经给了，不会被手势条压住。 */
+  #trashModal.moverlay{padding-bottom:0;z-index:120;}
 
   /* 云同步设置内容多，手机端做成一整页自然滚动（跟「全部/笔记/日历」一样）：
      整个 .mbox 是滚动容器，头/尾随内容一起滚，不再固定成三段夹一条。
@@ -3356,12 +3361,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   margin:6px 14px 0;padding:8px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{background:transparent;border:none;border-radius:0;
   margin:0 14px 12px;padding:0;}
-/* 12 张月卡横竖都留 12——卡片自己按 1fr 缩到 176.5，日期列 20.36，
-   18 的圆每侧余 1.18。 */
+/* 12 张月卡横竖都留 12——卡片自己按 1fr 缩到 176.5。左右内边距 12（上下仍是 10）
+   之后，内容宽 152.5、日期列 20.07，18 的圆每侧余 1.04。 */
 #calViewPeriod.pv-year .calendar-container.year-view{margin:0;gap:12px;}
 #calViewPeriod.pv-year .calendar-container.year-view .month{
   background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:10px;border-top:1px solid var(--border);}
+  padding:10px 12px;border-top:1px solid var(--border);}
 /* 首行原本要贴着标题栏、所以上内边距被收成 4px；现在每月自成一卡，四张卡内边距要一致 */
 #calViewPeriod.pv-year .calendar-container.year-view .month:nth-child(-n+2){padding-top:10px;}
 /* 月份名靠左（只改年视图；月视图那个 .month-title 是另一处，不动）。
@@ -14001,6 +14006,11 @@ function closeMemoSheet(save){
       }
     }
   }
+  // 先收键盘再让面板滑下去：取消/保存按钮用 onpointerdown+preventDefault 挡掉了
+  // 默认的焦点转移（否则按下时输入框先失焦，面板会跳一下），代价是输入框一直
+  // 带着焦点——面板都滑走了手机键盘还杵在那儿。这里补一次手动 blur。
+  const act=document.activeElement;
+  if(act&&act.blur&&sheet.contains(act)) act.blur();
   document.getElementById('mfSheetMask').classList.remove('show');
   sheet.classList.remove('show');
   memoSheet={noteId:null,key:null,raw:'',isNote:false,isCustom:false,rawKey:''};
