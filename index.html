@@ -1358,12 +1358,12 @@ body.cal-searching .cal-searchresults{display:flex;}
 body.cal-searching .cal-scroll,
 body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;
   margin-top:0;padding:0 var(--sp-4) var(--sp-10);}
-.cal-sr-year{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:0 var(--sp-12) var(--sp-6);margin-bottom:var(--sp-10);}
-/* 卡头 40.6 = 上 8 + 年份行高 25.6 + 下 6 + 线 1。年份从 13 提到 16 后卡头一度
-   涨到 48.6，比一条记录行还厚，上下收回来。 */
+/* 不再套白卡：每条自己带淡色底，外面再罩一张白卡就是「底上还有底」。
+   年份裸放在页面灰底上，色块左右铺到页边（18→375），文字仍落在 33。
+   卡头那条分隔线跟着白卡一起去掉——分组边界改由年份上方那 14px 留白表达。 */
+.cal-sr-year{background:transparent;border:none;border-radius:0;padding:0;margin-bottom:var(--sp-14);}
 .cal-sr-yhd{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-10);
-  padding:var(--sp-8) var(--sp-2) var(--sp-6);border-bottom:1px solid var(--border-soft);}
+  padding:var(--sp-8) 15px var(--sp-6);border-bottom:none;}
 /* 年份是这张卡的标题，按标题的分量给：16px/700、正文色（原来 13px/600 的灰
    跟右边「3 条」几乎一样重，卡头看着像一行注释而不是标题）。
    不用主题色：行里已经有分类色了，年份再上色这一屏就三四种颜色在打架。 */
@@ -1374,10 +1374,9 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    不画分类色点——7px 的点看不出是哪一类，只会把中间那段又推窄一截。 */
 /* 整行铺 7% 的分类色、左边一条 3px 实色：淡底负责「这几条是一伙的」，
    实色条负责「是哪一类」——7% 太淡，光靠它认不出类别。
-   左右各外扩 12px（抵掉卡片内边距）再用 padding 补回来：色块铺到卡片内沿，
-   而文字仍落在原来的 33，跟年份卡头对齐。
+   色块铺满整条（18→375），左右各 15px 内边距把文字送回 33，跟年份对齐。
    相邻同色的行合并成一段：圆角只画在段首尾、段内不留缝，段与段之间留 4px。 */
-.cal-sr{display:flex;align-items:baseline;gap:var(--sp-10);margin:0 -12px;padding:var(--sp-10) 14px;
+.cal-sr{display:flex;align-items:baseline;gap:var(--sp-10);margin:0;padding:var(--sp-10) 15px;
   position:relative;cursor:pointer;transition:background .15s;}
 .cal-sr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,transparent);}
 .cal-sr.seg-top{border-top-left-radius:var(--r);border-top-right-radius:var(--r);}
