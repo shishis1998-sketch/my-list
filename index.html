@@ -1372,17 +1372,14 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 一条记录 = 一行三段：左边日期成列、中间标题（「第 N 天」跟在标题后面）、
    右边距今。日期给死 44px 右对齐 + 等宽数字，一列数字天生对齐；
    不画分类色点——7px 的点看不出是哪一类，只会把中间那段又推窄一截。 */
-/* 整行铺 7% 的分类色、左边一条 3px 实色：淡底负责「这几条是一伙的」，
-   实色条负责「是哪一类」——7% 太淡，光靠它认不出类别。
+/* 整行铺 10% 的分类色：颜色只做「这几条是一伙的」，不再额外画左边那条实色。
+   7% 铺在页面灰底上太轻（白底上才够），提到 10%。
    色块铺满整条（18→375），左右各 15px 内边距把文字送回 33，跟年份对齐。
    相邻同色的行合并成一段：圆角只画在段首尾、段内不留缝，段与段之间留 4px。 */
 .cal-sr{display:flex;align-items:baseline;gap:var(--sp-10);margin:0;padding:var(--sp-10) 15px;
-  position:relative;cursor:pointer;transition:background .15s;}
-.cal-sr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,transparent);}
+  cursor:pointer;transition:background .15s;}
 .cal-sr.seg-top{border-top-left-radius:var(--r);border-top-right-radius:var(--r);}
-.cal-sr.seg-top::before{border-top-left-radius:var(--r);}
 .cal-sr.seg-bot{border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r);margin-bottom:var(--sp-4);}
-.cal-sr.seg-bot::before{border-bottom-left-radius:var(--r);}
 .cal-sr-year .cal-sr:last-child{margin-bottom:0;}
 /* 悬停不换底色（换了就把分类色盖掉），改成压一层极淡的黑 */
 @media (hover:hover){.cal-sr:hover{box-shadow:inset 0 0 0 999px rgba(0,0,0,.03);}}
@@ -12758,12 +12755,11 @@ function runCalSearch(){
     card.appendChild(hd);
     g.items.forEach((it,i)=>{
       const row=document.createElement('div');row.className='cal-sr';
-      // 分类色：淡底给整行，实色给左边那条；相邻同色合并成一段，圆角只画在段首尾
+      // 分类色只做整行淡底；相邻同色合并成一段，圆角只画在段首尾
       const prev=g.items[i-1],next=g.items[i+1];
       if(!prev||prev.color!==it.color)row.classList.add('seg-top');
       if(!next||next.color!==it.color)row.classList.add('seg-bot');
-      row.style.setProperty('--c',it.color);
-      row.style.background=calHexA(it.color,.07);
+      row.style.background=calHexA(it.color,.10);
       const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
       row.innerHTML=`<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
         `<div class="cal-sr-t">${esc(it.title)}${dayTag}</div>`+
