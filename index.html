@@ -2117,6 +2117,7 @@ body.cal-searching .cal-searchresults{display:flex;}
 .mfsheet.show{transform:translateY(0);}
 .mfsheet-grip{width:38px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 14px;}
 .mfsheet-label{font-size:var(--fs-foot);font-weight:600;color:var(--accent-mid);margin-bottom:8px;letter-spacing:.02em;}
+.mfsheet-label.sub{margin-top:14px;}
 .mfsheet-input{width:100%;box-sizing:border-box;font-size:16px;font-family:var(--zh);font-weight:500;color:var(--text-primary);
   background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px;outline:none;-webkit-appearance:none;line-height:1.5;}
 .mfsheet-input:focus{border-color:var(--accent);}
@@ -13919,21 +13920,54 @@ function memoFieldSet(n,key,val){
   else if(key==='note')n.fields.note=val;
   else if(key.indexOf('cf_')===0){const i=+key.slice(3);if(n.customFields&&n.customFields[i])n.customFields[i].value=val;}
 }
+// 自定义字段的字段名是用户自己起的（账号/密码/备注是固定字段，名字不给改）
+function memoFieldIsCustom(key){return key.indexOf('cf_')===0;}
+function memoFieldKeyRaw(n,key){
+  if(!memoFieldIsCustom(key))return '';
+  const i=+key.slice(3);
+  return (n.customFields&&n.customFields[i]&&n.customFields[i].key)||'';
+}
+function memoFieldKeySet(n,key,val){
+  if(!memoFieldIsCustom(key))return;
+  const i=+key.slice(3);
+  if(n.customFields&&n.customFields[i])n.customFields[i].key=val;
+}
 // 点字段值 → 从底部升起「只编辑这一项」的面板；宽敞、手机友好、不弹完整编辑页
-let memoSheet={noteId:null,key:null,raw:'',isNote:false};
+let memoSheet={noteId:null,key:null,raw:'',isNote:false,isCustom:false,rawKey:''};
 function openMemoSheet(noteId,key,isNote){
   const n=notes.find(x=>x.id===noteId);
   if(!n||isEncLocked(n))return;
   const raw=memoFieldRaw(n,key);
   const f=memoCollectFields(n).find(x=>x.key===key);
-  memoSheet={noteId,key,raw,isNote:!!isNote};
-  document.getElementById('mfSheetLabel').textContent=f?f.label:'';
+  // 自定义字段：名字也是用户自己填的，在这里一并能改；固定字段只改内容
+  const isCustom=memoFieldIsCustom(key);
+  const rawKey=isCustom?memoFieldKeyRaw(n,key):'';
+  memoSheet={noteId,key,raw,isNote:!!isNote,isCustom,rawKey};
+  document.getElementById('mfSheetLabel').textContent=isCustom?'字段名':(f?f.label:'');
   const holder=document.getElementById('mfSheetHolder');
   holder.innerHTML='';
+  let keyInp=null;
+  if(isCustom){
+    keyInp=document.createElement('input');
+    keyInp.type='text';keyInp.className='mfsheet-input';keyInp.id='mfSheetKeyInput';
+    keyInp.value=rawKey;keyInp.placeholder='字段名';keyInp.enterKeyHint='next';
+    keyInp.autocapitalize='off';keyInp.autocorrect='off';keyInp.autocomplete='off';
+    holder.appendChild(keyInp);
+    const sub=document.createElement('div');
+    sub.className='mfsheet-label sub';sub.textContent='内容';
+    holder.appendChild(sub);
+  }
   const inp=document.createElement(isNote?'textarea':'input');
   inp.className='mfsheet-input';inp.id='mfSheetInput';inp.value=raw;
   if(!isNote){inp.type='text';inp.enterKeyHint='done';}
   holder.appendChild(inp);
+  if(keyInp){
+    keyInp.addEventListener('keydown',(ev)=>{
+      // 字段名上按回车不算保存，先跳到内容框
+      if(ev.key==='Enter'){ev.preventDefault();inp.focus();}
+      else if(ev.key==='Escape'){ev.preventDefault();closeMemoSheet(false);}
+    });
+  }
   inp.addEventListener('keydown',(ev)=>{
     if(ev.key==='Enter'&&!isNote){ev.preventDefault();closeMemoSheet(true);}
     else if(ev.key==='Escape'){ev.preventDefault();closeMemoSheet(false);}
@@ -13952,12 +13986,24 @@ function closeMemoSheet(save){
     if(n&&!isEncLocked(n)){
       const inp=document.getElementById('mfSheetInput');
       const nv=s.isNote?inp.value:inp.value.trim();
-      if(nv!==s.raw){memoFieldSet(n,s.key,nv);n.updatedAt=Date.now();persistNotes();toast('已保存');}
+      const keyInp=document.getElementById('mfSheetKeyInput');
+      const nk=(s.isCustom&&keyInp)?keyInp.value.trim():s.rawKey;
+      if(nv!==s.raw||nk!==s.rawKey){
+        // 名字和内容都被清空的自定义字段直接删掉（与编辑页里的行为一致）
+        if(s.isCustom&&!nk&&!nv){
+          const i=+s.key.slice(3);
+          if(n.customFields&&n.customFields[i])n.customFields.splice(i,1);
+        }else{
+          if(s.isCustom)memoFieldKeySet(n,s.key,nk);
+          memoFieldSet(n,s.key,nv);
+        }
+        n.updatedAt=Date.now();persistNotes();toast('已保存');
+      }
     }
   }
   document.getElementById('mfSheetMask').classList.remove('show');
   sheet.classList.remove('show');
-  memoSheet={noteId:null,key:null,raw:'',isNote:false};
+  memoSheet={noteId:null,key:null,raw:'',isNote:false,isCustom:false,rawKey:''};
   render();
 }
 
