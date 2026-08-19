@@ -1305,7 +1305,7 @@ body.cal-searching .cal-searchwrap{display:flex;}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
 body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
-.cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-8) var(--sp-6) var(--sp-8) var(--sp-12);transition:border-color .15s,background .15s;}
+.cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);padding:var(--sp-8) var(--sp-6) var(--sp-8) var(--sp-12);transition:border-color .15s,background .15s;}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;transition:color .15s;}
 /* 三态描边，跟底栏笔记搜索(.bb-sbox input)同一套语言：
    聚焦=墨绿边，搜到了=墨绿边+淡绿底+图标染色，没搜到=红边。
@@ -1349,8 +1349,11 @@ body.cal-searching .cal-searchresults{display:flex;}
    年份在卡头写过了，行内日期只留月-日（省出的宽度给标题）。 */
 .cal-sr-hint{padding:var(--sp-24) var(--sp-4);color:var(--text-muted);font-size:var(--fs-caption);text-align:center;}
 .cal-sr-count{padding:var(--sp-8) var(--sp-4);color:var(--text-muted);font-size:var(--fs-foot);letter-spacing:.02em;}
-/* 搜索态下外层那张大白卡退成透明：白卡改由每个年份各自持有 */
-body.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;padding:0 var(--sp-4) var(--sp-10);}
+/* 搜索态下外层那张大白卡退成透明：白卡改由每个年份各自持有。
+   1279 行的 body.cal-open.cal-searching 优先级更高（多一个类），
+   不把它一起写上，它那条 border-top 会留在搜索框下面变成一道横线。 */
+body.cal-searching .cal-scroll,
+body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;padding:0 var(--sp-4) var(--sp-10);}
 .cal-sr-year{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:0 var(--sp-12) var(--sp-6);margin-bottom:var(--sp-10);}
 .cal-sr-yhd{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-10);
@@ -1363,7 +1366,6 @@ body.cal-searching .cal-scroll{background:transparent;border:none;border-radius:
 .cal-sr-body{flex:1;min-width:0;}
 .cal-sr-top{display:flex;align-items:baseline;gap:var(--sp-10);}
 .cal-sr-t{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-sr-t mark.shl{background:linear-gradient(transparent 78%, var(--hl, rgba(255,106,74,.45)) 78%);}
 .cal-sr-meta{display:flex;align-items:center;gap:var(--sp-8);margin-top:2px;font-size:var(--fs-foot);color:var(--text-muted);}
 .cal-sr-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;}
 /* 距今永远贴右边：左边没有「第 N 天」时也不会滑到左侧 */
@@ -12629,19 +12631,6 @@ function calSearchItems(){
   });
   return items;
 }
-// 命中高亮：与笔记搜索一致，用 mark.shl（渐变下划线）
-function calHl(s,q){
-  s=(s==null)?'':String(s);
-  q=(q||'').trim();
-  if(!q||!s)return esc(s);
-  const ls=s.toLowerCase(),lq=q.toLowerCase();
-  let out='',i=0,idx;
-  while((idx=ls.indexOf(lq,i))!==-1){
-    out+=esc(s.slice(i,idx))+'<mark class="shl">'+esc(s.slice(idx,idx+q.length))+'</mark>';
-    i=idx+q.length;
-  }
-  return out+esc(s.slice(i));
-}
 // 结果里的日期：统一 YYYY-MM-DD，等宽对齐、长短一致
 function calSearchDate(dateStr){return dateStr;}
 // 距今多久：x 年 x 个月 x 天，为 0 的单位省略（「1 个月 6 天前」「4 天前」）。
@@ -12666,13 +12655,6 @@ function calRelTime(dateStr){
   if(d)s+=d+' 天';
   s=s.trim();
   return future?('还有 '+s):(s+'前');
-}
-// 十六进制色 → rgba（给下划线用，带透明度）
-function calHexA(hex,a){
-  const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');
-  if(!m)return `rgba(255,106,74,${a})`;
-  const n=parseInt(m[1],16);
-  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
 }
 // —— 最近搜索 ——
 // 只在「这条查询确实有用」时才记：点了某条结果、或按了回车。
@@ -12739,7 +12721,7 @@ function runCalSearch(){
       row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
         `<div class="cal-sr-body">`+
           `<div class="cal-sr-top">`+
-            `<div class="cal-sr-t" style="--hl:${calHexA(it.color,.45)}">${calHl(it.title,raw)}</div>`+
+            `<div class="cal-sr-t">${esc(it.title)}</div>`+
             `<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
           `</div>`+
           `<div class="cal-sr-meta">${dayTag}<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span></div>`+
