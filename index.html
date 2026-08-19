@@ -1094,6 +1094,11 @@ body.detail-open .content{display:none!important;}
   body.cal-open .moverlay,body.sb-open .moverlay{
     padding-bottom:calc(var(--sp-20) + 64px + env(safe-area-inset-bottom));
   }
+  /* 回收站是从设置页（body.sb-open）打开的，会吃到上面那条 64px 留白：白卡停在半空，
+     下面露出一条被压暗的空档和底栏，看着像没开全。它是整屏弹窗、不是抽屉，
+     所以直接铺到底并抬过底栏（同 #icsColorModal 那套：z-index 要大于 115）。
+     底部按钮的安全区留白在 .mftr 那条里已经给了，不会被手势条压住。 */
+  #trashModal.moverlay{padding-bottom:0;z-index:120;}
 
   /* 云同步设置内容多，手机端做成一整页自然滚动（跟「全部/笔记/日历」一样）：
      整个 .mbox 是滚动容器，头/尾随内容一起滚，不再固定成三段夹一条。
