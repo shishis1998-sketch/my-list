@@ -1369,17 +1369,18 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    用 --accent 而不是写死墨绿：这一屏跟随设置里的主题色。 */
 .cal-sr-ylbl{font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 .cal-sr-yn{font-size:var(--fs-foot);color:var(--text-muted);}
-/* 不画分类色点：7px 的点看不出是哪一类（颜色认不出来），却占掉标题左边 17px，
-   还把年份和标题错成两条线。去掉之后年份、标题、第二行全部落在同一条竖线上。 */
-.cal-sr{padding:var(--sp-10) var(--sp-2);border-radius:var(--r);cursor:pointer;transition:background .15s;}
+/* 一条记录 = 一行三段：左边日期成列、中间标题（「第 N 天」跟在标题后面）、
+   右边距今。日期给死 44px 右对齐 + 等宽数字，一列数字天生对齐；
+   不画分类色点——7px 的点看不出是哪一类，只会把中间那段又推窄一截。 */
+.cal-sr{display:flex;align-items:baseline;gap:var(--sp-10);padding:var(--sp-10) var(--sp-2);border-radius:var(--r);cursor:pointer;transition:background .15s;}
 @media (hover:hover){.cal-sr:hover{background:var(--accent-light);}}
-.cal-sr-top{display:flex;align-items:baseline;gap:var(--sp-10);}
+/* 左对齐而不是右对齐：日期永远是 MM-DD 五个字符、又是等宽数字，左对齐一样成列，
+   而且文字左沿正好落在年份卡头「2026 年」的左沿上（右对齐时数字比 44 窄，会往右缩 4px）。 */
+.cal-sr-date{width:44px;flex-shrink:0;text-align:left;font-size:var(--fs-caption);color:var(--text-secondary);
+  white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;}
 .cal-sr-t{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-sr-meta{display:flex;align-items:center;gap:var(--sp-8);margin-top:2px;font-size:var(--fs-foot);color:var(--text-muted);}
-.cal-sr-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;}
-/* 距今永远贴右边：左边没有「第 N 天」时也不会滑到左侧 */
-.cal-sr-rel{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
-.cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
+.cal-sr-day{margin-left:var(--sp-8);color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;}
+.cal-sr-rel{flex-shrink:0;white-space:nowrap;font-size:var(--fs-foot);color:var(--text-muted);font-variant-numeric:tabular-nums;letter-spacing:.02em;}
 /* 行高钉死 36（含 1px 分隔线），星期名靠 align-items 居中——上下留白由浏览器均分，
    字号以后再改也不会一边宽一边窄。column-gap 与日期网格同为 2px，两行的列心才重合。 */
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);height:36px;align-items:center;padding:0;position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
@@ -12739,11 +12740,9 @@ function runCalSearch(){
     g.items.forEach(it=>{
       const row=document.createElement('div');row.className='cal-sr';
       const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
-      row.innerHTML=`<div class="cal-sr-top">`+
-          `<div class="cal-sr-t">${esc(it.title)}</div>`+
-          `<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
-        `</div>`+
-        `<div class="cal-sr-meta">${dayTag}<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span></div>`;
+      row.innerHTML=`<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
+        `<div class="cal-sr-t">${esc(it.title)}${dayTag}</div>`+
+        `<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span>`;
       row.onclick=()=>jumpCalSearch(it.date);
       card.appendChild(row);
     });
