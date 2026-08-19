@@ -1365,10 +1365,10 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    用 --accent 而不是写死墨绿：这一屏跟随设置里的主题色。 */
 .cal-sr-ylbl{font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;}
 .cal-sr-yn{font-size:var(--fs-foot);color:var(--text-muted);}
-.cal-sr{display:flex;gap:var(--sp-10);padding:var(--sp-10) var(--sp-2);border-radius:var(--r);cursor:pointer;transition:background .15s;}
+/* 不画分类色点：7px 的点看不出是哪一类（颜色认不出来），却占掉标题左边 17px，
+   还把年份和标题错成两条线。去掉之后年份、标题、第二行全部落在同一条竖线上。 */
+.cal-sr{padding:var(--sp-10) var(--sp-2);border-radius:var(--r);cursor:pointer;transition:background .15s;}
 @media (hover:hover){.cal-sr:hover{background:var(--accent-light);}}
-.cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;}
-.cal-sr-body{flex:1;min-width:0;}
 .cal-sr-top{display:flex;align-items:baseline;gap:var(--sp-10);}
 .cal-sr-t{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cal-sr-meta{display:flex;align-items:center;gap:var(--sp-8);margin-top:2px;font-size:var(--fs-foot);color:var(--text-muted);}
@@ -12723,14 +12723,11 @@ function runCalSearch(){
     g.items.forEach(it=>{
       const row=document.createElement('div');row.className='cal-sr';
       const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
-      row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
-        `<div class="cal-sr-body">`+
-          `<div class="cal-sr-top">`+
-            `<div class="cal-sr-t">${esc(it.title)}</div>`+
-            `<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
-          `</div>`+
-          `<div class="cal-sr-meta">${dayTag}<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span></div>`+
-        `</div>`;
+      row.innerHTML=`<div class="cal-sr-top">`+
+          `<div class="cal-sr-t">${esc(it.title)}</div>`+
+          `<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
+        `</div>`+
+        `<div class="cal-sr-meta">${dayTag}<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span></div>`;
       row.onclick=()=>jumpCalSearch(it.date);
       card.appendChild(row);
     });
