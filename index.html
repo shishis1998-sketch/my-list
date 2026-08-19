@@ -12611,6 +12611,18 @@ function openCalSearch(){
   runCalSearch();
   setTimeout(()=>inp.focus(),60);
 }
+// 手指在结果区一滑就把输入框的焦点撤掉（顺带收起键盘）。
+// Chrome 安卓端在页面里有输入框处于聚焦状态时会把地址栏钉住不收，滑动看结果
+// 时那颗焦点已经没用了。用 touchmove 而不是 scroll：键盘弹出/收起本身会触发
+// 滚动和 resize，绑 scroll 会在刚点进输入框时就把焦点抹掉，字都没法打。
+document.addEventListener('touchmove',function(e){
+  if(!document.body.classList.contains('cal-searching'))return;
+  const inp=document.getElementById('calSearchInput');
+  if(!inp||document.activeElement!==inp)return;
+  // 在输入框那一行里划（选文字、拖光标）不算「滑结果」
+  if(e.target&&e.target.closest&&e.target.closest('.cal-searchwrap'))return;
+  inp.blur();
+},{passive:true});
 function closeCalSearch(){
   document.body.classList.remove('cal-searching');
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.remove('on');
