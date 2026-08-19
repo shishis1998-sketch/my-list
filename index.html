@@ -14001,6 +14001,11 @@ function closeMemoSheet(save){
       }
     }
   }
+  // 先收键盘再让面板滑下去：取消/保存按钮用 onpointerdown+preventDefault 挡掉了
+  // 默认的焦点转移（否则按下时输入框先失焦，面板会跳一下），代价是输入框一直
+  // 带着焦点——面板都滑走了手机键盘还杵在那儿。这里补一次手动 blur。
+  const act=document.activeElement;
+  if(act&&act.blur&&sheet.contains(act)) act.blur();
   document.getElementById('mfSheetMask').classList.remove('show');
   sheet.classList.remove('show');
   memoSheet={noteId:null,key:null,raw:'',isNote:false,isCustom:false,rawKey:''};
