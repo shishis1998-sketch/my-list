@@ -1348,12 +1348,16 @@ body.cal-searching .cal-searchresults{display:flex;}
    现在线只剩每张卡头那一条，"换年" 是唯一由线表达的事，记录之间靠留白分。
    年份在卡头写过了，行内日期只留月-日（省出的宽度给标题）。 */
 .cal-sr-hint{padding:var(--sp-24) var(--sp-4);color:var(--text-muted);font-size:var(--fs-caption);text-align:center;}
-.cal-sr-count{padding:var(--sp-8) var(--sp-4);color:var(--text-muted);font-size:var(--fs-foot);letter-spacing:.02em;}
+/* 搜索框到「找到 N 条」原来隔了 30px（搜索行下内边距 12 + 结果区上外边距 8 +
+   这条自己的上内边距 8），中间是一片空白。上内边距收到 4、结果区的上外边距归零，
+   隔开 18px 就够——它是紧跟着搜索框的一句说明，不是独立的一段。 */
+.cal-sr-count{padding:var(--sp-4) var(--sp-4) var(--sp-8);color:var(--text-muted);font-size:var(--fs-foot);letter-spacing:.02em;}
 /* 搜索态下外层那张大白卡退成透明：白卡改由每个年份各自持有。
    1279 行的 body.cal-open.cal-searching 优先级更高（多一个类），
    不把它一起写上，它那条 border-top 会留在搜索框下面变成一道横线。 */
 body.cal-searching .cal-scroll,
-body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;padding:0 var(--sp-4) var(--sp-10);}
+body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;
+  margin-top:0;padding:0 var(--sp-4) var(--sp-10);}
 .cal-sr-year{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:0 var(--sp-12) var(--sp-6);margin-bottom:var(--sp-10);}
 /* 卡头 40.6 = 上 8 + 年份行高 25.6 + 下 6 + 线 1。年份从 13 提到 16 后卡头一度
