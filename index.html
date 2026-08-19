@@ -1356,8 +1356,10 @@ body.cal-searching .cal-scroll,
 body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;padding:0 var(--sp-4) var(--sp-10);}
 .cal-sr-year{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:0 var(--sp-12) var(--sp-6);margin-bottom:var(--sp-10);}
+/* 卡头 40.6 = 上 8 + 年份行高 25.6 + 下 6 + 线 1。年份从 13 提到 16 后卡头一度
+   涨到 48.6，比一条记录行还厚，上下收回来。 */
 .cal-sr-yhd{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-10);
-  padding:var(--sp-12) var(--sp-2) var(--sp-10);border-bottom:1px solid var(--border-soft);}
+  padding:var(--sp-8) var(--sp-2) var(--sp-6);border-bottom:1px solid var(--border-soft);}
 /* 年份是这张卡的标题，按标题的分量给：16px/700 + 主题色（原来 13px/600 的灰
    跟右边「3 条」几乎一样重，卡头看着像一行注释而不是标题）。
    用 --accent 而不是写死墨绿：这一屏跟随设置里的主题色。 */
