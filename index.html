@@ -1331,15 +1331,32 @@ body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!i
 .cal-scancel{border:none;background:transparent;cursor:pointer;color:var(--accent);font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;padding:var(--sp-4);}
 .cal-searchresults{display:none;flex-direction:column;}
 body.cal-searching .cal-searchresults{display:flex;}
+/* 搜索结果：按年分成一张张白卡（卡头写年份 + 条数），卡内每条占两行——
+   第一行标题 + 右端 月-日，第二行第 N 天 + 右端「距今多久」。
+   记录之间不画线：一屏 8 条结果原本要画 8 条行线 + 每年一条，密得像张表格；
+   现在线只剩每张卡头那一条，"换年" 是唯一由线表达的事，记录之间靠留白分。
+   年份在卡头写过了，行内日期只留月-日（省出的宽度给标题）。 */
 .cal-sr-hint{padding:var(--sp-24) var(--sp-4);color:var(--text-muted);font-size:var(--fs-caption);text-align:center;}
 .cal-sr-count{padding:var(--sp-8) var(--sp-4);color:var(--text-muted);font-size:var(--fs-foot);letter-spacing:.02em;}
-.cal-sr{display:flex;align-items:center;gap:var(--sp-12);padding:var(--sp-12) var(--sp-4);border-top:1px solid var(--border-soft);cursor:pointer;transition:background .15s;}
+/* 搜索态下外层那张大白卡退成透明：白卡改由每个年份各自持有 */
+body.cal-searching .cal-scroll{background:transparent;border:none;border-radius:0;padding:0 var(--sp-4) var(--sp-10);}
+.cal-sr-year{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
+  padding:0 var(--sp-12) var(--sp-6);margin-bottom:var(--sp-10);}
+.cal-sr-yhd{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-10);
+  padding:var(--sp-12) var(--sp-2) var(--sp-10);border-bottom:1px solid var(--border-soft);}
+.cal-sr-ylbl{font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);letter-spacing:.04em;}
+.cal-sr-yn{font-size:var(--fs-foot);color:var(--text-muted);}
+.cal-sr{display:flex;gap:var(--sp-10);padding:var(--sp-10) var(--sp-2);border-radius:var(--r);cursor:pointer;transition:background .15s;}
 @media (hover:hover){.cal-sr:hover{background:var(--accent-light);}}
-.cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.cal-sr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:6px;}
 .cal-sr-body{flex:1;min-width:0;}
-.cal-sr-t{font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-sr-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;margin-left:14px;}
+.cal-sr-top{display:flex;align-items:baseline;gap:var(--sp-10);}
+.cal-sr-t{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--text-primary);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cal-sr-t mark.shl{background:linear-gradient(transparent 78%, var(--hl, rgba(255,106,74,.45)) 78%);}
+.cal-sr-meta{display:flex;align-items:center;gap:var(--sp-8);margin-top:2px;font-size:var(--fs-foot);color:var(--text-muted);}
+.cal-sr-day{color:var(--text-muted);font-size:var(--fs-foot);font-weight:400;}
+/* 距今永远贴右边：左边没有「第 N 天」时也不会滑到左侧 */
+.cal-sr-rel{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:.02em;}
 .cal-sr-date{font-size:var(--fs-caption);color:var(--text-secondary);white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;}
 /* 行高钉死 36（含 1px 分隔线），星期名靠 align-items 居中——上下留白由浏览器均分，
    字号以后再改也不会一边宽一边窄。column-gap 与日期网格同为 2px，两行的列心才重合。 */
@@ -12614,6 +12631,29 @@ function calHl(s,q){
 }
 // 结果里的日期：统一 YYYY-MM-DD，等宽对齐、长短一致
 function calSearchDate(dateStr){return dateStr;}
+// 距今多久：x 年 x 个月 x 天，为 0 的单位省略（「1 个月 6 天前」「4 天前」）。
+// 按自然月历算而不是按 365/30 整除——「1 年 5 个月」在日历上是确定的一段，
+// 换算成天数再除回来会在闰年和大小月上差一两天，用户拿手指头一数就能发现。
+function calRelTime(dateStr){
+  const p=String(dateStr||'').split('-').map(Number);
+  if(p.length<3||p.some(isNaN))return '';
+  const now=new Date();
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const that=new Date(p[0],p[1]-1,p[2]);
+  if(that.getTime()===today.getTime())return '今天';
+  const future=that>today;
+  const a=future?today:that, b=future?that:today;   // a 早、b 晚
+  let y=b.getFullYear()-a.getFullYear(), m=b.getMonth()-a.getMonth(), d=b.getDate()-a.getDate();
+  // 借位：day 不够就从上个月借，借多少天取「b 的上一个月」有多少天
+  if(d<0){m--;d+=new Date(b.getFullYear(),b.getMonth(),0).getDate();}
+  if(m<0){y--;m+=12;}
+  let s='';
+  if(y)s+=y+' 年 ';
+  if(m)s+=m+' 个月 ';
+  if(d)s+=d+' 天';
+  s=s.trim();
+  return future?('还有 '+s):(s+'前');
+}
 // 十六进制色 → rgba（给下划线用，带透明度）
 function calHexA(hex,a){
   const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');
@@ -12668,14 +12708,33 @@ function runCalSearch(){
   const head=document.createElement('div');head.className='cal-sr-count';
   head.textContent=`找到 ${hits.length} 条 · 点一条跳到那天`;
   box.appendChild(head);
+  // 结果已按日期倒序，同一年的自然连在一起：顺序扫一遍即可切卡，不必先排序分桶
+  const groups=[];
   hits.forEach(it=>{
-    const row=document.createElement('div');row.className='cal-sr';
-    const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
-    row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
-      `<div class="cal-sr-body"><div class="cal-sr-t" style="--hl:${calHexA(it.color,.45)}">${calHl(it.title,raw)}${dayTag}</div></div>`+
-      `<div class="cal-sr-date">${esc(it.date)}</div>`;
-    row.onclick=()=>jumpCalSearch(it.date);
-    box.appendChild(row);
+    const y=it.date.slice(0,4);
+    if(!groups.length||groups[groups.length-1].y!==y)groups.push({y:y,items:[]});
+    groups[groups.length-1].items.push(it);
+  });
+  groups.forEach(g=>{
+    const card=document.createElement('div');card.className='cal-sr-year';
+    const hd=document.createElement('div');hd.className='cal-sr-yhd';
+    hd.innerHTML=`<span class="cal-sr-ylbl">${esc(g.y)} 年</span><span class="cal-sr-yn">${g.items.length} 条</span>`;
+    card.appendChild(hd);
+    g.items.forEach(it=>{
+      const row=document.createElement('div');row.className='cal-sr';
+      const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
+      row.innerHTML=`<span class="cal-sr-dot" style="background:${it.color}"></span>`+
+        `<div class="cal-sr-body">`+
+          `<div class="cal-sr-top">`+
+            `<div class="cal-sr-t" style="--hl:${calHexA(it.color,.45)}">${calHl(it.title,raw)}</div>`+
+            `<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
+          `</div>`+
+          `<div class="cal-sr-meta">${dayTag}<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span></div>`+
+        `</div>`;
+      row.onclick=()=>jumpCalSearch(it.date);
+      card.appendChild(row);
+    });
+    box.appendChild(card);
   });
 }
 function jumpCalSearch(dateStr){
