@@ -1364,16 +1364,29 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    涨到 48.6，比一条记录行还厚，上下收回来。 */
 .cal-sr-yhd{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-10);
   padding:var(--sp-8) var(--sp-2) var(--sp-6);border-bottom:1px solid var(--border-soft);}
-/* 年份是这张卡的标题，按标题的分量给：16px/700 + 主题色（原来 13px/600 的灰
+/* 年份是这张卡的标题，按标题的分量给：16px/700、正文色（原来 13px/600 的灰
    跟右边「3 条」几乎一样重，卡头看着像一行注释而不是标题）。
-   用 --accent 而不是写死墨绿：这一屏跟随设置里的主题色。 */
-.cal-sr-ylbl{font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;}
+   不用主题色：行里已经有分类色了，年份再上色这一屏就三四种颜色在打架。 */
+.cal-sr-ylbl{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);letter-spacing:.02em;}
 .cal-sr-yn{font-size:var(--fs-foot);color:var(--text-muted);}
 /* 一条记录 = 一行三段：左边日期成列、中间标题（「第 N 天」跟在标题后面）、
    右边距今。日期给死 44px 右对齐 + 等宽数字，一列数字天生对齐；
    不画分类色点——7px 的点看不出是哪一类，只会把中间那段又推窄一截。 */
-.cal-sr{display:flex;align-items:baseline;gap:var(--sp-10);padding:var(--sp-10) var(--sp-2);border-radius:var(--r);cursor:pointer;transition:background .15s;}
-@media (hover:hover){.cal-sr:hover{background:var(--accent-light);}}
+/* 整行铺 7% 的分类色、左边一条 3px 实色：淡底负责「这几条是一伙的」，
+   实色条负责「是哪一类」——7% 太淡，光靠它认不出类别。
+   左右各外扩 12px（抵掉卡片内边距）再用 padding 补回来：色块铺到卡片内沿，
+   而文字仍落在原来的 33，跟年份卡头对齐。
+   相邻同色的行合并成一段：圆角只画在段首尾、段内不留缝，段与段之间留 4px。 */
+.cal-sr{display:flex;align-items:baseline;gap:var(--sp-10);margin:0 -12px;padding:var(--sp-10) 14px;
+  position:relative;cursor:pointer;transition:background .15s;}
+.cal-sr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,transparent);}
+.cal-sr.seg-top{border-top-left-radius:var(--r);border-top-right-radius:var(--r);}
+.cal-sr.seg-top::before{border-top-left-radius:var(--r);}
+.cal-sr.seg-bot{border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r);margin-bottom:var(--sp-4);}
+.cal-sr.seg-bot::before{border-bottom-left-radius:var(--r);}
+.cal-sr-year .cal-sr:last-child{margin-bottom:0;}
+/* 悬停不换底色（换了就把分类色盖掉），改成压一层极淡的黑 */
+@media (hover:hover){.cal-sr:hover{box-shadow:inset 0 0 0 999px rgba(0,0,0,.03);}}
 /* 左对齐而不是右对齐：日期永远是 MM-DD 五个字符、又是等宽数字，左对齐一样成列，
    而且文字左沿正好落在年份卡头「2026 年」的左沿上（右对齐时数字比 44 窄，会往右缩 4px）。 */
 .cal-sr-date{width:44px;flex-shrink:0;text-align:left;font-size:var(--fs-caption);color:var(--text-secondary);
@@ -12655,6 +12668,13 @@ function calSearchItems(){
 }
 // 结果里的日期：统一 YYYY-MM-DD，等宽对齐、长短一致
 function calSearchDate(dateStr){return dateStr;}
+// 十六进制色 → rgba（给搜索结果的整行淡底用）
+function calHexA(hex,a){
+  const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');
+  if(!m)return `rgba(155,155,155,${a})`;
+  const n=parseInt(m[1],16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
 // 距今多久：x 年 x 个月 x 天，为 0 的单位省略（「1 个月 6 天前」「4 天前」）。
 // 按自然月历算而不是按 365/30 整除——「1 年 5 个月」在日历上是确定的一段，
 // 换算成天数再除回来会在闰年和大小月上差一两天，用户拿手指头一数就能发现。
@@ -12737,8 +12757,14 @@ function runCalSearch(){
     const hd=document.createElement('div');hd.className='cal-sr-yhd';
     hd.innerHTML=`<span class="cal-sr-ylbl">${esc(g.y)} 年</span><span class="cal-sr-yn">${g.items.length} 条</span>`;
     card.appendChild(hd);
-    g.items.forEach(it=>{
+    g.items.forEach((it,i)=>{
       const row=document.createElement('div');row.className='cal-sr';
+      // 分类色：淡底给整行，实色给左边那条；相邻同色合并成一段，圆角只画在段首尾
+      const prev=g.items[i-1],next=g.items[i+1];
+      if(!prev||prev.color!==it.color)row.classList.add('seg-top');
+      if(!next||next.color!==it.color)row.classList.add('seg-bot');
+      row.style.setProperty('--c',it.color);
+      row.style.background=calHexA(it.color,.07);
       const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
       row.innerHTML=`<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
         `<div class="cal-sr-t">${esc(it.title)}${dayTag}</div>`+
