@@ -1133,10 +1133,15 @@ body.detail-open .content{display:none!important;}
   body.kb-open .bottombar{padding-bottom:0;}
   /* 键盘弹起时收起 4 个 tab，只留搜索行，腾出空间看结果 */
   body.kb-open .bb-tabs{display:none;}
-  /* 下滑隐藏 4 个 tab（平滑折叠），上滑恢复 */
-  .bb-tabs{overflow:hidden;max-height:64px;opacity:1;
-    transition:max-height .26s ease, opacity .2s ease;}
-  body.tabs-hidden .bb-tabs{max-height:0;opacity:0;}
+  /* 下滑收起底栏、上滑恢复。收的是「整条底栏」，不是只收 tab 那一行——
+     底栏是 bottom:0 固定的，只收 tab 的话上面那条 .bb-actions（搜索/排序/
+     筛选/添加）会顺势滑到屏幕最底，正好落在手指习惯点 tab 的位置：
+     「想切页 → 点出一个排序抽屉 → 再点只是把它关掉 → 再点又弹出筛选」，
+     连点三次都切不走，就是这么来的。整条推出去，底部不留任何可点的东西。
+     两个 :not() 不能省：上面那两条键盘规则也在写 .bottombar 的 transform，
+     不排除掉会互相覆盖，键盘弹起时底栏会跑飞。 */
+  .bb-tabs{overflow:hidden;max-height:64px;opacity:1;}
+  body.tabs-hidden:not(.kb-open):not(.vv-track) .bottombar{transform:translateY(110%);}
   /* 不用 gap：右侧按钮聚焦时要收成 0 宽，gap 留下的 3 道缝隙没法跟着收，
      搜索框就吃不满整行。改成按钮各自带 margin-left，收起时一起归零 */
   .bb-actions{display:flex;align-items:center;padding:var(--sp-8) var(--sp-12) var(--sp-8);border-bottom:1px solid var(--border-soft);}
@@ -1198,6 +1203,9 @@ body.detail-open .content{display:none!important;}
   .bb-tab svg{width:20px;height:20px;stroke-width:2;transition:transform .12s;}
   .bb-tab.on{color:var(--accent);}
   .bb-tab.on svg{stroke-width:2.4;}
+  /* 按下态要看得见：全局关掉了系统的点击高亮，原来只有 SVG 缩到 0.9，
+     手指正好盖在图标上，等于没有反馈 */
+  .bb-tab:active{background:var(--bg);}
   .bb-tab:active svg{transform:scale(.9);}
   .bb-tab.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
     width:26px;height:3px;border-radius:2px;background:var(--accent);}
@@ -1671,6 +1679,15 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    行本身也不带圆角，swipe-cut 那套「拼圆角」的补丁跟着一起退休。 */
 .swipe-wrap-row{margin-bottom:0;border-radius:0;}
 .swipe-wrap>.mrow{position:relative;z-index:2;will-change:transform;touch-action:pan-y;}
+/* 离屏的行不参与布局/绘制。列表没有虚拟滚动，每次切 tab 都要把全部记录重排一遍，
+   而屏幕上一次只看得到十来条——实测 600 条时这一步占掉整次切换 85% 的耗时
+   （layout 4.9s → 0.17s，切换阻塞 3.5s → 0.35s）。
+   contain-intrinsic-size 是给离屏行的高度估值，滚动条长度靠它算；用 auto 关键字
+   是因为行高会随「设置 › 字号」变，auto 让浏览器记住每行实际量到的高度，
+   写死 68px 的话调过字号就会算歪、滚动条抽动。
+   需要 iOS 18+ / Chrome 85+；老浏览器直接忽略这两行，只是没有加速，不会变形。 */
+#mlist > .swipe-wrap-row,
+#mlist > .mrow{content-visibility:auto;contain-intrinsic-size:auto 68px;}
 /* 末行的下边线：行被滑动容器包起来后 .mrow:last-child 选不中它了 */
 .swipe-wrap-row:last-child>.mrow{border-bottom:none;}
 
@@ -10710,6 +10727,7 @@ function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
   detailId=id; dtTab='info';
   renderDetail();
+  document.body.classList.remove('tabs-hidden');   // 同 openCalendar：这页底栏是唯一导航
   document.body.classList.add('detail-open');
   document.getElementById('detailRoot').classList.add('open');
   window.scrollTo(0,0);
@@ -11135,6 +11153,9 @@ function toggleSidebar(open){
   const ov=document.getElementById('sbOverlay');
   if(open===undefined) open=!sb.classList.contains('open');
   if(open && document.body.classList.contains('cal-open')) closeCalendar();  // 「设置」从日历页切走
+  // 设置页整页几乎不滚，滚动监听不一定会跑，收着的底栏得在这里主动放回来，
+  // 否则进了设置页底部四个 tab 全在屏幕外，切不出去。
+  if(open) document.body.classList.remove('tabs-hidden');
   sb.classList.toggle('open',open);
   ov.classList.toggle('open',open);
   document.body.classList.toggle('sb-open',open);  // 设置页：底栏浮于其上、只留 tab（与日历一致）
@@ -11157,7 +11178,25 @@ function setMenuTabActive(on){
 function isNoteMode(){return typeof curCat==='string'&&curCat.indexOf('notes')===0;}
 
 // ── Filters ───────────────────────────────────────────────────────
+// 切分类/切 tab 的重渲染排到下一帧，并且只保留最后一次。
+// render() 是同步的，几百条记录要跑几百毫秒，期间一帧都不刷；把它排到下一帧，
+// 才能先把 tab 高亮画出来。合并成一次也很关键：卡住的时候人本能会补点，
+// 原来每一次补点都排一次完整的全量重渲染，越点越卡。
+let _catRenderRAF=0;
+function scheduleCatRender(){
+  if(_catRenderRAF) cancelAnimationFrame(_catRenderRAF);
+  _catRenderRAF=requestAnimationFrame(()=>{ _catRenderRAF=0; render(); playCatStagger(); });
+}
 function filterCat(cat){
+  const onList = !document.body.classList.contains('cal-open')
+              && !document.body.classList.contains('sb-open')
+              && !detailId;
+  // 已经停在这个 tab、也没有别的页盖着 → 什么都不用做。
+  // 少了这个短路，点已经选中的 tab 也会把整个列表重建一遍。
+  // curFilterTags 那个条件是故意留的：「再点一次当前 tab 顺手清空标签筛选」
+  // 是原有行为，保留。
+  if(onList && curCat===cat && !curFilterTags.length) return;
+
   if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
   closeDetail();                                                     // 从详情页切回列表
   curCat=cat;
@@ -11168,10 +11207,11 @@ function filterCat(cat){
     curNoteSub=parts[1]||'all';
   }
   applyModeUI();
-  render();
-  playCatStagger();
-  // 手机端点完分类自动关闭抽屉
+  // 手机端点完分类自动关闭抽屉。必须赶在 syncBottomTabs 之前——它会看 body.sb-open，
+  // 抽屉还开着的话高亮会停在「设置」上。
   if(isMobileLayout()) toggleSidebar(false);
+  syncBottomTabs();     // 高亮先切过去：按下就有反应，不用等列表画完
+  scheduleCatRender();
   saveLastView();
 }
 
@@ -11223,8 +11263,13 @@ function restoreLastPage(){
 function playCatStagger(){
   const c=isNoteMode()?document.getElementById('nlist'):document.getElementById('mlist');
   if(!c) return;
+  // 只做前 12 个。延迟本来在第 10 个就封顶了，后面的元素动画完全同步，
+  // 给几百上千个元素各写一遍内联样式纯属白干；更要紧的是它会把
+  // content-visibility 跳过的离屏行硬拉回来算样式，正好抵消掉那边的加速，
+  // 而且那些行会在你滚到它们时才补播入场动画，看着莫名其妙。
   const items=c.children;
-  for(let i=0;i<items.length;i++){
+  const n=Math.min(items.length,12);
+  for(let i=0;i<n;i++){
     const el=items[i];
     el.style.animationDelay=(Math.min(i,10)*45)+'ms';
     el.classList.add('stagger-in');
@@ -12353,10 +12398,11 @@ function haptic(type){
 // 开关：setHaptic(false) 关闭全部震动并记住；setHaptic(true) 重新开启
 function setHaptic(on){hapticOn=!!on;localStorage.setItem('hapticOff',on?'0':'1');if(on)haptic('tap');}
 
-// 提示条要停在底栏上方。底栏的实际高度不是个常数：滚动时标签行会收起
+// 提示条要停在底栏上方。底栏的位置不是个常数：滚动时整条会被推出屏幕
 // (body.tabs-hidden)，键盘弹起时整条会被 transform 顶到键盘上方，日历/设置页
 // 还会改它的层级。所以不在启动时量一遍写死，而是每次弹之前现量——
-// 用「可视区底部 − 底栏顶边」算净高，底栏被 transform 移动过时也准。
+// 用「可视区底部 − 底栏顶边」算净高，底栏被 transform 移动过时也准；
+// 整条被推出屏幕时顶边已经在 vh 以下，下面那个 top<vh 不成立，提示条自动落回屏底。
 // 底栏自己的 padding-bottom 已经含 env(safe-area-inset-bottom)，这里不能再加一遍。
 function syncToastLift(el){
   let lift=14;
@@ -12385,6 +12431,7 @@ let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起�
 
 function openCalendar(){
   closeDetail();                                  // 详情页开着的话先退回列表
+  document.body.classList.remove('tabs-hidden');  // 列表页可能正收着底栏，这页底栏是唯一导航
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
   document.getElementById('calRoot').classList.add('open');
   const today=new Date();
@@ -14764,7 +14811,12 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
   update();
 })();
 
-// -- 下滑隐藏底部 4 个 tab,上滑恢复(仅手机端) --
+// iOS Safari 只有在元素或其祖先挂了 touchstart 监听时才会给非链接元素套 :active。
+// 全站又把 -webkit-tap-highlight-color 关成 transparent 了，不补这一条空监听，
+// 底部 tab 的按下反馈在 iPhone 上根本不出现。
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+// -- 下滑收起整条底栏,上滑恢复(仅手机端;CSS 见 body.tabs-hidden .bottombar) --
 (function(){
   let lastY = window.scrollY || 0;
   let ticking = false;
@@ -14774,9 +14826,26 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
     if(!isMobileLayout()){
       document.body.classList.remove('tabs-hidden'); return;
     }
+    // 日历/详情/设置页的底栏是唯一的导航入口，必须常驻。这三页原本是靠
+    // 「body.xx-open .bb-tabs{max-height:64px}」把 tab 撑回来的，可 tabs-hidden
+    // 这个 class 还挂在 body 上——改成推整条底栏之后，那几条撑不住了，
+    // 底栏会连 tab 一起被推出屏幕，这三页就彻底没了导航。所以在这里清掉。
+    if(document.body.classList.contains('cal-open') ||
+       document.body.classList.contains('detail-open') ||
+       document.body.classList.contains('sb-open')){
+      document.body.classList.remove('tabs-hidden');
+      lastY = window.scrollY || 0;   // 基准跟着走，回列表页第一次滑不会被算成「下滑」
+      return;
+    }
     if(document.body.classList.contains('modal-open') ||
        document.body.classList.contains('kb-open')){ return; }
     const y = window.scrollY || 0;
+    // 内容只比一屏多出一点点时不收。记录很少时文档只高出几十像素，
+    // 手一抖就滚过了阈值，整条导航跟着消失，看着像界面坏了；
+    // 而且本来也没多少地方可滚，腾这点空间毫无意义。要求至少还有半屏可滚。
+    if(document.documentElement.scrollHeight - window.innerHeight < window.innerHeight * 0.5){
+      document.body.classList.remove('tabs-hidden'); lastY = y; return;
+    }
     const dy = y - lastY;
     if(y < 40){ document.body.classList.remove('tabs-hidden'); }
     else if(dy > THRESH){ document.body.classList.add('tabs-hidden'); }
