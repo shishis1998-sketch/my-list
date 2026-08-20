@@ -1374,8 +1374,10 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 一条记录 = 一行三段：左边日期成列、中间标题（「第 N 天」跟在标题后面）、
    右边距今。日期给死 44px 右对齐 + 等宽数字，一列数字天生对齐；
    不画分类色点——7px 的点看不出是哪一类，只会把中间那段又推窄一截。 */
-/* 整行铺 10% 的分类色：颜色只做「这几条是一伙的」，不再额外画左边那条实色。
-   7% 铺在页面灰底上太轻（白底上才够），提到 10%。
+/* 整行铺 16% 的分类色：颜色只做「这几条是一伙的」，不再额外画左边那条实色。
+   7% 铺在页面灰底上太轻（白底上才够），先提到 10%，仍然认不出是哪一类——
+   媒体(#6B6B6B)、日历(#A09A8E) 本身就是灰的，10% 压在灰底上跟没上色差不多；
+   再提到 16%，蓝/绿/棕/紫几档才彼此拉得开。
    色块铺满整条（18→375），左右各 15px 内边距把文字送回 33，跟年份对齐。
    相邻同色的行合并成一段：圆角只画在段首尾、段内不留缝，段与段之间留 4px。 */
 .cal-sr{display:flex;align-items:baseline;gap:var(--sp-8);margin:0;padding:var(--sp-10) 15px;
@@ -12758,10 +12760,11 @@ function runCalSearch(){
     g.items.forEach((it,i)=>{
       const row=document.createElement('div');row.className='cal-sr';
       // 分类色只做整行淡底；相邻同色合并成一段，圆角只画在段首尾
+      // 浓度 16%：见 .cal-sr 那条注释（10% 对灰色系的分类几乎不起作用）
       const prev=g.items[i-1],next=g.items[i+1];
       if(!prev||prev.color!==it.color)row.classList.add('seg-top');
       if(!next||next.color!==it.color)row.classList.add('seg-bot');
-      row.style.background=calHexA(it.color,.10);
+      row.style.background=calHexA(it.color,.16);
       const dayTag=it.dayLabel?`<span class="cal-sr-day">${esc(it.dayLabel)}</span>`:'';
       row.innerHTML=`<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
         `<div class="cal-sr-t">${esc(it.title)}${dayTag}</div>`+
