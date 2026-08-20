@@ -1305,10 +1305,13 @@ body.cal-searching .cal-searchwrap{display:flex;}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
 body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
-/* 不填底色，只留描边：搜索框跟结果卡片同宽同圆角，再垫一层底就成了「底上还有底」 */
+/* 填 surface 白底 + 描边：结果行现在整行铺 16% 的分类色，搜索框再跟着页面灰底走
+   就跟结果混成一片；填白之后「输入的地方」和「搜出来的东西」一眼分得开。
+   （去掉底色是 #395 留下的，那时结果还是白卡，白框压白卡才是「底上还有底」。）
+   用 var(--surface) 而不是写死 #fff：夜间它是 #1C1C1F，跟着一起翻。 */
 /* 圆角改成胶囊：跟上面那条视图切换条(.cal-vtoggle，999)一个形状。两者上下挨着
    同时出现（搜索态只藏了月份行和日期网格，切换条还在），一个胶囊一个圆角矩形对不上。 */
-.cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:transparent;border:1px solid var(--border);border-radius:999px;padding:var(--sp-8) var(--sp-6) var(--sp-8) var(--sp-12);transition:border-color .15s;}
+.cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:var(--sp-8) var(--sp-6) var(--sp-8) var(--sp-12);transition:border-color .15s;}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;transition:color .15s;}
 /* 三态只改描边（底色已去掉）：聚焦=墨绿边，搜到了=墨绿边+图标染色，没搜到=红边。
    用 :focus-within 而不是 input:focus——描边画在外面这一层 div 上。 */
