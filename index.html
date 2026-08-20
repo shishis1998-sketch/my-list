@@ -1305,13 +1305,16 @@ body.cal-searching .cal-searchwrap{display:flex;}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
 body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
+/* 上下内边距 8 → 6：框高 44 → 40，跟一条结果行（40.8）齐平。搜索框和结果行上下
+   紧挨着，高一截会显得它比一条记录"重"；同高之后整屏是同一个行高节奏。
+   高度由框内那颗 26px 的 ✕ 撑着（26 + 6×2 + 描边 2 = 40），不是写死的数值。 */
 /* 填 surface 白底 + 描边：结果行现在整行铺 16% 的分类色，搜索框再跟着页面灰底走
    就跟结果混成一片；填白之后「输入的地方」和「搜出来的东西」一眼分得开。
    （去掉底色是 #395 留下的，那时结果还是白卡，白框压白卡才是「底上还有底」。）
    用 var(--surface) 而不是写死 #fff：夜间它是 #1C1C1F，跟着一起翻。 */
 /* 圆角改成胶囊：跟上面那条视图切换条(.cal-vtoggle，999)一个形状。两者上下挨着
    同时出现（搜索态只藏了月份行和日期网格，切换条还在），一个胶囊一个圆角矩形对不上。 */
-.cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:var(--sp-8) var(--sp-6) var(--sp-8) var(--sp-12);transition:border-color .15s;}
+.cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:var(--sp-6) var(--sp-6) var(--sp-6) var(--sp-12);transition:border-color .15s;}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;transition:color .15s;}
 /* 三态只改描边（底色已去掉）：聚焦=墨绿边，搜到了=墨绿边+图标染色，没搜到=红边。
    用 :focus-within 而不是 input:focus——描边画在外面这一层 div 上。 */
@@ -1336,7 +1339,8 @@ body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!i
 @media (hover:hover){.cal-recent-chip:hover{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);}}
 .cal-sfield input{flex:1;border:none;background:transparent;outline:none;font-family:var(--zh);font-size:var(--fs-body);color:var(--text-primary);padding:0;}
 /* 退出搜索：原来是输入框右边的「取消」二字，现在收进框内做成一枚 ✕。
-   圆钮画 26（再大就把 44 高的输入框撑开了），点击区靠 ::after 向外扩 6px 到 38，
+   圆钮画 26——它正是撑起输入框高度的那个元素（26 + 上下内边距 6 + 描边 2 = 40，
+   与一条结果行齐平），改大改小都会连带把框撑高/压矮；点击区靠 ::after 向外扩 6px 到 38，
    手指够得着又不改变布局。 */
 .cal-scancel{position:relative;flex-shrink:0;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;
   border:none;background:transparent;border-radius:50%;cursor:pointer;color:var(--text-muted);
