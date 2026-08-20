@@ -1306,8 +1306,7 @@ body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐�
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
 body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
 /* 不填底色，只留描边：搜索框跟结果卡片同宽同圆角，再垫一层底就成了「底上还有底」 */
-/* 圆角 12 → 14：跟顶部四角视图切换条那颗方框对齐。两者一上一下都是这一页的
-   「工具条」，一个 12 一个 14 在同一屏里看得出差半格。 */
+/* 圆角 12 → 14：框高 44，12 的角在这个高度上偏紧，方一档更稳当。 */
 .cal-sfield{flex:1;display:flex;align-items:center;gap:var(--sp-8);background:transparent;border:1px solid var(--border);border-radius:14px;padding:var(--sp-8) var(--sp-6) var(--sp-8) var(--sp-12);transition:border-color .15s;}
 .cal-sfield svg{color:var(--text-muted);flex-shrink:0;transition:color .15s;}
 /* 三态只改描边（底色已去掉）：聚焦=墨绿边，搜到了=墨绿边+图标染色，没搜到=红边。
@@ -2422,18 +2421,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle.cvt3 .cvt,
 .cal-vtoggle.cvt4 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}   /* 等分满宽 + 高度压低到约 30px */
 .cal-vtoggle .cvt.on{color:var(--text-primary);}
-/* ═══ 四角式（2×2）视图切换：把一行四段的胶囊条摊成田字格，四个视图各占一角 ═══
-   日历=左上、经期=右上、年度=左下、标签=右下。一行四段时「标签」要横着挪三格才到，
-   摊成四角后任意两档都只隔一步，手指从屏幕上沿够过去也更近。
-   容器改用圆角矩形（胶囊在两行高度上会把左右两端啃掉一大块），滑块横竖两个方向一起动。 */
-.cal-vtoggle.cvt4c{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
-  width:100%;border-radius:14px;}
-.cal-vtoggle.cvt4c .cvt-thumb{top:3px;bottom:auto;left:3px;
-  width:calc(50% - 3px);height:calc(50% - 3px);border-radius:11px;}
-.cal-vtoggle.cvt4c .cvt-thumb.m{transform:translate(100%,0);}
-.cal-vtoggle.cvt4c .cvt-thumb.y{transform:translate(0,100%);}
-.cal-vtoggle.cvt4c .cvt-thumb.h{transform:translate(100%,100%);}
-.cal-vtoggle.cvt4c .cvt{flex:none;padding:6px 0;border-radius:11px;}
 #calViewCalendar{flex:1 1 auto;display:flex;flex-direction:column;overflow:visible;}
 #calViewPeriod{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
@@ -4055,7 +4042,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="cal-modal">
       <div class="cal-viewbar">
         <div class="cal-viewtitle" id="calViewTitle">日历</div>
-        <div class="cal-vtoggle cvt4 cvt4c" role="tablist" aria-label="视图切换">
+        <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
           <span class="cvt-thumb" id="cvtThumb"></span>
           <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
           <button class="cvt" data-cv="month" onclick="setCalView('month')">经期</button>
