@@ -723,9 +723,20 @@ body.detail-open .content{display:none!important;}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast>svg{flex-shrink:0;}   /* 长句换行时对勾不被挤扁 */
 
-::-webkit-scrollbar{width:5px;}
+/* 滚动条：滑起来才出现，停下就收起（同 macOS 的浮层滚动条）。
+   槽 10、两边各留 2 的透明边（background-clip 只填内容盒）＝ 看得见的 6px，
+   比原来的 5 粗、颜色也从 --border（几乎是白的）换成 --text-muted，
+   在正文编辑框那种整屏白底上才找得着。
+   不滑的时候只是把滑块调成透明，槽的宽度一直占着——出现/消失时不会顶得版面跳。
+   .scrolling 由页脚那段脚本挂在 <html> 上，见「滚动条：滑起来才显形」。 */
+::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+::-webkit-scrollbar-thumb{background:transparent;border-radius:99px;
+  border:2px solid transparent;background-clip:content-box;}
+html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background-clip:content-box;}
+/* 不写 scrollbar-color / scrollbar-width：这两个标准属性一旦出现，Chrome 就整个
+   忽略上面那套 ::-webkit-scrollbar（标准的优先），槽宽和圆角都白写。
+   Firefox 那边就用它自己的默认滚动条，不跟着一起收起——只有它这样。 */
 
 /* ===== 汉堡按钮 (默认手机端才显示) ===== */
 .menubtn{
@@ -14865,6 +14876,18 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
 // 全站又把 -webkit-tap-highlight-color 关成 transparent 了，不补这一条空监听，
 // 底部 tab 的按下反馈在 iPhone 上根本不出现。
 document.addEventListener('touchstart', function(){}, {passive:true});
+
+// -- 滚动条：滑起来才显形，停下 700ms 收起（CSS 见 html.scrolling ::-webkit-scrollbar-thumb）--
+// 用捕获阶段听：scroll 不冒泡，只有捕获才收得到正文编辑框、抽屉这些内部容器的滚动。
+(function(){
+  const R=document.documentElement;
+  let t=null;
+  document.addEventListener('scroll',function(){
+    R.classList.add('scrolling');
+    clearTimeout(t);
+    t=setTimeout(function(){ R.classList.remove('scrolling'); },700);
+  },{capture:true,passive:true});
+})();
 
 // -- 下滑收起整条底栏,上滑恢复(仅手机端;CSS 见 body.tabs-hidden .bottombar) --
 (function(){
