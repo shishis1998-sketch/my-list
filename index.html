@@ -540,8 +540,29 @@ body.detail-open .content{display:none!important;}
    两列对齐（比稿方案 C）正是折在这一点上 */
 .dt-people{display:flex;flex-direction:column;}
 /* 一个人就是一个点击目标：点谁就只弹谁那一组，不用在整张名单里滑着找 */
-.dt-pitem{padding:var(--sp-12) 0;cursor:pointer;transition:opacity .15s;}
+.dt-pitem{display:flex;align-items:center;gap:var(--sp-10);
+  padding:var(--sp-12) 0;cursor:pointer;transition:opacity .15s;}
+.dt-pcol{flex:1;min-width:0;}
 .dt-pitem:active{opacity:.55;}
+/* ── 排序态：整行不再可点，只有右边那颗拖柄能拖（见 peopleDragStart）── */
+.dt-people.sorting .dt-pitem{cursor:default;}
+.dt-people.sorting .dt-pitem:active{opacity:1;}
+.dt-phandle{flex:0 0 auto;width:40px;height:40px;padding:0;margin:-8px calc(-1 * var(--sp-6)) -8px 0;
+  display:grid;place-items:center;background:none;border:0;color:var(--text-muted);
+  cursor:grab;touch-action:none;}
+.dt-phandle svg{width:20px;height:20px;pointer-events:none;}
+.dt-phandle:active{cursor:grabbing;color:var(--text-secondary);}
+/* 拎起来的那条：全站不投影，靠描一圈主题色边表示「浮起来了」。
+   用 outline 不用 border——outline 不占布局，行高不会在按下的一瞬间跳一下 */
+.dt-pitem.dragging{position:relative;z-index:5;background:var(--surface);
+  border-radius:var(--rlg);outline:1.5px solid var(--accent);outline-offset:-1px;}
+body.pe-dragging{user-select:none;-webkit-user-select:none;}
+/* 小节名那行的纯图标按钮：字号行里塞一颗 40 见方的热区，负边距抵掉多出来的高度 */
+/* margin-left:auto：这一行是 space-between，电脑端有三样（人物 / 排序 / ＋添加），
+   不推一把的话三者会被均分开，「排序」孤零零卡在中间 */
+.dt-lnk-icon{align-self:center;display:grid;place-items:center;width:40px;height:40px;
+  padding:0;margin:-10px calc(-1 * var(--sp-4)) -10px auto;}
+.dt-lnk-icon svg{width:18px;height:18px;}
 .dt-pitem+.dt-pitem{border-top:1px solid var(--border-soft);}
 .dt-pitem:first-child{padding-top:0;}
 .dt-pitem:last-child{padding-bottom:0;}
@@ -10766,7 +10787,8 @@ let detailId=null, detailPushed=false;
 // 详情页的三栏视图。概览＝时间 + 标签；备注＝这条记录的备注；时间线＝读书笔记的章节
 const DT_TABS=[{id:'info',lbl:'概览'},{id:'note',lbl:'备注'},{id:'tl',lbl:'时间线'}];
 let dtTab='info';
-function setDetailTab(v){ dtTab=DT_TABS.some(t=>t.id===v)?v:'info'; renderDetail(); }
+function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（顺序落手时已存）
+  dtTab=DT_TABS.some(t=>t.id===v)?v:'info'; renderDetail(); }
 
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
@@ -10787,6 +10809,7 @@ function closeDetail(){
 }
 function hideDetail(){
   document.body.classList.remove('fab-hidden');
+  dtSortPeople=false;
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
@@ -10873,12 +10896,129 @@ function nameHtml(s){
 // 排版走「分行式」（见 docs/people-card-layouts.html 方案 B）：名字独占一行，
 // 信息、备注依次往下缩字号，人与人之间一道发丝线。三栏各写多长都不打架，
 // 名字也不用为了对齐去折行——两列对齐（方案 C）就是折在这一点上。
-function renderPeople(list){
-  return `<div class="dt-people">${list.map((p,i)=>
-    `<div class="dt-pitem" onclick="tapPerson(event,${i})">
-      <div class="dt-pname">${nameHtml(p.name)}</div>
-      ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
-      ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
+// ── 人物排序 ──────────────────────────────────────────────
+// 小节名那颗拖柄图标进出排序态；排序态里按住行右边的拖柄上下拖。
+// 为什么是「先进模式再拖」而不是「长按直接拖」：这一行本来就是「点开编辑」的按钮，
+// 长按和轻点共用一个目标，判定稍有偏差就会「想改名字结果把人挪走了」。
+// 分成两态之后，能拖的地方看得见（拖柄），不能拖的时候一点也拖不动。
+let dtSortPeople=false, dtSortOrig='';
+function setSortPeople(on){
+  const it=data.find(d=>d.id===detailId);
+  if(on){
+    dtSortPeople=true;
+    dtSortOrig=it?JSON.stringify(normPeople(it.people)):'';
+  }else{
+    dtSortPeople=false;
+    const now=it?JSON.stringify(normPeople(it.people)):'';
+    // 顺序是每次落手就已经存了的，这条只是收尾时告诉你一声
+    if(dtSortOrig&&now!==dtSortOrig) toast('顺序已保存');
+    dtSortOrig='';
+  }
+  renderDetail();
+}
+
+let peDrag=null;
+// 详情页在手机上是整页滚的，宽屏某些组合下是 #detailRoot 自己滚——拖到边缘要跟着滚，
+// 先认清楚是谁在滚
+function peScroller(){
+  const d=document.getElementById('detailRoot');
+  return (d&&d.scrollHeight>d.clientHeight+2)?d:null;
+}
+function peScrollTop(){ const el=peScroller(); return el?el.scrollTop:(window.scrollY||0); }
+function peopleDragStart(ev){
+  if(ev.button!=null&&ev.button!==0) return;
+  const handle=ev.currentTarget, row=handle.closest('.dt-pitem'), list=row&&row.parentElement;
+  if(!row||!list) return;
+  ev.preventDefault();
+  peDrag={row,list,handle,pid:ev.pointerId,startY:ev.clientY,y:ev.clientY,scroll0:peScrollTop(),raf:0};
+  row.classList.add('dragging');
+  document.body.classList.add('pe-dragging');
+  // 监听挂 window，不用 setPointerCapture：换位是把这一行 insertBefore 到别处，
+  // 元素一从原位置搬走，浏览器就把指针捕获释放了——捕获在拖柄上的话，
+  // 第一次换位之后就再也收不到 move/up，拖不动也存不下（踩过）
+  window.addEventListener('pointermove',peopleDragMove,{passive:false});
+  window.addEventListener('pointerup',peopleDragEnd);
+  window.addEventListener('pointercancel',peopleDragEnd);
+  haptic('tap');
+  peAutoScroll();
+}
+function peopleDragMove(ev){
+  const c=peDrag; if(!c||ev.pointerId!==c.pid) return;
+  if(ev.cancelable) ev.preventDefault();     // 手指拖的时候页面别跟着滚
+  c.y=ev.clientY;
+  pePlace();
+}
+// 摆到手指底下，并按「越过邻居的中线就换位」重排 DOM。
+// 换位后这一条的布局位置会跳一格（往上换位＝布局位置上移一个邻居的高度），
+// 所以把基准 startY 反向挪同样的距离，抵消掉这一跳——
+// 视觉上它一直粘在手指上——人物三行高矮不一，这样才不用假设行高相等
+function pePlace(){
+  const c=peDrag; if(!c) return;
+  const put=()=>{ c.row.style.transform='translateY('+((c.y-c.startY)+(peScrollTop()-c.scroll0))+'px)'; };
+  put();
+  // 一次 move 可能跨过好几行（拖得快、或边缘自动滚着），一直换到位为止
+  for(let n=0;n<40;n++){
+    const r=c.row.getBoundingClientRect();
+    const prev=c.row.previousElementSibling;
+    if(prev){
+      const pr=prev.getBoundingClientRect();
+      if(r.top<pr.top+pr.height/2){ c.list.insertBefore(c.row,prev); c.startY-=pr.height; put(); continue; }
+    }
+    const next=c.row.nextElementSibling;
+    if(next){
+      const nr=next.getBoundingClientRect();
+      if(r.bottom>nr.top+nr.height/2){ c.list.insertBefore(next,c.row); c.startY+=nr.height; put(); continue; }
+    }
+    break;
+  }
+}
+// 拖到屏幕上下边缘就跟着滚，名单长了才够得着（底下 64 是底栏，别把行藏它后面）
+function peAutoScroll(){
+  const c=peDrag; if(!c) return;
+  const h=window.innerHeight, edge=90;
+  let dy=0;
+  if(c.y<edge) dy=-Math.ceil((edge-c.y)/6);
+  else if(c.y>h-edge-64) dy=Math.ceil((c.y-(h-edge-64))/6);
+  if(dy){
+    const el=peScroller();
+    if(el) el.scrollTop+=dy; else window.scrollBy(0,dy);
+    pePlace();
+  }
+  c.raf=requestAnimationFrame(peAutoScroll);
+}
+function peopleDragEnd(ev){
+  const c=peDrag; if(!c) return;
+  if(ev&&ev.pointerId!=null&&ev.pointerId!==c.pid) return;
+  cancelAnimationFrame(c.raf);
+  window.removeEventListener('pointermove',peopleDragMove,{passive:false});
+  window.removeEventListener('pointerup',peopleDragEnd);
+  window.removeEventListener('pointercancel',peopleDragEnd);
+  c.row.style.transform=''; c.row.classList.remove('dragging');
+  document.body.classList.remove('pe-dragging');
+  const order=[...c.list.children].map(el=>+el.dataset.i);
+  peDrag=null;
+  const it=data.find(d=>d.id===detailId);
+  if(!it) return;
+  const cur=normPeople(it.people);
+  if(order.length===cur.length&&order.some((v,i)=>v!==i)){
+    it.people=order.map(i=>cur[i]);
+    touchRec(it); persist(); render();
+  }
+  renderDetail();          // 重画一遍，data-i 归位
+}
+
+// sorting=排序态：整行不再是「点开编辑」的按钮，只有右边那颗拖柄能拖（见 peopleDragStart）。
+// data-i 记的是这个人在原数组里的下标，落手时按 DOM 顺序读回来就是新顺序
+function renderPeople(list,sorting){
+  return `<div class="dt-people${sorting?' sorting':''}">${list.map((p,i)=>
+    `<div class="dt-pitem" data-i="${i}"${sorting?'':` onclick="tapPerson(event,${i})"`}>
+      <div class="dt-pcol">
+        <div class="dt-pname">${nameHtml(p.name)}</div>
+        ${p.info?`<div class="dt-pdesc">${esc(p.info)}</div>`:''}
+        ${p.note?`<div class="dt-pnote">${esc(p.note)}</div>`:''}
+      </div>
+      ${sorting?`<button type="button" class="dt-phandle" aria-label="按住拖动排序"
+        onpointerdown="peopleDragStart(event)">${ICON_DRAG}</button>`:''}
     </div>`).join('')}</div>`;
 }
 
@@ -10947,14 +11087,20 @@ function renderDetail(){
       </div>
       <div class="dt-sec">
         ${(()=>{const ppl=normPeople(item.people);
+          // 排序态：只剩一个人就没什么可排的，自动退出（比如在排序态里删掉了人）
+          const sorting=dtSortPeople&&ppl.length>1;
           return `<div class="dt-seclbl-row">
             <div class="dt-seclbl">人物</div>
-            ${ppl.length?'<button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
+            ${ppl.length>1?(sorting
+              ? '<button type="button" class="dt-lnk" onclick="setSortPeople(false)">完成</button>'
+              : `<button type="button" class="dt-lnk dt-lnk-icon" aria-label="排序" title="排序"
+                  onclick="setSortPeople(true)">${ICON_SORT}</button>`):''}
+            ${ppl.length&&!sorting?'<button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
           </div>
           <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
-            ${ppl.length?renderPeople(ppl):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
+            ${ppl.length?renderPeople(ppl,sorting):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
           </div>
-          ${ppl.length?`<button type="button" class="dt-fab" aria-label="添加人物" title="添加人物"
+          ${ppl.length&&!sorting?`<button type="button" class="dt-fab" aria-label="添加人物" title="添加人物"
             onclick="tapPerson(event,-1)">${ICON_ADD_PERSON}</button>`:''}`;})()}
       </div>`:''}
 
@@ -10984,6 +11130,10 @@ function noteOriginOf(item){
 function bookNoteLbl(item){ return /书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文'; }
 // 时间线一栏：读书笔记正文（item.bookNote）解析出的章节。
 // 正文和章节都存在这条媒体记录上——读书笔记不再是「笔记」里的一条，见 migrateBookNotes。
+// 人物小节名那一行的「排序」：一个拖柄，没有文字（配 aria-label / title）。
+// 排序态里每行右边那颗拖柄用三道杠——那是通行画法；这颗两道，小一号、不抢戏
+const ICON_SORT=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>`;
+const ICON_DRAG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
 // 人物那栏右下角那颗的图标：一个人 + 一个加号。笔画比别处细半档（1.7 对 2）——
 // 这颗只有一个人形加一个加号，同样粗细下比「一页纸+笔」显得实、显得挤
 const ICON_ADD_PERSON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="7.6" r="3.6"/><path d="M3.6 19.4c0-3.2 2.6-5.9 5.9-5.9s5.9 2.7 5.9 5.9"/><path d="M19.4 5.6v6M16.4 8.6h6"/></svg>`;
