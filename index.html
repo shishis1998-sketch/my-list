@@ -941,7 +941,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   .dt-card{padding:var(--sp-14);}
   /* 右下角那颗：底栏 64 + 安全区之上再垫 sp-16（同步弹窗底部留白也是这个算法）。
      详情页的底栏不会随下滑收起（见 tabs-hidden 那段），位置是稳的。 */
-  .dt-lnk-tl{display:none;}
+  .dt-lnk-tl,.dt-lnk-add{display:none;}
   .dt-fab{display:grid;place-items:center;position:fixed;z-index:80;
     right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
     width:48px;height:48px;padding:0;border:0;border-radius:50%;
@@ -10949,11 +10949,13 @@ function renderDetail(){
         ${(()=>{const ppl=normPeople(item.people);
           return `<div class="dt-seclbl-row">
             <div class="dt-seclbl">人物</div>
-            ${ppl.length?'<button type="button" class="dt-lnk" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
+            ${ppl.length?'<button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
           </div>
           <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
             ${ppl.length?renderPeople(ppl):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
-          </div>`;})()}
+          </div>
+          ${ppl.length?`<button type="button" class="dt-fab" aria-label="添加人物" title="添加人物"
+            onclick="tapPerson(event,-1)">${ICON_ADD_PERSON}</button>`:''}`;})()}
       </div>`:''}
 
     ${dtTab==='tl'?renderDetailTL(item):''}
@@ -10982,6 +10984,9 @@ function noteOriginOf(item){
 function bookNoteLbl(item){ return /书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文'; }
 // 时间线一栏：读书笔记正文（item.bookNote）解析出的章节。
 // 正文和章节都存在这条媒体记录上——读书笔记不再是「笔记」里的一条，见 migrateBookNotes。
+// 人物那栏右下角那颗的图标：一个人 + 一个加号。笔画比别处细半档（1.7 对 2）——
+// 这颗只有一个人形加一个加号，同样粗细下比「一页纸+笔」显得实、显得挤
+const ICON_ADD_PERSON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="7.6" r="3.6"/><path d="M3.6 19.4c0-3.2 2.6-5.9 5.9-5.9s5.9 2.7 5.9 5.9"/><path d="M19.4 5.6v6M16.4 8.6h6"/></svg>`;
 // 右下角那颗按钮的图标：一页纸 + 一支笔，「改这一整篇正文」。
 // 画法跟全站其它图标同一套（24 视框、描边 2、圆头收尾）
 const ICON_EDIT_DOC=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H6a2 2 0 00-2 2v14a2 2 0 002 2h6"/><path d="M8 8h6M8 12h4"/><path d="M18.4 12.6a1.9 1.9 0 012.7 2.7L16.5 20l-3.2.7.7-3.2 4.4-4.9z"/></svg>`;
