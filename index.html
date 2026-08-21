@@ -928,11 +928,17 @@ body.detail-open .content{display:none!important;}
   .dt-lnk-tl{display:none;}
   .dt-fab{display:grid;place-items:center;position:fixed;z-index:80;
     right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
-    width:52px;height:52px;padding:0;border:0;border-radius:50%;
-    color:var(--on-accent);background:var(--accent);box-shadow:var(--shadowlg);
+    width:46px;height:46px;padding:0;border:0;border-radius:50%;
+    color:var(--on-accent);background:var(--accent);
+    /* 全站是纯平面（--shadow/--shadowlg 都是 none，见 design.md「圆角系统」那节），
+       这颗是唯一的例外：它真的浮在会滚动的内容上面，压过章节卡的时候没有这道影
+       就分不出前后，像直接印在卡上。所以只给它一道，不动全局那两个 token。
+       深色模式底色本来就暗，黑影几乎看不见，加重一档才有同样的浮起感。 */
+    box-shadow:0 4px 12px rgba(0,0,0,.14);
     cursor:pointer;transition:transform .12s;}
+  :root[data-mode="dark"] .dt-fab{box-shadow:0 6px 16px rgba(0,0,0,.55);}
   .dt-fab:active{transform:scale(.92);}
-  .dt-fab svg{width:22px;height:22px;}
+  .dt-fab svg{width:20px;height:20px;}
   .dt-hd{padding:var(--sp-16) var(--sp-14);}
 
   /* 弹窗 - 手机端全屏 */
