@@ -928,17 +928,19 @@ body.detail-open .content{display:none!important;}
   .dt-lnk-tl{display:none;}
   .dt-fab{display:grid;place-items:center;position:fixed;z-index:80;
     right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
-    width:46px;height:46px;padding:0;border:0;border-radius:50%;
-    color:var(--on-accent);background:var(--accent);
-    /* 全站是纯平面（--shadow/--shadowlg 都是 none，见 design.md「圆角系统」那节），
-       这颗是唯一的例外：它真的浮在会滚动的内容上面，压过章节卡的时候没有这道影
-       就分不出前后，像直接印在卡上。所以只给它一道，不动全局那两个 token。
-       深色模式底色本来就暗，黑影几乎看不见，加重一档才有同样的浮起感。 */
-    box-shadow:0 4px 12px rgba(0,0,0,.14);
-    cursor:pointer;transition:transform .12s;}
-  :root[data-mode="dark"] .dt-fab{box-shadow:0 6px 16px rgba(0,0,0,.55);}
+    width:48px;height:48px;padding:0;border:0;border-radius:50%;
+    /* 全站纯平面，这颗也不破例（--shadow/--shadowlg 见 design.md）。它浮在会滚动的
+       内容上面，要跟底下的东西分出前后，就靠颜色再深一档：--accent-dark 比正文里
+       那些主题色元素（部名、状态字）都重，一眼是「另一层」。深色模式那档是提亮的，
+       方向相反、道理一样——都是朝离底色更远的方向再走一步。 */
+    color:var(--on-accent);background:var(--accent-dark);
+    cursor:pointer;transition:transform .16s ease,opacity .16s ease;}
   .dt-fab:active{transform:scale(.92);}
   .dt-fab svg{width:20px;height:20px;}
+  /* 往下读就让开，往回滑再回来（方向判定见 syncDetailFab）。
+     落下去而不是原地淡出：手指是往下推的，按钮顺着推走才跟手 */
+  body.fab-hidden .dt-fab{opacity:0;pointer-events:none;
+    transform:translateY(calc(100% + var(--sp-16)));}
   .dt-hd{padding:var(--sp-16) var(--sp-14);}
 
   /* 弹窗 - 手机端全屏 */
@@ -10766,6 +10768,7 @@ function closeDetail(){
   if(detailPushed){ detailPushed=false; try{history.back();}catch(e){} }
 }
 function hideDetail(){
+  document.body.classList.remove('fab-hidden');
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
@@ -10870,6 +10873,7 @@ function daysBetween(a,b){
   return n>=0?n:null;
 }
 
+let dtRenderAt=0;      // 详情页最近一次重画的时刻，见 syncDetailFab
 function renderDetail(){
   const item=data.find(d=>d.id===detailId);
   const box=document.getElementById('dtBody');
@@ -10937,6 +10941,11 @@ function renderDetail(){
     ${dtTab==='tl'?renderDetailTL(item):''}
 
     ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
+  // 重画一次就把圆钮放出来：换栏目、改完正文回来，都不该看见一颗还收着的按钮。
+  // 记下时刻给 syncDetailFab 用：换栏目那一下页面高度会突变，浏览器跟着挪一次
+  // 滚动位置，那一下不是用户在滑，不能算成一次「下滑」（否则刚切回来按钮又没了）
+  document.body.classList.remove('fab-hidden');
+  dtRenderAt = Date.now();
 }
 
 // 搬进这条记录的读书笔记，自己最早是什么时候建的。
@@ -14855,7 +14864,8 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   function apply(){
     ticking = false;
     if(!isMobileLayout()){
-      document.body.classList.remove('tabs-hidden'); return;
+      document.body.classList.remove('tabs-hidden');
+      document.body.classList.remove('fab-hidden'); return;
     }
     // 日历/详情/设置页的底栏是唯一的导航入口，必须常驻。这三页原本是靠
     // 「body.xx-open .bb-tabs{max-height:64px}」把 tab 撑回来的，可 tabs-hidden
@@ -14865,6 +14875,7 @@ document.addEventListener('touchstart', function(){}, {passive:true});
        document.body.classList.contains('detail-open') ||
        document.body.classList.contains('sb-open')){
       document.body.classList.remove('tabs-hidden');
+      syncDetailFab(window.scrollY || 0, lastY);
       lastY = window.scrollY || 0;   // 基准跟着走，回列表页第一次滑不会被算成「下滑」
       return;
     }
@@ -14882,6 +14893,20 @@ document.addEventListener('touchstart', function(){}, {passive:true});
     else if(dy > THRESH){ document.body.classList.add('tabs-hidden'); }
     else if(dy < -THRESH){ document.body.classList.remove('tabs-hidden'); }
     lastY = y;
+  }
+  // 详情页时间线右下角那颗「编辑全文」：往下读就让开，往回滑再回来。
+  // 底栏在这页是常驻的（见上面那段），所以它不能跟着 tabs-hidden 走，自己判方向。
+  // 阈值和判法与收底栏那套一致：顶上一律显示，超过 THRESH 才算一次方向。
+  function syncDetailFab(y, prevY){
+    if(!document.body.classList.contains('detail-open')){
+      document.body.classList.remove('fab-hidden'); return;
+    }
+    // 刚重画完那几百毫秒里的位移是页面自己在挪（换栏目高度突变），不是用户在滑
+    if(Date.now() - dtRenderAt < 300) return;
+    const dy = y - prevY;
+    if(y < 40) document.body.classList.remove('fab-hidden');
+    else if(dy > THRESH) document.body.classList.add('fab-hidden');
+    else if(dy < -THRESH) document.body.classList.remove('fab-hidden');
   }
   window.addEventListener('scroll', function(){
     if(ticking) return;
