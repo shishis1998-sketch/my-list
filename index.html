@@ -929,11 +929,13 @@ body.detail-open .content{display:none!important;}
   .dt-fab{display:grid;place-items:center;position:fixed;z-index:80;
     right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
     width:48px;height:48px;padding:0;border:0;border-radius:50%;
-    /* 全站纯平面，这颗也不破例（--shadow/--shadowlg 见 design.md）。它浮在会滚动的
-       内容上面，要跟底下的东西分出前后，就靠颜色再深一档：--accent-dark 比正文里
-       那些主题色元素（部名、状态字）都重，一眼是「另一层」。深色模式那档是提亮的，
-       方向相反、道理一样——都是朝离底色更远的方向再走一步。 */
-    color:var(--on-accent);background:var(--accent-dark);
+    /* 全站纯平面，这颗也不破例（--shadow/--shadowlg 见 design.md）：不投影，
+       立体感全靠颜色自己叠——主题色打底，上面盖一层「左上提亮、右下压暗」的渐变，
+       光从左上来，圆面就鼓起来了。叠的是相对明暗（白/黑的低透明度）而不是
+       --accent-mid / --accent-dark 那两档：那两个 token 在深色模式下几乎同色，
+       用它们做渐变，一到夜间就摊平了；相对明暗在十套主题、两个模式下一样成立。 */
+    color:var(--on-accent);
+    background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--accent);
     cursor:pointer;transition:transform .16s ease,opacity .16s ease;}
   .dt-fab:active{transform:scale(.92);}
   .dt-fab svg{width:20px;height:20px;}
