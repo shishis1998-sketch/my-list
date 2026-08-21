@@ -731,8 +731,13 @@ body.detail-open .content{display:none!important;}
    .scrolling 由页脚那段脚本挂在 <html> 上，见「滚动条：滑起来才显形」。 */
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:transparent;border-radius:99px;
+/* min-height：正文一长，滑块就缩成一个小疙瘩，看不清也不好拖，给个下限 */
+::-webkit-scrollbar-thumb{background:transparent;border-radius:99px;min-height:44px;
   border:2px solid transparent;background-clip:content-box;}
+/* 整页那条不出现。页面滚到哪，内容自己看得出来；而右边缘那条是通到窗口顶底的，
+   抽屉开着时底下那页几乎不能滚，滑块就撑满整条——一道贯穿全屏的深色长条，
+   比它指示的那点信息抢眼得多。容器内部的滚动条照旧，那里才真需要它 */
+html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
 html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background-clip:content-box;}
 /* 不写 scrollbar-color / scrollbar-width：这两个标准属性一旦出现，Chrome 就整个
    忽略上面那套 ::-webkit-scrollbar（标准的优先），槽宽和圆角都白写。
