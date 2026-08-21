@@ -1998,6 +1998,24 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .notesheet-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
 /* 正文那一栏：整本书的笔记都在这个框里，比备注给得更高（抽屉自己封顶 88vh） */
 .notesheet-ta.tall{min-height:56vh;}
+/* 正文编辑框的滚动条单独做一根宽把手：整本书的笔记都在这个框里，滑到某一章基本
+   靠拖这条，手机上（安卓尤其）几像素宽的细条捏不住。24 的槽 + 18 的胶囊，
+   中间两道小横线，一眼是「这根能捏」。
+   两点和全站那条不一样，都是有意的：
+   ① 不跟着 html.scrolling 收起——要拖的东西必须一直在，收起来就没得抓；
+   ② 选择器带上 html.scrolling 那份，否则滚动时会被全站那条规则压回细灰条
+      （html.scrolling ::-webkit-scrollbar-thumb 的权重比单个类高）。 */
+.notesheet-ta::-webkit-scrollbar{width:24px;}
+.notesheet-ta::-webkit-scrollbar-track{background:transparent;}
+.notesheet-ta::-webkit-scrollbar-thumb,
+html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
+  background-color:var(--surface-2);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='9'><path d='M1.6 2h8.8M1.6 7h8.8' stroke='%239B9B9B' stroke-width='1.7' stroke-linecap='round'/></svg>");
+  background-position:center;background-repeat:no-repeat;background-clip:content-box;
+  border:3px solid transparent;border-radius:999px;min-height:72px;}
+:root[data-mode="dark"] .notesheet-ta::-webkit-scrollbar-thumb,
+:root[data-mode="dark"].scrolling .notesheet-ta::-webkit-scrollbar-thumb{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='9'><path d='M1.6 2h8.8M1.6 7h8.8' stroke='%2377777E' stroke-width='1.7' stroke-linecap='round'/></svg>");}
 /* 格式按钮钉在正文框上沿：框有 56vh 高，按钮要是摆在框下面，写到一半就滑出屏幕了 */
 .ns-fmt{position:sticky;top:0;z-index:1;background:var(--surface);
   margin:0 0 var(--sp-8);padding-bottom:var(--sp-6);}
