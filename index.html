@@ -529,6 +529,12 @@ body.detail-open .content{display:none!important;}
   background:none;border:0;padding:var(--sp-2) var(--sp-4);line-height:var(--lh-tight);
   cursor:pointer;transition:opacity .15s;}
 .dt-lnk:active{opacity:.5;}
+/* 「编辑全文」在手机上换一种挂法：章节一多，标题行上那颗跟着卡顶滑出屏幕，
+   想改一行章名得先滑回顶上。手机端改成右下角一颗常驻的圆按钮，落在拇指弧线里，
+   滑到第几章都够得着；电脑端有鼠标、又没有底栏，仍旧用标题行上那颗小字按钮
+   （一颗圆钮浮在宽屏右下角，离居中那栏正文半个屏幕远，反而更难够）。
+   两颗是同一个动作，任何一屏上只出现其中一颗。 */
+.dt-fab{display:none;}
 /* 人物：分行式。名字独占一行，信息、备注依次往下缩字号、退一档颜色，
    人与人之间一道发丝线。三行都是整屏宽，谁也不用为了对齐去折行——
    两列对齐（比稿方案 C）正是折在这一点上 */
@@ -917,6 +923,16 @@ body.detail-open .content{display:none!important;}
   /* 详情页没有顶栏，刘海那圈由第一张卡上面的留白让开 */
   .dt-body{--dt-padx:var(--sp-14);--dt-padt:calc(var(--sp-12) + env(safe-area-inset-top));}
   .dt-card{padding:var(--sp-14);}
+  /* 右下角那颗：底栏 64 + 安全区之上再垫 sp-16（同步弹窗底部留白也是这个算法）。
+     详情页的底栏不会随下滑收起（见 tabs-hidden 那段），位置是稳的。 */
+  .dt-lnk-tl{display:none;}
+  .dt-fab{display:grid;place-items:center;position:fixed;z-index:80;
+    right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
+    width:52px;height:52px;padding:0;border:0;border-radius:50%;
+    color:var(--on-accent);background:var(--accent);box-shadow:var(--shadowlg);
+    cursor:pointer;transition:transform .12s;}
+  .dt-fab:active{transform:scale(.92);}
+  .dt-fab svg{width:22px;height:22px;}
   .dt-hd{padding:var(--sp-16) var(--sp-14);}
 
   /* 弹窗 - 手机端全屏 */
@@ -10930,6 +10946,10 @@ function noteOriginOf(item){
 function bookNoteLbl(item){ return /书/.test(getCat(item.type).name||'')?'读书笔记':'笔记正文'; }
 // 时间线一栏：读书笔记正文（item.bookNote）解析出的章节。
 // 正文和章节都存在这条媒体记录上——读书笔记不再是「笔记」里的一条，见 migrateBookNotes。
+// 右下角那颗按钮的图标：一页纸 + 一支笔，「改这一整篇正文」。
+// 画法跟全站其它图标同一套（24 视框、描边 2、圆头收尾）
+const ICON_EDIT_DOC=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H6a2 2 0 00-2 2v14a2 2 0 002 2h6"/><path d="M8 8h6M8 12h4"/><path d="M18.4 12.6a1.9 1.9 0 012.7 2.7L16.5 20l-3.2.7.7-3.2 4.4-4.9z"/></svg>`;
+
 function renderDetailTL(item){
   const body=(item.bookNote||'').trim();
   const lbl=bookNoteLbl(item);
@@ -10960,14 +10980,16 @@ function renderDetailTL(item){
   return `<div class="dt-card" style="cursor:default">
     <div class="dt-lbl-row">
       <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
-      <button type="button" class="dt-lnk" onclick="tapNoteCard(event,'booknote')">编辑全文</button>
+      <button type="button" class="dt-lnk dt-lnk-tl" onclick="tapNoteCard(event,'booknote')">编辑全文</button>
     </div>
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openDetailChapter(${x.i})">
         <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`).join('')}</div>`).join('')}
     ${since}
-  </div>`;
+  </div>
+  <button type="button" class="dt-fab" aria-label="编辑全文" title="编辑全文"
+    onclick="tapNoteCard(event,'booknote')">${ICON_EDIT_DOC}</button>`;
 }
 
 // 点章节 → 复用笔记那套章节抽屉，只是宿主换成这条媒体记录（见 tlHostMedia）
