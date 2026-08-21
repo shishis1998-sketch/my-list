@@ -2007,13 +2007,16 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
       （html.scrolling ::-webkit-scrollbar-thumb 的权重比单个类高）。 */
 .notesheet-ta::-webkit-scrollbar{width:24px;}
 .notesheet-ta::-webkit-scrollbar-track{background:transparent;}
-.notesheet-ta::-webkit-scrollbar-thumb,
+/* 静止时整根透明（槽宽一直占着，出现/消失不会挤动文字），滑起来才显形。
+   这根比别处停留久一点（见 --sb-hold / 那段脚本）：它是拿来「捏住拖」的，
+   刚显形就收走就白显了 */
+.notesheet-ta::-webkit-scrollbar-thumb{
+  background-color:transparent;background-image:none;background-clip:content-box;
+  border:3px solid transparent;border-radius:999px;min-height:72px;}
 html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   background-color:var(--surface-2);
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='9'><path d='M1.6 2h8.8M1.6 7h8.8' stroke='%239B9B9B' stroke-width='1.7' stroke-linecap='round'/></svg>");
-  background-position:center;background-repeat:no-repeat;background-clip:content-box;
-  border:3px solid transparent;border-radius:999px;min-height:72px;}
-:root[data-mode="dark"] .notesheet-ta::-webkit-scrollbar-thumb,
+  background-position:center;background-repeat:no-repeat;background-clip:content-box;}
 :root[data-mode="dark"].scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='9'><path d='M1.6 2h8.8M1.6 7h8.8' stroke='%2377777E' stroke-width='1.7' stroke-linecap='round'/></svg>");}
 /* 格式按钮钉在正文框上沿：框有 56vh 高，按钮要是摆在框下面，写到一半就滑出屏幕了 */
@@ -15060,10 +15063,14 @@ document.addEventListener('touchstart', function(){}, {passive:true});
 (function(){
   const R=document.documentElement;
   let t=null;
-  document.addEventListener('scroll',function(){
+  document.addEventListener('scroll',function(ev){
     R.classList.add('scrolling');
     clearTimeout(t);
-    t=setTimeout(function(){ R.classList.remove('scrolling'); },700);
+    // 正文编辑框那根是「捏住拖」用的宽把手，收得太快会刚显形就没影；
+    // 别处只是个位置指示，700 够了
+    const el=ev.target;
+    const hold=(el&&el.classList&&el.classList.contains('notesheet-ta'))?2200:700;
+    t=setTimeout(function(){ R.classList.remove('scrolling'); },hold);
   },{capture:true,passive:true});
 })();
 
