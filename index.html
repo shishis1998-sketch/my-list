@@ -10825,19 +10825,27 @@ function openDetail(id){
 // 否则用户之后按返回会先「退回一条已经关掉的详情」，白按一次。
 function closeDetail(){
   if(!detailId) return;
+  let back=0;
+  if(tlSheetPushed){ tlSheetPushed=false; back++; }   // 章节弹窗压的那条（hideDetail 会收掉弹窗本身）
   hideDetail();
-  if(detailPushed){ detailPushed=false; try{history.back();}catch(e){} }
+  if(detailPushed){ detailPushed=false; back++; }
+  if(back) try{history.go(-back);}catch(e){}
 }
 function hideDetail(){
   document.body.classList.remove('fab-hidden');
   dtSortPeople=false;
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
+  // 章节弹窗还开着就一并收掉（同样先落盘）。它那条历史由调用方处理：
+  // closeDetail 连着一起退，走系统返回时已经被这一下吃掉了
+  if(tlSheetIdx!=null){ tlSheetPushed=false; closeChapterSheet(); }
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
   document.body.classList.remove('detail-open');
 }
 // 系统返回手势 / 后退键：这时历史已经退过了，只收界面，别再 back 一次
 window.addEventListener('popstate',()=>{
+  // 章节弹窗开着：这一下退的是它自己压的那条，只收弹窗，底下那页留着
+  if(tlSheetIdx!=null){ tlSheetPushed=false; closeChapterSheet(); return; }
   // 备注抽屉开着：这一下返回只收抽屉（内容照存），详情页留着——
   // 抽屉开的时候用户想退的是抽屉。详情那条历史刚被这一下吃掉，补压回去。
   if(noteSheetId!=null){
@@ -13901,7 +13909,8 @@ function closeTimeline(){
 }
 
 // ── 章节底部弹窗：点章节打开，内容直接可编辑，关闭即保存 ──────────
-let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetSegs=[], tlSheetOrigRaw='', tlSheetEdit=-1, tlSheetDragInit=false;
+let tlSheetIdx=null, tlSheetLead='', tlSheetHeading='', tlSheetSegs=[], tlSheetOrigRaw='', tlSheetEdit=-1, tlSheetDragInit=false,
+    tlSheetPushed=false;   // 打开时往历史里压了一条（见 openChapterSheet）
 // 把「标题行之后的原文」拆成段：每段带 gap（本段前保留的换行/空行），使编辑保存能原样留住段间空行
 // gap 语义：首段 = 标题后额外的空行；其余段 = 1 个基础换行 + 段间空行。编号段沿用重新编号后的「N. 」前缀
 function parseChapterSegs(rest){
@@ -13963,6 +13972,9 @@ function openChapterSheet(idx){
   document.getElementById('tlSheetMask').classList.add('show');
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initTlSheetDrag();
+  // 往历史里压一条，安卓返回手势 / 后退键这一下才落在弹窗上：不压的话，在详情页里
+  // 这一下会被详情那条吃掉——详情页退回列表了，章节弹窗还盖在上面（见 popstate）
+  if(!tlSheetPushed){ try{history.pushState({tl:1},'');}catch(e){} tlSheetPushed=true; }
 }
 
 // 渲染分段卡片；tlSheetEdit 段渲染为输入框
@@ -14034,6 +14046,10 @@ function closeChapterSheet(){
   document.getElementById('tlSheetMask').classList.remove('show');
   document.getElementById('tlSheet').classList.remove('show');
   tlSheetIdx=null; tlSheetEdit=-1;
+  // 页面内主动关闭（下拉、点遮罩、退出时间线……）：退掉打开时压的那条，
+  // 否则用户之后按返回会先白按一次「退回一个已经关掉的弹窗」。
+  // 走系统返回关闭时历史已经退过了，调用方会先把这个标记清掉（见 popstate / hideDetail）
+  if(tlSheetPushed){ tlSheetPushed=false; try{history.back();}catch(e){} }
 }
 
 // 点遮罩：遮罩是铺满全屏的，章节列表整片压在它下面。抽屉只占屏幕下半截，
