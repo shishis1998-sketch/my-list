@@ -7289,8 +7289,9 @@ window.PV = (function(){
       }, 50);
     }
 
+    // 不带事件调用（系统返回）也能关；点在面板里面的那些点击照旧不关
     function closeYearPicker(e) {
-      if (e.target === document.getElementById('yearPickerOverlay'))
+      if (!e || e.target === document.getElementById('yearPickerOverlay'))
         document.getElementById('yearPickerOverlay').classList.remove('show');
     }
 
@@ -10800,11 +10801,79 @@ function render(){
   document.getElementById('vcnt').textContent=L.length+' 条记录';
 }
 
+// ── 系统返回：一条历史管住所有浮层 ────────────────────────────────
+// 安卓返回手势 / 后退键、iOS 左缘右滑、浏览器后退，落到网页上都是同一件事：退一条
+// 历史。不压历史的话这一下直接退出整个网页——弹窗开着也照退；只给一两个浮层单独
+// 压，返回又会落到别人身上（详情页里关章节弹窗，退掉的是详情页）。
+//
+// 这里用「一条哨兵」：只要还有浮层开着，历史里就多一条我们压的。返回时收掉最上面
+// 那层，底下还有就把这条补回去；全程只多一条，不用按层数对账。
+//
+// 谁开着由 DOM 上的类名说了算（下面这张表 + MutationObserver）：点 ✕、点遮罩、
+// 下拉收起、别处代码顺手 classList.remove 关掉的，全都算数，不必在每个关闭函数
+// 里各写一遍。新加浮层时在表里补一行就行。
+// 底部四个 tab 那几页（列表 / 日历 / 设置侧栏）不在表里：它们是页不是浮层，
+// 在首页按返回就该退出网页，跟原生 App 一样。
+const BACK_LAYERS=[
+  {id:'detailRoot',         cls:'open', close:()=>closeDetail()},
+  {id:'modal',              cls:'open', close:()=>closeModal()},
+  {id:'noteSheet',          cls:'show', close:()=>closeNoteSheet()},
+  {id:'tlSheet',            cls:'show', close:()=>closeChapterSheet()},
+  {id:'bbSortSheet',        cls:'open', close:()=>closeSortSheet()},
+  {id:'bbTagSheet',         cls:'open', close:()=>closeTagSheet()},
+  {id:'cfdlg',              cls:'open', close:()=>closeCf()},
+  {id:'trashModal',         cls:'open', close:()=>closeTrash()},
+  {id:'tagMgrModal',        cls:'open', close:()=>closeTagMgr()},
+  {id:'catmodal',           cls:'open', close:()=>closeCatMgr()},
+  {id:'emojiPanel',         cls:'open', close:()=>closeEmojiPanel()},
+  {id:'syncModal',          cls:'open', close:()=>closeSyncCfg()},
+  {id:'qrModal',            cls:'open', close:()=>closeSyncQR()},
+  {id:'scanModal',          cls:'open', close:()=>closeSyncScan()},
+  {id:'icsColorModal',      cls:'open', close:()=>closeIcsColor()},
+  {id:'icsDelModal',        cls:'open', close:()=>closeIcsDel()},
+  {id:'noteModal',          cls:'open', close:()=>closeNoteModal()},
+  {id:'nsubModal',          cls:'open', close:()=>closeNoteSubMgr()},
+  {id:'tlModal',            cls:'open', close:()=>closeTimeline()},
+  {id:'tlEditModal',        cls:'open', close:()=>closeTlEdit()},
+  {id:'mfSheet',            cls:'show', close:()=>closeMemoSheet(false)},   // 同点遮罩：按取消
+  {id:'calNotePreviewModal',cls:'open', close:()=>closeCalNotePreview()},
+  {id:'calFilterPop',       cls:'open', close:()=>closeCalFilter()},
+  {id:'yearPickerOverlay',  cls:'show', close:()=>PV.closeYearPicker()},
+  {id:'pvSheet',            cls:'open', close:()=>PV.closeDaySheet()},
+  {id:'pvCardsSheet',       cls:'open', close:()=>PV.closeCardsSheet()}
+];
+const backOpen=[];       // 当前开着的浮层，后开的在上面
+let backArmed=false;     // 历史里有没有我们压的那一条
+function backSync(){
+  if(backOpen.length&&!backArmed){ try{history.pushState({ov:1},''); backArmed=true;}catch(e){} }
+  else if(!backOpen.length&&backArmed){ backArmed=false; try{history.back();}catch(e){} }
+}
+BACK_LAYERS.forEach(L=>{
+  const el=document.getElementById(L.id); if(!el) return;
+  new MutationObserver(()=>{
+    const on=el.classList.contains(L.cls), i=backOpen.indexOf(L);
+    if(on&&i<0) backOpen.push(L);
+    else if(!on&&i>=0) backOpen.splice(i,1);
+    else return;                       // 类名动了但开关没变（换主题色之类），不关我们的事
+    backSync();
+  }).observe(el,{attributes:true,attributeFilter:['class']});
+});
+window.addEventListener('popstate',()=>{
+  if(!backArmed) return;               // 这条不是我们压的：没浮层开着，照常后退（退出网页）
+  backArmed=false;                     // 我们那条刚被这一下吃掉
+  const L=backOpen[backOpen.length-1];
+  if(L) try{L.close();}catch(e){}      // 只收最上面那层；摘层和补压交给观察器
+  // 兜底：万一那层没真关上（关闭函数里有前置判断早退了），把哨兵补回来，
+  // 否则用户下一次返回就直接退出网页了。观察器的回调排在这个微任务前面，
+  // 真关上的话这里看到的已经是收拾干净的状态。
+  Promise.resolve().then(()=>{ if(backOpen.length&&!backArmed) backSync(); });
+});
+
 // ── 详情页 ────────────────────────────────────────────────────────
 // 与 .content 平级的同级视图（同日历页），不是浮层：打开时列表整块不渲染。
-// 页面上没有返回按钮——打开时往历史里压一条，退出交给系统返回手势（安卓边缘滑动 /
-// iOS 左缘右滑 / 浏览器后退键）。不压这条的话，在详情页做返回手势会直接退出整个网页。
-let detailId=null, detailPushed=false;
+// 页面上没有返回按钮——退出交给系统返回手势（安卓边缘滑动 / iOS 左缘右滑 /
+// 浏览器后退键），历史那条由上面的浮层返回栈统一压（BACK_LAYERS 里的 detailRoot）。
+let detailId=null;
 // 详情页的三栏视图。概览＝时间 + 标签；备注＝这条记录的备注；时间线＝读书笔记的章节
 const DT_TABS=[{id:'info',lbl:'概览'},{id:'note',lbl:'备注'},{id:'tl',lbl:'时间线'}];
 let dtTab='info';
@@ -10819,35 +10888,22 @@ function openDetail(id){
   document.body.classList.add('detail-open');
   document.getElementById('detailRoot').classList.add('open');
   window.scrollTo(0,0);
-  if(!detailPushed){ try{history.pushState({dt:1},'');}catch(e){} detailPushed=true; }
 }
-// 页面内主动关闭（点分类、进日历……）：把压进去的那条历史一并退掉，
+// 页面内主动关闭（点分类、进日历……）：压进去的那条历史由返回栈跟着退掉，
 // 否则用户之后按返回会先「退回一条已经关掉的详情」，白按一次。
 function closeDetail(){
   if(!detailId) return;
   hideDetail();
-  if(detailPushed){ detailPushed=false; try{history.back();}catch(e){} }
 }
 function hideDetail(){
   document.body.classList.remove('fab-hidden');
   dtSortPeople=false;
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
+  if(tlSheetIdx!=null) closeChapterSheet();  // 章节弹窗还开着就一并收掉（同样先落盘）
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
   document.body.classList.remove('detail-open');
 }
-// 系统返回手势 / 后退键：这时历史已经退过了，只收界面，别再 back 一次
-window.addEventListener('popstate',()=>{
-  // 备注抽屉开着：这一下返回只收抽屉（内容照存），详情页留着——
-  // 抽屉开的时候用户想退的是抽屉。详情那条历史刚被这一下吃掉，补压回去。
-  if(noteSheetId!=null){
-    closeNoteSheet();
-    if(detailId&&detailPushed){ try{history.pushState({dt:1},'');}catch(e){} }
-    return;
-  }
-  if(detailId){ detailPushed=false; hideDetail(); }
-});
-
 // 点详情页任意一处 → 从底部升起编辑面板，并聚焦点中的那一项。
 // 正在选文字时不触发：备注是最常想复制的一段，长按选中之后的收尾点击不该弹出编辑。
 function editFromDetail(ev){
@@ -12214,6 +12270,12 @@ function closeEmojiOnOutside(e){
     panel.classList.remove('open');
     document.removeEventListener('click',closeEmojiOnOutside);
   }
+}
+// 关掉表情面板（点别处、选中、系统返回都走这里）
+function closeEmojiPanel(){
+  const panel=document.getElementById('emojiPanel');
+  if(panel) panel.classList.remove('open');
+  document.removeEventListener('click',closeEmojiOnOutside);
 }
 function pickEmoji(idx,emoji){
   editCats[idx].emoji=emoji;
