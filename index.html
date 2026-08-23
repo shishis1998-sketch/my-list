@@ -2799,10 +2799,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .ms-bar i {height: 6px; flex: 1; border-radius: 3px;}
 #calViewPeriod .ms-note {margin-top: 6px; font-size: var(--fs-footnote);
       color: var(--faint); line-height: 1.6;}
-#calViewPeriod .ms-secs {margin-top: 6px; border-top: 1px solid var(--line);}
-#calViewPeriod .ms-sec {padding: 10px 0 2px;}
-#calViewPeriod .ms-sec + .ms-sec {border-top: 1px dashed var(--line);}
-#calViewPeriod .ms-lab {display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px;}
+/* 段与段之间不画线，靠间距分组：每段本来就是「一行小标题 + 一排胶囊」的
+   紧凑块，段间距拉到明显大于段内(标题到胶囊 7px)，分组关系自己就读出来了，
+   再加分隔线只是多一层噪音。头部到分段之间那条实线保留——那是两种信息的
+   交界(经期摘要 vs 阶段明细)，不是同类项之间的分隔。 */
+#calViewPeriod .ms-secs {margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);}
+#calViewPeriod .ms-sec + .ms-sec {margin-top: 18px;}
+#calViewPeriod .ms-lab {display: flex; align-items: baseline; gap: 6px; margin-bottom: 7px;}
 #calViewPeriod .ms-lab b {font-size: var(--fs-caption); color: var(--ink-2); font-weight: 700;}
 #calViewPeriod .ms-lab i {font-style: normal; font-size: var(--fs-footnote); color: var(--faint);}
 #calViewPeriod .ms-chips {display: flex; flex-wrap: wrap; gap: 6px;}
