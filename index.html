@@ -2817,8 +2817,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       white-space: nowrap;}
 #calViewPeriod .ms-chip.ovu {background: var(--ovu-soft); color: var(--ovu-on-soft);}
 #calViewPeriod .ms-chip.grey {background: var(--line-soft); color: var(--body);}
-/* 次数压一档：标签名是主角，「×3」是附注，不该抢 */
-#calViewPeriod .ms-chip em {font-style: normal; opacity: .65; font-size: 10px; margin-left: 2px;}
+/* 次数压一档：标签名是主角，次数是附注，不该抢。不写「×3」——放大看像
+   乘法算式，「蚊子包×1」读起来也别扭；空一格跟在名字后面就够清楚了。
+   tabular-nums 让两位数对齐，一排标签的数字不会看着高低不齐。 */
+#calViewPeriod .ms-chip em {font-style: normal; opacity: .6; font-size: 11px;
+      margin-left: 5px; font-variant-numeric: tabular-nums;}
 #calViewPeriod .ms-none {font-size: var(--fs-footnote); color: var(--faint);}
 /* 「查看时间线」：整张卡里唯一可点的元素，样式压到最低——它是入口不是内容 */
 #calViewPeriod .ms-fold {display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -8619,19 +8622,19 @@ window.PV = (function(){
 
     // ── 「本月状态记录」：文字总结 + 可折叠的症状时间线 ──────────────
     // 原先只有一张横向时间线：看得出「哪天记了什么」，却看不出「这些症状跟
-    // 这次经期什么关系」。现在默认给一段按周期阶段分的文字总结——来之前 /
-    // 经期中 / 结束后 / 排卵期 / 黄体期，每段列出该阶段记过的症状和天数；
+    // 这次经期什么关系」。现在默认给一段按周期阶段分的文字总结——经期前 /
+    // 经期中 / 经期后 / 排卵期 / 黄体期，每段列出该阶段记过的症状和天数；
     // 原来那张时间线收进底部的「查看时间线」，想看逐日分布照样点得开。
-    const PMS_DAYS = 5;      // 「来之前」窗口：经期开始前几天算经前
+    const PMS_DAYS = 5;      // 「经期前」窗口：经期开始前几天算经前
     let symTlOpen = false;   // 时间线展开态，跨 render 保留(整轮 render 会重建这张卡)
 
     // 阶段配色：跟日历上的标记同一套语义——经期相关的粉红、排卵期蓝、
     // 黄体期和无经期可依的日子保持灰。同一个标签名在状态卡里也是这个规则。
     const PHASE_CHIP = { '排卵期': ' ovu', '黄体期': ' grey', '其余日子': ' grey' };
 
-    // 给某一天定阶段。优先级：经期中 > 来之前 > 排卵期 > 黄体期/结束后。
-    // 「来之前」压在排卵期之上是有意的：经前窗口和黄体期尾巴本来就重叠，
-    // 而这张卡要回答的正是「来之前有什么症状」，那几天必须归经前。
+    // 给某一天定阶段。优先级：经期中 > 经期前 > 排卵期 > 黄体期/经期后。
+    // 「经期前」压在排卵期之上是有意的：经前窗口和黄体期尾巴本来就重叠，
+    // 而这张卡要回答的正是「经期前有什么症状」，那几天必须归经前。
     function makePhaseOf(periods) {
       // FERT.map 里的排卵日：用来分辨「经期结束→排卵」和「排卵→下次经期」
       const ovuDays = [];
@@ -8655,7 +8658,7 @@ window.PV = (function(){
           if (t >= p.start.getTime() && t <= p.end.getTime()) return '经期中';
         for (const p of periods) {
           const gap = Math.round((p.start.getTime() - t) / 86400000);
-          if (gap >= 1 && gap <= PMS_DAYS) return '来之前';
+          if (gap >= 1 && gap <= PMS_DAYS) return '经期前';
         }
         const fk = fertKind(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
         if (fk === 'ovu' || fk === 'fertile') return '排卵期';
@@ -8663,7 +8666,7 @@ window.PV = (function(){
         if (pe === null) return '其余日子';        // 这天之前根本没记过经期,无从谈阶段
         const ov = lastLE(ovuDays, t);
         // 这个周期里排卵已经过去 → 黄体期;否则还在经期结束到排卵之间
-        return (ov !== null && ov > pe) ? '黄体期' : '结束后';
+        return (ov !== null && ov > pe) ? '黄体期' : '经期后';
       };
     }
 
@@ -8718,11 +8721,11 @@ window.PV = (function(){
       if (monthSyms.length === 0 && monthPeriods.length === 0) return null;
 
       // ── 阶段分段：从月初往前回看若干天 ──
-      // 8月3日来经，它的「来之前」落在 7月29日–8月2日，跨月照常显示；
+      // 8月3日来经，它的「经期前」落在 7月29日–8月2日，跨月照常显示；
       // 不往前看的话经前那几天会被月份边界切没。
       // 回看多远要算：既得盖住经前窗口，也得盖住「上个月来、跨到本月」的经期
       // 自身的开头——只回看 5 天的话，7月30日来的那次会被截成「经期中 从 27 号
-      // 起」「来之前 只剩 3 天」，显示出去的是被月份边界切出来的假区间。
+      // 起」「经期前 只剩 3 天」，显示出去的是被月份边界切出来的假区间。
       let back = PMS_DAYS;
       monthPeriods.forEach(p => {
         const off = Math.round((monthStart - p.start) / 86400000);   // p 比月初早几天
@@ -8737,7 +8740,7 @@ window.PV = (function(){
         if (last && last.phase === ph) last.to = dt;
         else segs.push({ phase: ph, from: dt, to: dt });
       }
-      // 只留跟本月有交集的段。额外放行一种：整段落在上个月的「来之前」——
+      // 只留跟本月有交集的段。额外放行一种：整段落在上个月的「经期前」——
       // 经期正好是 1 号来的时候，经前窗口全在上个月，但它属于本月这次经期。
       const hits = s => s.to >= monthStart && s.from <= monthEnd;
       const now = new Date();
@@ -8746,11 +8749,11 @@ window.PV = (function(){
       // 只有这两个阶段挂在具体某段经期上，跨月是真实的、照实显示；
       // 其余阶段的起点由回看窗口决定，不是它真正开始的日子，一律夹回月初，
       // 免得「本月没有经期记录」的月份冒出「其余日子 7月27日–8月31日」。
-      const ANCHORED = { '来之前': 1, '经期中': 1 };
+      const ANCHORED = { '经期前': 1, '经期中': 1 };
 
       const rows = [];
       segs.forEach((s, i) => {
-        if (!(hits(s) || (s.phase === '来之前' && segs[i + 1] && hits(segs[i + 1])))) return;
+        if (!(hits(s) || (s.phase === '经期前' && segs[i + 1] && hits(segs[i + 1])))) return;
         const from = (ANCHORED[s.phase] || s.from >= monthStart) ? s.from : monthStart;
         const list = symCountsIn(from, s.to);
         // 还没到的日子没症状很正常，不用占一行说「没有记录」
@@ -8759,7 +8762,7 @@ window.PV = (function(){
         const cls = PHASE_CHIP[s.phase] || '';
         const chips = list.length
           ? list.map(([n, c]) =>
-              `<span class="ms-chip${cls}">${escapeHtml(n)}<em>×${c}</em></span>`).join('')
+              `<span class="ms-chip${cls}">${escapeHtml(n)}<em>${c}</em></span>`).join('')
           : `<span class="ms-none">没有记录</span>`;
         rows.push(`<div class="ms-sec"><div class="ms-lab"><b>${s.phase}</b>` +
           `<i>${fmtDateRange(from, s.to)} · ${days}天</i></div>` +
