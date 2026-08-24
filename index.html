@@ -1983,6 +1983,9 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .tlseg-fmt{margin:0 0 var(--sp-2);gap:var(--sp-4);}
 .tlseg-fmt .fmt-btn{background:var(--surface);}
 .tlseg-fmt .fmt-btn:active{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);}
+/* 格式键之后那颗「＋ 添加」：挤到行尾，和 B/I/U/• 拉开距离，免得当成又一个格式键 */
+.tlseg-fmt .tlseg-addhere{margin-left:auto;padding:0 var(--sp-8);color:var(--accent-mid);
+  border-style:dashed;font-size:var(--fs-foot);}
 /* 加一段 */
 .tl-addrow{align-items:center;}
 .tl-addrow .tl-pdot::after{border-style:dashed;background:transparent;opacity:.7;}
@@ -14288,11 +14291,21 @@ const TL_FMT_BTNS=[['b','粗体','<b>B</b>'],['i','斜体','<i>I</i>'],['u','下
 function tlFmtBarHtml(){
   return `<div class="fmt-bar tlseg-fmt">`+TL_FMT_BTNS.map(b=>
     `<button type="button" class="fmt-btn" data-fmt="${b[0]}" title="${b[1]}" aria-label="${b[1]}">${b[2]}</button>`
-  ).join('')+`</div>`;
+  ).join('')+
+    // 「添加」跟在格式键后面：底下那颗「＋ 加一段」只往全章末尾加，
+    // 写到一半想在这段后面接一段，就得先划到底再划回来。这颗就地插在本段之后
+    `<button type="button" class="fmt-btn tlseg-addhere" data-act="add" title="在这段后面加一段" aria-label="在这段后面加一段">＋ 添加</button>`+
+  `</div>`;
 }
 
+// 每次重绘 +1：旧输入框被 innerHTML 换掉时浏览器可能补一发 blur，
+// 那时段数组已经改过了，旧框再提交一次会把新插的段抹掉（见下面的 seq 判断）
+let tlRenderSeq=0;
+// 「＋ 添加」是按下即重绘的，手指抬起时那声 click 会落到新排版下别的段上——短暂捂住读态点按
+let tlTapMuteUntil=0;
 // 渲染分段卡片；tlSheetEdit 段渲染为输入框
 function renderChapterSheet(){
+  const seq=++tlRenderSeq;
   const body=document.getElementById('tlSheetBody');
   let num=0;
   const rows=tlSheetSegs.map((seg,i)=>{
@@ -14324,12 +14337,12 @@ function renderChapterSheet(){
   if(ta){
     autosizeTl(ta);
     ta.addEventListener('input',()=>autosizeTl(ta));
-    ta.addEventListener('blur',()=>commitTlSeg(ta));
+    ta.addEventListener('blur',()=>{ if(seq===tlRenderSeq) commitTlSeg(ta); });
     ta.focus(); try{ta.selectionStart=ta.selectionEnd=ta.value.length;}catch(_){}
   }
   // 格式按钮走 pointerdown，不走 click：手指一按下焦点就离开输入框，blur 会提交这段并重绘，
   // 按钮等不到 click 就被换掉了。按下当场做完并 preventDefault，焦点和选区都还留在框里
-  body.querySelectorAll('.tlseg-fmt .fmt-btn').forEach(btn=>{
+  body.querySelectorAll('.tlseg-fmt [data-fmt]').forEach(btn=>{
     btn.addEventListener('pointerdown',e=>{
       e.preventDefault();
       if(!ta) return;
@@ -14337,11 +14350,23 @@ function renderChapterSheet(){
       autosizeTl(ta);
     });
   });
+  // 「＋ 添加」：同样按下即做（不走 blur 那条提交路），手动收下本段再插一段空的在它后面
+  const addHere=body.querySelector('.tlseg-fmt [data-act="add"]');
+  if(addHere) addHere.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    if(!ta) return;
+    const i=+ta.dataset.edit;
+    if(tlSheetSegs[i]!=null) tlSheetSegs[i].text=ta.value.trim();
+    tlSheetSegs.splice(i+1,0,{text:'',gap:'\n\n'});
+    tlSheetEdit=i+1;
+    tlTapMuteUntil=Date.now()+400;
+    renderChapterSheet();
+  });
   body.querySelectorAll('.tlseg-tap').forEach(el=>{
-    el.addEventListener('click',()=>{ tlSheetEdit=+el.dataset.tap; renderChapterSheet(); });
+    el.addEventListener('click',()=>{ if(Date.now()<tlTapMuteUntil) return; tlSheetEdit=+el.dataset.tap; renderChapterSheet(); });
   });
   const addBtn=document.getElementById('tlSegAdd');
-  if(addBtn) addBtn.addEventListener('click',()=>{ tlSheetSegs.push({text:'',gap:'\n\n'}); tlSheetEdit=tlSheetSegs.length-1; renderChapterSheet(); });
+  if(addBtn) addBtn.addEventListener('click',()=>{ if(Date.now()<tlTapMuteUntil) return; tlSheetSegs.push({text:'',gap:'\n\n'}); tlSheetEdit=tlSheetSegs.length-1; renderChapterSheet(); });
 }
 function commitTlSeg(ta){
   const i=+ta.dataset.edit;
