@@ -1583,6 +1583,38 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   padding:0 var(--sp-14) var(--sp-16);}
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
+
+/* ===== 本周卡片：月历和「当天」卡之间的一张周概览 =====
+   月历格子只有圆点，看得出「有事」看不出「是什么」；这张卡把选中日所在那一周铺开。
+   一件事一个色块，块按名字长短撑开、起点贴着它那一天；一行塞得下就接着塞，塞不下才换行
+   （一事一行会排成一道楼梯，七天各占一行，反而看不出「一周」）。 */
+.cw-card{flex:0 0 auto;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--rxl);margin:0 var(--sp-14) var(--sp-12);overflow:hidden;}
+.cw-hd{width:100%;display:flex;align-items:center;gap:var(--sp-8);background:none;border:0;
+  padding:var(--sp-12) var(--sp-14);cursor:pointer;font-family:var(--zh);text-align:left;}
+.cw-hd-t{font-size:var(--fs-headline);font-weight:700;color:var(--accent);}
+.cw-hd-rng{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);}
+.cw-chev{width:16px;height:16px;color:var(--text-muted);flex-shrink:0;margin-left:auto;transition:transform .2s;}
+.cw-card.closed .cw-chev{transform:rotate(-90deg);}
+.cw-card.closed .cw-body{display:none;}
+.cw-body{padding:0 var(--sp-14) var(--sp-14);}
+.cw-cols{display:grid;grid-template-columns:repeat(7,1fr);}
+.cw-gh{text-align:center;padding-bottom:var(--sp-8);}
+.cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;}
+.cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
+.cw-gh.today .w{color:var(--accent);font-weight:700;}
+.cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
+  width:22px;height:22px;line-height:22px;margin:0 auto;}
+/* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
+.cw-pills{position:relative;}
+.cw-p{position:absolute;height:23px;border-radius:999px;z-index:1;cursor:pointer;
+  display:flex;align-items:center;overflow:hidden;}
+.cw-p span{font-size:var(--fs-foot);color:inherit;white-space:nowrap;padding:0 var(--sp-8);
+  overflow:hidden;text-overflow:ellipsis;}
+.cw-p:active{opacity:.75;}
+.cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
+/* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
+body.cal-searching .cw-card{display:none;}
 .cal-sheet #calDetailList{flex:1;min-height:0;display:flex;flex-direction:column;}   /* 不在此滚动：改由内部 .cal-tl 滚动，卡片圆角框固定不动 */
 
 
@@ -4280,6 +4312,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
         <div class="cal-searchresults" id="calSearchResults"></div>
       </div>
+      <!-- 本周卡片：选中日所在那一周的事件概览，点标题栏收起/展开 -->
+      <div class="cw-card" id="calWeekCard"></div>
       <!-- 点击某天从底部滑出的详情抽屉 -->
       <div class="cal-sheet-scrim" id="calSheetScrim" onclick="closeCalSheet()"></div>
       <div class="cal-sheet" id="calSheet" role="dialog" aria-label="当天记录">
@@ -13010,6 +13044,7 @@ function openCalendar(){
       el.classList.remove('cal-animating');el.style.setProperty('--p','0');});}
   const _grab=document.getElementById('calGrabRow');if(_grab)_grab.classList.remove('cal-grab-on');
   renderCalDetail();               // 内嵌下半区：直接填入今天的记录
+  renderWeekCard(true);            // 本周卡片：重开日历一律重画
   closeCalSearch();                // 确保搜索收起
   closeCalFilter();                // 确保筛选面板收起
   setCalTabActive(true);           // 高亮底部「日历」tab
@@ -13058,7 +13093,7 @@ function calReselect(){
   const last=new Date(calYear,calMonth+1,0).getDate();
   if(day>last)day=last;
   calSelDate=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  renderCal();renderCalDetail();
+  renderCal();renderCalDetail();renderWeekCard();
 }
 
 // —— 底部抽屉：点某天弹出 / 收起 ——
@@ -13066,6 +13101,7 @@ function openCalDay(dateStr){
   calSelDate=dateStr;
   renderCal();                     // 刷新选中高亮
   renderCalDetail();               // 内嵌下半区：填入当天记录
+  renderWeekCard();                // 点到别的周去了才重画
 }
 function hideCalSheet(){
   const s=document.getElementById('calSheet'),sc=document.getElementById('calSheetScrim');
@@ -13190,7 +13226,7 @@ function toggleCalCat(key){
   persistCalHidden();
   renderCalLegend();
   renderCal();
-  if(calSelDate)renderCalDetail();
+  if(calSelDate){renderCalDetail();renderWeekCard(true);}   // 改了图例筛选：本周卡片也跟着筛
 }
 function renderCalLegend(){
   const el=document.getElementById('calLegend');
@@ -13729,6 +13765,122 @@ function calCurTail(r){
   }
   const c=getCat(r.type);
   return `${esc(c.name)}${r.score?` · ${r.score}/5`:''}`;
+}
+
+// ── 本周卡片 ────────────────────────────────────────────────
+// 选中日所在的那一周（周一起），一件事一个色块。块的位置是按像素算的：
+// 起点 = 它那一天的列左边，宽 = max(真实跨度, 名字撑开的宽)。名字比跨度长时块会
+// 伸出真实结束日——一周概览要的是「一眼认出是什么事」，精确到哪天点进那天看。
+const CW_OPEN_KEY='my_list_cal_week_open';
+const CW_WK=['一','二','三','四','五','六','日'];
+let calWeekOpen=localStorage.getItem(CW_OPEN_KEY)!=='0';
+let cwShownWeek='';                     // 已经画出来的那一周（周一那天），周没变就不重画
+function calWeekDays(){
+  const base=new Date((calSelDate||calToday())+'T00:00:00');
+  base.setDate(base.getDate()-((base.getDay()+6)%7));         // 回到周一
+  return [...Array(7)].map((_,i)=>{const d=new Date(base);d.setDate(base.getDate()+i);return calFmtDate(d);});
+}
+function calFmtDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function calToday(){return calFmtDate(new Date());}
+// 当天记录，口径和 renderCalDetail 的「① 当天记录」一致（同样按图例筛选）
+function calWeekRecs(ds){
+  const [y,m,d]=ds.split('-');
+  const media=calCatVisible('media')?data.filter(r=>r.watchDate===ds):[];
+  const nts=notes.filter(n=>n.title===`${y}/${m}/${d}`).map(toCalNoteRec).filter(calRecVisible);
+  return [...media,...nts];
+}
+// 跨天事件在数据里是每天一条，这里按「名字 + 分类」并回一件事，免得一趟旅行铺满七格
+function calWeekGroups(days){
+  const map=new Map();
+  days.forEach(ds=>calWeekRecs(ds).forEach(r=>{
+    const name=r._isNote?calNoteTitle(r):r.name;
+    const k=name+'|'+(r._isNote?r.subCat:r.type);
+    if(!map.has(k))map.set(k,{name,color:r._isNote?calNoteColor(r):getCat(r.type).color,dates:[]});
+    map.get(k).dates.push(ds);
+  }));
+  // 先按开始日，同一天里跨得久的排前面（长条先占位，短块才好往缝里塞）
+  return [...map.values()].sort((a,b)=>a.dates[0].localeCompare(b.dates[0])||b.dates.length-a.dates.length);
+}
+// 块里的字用白还是黑：分类颜色是用户自己挑的，浅色块上压白字会糊
+function cwInk(c){
+  const m=String(c||'').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if(!m)return '#fff';
+  let h=m[1];if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  const v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255)
+    .map(x=>x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4));
+  return (.2126*v[0]+.7152*v[1]+.0722*v[2])>.30?'#1A1A1A':'#fff';
+}
+
+function renderWeekCard(force){
+  const card=document.getElementById('calWeekCard');
+  if(!card)return;
+  const days=calWeekDays();
+  if(!force&&days[0]===cwShownWeek&&card.firstChild)return;
+  cwShownWeek=days[0];
+  const today=calToday();
+  const md=ds=>{const[,m,d]=ds.split('-');return `${+m}/${+d}`;};
+  const cols=days.map(ds=>{const dt=new Date(ds+'T00:00:00');
+    return `<div class="cw-gh${ds===today?' today':''}"><span class="w">${CW_WK[(dt.getDay()+6)%7]}</span>`+
+           `<span class="d">${dt.getDate()}</span></div>`;}).join('');
+  card.className='cw-card'+(calWeekOpen?'':' closed');
+  card.innerHTML=
+    `<button type="button" class="cw-hd" onclick="toggleWeekCard()">`+
+    // 翻到别的月份时这一周未必是「本周」，标题跟着改口，免得 7 月那一周也叫本周
+    `<span class="cw-hd-t">${days.includes(today)?'本周':'那一周'}</span>`+
+    `<span class="cw-hd-rng">${md(days[0])} – ${md(days[6])}</span>`+
+    `<svg class="cw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" `+
+    `stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>`+
+    `<div class="cw-body"><div class="cw-cols">${cols}</div><div class="cw-pills" id="calWeekPills"></div></div>`;
+  layoutWeekPills(days);
+}
+// 摆块：先量名字撑开要多宽，再一行一行地塞（塞得下就同一行，塞不下开新行）
+function layoutWeekPills(days){
+  const box=document.getElementById('calWeekPills');
+  if(!box)return;
+  days=days||calWeekDays();          // 展开/转屏那两处是干摆一遍，不带日子进来
+  box.innerHTML='';
+  const gs=calWeekGroups(days);
+  if(!gs.length){box.innerHTML='<div class="cw-empty">这一周没有记录</div>';box.style.height='';return;}
+  const W=box.clientWidth;
+  if(!W){box.style.height='';return;}          // 收起着或还没上屏：量不到宽度，展开时再摆
+  const col=W/7, H=23, GAP=6;
+  const els=gs.map(g=>{
+    const el=document.createElement('div');
+    el.className='cw-p';
+    el.style.cssText=`visibility:hidden;left:0;top:0;width:max-content;height:${H}px;background:${g.color};color:${cwInk(g.color)}`;
+    el.innerHTML=`<span>${esc(g.name)}</span>`;
+    el.onclick=()=>openCalDay(g.dates[0]);
+    box.appendChild(el);
+    return el;
+  });
+  const need=els.map(el=>el.offsetWidth);      // 名字撑开后的宽（含左右内边距）
+  const rowRight=[];                           // 每行已经占到哪个 x
+  gs.forEach((g,i)=>{
+    const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
+    const spanW=(e-s+1)*col-2;                 // 真实跨度占的宽
+    const w=Math.min(Math.max(spanW,need[i]),W);
+    let left=s*col+1;
+    if(left+w>W)left=W-w;                      // 右边顶到头：改成右端贴着那天、向左长
+    let ri=rowRight.findIndex(right=>left>=right+GAP);
+    if(ri<0){rowRight.push(left+w);ri=rowRight.length-1;}else rowRight[ri]=left+w;
+    els[i].style.cssText=`left:${left}px;top:${ri*(H+GAP)}px;width:${w}px;height:${H}px;background:${g.color};color:${cwInk(g.color)}`;
+  });
+  box.style.height=(rowRight.length*(H+GAP)-GAP)+'px';
+}
+// 转屏/改字号后卡宽变了，块的 left/width 是像素算的，得重摆一遍
+let _cwRz=null;
+window.addEventListener('resize',()=>{
+  if(!document.body.classList.contains('cal-open'))return;
+  clearTimeout(_cwRz);_cwRz=setTimeout(()=>layoutWeekPills(),150);
+});
+
+function toggleWeekCard(){
+  const card=document.getElementById('calWeekCard');
+  if(!card)return;
+  calWeekOpen=!calWeekOpen;
+  try{localStorage.setItem(CW_OPEN_KEY,calWeekOpen?'1':'0');}catch(_){}
+  card.classList.toggle('closed',!calWeekOpen);
+  if(calWeekOpen)layoutWeekPills();           // 收起时量不到宽度，展开这一下才摆得出来
 }
 
 function renderCalDetail(){
