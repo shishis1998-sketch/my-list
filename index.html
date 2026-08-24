@@ -1542,7 +1542,10 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    节点/竖线同一条左缘，「8」正好落在那串圆点上方；这里 100% 是 .cal-card 的
    内容宽（330），比时间线那边多 20，所以半列宽写成 (100% - 32px)/14。
    右内边距写同一个值，卡片两侧留白相等（标题本身左对齐，这里只为一致）。 */
-.cal-card-date{flex-shrink:0;padding:var(--sp-12) calc((100% - 32px) / 14 - 10px);
+/* 右内边距单独写成 14，和本周卡片标题栏一致：两张卡的箭头要在同一条竖线上。
+   左边仍按半列宽算——那是为了让「8 月」压在下面第一列的圆点上方，两边本就不必相等。
+   （原来左右共用那个 calc，窄屏上算出来只有八九像素，箭头就比本周卡片的靠右好几像素）*/
+.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14) var(--sp-12) calc((100% - 32px) / 14 - 10px);
   font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;
   display:flex;align-items:center;gap:var(--sp-8);cursor:pointer;}
 .cal-card-date .cw-chev{margin-left:auto;}
@@ -1615,7 +1618,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-pills{position:relative;}
 .cw-p{position:absolute;height:23px;border-radius:999px;z-index:1;cursor:pointer;
   display:flex;align-items:center;overflow:hidden;}
-.cw-p span{font-size:var(--fs-foot);color:inherit;white-space:nowrap;padding:0 var(--sp-8);
+.cw-p span{font-size:var(--fs-foot);color:var(--text-primary);white-space:nowrap;padding:0 var(--sp-8);
   overflow:hidden;text-overflow:ellipsis;}
 .cw-p:active{opacity:.75;}
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
@@ -13812,16 +13815,6 @@ function calWeekGroups(days){
   // 先按开始日，同一天里跨得久的排前面（长条先占位，短块才好往缝里塞）
   return [...map.values()].sort((a,b)=>a.dates[0].localeCompare(b.dates[0])||b.dates.length-a.dates.length);
 }
-// 块里的字用白还是黑：分类颜色是用户自己挑的，浅色块上压白字会糊
-function cwInk(c){
-  const m=String(c||'').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if(!m)return '#fff';
-  let h=m[1];if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
-  const v=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255)
-    .map(x=>x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4));
-  return (.2126*v[0]+.7152*v[1]+.0722*v[2])>.30?'#1A1A1A':'#fff';
-}
-
 function renderWeekCard(force){
   const card=document.getElementById('calWeekCard');
   if(!card)return;
@@ -13857,7 +13850,7 @@ function layoutWeekPills(days){
   const els=gs.map(g=>{
     const el=document.createElement('div');
     el.className='cw-p';
-    el.style.cssText=`visibility:hidden;left:0;top:0;width:max-content;height:${H}px;background:${g.color};color:${cwInk(g.color)}`;
+    el.style.cssText=`visibility:hidden;left:0;top:0;width:max-content;height:${H}px;background:${calHexA(g.color,.16)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
@@ -13875,7 +13868,7 @@ function layoutWeekPills(days){
     if(left+w>W)left=W-w;                      // 右边顶到头：改成右端贴着那天、向左长
     let ri=rowRight.findIndex(right=>left>=right+GAP);
     if(ri<0){rowRight.push(left+w);ri=rowRight.length-1;}else rowRight[ri]=left+w;
-    els[i].style.cssText=`left:${left}px;top:${ri*(H+GAP)}px;width:${w}px;height:${H}px;background:${g.color};color:${cwInk(g.color)}`;
+    els[i].style.cssText=`left:${left}px;top:${ri*(H+GAP)}px;width:${w}px;height:${H}px;background:${calHexA(g.color,.16)}`;
   });
   box.style.height=(rowRight.length*(H+GAP)-GAP)+'px';
 }
