@@ -2912,11 +2912,18 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .ms-lab {display: flex; align-items: baseline; gap: 6px; margin-bottom: 7px;}
 #calViewPeriod .ms-lab b {font-size: var(--fs-caption); color: var(--ink-2); font-weight: 700;}
 #calViewPeriod .ms-lab i {font-style: normal; font-size: var(--fs-footnote); color: var(--faint);}
-#calViewPeriod .ms-chips {display: flex; flex-wrap: wrap; gap: 6px;}
-/* 胶囊照抄状态卡的 .dc-chip：同样的圆角、内边距、行高(20+5+5=30)，
-   同一个标签名在两张卡里长得一样。配色按阶段走——经期相关的粉红、
-   排卵期蓝、黄体期灰，和日历上的标记同一套语义。 */
-#calViewPeriod .ms-chip {font-size: var(--fs-footnote); line-height: 20px; padding: 5px 10px;
+/* 胶囊尺寸集中在这四个变量里，想整体调大调小只动这一处。
+   现值是「小一档」：高 18+4+4=26。备选——
+     再小: --chip-fs 11.5px / --chip-lh 17px / --chip-py 3px / --chip-px 8px (高 23)
+     最小: --chip-fs 11px   / --chip-lh 16px / --chip-py 2px / --chip-px 7px (高 20)
+   胶囊是只读的，不承担点击，所以不受触控尺寸下限约束，可以压得比按钮狠。
+   圆角照旧写 --r-lg：浏览器会夹到高度一半，矮下来照样是全圆胶囊。 */
+#calViewPeriod .ms-chips {display: flex; flex-wrap: wrap; gap: 5px;
+      --chip-fs: 12px; --chip-lh: 18px; --chip-py: 4px; --chip-px: 9px;}
+/* 配色按阶段走——经期相关的粉红、排卵期蓝、黄体期灰，和日历上的标记同一套语义。
+   状态卡的 .dc-chip 尺寸不跟着改：那张卡的胶囊高度要和 .dc-row 的 min-height 对齐。 */
+#calViewPeriod .ms-chip {font-size: var(--chip-fs); line-height: var(--chip-lh);
+      padding: var(--chip-py) var(--chip-px);
       border-radius: var(--r-lg); background: var(--brand-soft); color: var(--brand-dark);
       white-space: nowrap;}
 #calViewPeriod .ms-chip.ovu {background: var(--ovu-soft); color: var(--ovu-on-soft);}
@@ -2924,8 +2931,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 次数压一档：标签名是主角，次数是附注，不该抢。不写「×3」——放大看像
    乘法算式，「蚊子包×1」读起来也别扭；空一格跟在名字后面就够清楚了。
    tabular-nums 让两位数对齐，一排标签的数字不会看着高低不齐。 */
-#calViewPeriod .ms-chip em {font-style: normal; opacity: .6; font-size: 11px;
-      margin-left: 5px; font-variant-numeric: tabular-nums;}
+#calViewPeriod .ms-chip em {font-style: normal; opacity: .6; font-size: 10.5px;
+      margin-left: 4px; font-variant-numeric: tabular-nums;}
 #calViewPeriod .ms-none {font-size: var(--fs-footnote); color: var(--faint);}
 /* 「查看时间线」：整张卡里唯一可点的元素，样式压到最低——它是入口不是内容 */
 #calViewPeriod .ms-fold {display: flex; align-items: center; justify-content: center; gap: 4px;
