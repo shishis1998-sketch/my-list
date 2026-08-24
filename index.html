@@ -13838,7 +13838,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
 
 // 把一条笔记转成日历记录对象
 function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||'',
-  tags:n.tags||[],_icsCal:n._icsCal,_icsColor:n._icsColor};}   // 配色字段一并带上，时间线节点要用
+  tags:n.tags||[],_ics:n._ics,_icsCal:n._icsCal,_icsColor:n._icsColor};}   // 配色字段一并带上，时间线节点要用；_ics 是周视图并块的凭据
 
 // 笔记分类 → 图例色（与顶部图例一致）
 function noteDotColor(subCat){
@@ -13940,13 +13940,22 @@ function calWeekRecs(ds){
   const nts=notes.filter(n=>n.title===`${y}/${m}/${d}`).map(toCalNoteRec).filter(calRecVisible);
   return [...media,...nts];
 }
-// 跨天事件在数据里是每天一条，这里按「名字 + 分类」并回一件事，免得一趟旅行铺满七格
+// 跨天事件在数据里是每天一条，这里并回一件事，免得一趟旅行铺满七格。
+// 凭据是导入时留下的 ICS UID：一件事的每一天共用同一个 UID，两件事的 UID 一定不同。
+// 早先按「名字 + 分类」并，出过两处错：导入事件的 subCat 一律是「日历」，于是
+// ① 两本日历里同名的事（连着两天各有一个「理发」）被并成一条跨天的，还只剩先来
+//    那条的颜色，后一条连同它的颜色一起没了；
+// ② 同一本日历里连着两天的两次同名事（两次「理发」就是两次），也被并成一条。
+// 没有 UID 的老数据仍按名字并，但把颜色一起写进 key——颜色不同的本来就不是同一件事。
 function calWeekGroups(days){
   const map=new Map();
   days.forEach(ds=>calWeekRecs(ds).forEach(r=>{
     const name=r._isNote?calNoteTitle(r):r.name;
-    const k=name+'|'+(r._isNote?r.subCat:r.type);
-    if(!map.has(k))map.set(k,{name,color:r._isNote?calNoteColor(r):getCat(r.type).color,dates:[]});
+    const color=r._isNote?calNoteColor(r):getCat(r.type).color;
+    const k=r._isNote
+      ? (r._ics?'ics|'+r._ics:'n|'+name+'|'+r.subCat+'|'+color)
+      : 'm|'+name+'|'+r.type;
+    if(!map.has(k))map.set(k,{name,color,dates:[]});
     map.get(k).dates.push(ds);
   }));
   // 先按开始日，同一天里跨得久的排前面（长条先占位，短块才好往缝里塞）
