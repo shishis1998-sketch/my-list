@@ -3683,6 +3683,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   margin:6px 14px 0;padding:8px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{background:transparent;border:none;border-radius:0;
   margin:0 14px 12px;padding:0;}
+/* 顶距与普通日历同一套：手机端收起了顶部的视图切换条，这张标题卡就是首屏第一行。
+   14 + 安全区走 margin（写进 padding 只会把卡撑高，卡片上沿仍贴在 6px，状态栏会压
+   在白卡上）。月视图和年视图各写一条：上面那条 .pv-year 的 margin 简写更具体、
+   位置也更靠后，只写月视图那条压不住它。 */
+@media (max-width:1024px), (pointer: coarse){
+  #calViewPeriod .home-header,
+  #calViewPeriod.pv-year .home-header{margin-top:calc(var(--sp-14) + env(safe-area-inset-top));}
+}
 /* 12 张月卡横竖都留 12——卡片自己按 1fr 缩到 176.5。左右内边距 12（上下仍是 10）
    之后，内容宽 152.5、日期列 20.07，18 的圆每侧余 1.04。 */
 #calViewPeriod.pv-year .calendar-container.year-view{margin:0;gap:12px;}
