@@ -2867,9 +2867,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       margin: var(--sp-card) 0 2px;
       padding: 16px 14px;
       background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
-#calViewPeriod .sym-list-title {font-size: var(--fs-footnote); color: var(--brand); font-weight: 700;
-      letter-spacing: 1px; margin-bottom: 8px;
-      display: flex; align-items: center;}
 #calViewPeriod .sym-row {display: flex; align-items: center; gap: 10px; padding: 7px 2px;}
 #calViewPeriod .sym-row + .sym-row {border-top: 1px dashed #f0f0f0;}
 #calViewPeriod .sym-name {flex: 0 0 96px;}
@@ -2906,8 +2903,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 经血量色带：一格一天，颜色取自调色板，与日历上那几格同一个值 */
 #calViewPeriod .ms-bar {display: flex; gap: 3px; margin: 9px 0 0;}
 #calViewPeriod .ms-bar i {height: 6px; flex: 1; border-radius: 3px;}
-#calViewPeriod .ms-note {margin-top: 6px; font-size: var(--fs-footnote);
-      color: var(--faint); line-height: 1.6;}
 /* 段与段之间不画线，靠间距分组：每段本来就是「一行小标题 + 一排胶囊」的
    紧凑块，段间距拉到明显大于段内(标题到胶囊 7px)，分组关系自己就读出来了，
    再加分隔线只是多一层噪音。头部到分段之间那条实线保留——那是两种信息的
@@ -8735,19 +8730,6 @@ window.PV = (function(){
       return card;
     }
 
-    // 把升序日期数组压成区间文本: [23,24,25,26,27]->"23-27日"; [4,13]->"4日、13日"
-    function formatDayRanges(days) {
-      const parts = [];
-      let start = days[0], prev = days[0];
-      for (let i = 1; i <= days.length; i++) {
-        const d = days[i];
-        if (d === prev + 1) { prev = d; continue; }
-        parts.push(start === prev ? `${start}日` : `${start}–${prev}日`);
-        start = d; prev = d;
-      }
-      return parts.join('、');
-    }
-
     // ── 「本月状态记录」：文字总结 + 可折叠的症状时间线 ──────────────
     // 原先只有一张横向时间线：看得出「哪天记了什么」，却看不出「这些症状跟
     // 这次经期什么关系」。现在默认给一段按周期阶段分的文字总结——经期前 /
@@ -8897,32 +8879,14 @@ window.PV = (function(){
           `<div class="ms-chips">${chips}</div></div>`);
       });
 
-      // ── 头部：本月的经期段(可能 0、1 或 2 段) + 点滴/平均周期备注 ──
-      let head = monthPeriods.length
+      // ── 头部：本月的经期段(可能 0、1 或 2 段) ──
+      const head = monthPeriods.length
         ? monthPeriods.map(p => periodHeadHtml(p, periods.indexOf(p), periods)).join('')
         : `<div class="ms-head"><div class="ms-h1"><span class="ms-big quiet">本月没有经期记录</span></div></div>`;
 
-      const notes = [];
-      const spot = [];
-      for (let d = 1; d <= daysInMonth; d++) if (getLevel(year, m, d) === 4) spot.push(d);
-      if (spot.length) notes.push(`${formatDayRanges(spot)}点滴`);
-      // 只在本月确实来过经期时比平均：没来的月份说「比平均短几天」没有意义
-      if (monthPeriods.length && FERT.ok && FERT.n) {
-        const last = monthPeriods[monthPeriods.length - 1];
-        const i = periods.indexOf(last);
-        if (i > 0) {
-          const days = Math.round((last.start - periods[i - 1].start) / 86400000);
-          const diff = days - FERT.avg;
-          notes.push(diff === 0
-            ? `与近 ${FERT.n} 次平均持平`
-            : `比近 ${FERT.n} 次平均${diff > 0 ? '长' : '短'} ${Math.abs(diff)} 天`);
-        }
-      }
-      if (notes.length) head += `<div class="ms-note">${escapeHtml(notes.join(' · '))}</div>`;
-
       const el = document.createElement('div');
       el.className = 'sym-list';
-      el.innerHTML = `<div class="sym-list-title">本月状态记录</div>` + head +
+      el.innerHTML = head +
         (rows.length ? `<div class="ms-secs">${rows.join('')}</div>` : '');
 
       // ── 底部：折叠起来的逐日时间线 ──
