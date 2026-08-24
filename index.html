@@ -1621,15 +1621,24 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   width:22px;height:22px;line-height:22px;text-align:center;margin:0 auto;}
 /* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
 .cw-pills{position:relative;}
-.cw-p{position:absolute;height:20px;border-radius:999px;z-index:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;padding:0 var(--sp-6);overflow:hidden;}
+/* 高度不写死：一行 20（3 上下内边距 + 14 行高），放不下的名字换第二行、块自己长到 34。
+   左右内边距挂在块上而不是 span 上：挂在 span 上时裁切边是它的 padding box，字会一路
+   铺到胶囊边缘上（看着就是「字超出胶囊」）；挂到块上，span 只有内容区那么宽，两头的
+   空当就留住了。 */
+/* 小圆角而不是胶囊：名字换到两行后块高 34，999px 的圆角把两头削成半圆，
+   34 高的椭圆压在 50 宽的一列里显得笨；6px（同 --rchip）收成小方块才立得住 */
+.cw-p{position:absolute;min-height:20px;border-radius:var(--rchip);z-index:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:flex-start;padding:3px var(--sp-6);overflow:hidden;}
+/* 单日块靠左、跨天块居中：单日块只有一列宽，字左对齐才和它那一天的其他块连成一竖条；
+   跨天块横跨好几列，靠左会把字全堆在起始日那头，看不出这条底色管的是哪几天 */
+.cw-p.cw-span{justify-content:center;}
+.cw-p.cw-span span{text-align:center;}
 /* 字比 foot 再小一号：一列就 50 来像素，11px 的名字连三个字都放不下。
-   左右内边距挪到块身上、只让 span 裁字：内边距挂在 span 上时裁切边是它的 padding box，
-   字会一路铺到胶囊边缘上（看着就是「字超出胶囊」）；挂到块上，span 只有内容区那么宽，
-   裁在内边距里侧，两头的空当就留住了。放得下的名字由 justify-content 居中，
-   放不下的从左边起排、右边裁掉——不给 text-overflow，宁可切齐也不要满屏省略号。 */
-.cw-p span{font-size:calc(10px * var(--fs-scale));color:var(--text-primary);white-space:nowrap;
-  overflow:hidden;}
+   最多两行（同 .cal-tl-nm 的写法），再长才在第二行末尾收省略号——两行给到 6~8 个字，
+   到这一步还没说完的名字，切一半反而认不出是哪件事。 */
+.cw-p span{font-size:calc(10px * var(--fs-scale));line-height:1.4;color:var(--text-primary);
+  text-align:left;word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .cw-p:active{opacity:.75;}
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
 /* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
@@ -13858,36 +13867,44 @@ function layoutWeekPills(days){
   if(!W){box.style.height='';return;}          // 收起着或还没上屏：量不到宽度，展开时再摆
   // 列宽/列缝照抄月历那张卡的网格（七列 1fr、列缝 2）：块的左右缘就压在月历
   // 同一天格子的左右缘上，两张卡的「17…23」上下对成一条线
-  const CG=2, col=(W-CG*6)/7, H=20, GAP=6;
-  // 块宽一律按日期算：单日 = 一列，跨天 = 跨几列。名字放不下就切掉，不加省略号
-  // （早先让名字把块撑长，一周十几件事就横七竖八，同一天的还被拆到好几行）
-  const put=(g,left,w,row)=>{
+  const CG=2, col=(W-CG*6)/7, GAP=6;
+  // 块宽一律按日期算：单日 = 一列，跨天 = 跨几列。名字一行放不下就换第二行，
+  // 块自己长高（早先让名字把块撑长，一周十几件事就横七竖八，同一天的还被拆到好几行）
+  const put=(g,left,w,isSpan)=>{
     const el=document.createElement('div');
-    el.className='cw-p';
-    el.style.cssText=`left:${left}px;top:${row*(H+GAP)}px;width:${w}px;height:${H}px`+
+    el.className='cw-p'+(isSpan?' cw-span':'');
+    // 高度不写死：交给 CSS 按一行/两行自己长（top 等量完再补，见下）
+    el.style.cssText=`left:${left}px;width:${w}px`+
       // 淡底浓度 22%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
       // 认不出是哪一类；22% 刚好分得开，字压上去仍有 12:1 上下的对比度
       `;background:${calHexA(g.color,.22)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
+    return el;
   };
   // 单日：一天一列，各自从第一行起往下堆，左缘对着它那一列
-  let rows=0;
-  days.forEach((ds,di)=>{
-    gs.filter(g=>g.dates.length<2&&g.dates[0]===ds)
-      .forEach((g,r)=>{ put(g,di*(col+CG),col,r); rows=Math.max(rows,r+1); });
-  });
+  const piles=days.map((ds,di)=>
+    gs.filter(g=>g.dates.length<2&&g.dates[0]===ds).map(g=>put(g,di*(col+CG),col)));
   // 跨天的垫在最下面：它们是这一周的底色（一趟旅行、一次搬家），
   // 摆在上面会把上面那七列从中间截断。短的在上、最长的压在最底
-  let row=rows;
-  gs.filter(g=>g.dates.length>1)
+  const spans=gs.filter(g=>g.dates.length>1)
     .sort((a,b)=>a.dates.length-b.dates.length||a.dates[0].localeCompare(b.dates[0]))
-    .forEach(g=>{
+    .map(g=>{
       const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-      put(g,s*(col+CG),(e-s+1)*(col+CG)-CG,row++);
+      return put(g,s*(col+CG),(e-s+1)*(col+CG)-CG,true);
     });
-  box.style.height=(row*(H+GAP)-GAP)+'px';
+  // 高度不再是一个常数（两行的块比一行的高 14），得先把块全建出来、一次量完再写
+  // top —— 边量边写会每块一次回流，七列十几个块就是十几次
+  const hs=new Map([...piles.flat(),...spans].map(el=>[el,el.offsetHeight]));
+  let bottom=0;
+  piles.forEach(pile=>{
+    let y=0;
+    pile.forEach(el=>{el.style.top=y+'px';y+=hs.get(el)+GAP;});
+    bottom=Math.max(bottom,y);            // 七列里最长的那一摞决定跨天块从哪儿起
+  });
+  spans.forEach(el=>{el.style.top=bottom+'px';bottom+=hs.get(el)+GAP;});
+  box.style.height=Math.max(0,bottom-GAP)+'px';
 }
 // 转屏/改字号后卡宽变了，块的 left/width 是像素算的，得重摆一遍
 let _cwRz=null;
