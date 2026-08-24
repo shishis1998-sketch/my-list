@@ -13868,6 +13868,10 @@ function layoutWeekPills(days){
   // 列宽/列缝照抄月历那张卡的网格（七列 1fr、列缝 2）：块的左右缘就压在月历
   // 同一天格子的左右缘上，两张卡的「17…23」上下对成一条线
   const CG=2, col=(W-CG*6)/7, GAP=6;
+  // 块与块横向留 6（月历那边只有 2）：日期之间更透气。列心不能跟着动——
+  // 那是刚跟月历对齐的东西，所以列距照旧按月历的 col+2 走，只把块两边各缩 2，
+  // 块仍居中压在月历同一天格子的中心线上，缩掉的部分变成块之间的空当。
+  const PITCH=col+CG, INSET=2;
   // 块宽一律按日期算：单日 = 一列，跨天 = 跨几列。名字一行放不下就换第二行，
   // 块自己长高（早先让名字把块撑长，一周十几件事就横七竖八，同一天的还被拆到好几行）
   const put=(g,left,w,isSpan)=>{
@@ -13875,9 +13879,9 @@ function layoutWeekPills(days){
     el.className='cw-p'+(isSpan?' cw-span':'');
     // 高度不写死：交给 CSS 按一行/两行自己长（top 等量完再补，见下）
     el.style.cssText=`left:${left}px;width:${w}px`+
-      // 淡底浓度 22%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
-      // 认不出是哪一类；22% 刚好分得开，字压上去仍有 12:1 上下的对比度
-      `;background:${calHexA(g.color,.22)}`;
+      // 淡底浓度 28%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
+      // 认不出是哪一类；28% 几档颜色彼此拉得开，字压上去仍有 10:1 上下的对比度
+      `;background:${calHexA(g.color,.28)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
@@ -13885,14 +13889,14 @@ function layoutWeekPills(days){
   };
   // 单日：一天一列，各自从第一行起往下堆，左缘对着它那一列
   const piles=days.map((ds,di)=>
-    gs.filter(g=>g.dates.length<2&&g.dates[0]===ds).map(g=>put(g,di*(col+CG),col)));
+    gs.filter(g=>g.dates.length<2&&g.dates[0]===ds).map(g=>put(g,di*PITCH+INSET,col-INSET*2)));
   // 跨天的垫在最下面：它们是这一周的底色（一趟旅行、一次搬家），
   // 摆在上面会把上面那七列从中间截断。短的在上、最长的压在最底
   const spans=gs.filter(g=>g.dates.length>1)
     .sort((a,b)=>a.dates.length-b.dates.length||a.dates[0].localeCompare(b.dates[0]))
     .map(g=>{
       const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-      return put(g,s*(col+CG),(e-s+1)*(col+CG)-CG,true);
+      return put(g,s*PITCH+INSET,(e-s)*PITCH+col-INSET*2,true);
     });
   // 高度不再是一个常数（两行的块比一行的高 14），得先把块全建出来、一次量完再写
   // top —— 边量边写会每块一次回流，七列十几个块就是十几次
