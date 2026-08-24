@@ -13861,18 +13861,34 @@ function layoutWeekPills(days){
   const need=els.map(el=>Math.ceil(el.getBoundingClientRect().width)+1);   // 名字撑开后的宽（含左右内边距）
   // 用 getBoundingClientRect 不用 offsetWidth：后者取整，真实宽 90.4 会量成 90，
   // 块照 90 摆，那 0.4 就把最后一个字挤成省略号（同样长的名字有的省有的不省）
-  const rowRight=[];                           // 每行已经占到哪个 x
+  // 摆放：跨天的每件各占一行排在最上面（要看得出横跨几天）；
+  // 单日的按天分行——一天一行，块从它那一列起往右接着排，排满了在本天内换行。
+  // 早先是「塞进第一个放得下的行」，最省地方，但同一天的事被拆到好几行、
+  // 不同天的事又挤在同一行，事情一多就看不出先后，只剩一片乱码。
+  const put=(i,left,w,row)=>{
+    els[i].style.cssText=`left:${left}px;top:${row*(H+GAP)}px;width:${w}px;height:${H}px`+
+      `;background:${calHexA(gs[i].color,.16)}`;
+  };
+  let row=0;
   gs.forEach((g,i)=>{
+    if(g.dates.length<2)return;
     const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-    const spanW=(e-s+1)*col-2;                 // 真实跨度占的宽
-    const w=Math.min(Math.max(spanW,need[i]),W);
-    let left=s*col+1;
-    if(left+w>W)left=W-w;                      // 右边顶到头：改成右端贴着那天、向左长
-    let ri=rowRight.findIndex(right=>left>=right+GAP);
-    if(ri<0){rowRight.push(left+w);ri=rowRight.length-1;}else rowRight[ri]=left+w;
-    els[i].style.cssText=`left:${left}px;top:${ri*(H+GAP)}px;width:${w}px;height:${H}px;background:${calHexA(g.color,.16)}`;
+    const w=Math.min(Math.max((e-s+1)*col-2,need[i]),W);
+    put(i,Math.min(s*col+1,W-w),w,row++);
   });
-  box.style.height=(rowRight.length*(H+GAP)-GAP)+'px';
+  days.forEach((ds,di)=>{
+    const idx=gs.map((g,i)=>i).filter(i=>gs[i].dates.length<2&&gs[i].dates[0]===ds);
+    if(!idx.length)return;
+    let x=di*col+1, first=true;
+    idx.forEach(i=>{
+      const w=Math.min(need[i],W);
+      if(!first&&x+w>W){row++;x=di*col+1;}      // 这一天排满了：换行，仍从它那一列起
+      if(x+w>W)x=W-w;                          // 一块就顶到边（周日的长名字）：右端贴住卡边
+      put(i,x,w,row); x+=w+GAP; first=false;
+    });
+    row++;
+  });
+  box.style.height=(row*(H+GAP)-GAP)+'px';
 }
 // 转屏/改字号后卡宽变了，块的 left/width 是像素算的，得重摆一遍
 let _cwRz=null;
