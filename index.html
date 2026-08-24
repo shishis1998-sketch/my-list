@@ -1610,7 +1610,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-card.closed .cw-body{display:none;}
 .cw-body{padding:0 var(--sp-14) var(--sp-14);}
 .cw-cols{display:grid;grid-template-columns:repeat(7,1fr);}
-.cw-gh{text-align:left;padding:0 0 var(--sp-8) calc(var(--sp-8) + 1px);}
+.cw-gh{text-align:left;padding:0 0 var(--sp-8) calc(var(--sp-6) + 1px);}
 .cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
@@ -1620,8 +1620,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-pills{position:relative;}
 .cw-p{position:absolute;height:23px;border-radius:999px;z-index:1;cursor:pointer;
   display:flex;align-items:center;overflow:hidden;}
-.cw-p span{font-size:var(--fs-foot);color:var(--text-primary);white-space:nowrap;padding:0 var(--sp-8);
-  overflow:hidden;text-overflow:ellipsis;}
+.cw-p span{font-size:var(--fs-foot);color:var(--text-primary);white-space:nowrap;padding:0 var(--sp-6);
+  overflow:hidden;}   /* 不给 text-overflow：一列就那么宽，宁可切齐，也不要满屏省略号 */
 .cw-p:active{opacity:.75;}
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
 /* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
@@ -13849,49 +13849,31 @@ function layoutWeekPills(days){
   const W=box.clientWidth;
   if(!W){box.style.height='';return;}          // 收起着或还没上屏：量不到宽度，展开时再摆
   const col=W/7, H=23, GAP=6;
-  const els=gs.map(g=>{
+  // 块宽一律按日期算：单日 = 一列，跨天 = 跨几列。名字放不下就切掉，不加省略号
+  // （早先让名字把块撑长，一周十几件事就横七竖八，同一天的还被拆到好几行）
+  const put=(g,left,w,row)=>{
     const el=document.createElement('div');
     el.className='cw-p';
-    el.style.cssText=`visibility:hidden;left:0;top:0;width:max-content;height:${H}px;background:${calHexA(g.color,.16)}`;
+    el.style.cssText=`left:${left}px;top:${row*(H+GAP)}px;width:${w}px;height:${H}px`+
+      `;background:${calHexA(g.color,.16)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
-    return el;
-  });
-  const need=els.map(el=>Math.ceil(el.getBoundingClientRect().width)+1);   // 名字撑开后的宽（含左右内边距）
-  // 用 getBoundingClientRect 不用 offsetWidth：后者取整，真实宽 90.4 会量成 90，
-  // 块照 90 摆，那 0.4 就把最后一个字挤成省略号（同样长的名字有的省有的不省）
-  // 摆放：单日的按天分行——一天一行，块从它那一列起往右接着排，排满了在本天内换行；
-  // 跨天的每件各占一行，垫在最下面（要看得出横跨几天）。
-  // 早先是「塞进第一个放得下的行」，最省地方，但同一天的事被拆到好几行、
-  // 不同天的事又挤在同一行，事情一多就看不出先后，只剩一片乱码。
-  const put=(i,left,w,row)=>{
-    els[i].style.cssText=`left:${left}px;top:${row*(H+GAP)}px;width:${w}px;height:${H}px`+
-      `;background:${calHexA(gs[i].color,.16)}`;
   };
-  let row=0;
+  // 单日：一天一列，各自从第一行起往下堆，左缘对着它那一列
+  let rows=0;
   days.forEach((ds,di)=>{
-    const idx=gs.map((g,i)=>i).filter(i=>gs[i].dates.length<2&&gs[i].dates[0]===ds);
-    if(!idx.length)return;
-    let x=di*col+1, first=true;
-    idx.forEach(i=>{
-      const w=Math.min(need[i],W);
-      if(!first&&x+w>W){row++;x=di*col+1;}      // 这一天排满了：换行，仍从它那一列起
-      if(x+w>W)x=W-w;                          // 一块就顶到边（周日的长名字）：右端贴住卡边
-      put(i,x,w,row); x+=w+GAP; first=false;
-    });
-    row++;
+    gs.filter(g=>g.dates.length<2&&g.dates[0]===ds)
+      .forEach((g,r)=>{ put(g,di*col+1,col-2,r); rows=Math.max(rows,r+1); });
   });
-  // 跨天的垫在最后：它们是这一周的底色（一趟旅行、一次搬家），
-  // 摆在上面会把「往下读 = 往后一天」那条线从中间截断。
-  // 短的在上、最长的压在最底下，越往下铺得越宽，像层层垫底
-  gs.map((g,i)=>i).filter(i=>gs[i].dates.length>1)
-    .sort((a,b)=>gs[a].dates.length-gs[b].dates.length||gs[a].dates[0].localeCompare(gs[b].dates[0]))
-    .forEach(i=>{
-      const g=gs[i];
+  // 跨天的垫在最下面：它们是这一周的底色（一趟旅行、一次搬家），
+  // 摆在上面会把上面那七列从中间截断。短的在上、最长的压在最底
+  let row=rows;
+  gs.filter(g=>g.dates.length>1)
+    .sort((a,b)=>a.dates.length-b.dates.length||a.dates[0].localeCompare(b.dates[0]))
+    .forEach(g=>{
       const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-      const w=Math.min(Math.max((e-s+1)*col-2,need[i]),W);
-      put(i,Math.min(s*col+1,W-w),w,row++);
+      put(g,s*col+1,(e-s+1)*col-2,row++);
     });
   box.style.height=(row*(H+GAP)-GAP)+'px';
 }
