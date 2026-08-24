@@ -1627,17 +1627,18 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    铺到胶囊边缘上（看着就是「字超出胶囊」）；挂到块上，span 只有内容区那么宽，两头的
    空当就留住了。 */
 /* 小圆角而不是胶囊：名字换到两行后块要长高，999px 的圆角把两头削成半圆，
-   椭圆压在四十来像素宽的一列里显得笨；6px（同 --rchip）收成小方块才立得住 */
-.cw-p{position:absolute;border-radius:var(--rchip);z-index:1;cursor:pointer;
+   椭圆压在四十来像素宽的一列里显得笨。块高只有 15，6px 的圆角占掉四成块高，
+   3px 才是「方块带个小角」 */
+.cw-p{position:absolute;border-radius:3px;z-index:1;cursor:pointer;
   display:flex;align-items:center;justify-content:flex-start;padding:1.5px 3px;overflow:hidden;}
 /* 单日块靠左、跨天块居中：单日块只有一列宽，字左对齐才和它那一天的其他块连成一竖条；
    跨天块横跨好几列，靠左会把字全堆在起始日那头，看不出这条底色管的是哪几天 */
 .cw-p.cw-span{justify-content:center;}
 .cw-p.cw-span span{text-align:center;}
-/* 9px：比 foot(11) 小两号。一列就 46 像素、去掉内边距只剩 40，10px 一行放不下四个字。
+/* 10px：比 foot(11) 小一号。一列就 46 像素、去掉内边距只剩 40，一行放得下四个字。
    最多两行（同 .cal-tl-nm 的写法），再长才在第二行末尾收省略号——两行给到 6~8 个字，
    到这一步还没说完的名字，切一半反而认不出是哪件事。 */
-.cw-p span{font-size:calc(9px * var(--fs-scale));line-height:12px;color:var(--text-primary);
+.cw-p span{font-size:calc(10px * var(--fs-scale));line-height:12px;color:var(--text-primary);
   text-align:left;word-break:break-word;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .cw-p:active{opacity:.75;}
