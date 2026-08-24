@@ -178,7 +178,7 @@ body{
 .tile.on svg,.tile.on span{color:var(--a-accent);}
 
 /* 戊：贴着 tab 的小卡片（＝现有 .bb-sortpanel） */
-.pop{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:170px;
+.pop{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:max-content;min-width:96px;
   background:var(--a-surface);border:1px solid var(--a-border-soft);border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;z-index:4;}
 .pop::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;width:12px;height:12px;
@@ -436,6 +436,7 @@ body{
   <section class="block">
     <div class="sec-hd"><h2>建议</h2><span class="tag">NEXT</span></div>
     <div class="note">
+      <p class="kicker" style="margin:0 0 2px">SHIPPED · 已按 戊 落地</p>
       <h3>先落 戊，它几乎是白捡的</h3>
       <p>排序和筛选那两张小卡片（<code>.bb-sortsheet</code> + <code>.bb-sortpanel</code> + <code>placeBBPanel</code>）已经把
          「贴着底栏某个按钮上方弹出、点外面收起、选中项高亮」整套做完了。视图切换只需要多喂一份四行的数据，
@@ -448,6 +449,9 @@ body{
       </ol>
       <p>如果更希望「一眼看懂每个视图是干嘛的」——尤其是「标签」这个名字确实不自解释——那就选<b>甲</b>，
          代价是每次切换都要盖掉半屏。想要最不打扰、切换最快，就选<b>丙</b>。</p>
+      <p><b>落地后的两处调整：</b>①卡片宽度收到 <b>96px</b>（比这张示意图还窄一档，宽度只够「两个字 + 图标」，
+         贴着 tab 更像是从它长出来的）；②顶部那条四段胶囊<b>只在手机端收起</b>——桌面端没有底栏，
+         那边仍靠它切换，两套共用同一个 <code>setCalView()</code> 和同一份「上次停在哪个视图」的记忆。</p>
     </div>
   </section>
 

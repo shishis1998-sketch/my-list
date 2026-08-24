@@ -1290,6 +1290,24 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   .bb-sortpanel{scrollbar-width:none;}
   .bb-sortpanel::-webkit-scrollbar{width:0;height:0;}
   @keyframes bbPopIn{from{opacity:0;transform:scale(.96) translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ── 日历视图切换：顶部那条四段胶囊在手机端整条收起，改成贴着底栏「日历」tab
+        弹出的小卡片。用的就是上面排序/筛选那张 .bb-sortpanel，只是居中对齐 tab、
+        多一个指向 tab 的小三角，宽度只由最长那项（两个字）决定。 ── */
+  /* 比日历页的底栏（z-index:115）低一档：遮罩只压内容区，底栏保持原色且可点——
+     手指看得见自己刚点的那个 tab，小三角也才有个不发暗的落点。卡片本身贴在底栏
+     上沿之上，不与它重叠，压低层级不影响显示。 */
+  #calViewSheet{z-index:112;}
+  .cal-viewpanel{min-width:96px;transform-origin:bottom center;overflow:visible;}
+  /* 小三角横向位置由 JS 按 tab 中心实测写入 --arrow-x：卡片碰到屏幕边会被夹住，
+     那时卡片中心已经不是 tab 中心，写死 50% 就会指偏。 */
+  .cal-viewpanel::after{content:"";position:absolute;bottom:-6px;left:var(--arrow-x,50%);margin-left:-5.5px;
+    width:11px;height:11px;background:var(--surface);
+    border-right:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);
+    transform:rotate(45deg);border-radius:0 0 3px 0;}
+  .cal-viewopt{gap:var(--sp-8);}
+  .cal-viewopt svg{width:16px;height:16px;flex-shrink:0;color:var(--text-muted);}
+  .cal-viewopt.on svg{color:var(--accent);}
   .bb-sortopt{display:flex;align-items:center;gap:var(--sp-6);width:100%;background:none;border:none;
     text-align:left;padding:var(--sp-8) var(--sp-10);border-radius:9px;
     font-size:14.5px;font-family:var(--zh);color:var(--text-primary);cursor:pointer;}
@@ -1326,8 +1344,9 @@ body.cal-open .content{display:none!important;}
 /* 标题栏 = 日历卡的顶部（无色白底，与下方网格拼成一张卡）*/
 /* 左右内边距都是 10：与下方网格卡 .cal-scroll 的 10px 对齐，两者内容区同宽（310），
    下面 .cal-nav 的半列偏移才能直接用百分比算。上下各 8 → 行高 8+32+8+1描边 = 49 */
-.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-8) var(--sp-10);flex-shrink:0;
-  background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sp-8) + env(safe-area-inset-top)) var(--sp-10) var(--sp-8);flex-shrink:0;
+  background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 桌面端：上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致；
+     手机端切换条已收起，这一行就是首屏第一行，顶部安全区由上面的 padding 接管 */
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
 /* 左移半列减半个箭头按钮：‹ 的图标中心落在第一列（周一）日期的中心线上，
    与右侧筛选/搜索对齐末列是同一套算法（见下面 .cal-nav） */
@@ -2588,9 +2607,12 @@ mark.shl{
 /* ═══ 日历/经期 视图切换（my-list 侧 chrome）═══ */
 .cal-viewbar{display:flex;align-items:center;justify-content:flex-end;gap:12px;
   padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 6px;flex-shrink:0;background:var(--bg);}
-.cal-viewtitle{display:none;}  /* 「日历/经期」标题去掉，下方年月标题已足够，避免重复 */
-/* 经期视图：不再把视图切换条钉在顶部——让整块 modal 一起滚动，切换条随内容向上滑走
-   （月份导航 .home-sticky 仍 sticky 吸顶，滚动时可继续翻月）。日历视图不受影响。 */
+/* 有底栏的那一档（＝ .bottombar 显示的同一个条件）整条收起：视图切换改走底栏
+   「日历」tab 上方弹出的小卡片。这条必须写在上面那条基础规则之后——同优先级，
+   排在前面的 @media 会被后面的基础规则盖掉。 */
+@media (max-width:1024px), (pointer: coarse){ .cal-viewbar{display:none;} }
+/* 经期视图：整块 modal 一起滚动（月份导航 .home-sticky 仍 sticky 吸顶，
+   滚动时可继续翻月）。日历视图不受影响。 */
 body.cal-view-period .cal-modal{overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
 body.cal-view-period .cal-modal::-webkit-scrollbar{display:none;}
@@ -2627,7 +2649,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    落到 token：原 9px 的星期头与格内日期一律提到 --fs-foot 11px，卡片 --rlg，日期格取正圆。
    accent 不再钉死：这一屏跟随设置里的主题色（经期/年度那两屏仍是固定墨绿）。 */
 #calViewHeat{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;-ms-overflow-style:none;padding:0 var(--sp-14) var(--sp-20);}
+  scrollbar-width:none;-ms-overflow-style:none;
+  padding:calc(env(safe-area-inset-top) + var(--sp-8)) var(--sp-14) var(--sp-20);}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
 #calViewHeat .hm-hdr{display:flex;align-items:center;padding:var(--sp-6) 0 var(--sp-12);}
@@ -4286,8 +4309,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   <!-- ===== CALENDAR VIEW：与 .content 平级的同级视图，不是浮层 ===== -->
   <div class="cal-view" id="calRoot">
     <div class="cal-modal">
+      <!-- 顶部四段条：只留给桌面端（那边没有底栏）。手机端整条隐藏，改成
+           在日历页再点一次底栏「日历」tab，从 tab 头上弹出 #calViewSheet 小卡片。 -->
       <div class="cal-viewbar">
-        <div class="cal-viewtitle" id="calViewTitle">日历</div>
         <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
           <span class="cvt-thumb" id="cvtThumb"></span>
           <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
@@ -4498,9 +4522,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h13l3 3v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
       笔记
     </button>
-    <button class="bb-tab" id="bbtab-cal" type="button" onclick="openCalendar()">
+    <button class="bb-tab" id="bbtab-cal" type="button" onclick="onCalTabTap()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      日历
+      <span id="bbtabCalLbl">日历</span>
     </button>
     <button class="bb-tab" id="bbtab-menu" type="button" onclick="toggleSidebar(true)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -4517,6 +4541,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 <!-- 标签筛选弹层（底部抽屉式）-->
 <div class="bb-sortsheet" id="bbTagSheet" onclick="if(event.target===this)closeTagSheet()">
   <div class="bb-sortpanel" id="bbTagPanel"></div>
+</div>
+
+<!-- 日历视图切换：贴着底栏「日历」tab 上方弹出，替代原顶部四段胶囊条 -->
+<div class="bb-sortsheet" id="calViewSheet" onclick="if(event.target===this)closeCalViewSheet()">
+  <div class="bb-sortpanel cal-viewpanel" id="calViewPanel"></div>
 </div>
 
 <!-- ===== ADD/EDIT MODAL ===== -->
@@ -9606,11 +9635,22 @@ function refreshCalPeriodView(){
 // 四段控件的高亮 + 滑块位置 + 记住的档位；setCalView 和 PV 内部换层级时都走这里，
 // 免得两处各写一遍走偏
 function syncCalToggle(v){
-  document.querySelectorAll('.cal-vtoggle .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
+  document.querySelectorAll('.cal-viewbar .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   const thumb=document.getElementById('cvtThumb');
   if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
             thumb.classList.toggle('h',v==='heat');}
+  document.querySelectorAll('#calViewPanel .cal-viewopt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
+  syncCalTabLabel();
   try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
+}
+// 顶部条在手机端收起后，「现在是哪个视图」就没人显示了——交给底栏那个 tab：
+// 在日历页时它的文字跟着当前视图走（经期/年度/标签），退出日历再变回「日历」。
+function syncCalTabLabel(){
+  const el=document.getElementById('bbtabCalLbl');
+  if(!el)return;
+  const inCal=document.body.classList.contains('cal-open');
+  const hit=CAL_VIEWS.find(x=>x.id===calView);
+  el.textContent=(inCal&&hit)?hit.lbl:'日历';
 }
 // PV 自己切了月↔年（年视图里点某个月）→ 把控件挪到对应那一段。
 // setCalView 调 PV.setHomeView 时 calView 已经是 v 了，这里直接返回，不会来回打转。
@@ -9633,7 +9673,6 @@ function setCalView(v){
   if(hv)hv.style.display=isH?'':'none';
   document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
   syncCalToggle(v);
-  const title=document.getElementById('calViewTitle');if(title)title.textContent=(isP||isH)?'经期':'日历';
   if(isH&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
     PV.openHeat(prev);   // 从经期/年度切进来时跟随那边的年月
@@ -9644,6 +9683,64 @@ function setCalView(v){
     if(prev==='cal'||prev==='heat'||!PV.hasPos())PV.open(v);
     else PV.setHomeView(v);            // 月↔年 只换缩放层级，保留当前位置
   }
+}
+
+// ── 日历视图切换卡片（手机端）─────────────────────────────────────
+// 顶部四段胶囊条在手机端收起了，入口改成：已经在日历页时再点一次底栏「日历」tab。
+// 卡片本身就是排序/筛选那张 .bb-sortpanel，只是改成对准 tab 居中、加一个小三角。
+const CAL_VIEWS=[
+  {id:'cal',  lbl:'日历', ic:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
+  {id:'month',lbl:'经期', ic:'<path d="M12 3.2s6.2 6.7 6.2 10.5A6.2 6.2 0 0 1 5.8 13.7C5.8 9.9 12 3.2 12 3.2z"/>'},
+  {id:'year', lbl:'年度', ic:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h2M11 9h2M15 9h2M7 13h2M11 13h2M15 13h2"/>'},
+  {id:'heat', lbl:'标签', ic:'<path d="M20.6 13.4 12 4.8H4.8V12l8.6 8.6a1.6 1.6 0 0 0 2.3 0l4.9-4.9a1.6 1.6 0 0 0 0-2.3z"/><circle cx="8.4" cy="8.4" r="1.3"/>'}
+];
+// 底栏「日历」：不在日历页 → 进日历（老行为）；已经在日历页 → 弹视图卡片
+function onCalTabTap(){
+  if(document.body.classList.contains('cal-open')) toggleCalViewSheet();
+  else openCalendar();
+}
+function toggleCalViewSheet(){
+  const sheet=document.getElementById('calViewSheet');
+  if(sheet&&sheet.classList.contains('open')) closeCalViewSheet();
+  else openCalViewSheet();
+}
+function openCalViewSheet(){
+  const sheet=document.getElementById('calViewSheet');
+  const panel=document.getElementById('calViewPanel');
+  if(!sheet||!panel)return;
+  panel.innerHTML=CAL_VIEWS.map(v=>
+    `<button type="button" class="bb-sortopt cal-viewopt${v.id===calView?' on':''}" data-cv="${v.id}" onclick="pickCalView('${v.id}')">`+
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${v.ic}</svg>${v.lbl}</button>`
+  ).join('');
+  sheet.classList.add('open');
+  placeCalViewPanel();
+  window.addEventListener('resize',placeCalViewPanel);
+  haptic('tap');
+}
+function closeCalViewSheet(){
+  window.removeEventListener('resize',placeCalViewPanel);
+  const sheet=document.getElementById('calViewSheet');
+  if(sheet)sheet.classList.remove('open');
+}
+// 对准 tab 居中，不是像排序那样右对齐：日历 tab 在中间，右对齐会整张卡歪到左边。
+// 碰到屏幕边就夹住，此时卡片中心≠tab 中心，小三角的位置另外算。
+function placeCalViewPanel(){
+  const panel=document.getElementById('calViewPanel');
+  const btn=document.getElementById('bbtab-cal');
+  if(!panel||!btn)return;
+  const r=btn.getBoundingClientRect();
+  if(!r.width)return;                       // 底栏没显示（桌面用顶部四段条）
+  panel.style.bottom=(window.innerHeight-r.top+10)+'px';
+  const w=panel.offsetWidth, cx=r.left+r.width/2;
+  const left=Math.max(8,Math.min(Math.round(cx-w/2),window.innerWidth-w-8));
+  panel.style.left=left+'px';
+  panel.style.right='auto';
+  panel.style.setProperty('--arrow-x',Math.round(cx-left)+'px');
+}
+function pickCalView(v){
+  setCalView(v);
+  saveLastView();
+  closeCalViewSheet();
 }
 
 // ── Data ─────────────────────────────────────────────────────────
@@ -11154,6 +11251,7 @@ const BACK_LAYERS=[
   {id:'tlSheet',            cls:'show', close:()=>closeChapterSheet()},
   {id:'bbSortSheet',        cls:'open', close:()=>closeSortSheet()},
   {id:'bbTagSheet',         cls:'open', close:()=>closeTagSheet()},
+  {id:'calViewSheet',       cls:'open', close:()=>closeCalViewSheet()},
   {id:'cfdlg',              cls:'open', close:()=>closeCf()},
   {id:'trashModal',         cls:'open', close:()=>closeTrash()},
   {id:'tagMgrModal',        cls:'open', close:()=>closeTagMgr()},
@@ -13092,6 +13190,8 @@ function openCalendar(){
 function closeCalendar(){
   document.getElementById('calRoot').classList.remove('open');
   document.body.classList.remove('cal-open');
+  closeCalViewSheet();             // 视图卡片跟着日历页一起收
+  syncCalTabLabel();               // cal-open 已去掉 → tab 文字回到「日历」
   document.body.classList.remove('cal-view-period');
   closeCalSearch();                // 退出日历时收起搜索
   closeCalFilter();                // 退出日历时收起筛选
