@@ -1608,17 +1608,20 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-chev{width:16px;height:16px;color:var(--text-muted);flex-shrink:0;margin-left:auto;transition:transform .2s;}
 .cw-card.closed .cw-chev{transform:rotate(-90deg);}
 .cw-card.closed .cw-body{display:none;}
-.cw-body{padding:0 var(--sp-14) var(--sp-14);}
-.cw-cols{display:grid;grid-template-columns:repeat(7,1fr);}
-.cw-gh{text-align:left;padding:0 0 var(--sp-8) calc(var(--sp-6) + 1px);}
+/* 左右 10 = 月历卡 .cal-scroll 的左右内边距：两张卡外边距同为 14，内边距也取齐，
+   这一格七列才和上面月历的七列同起同止（列宽 50、列缝 2 都对得上）。 */
+.cw-body{padding:0 var(--sp-10) var(--sp-14);}
+/* 列缝 2px：同 .cal-grid / .cal-weekrow，列心才和月历的日期数字重合 */
+.cw-cols{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);}
+.cw-gh{text-align:center;padding:0 0 var(--sp-8);}
 .cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
 .cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
-  width:22px;height:22px;line-height:22px;text-align:center;margin:0 0 0 -5px;}
+  width:22px;height:22px;line-height:22px;text-align:center;margin:0 auto;}
 /* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
 .cw-pills{position:relative;}
-.cw-p{position:absolute;height:23px;border-radius:999px;z-index:1;cursor:pointer;
+.cw-p{position:absolute;height:20px;border-radius:999px;z-index:1;cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0 var(--sp-6);overflow:hidden;}
 /* 字比 foot 再小一号：一列就 50 来像素，11px 的名字连三个字都放不下。
    左右内边距挪到块身上、只让 span 裁字：内边距挂在 span 上时裁切边是它的 padding box，
@@ -13853,7 +13856,9 @@ function layoutWeekPills(days){
   if(!gs.length){box.innerHTML='<div class="cw-empty">这一周没有记录</div>';box.style.height='';return;}
   const W=box.clientWidth;
   if(!W){box.style.height='';return;}          // 收起着或还没上屏：量不到宽度，展开时再摆
-  const col=W/7, H=23, GAP=6;
+  // 列宽/列缝照抄月历那张卡的网格（七列 1fr、列缝 2）：块的左右缘就压在月历
+  // 同一天格子的左右缘上，两张卡的「17…23」上下对成一条线
+  const CG=2, col=(W-CG*6)/7, H=20, GAP=6;
   // 块宽一律按日期算：单日 = 一列，跨天 = 跨几列。名字放不下就切掉，不加省略号
   // （早先让名字把块撑长，一周十几件事就横七竖八，同一天的还被拆到好几行）
   const put=(g,left,w,row)=>{
@@ -13871,7 +13876,7 @@ function layoutWeekPills(days){
   let rows=0;
   days.forEach((ds,di)=>{
     gs.filter(g=>g.dates.length<2&&g.dates[0]===ds)
-      .forEach((g,r)=>{ put(g,di*col+1,col-2,r); rows=Math.max(rows,r+1); });
+      .forEach((g,r)=>{ put(g,di*(col+CG),col,r); rows=Math.max(rows,r+1); });
   });
   // 跨天的垫在最下面：它们是这一周的底色（一趟旅行、一次搬家），
   // 摆在上面会把上面那七列从中间截断。短的在上、最长的压在最底
@@ -13880,7 +13885,7 @@ function layoutWeekPills(days){
     .sort((a,b)=>a.dates.length-b.dates.length||a.dates[0].localeCompare(b.dates[0]))
     .forEach(g=>{
       const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-      put(g,s*col+1,(e-s+1)*col-2,row++);
+      put(g,s*(col+CG),(e-s+1)*(col+CG)-CG,row++);
     });
   box.style.height=(row*(H+GAP)-GAP)+'px';
 }
