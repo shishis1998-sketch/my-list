@@ -1604,7 +1604,6 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-hd{width:100%;display:flex;align-items:center;gap:var(--sp-8);background:none;border:0;
   padding:var(--sp-12) var(--sp-14);cursor:pointer;font-family:var(--zh);text-align:left;}
 .cw-hd-t{font-size:var(--fs-headline);font-weight:700;color:var(--accent);}
-.cw-hd-rng{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);}
 .cw-chev{width:16px;height:16px;color:var(--text-muted);flex-shrink:0;margin-left:auto;transition:transform .2s;}
 .cw-card.closed .cw-chev{transform:rotate(-90deg);}
 .cw-card.closed .cw-body{display:none;}
@@ -13843,7 +13842,6 @@ function renderWeekCard(force){
   if(!force&&days[0]===cwShownWeek&&card.firstChild)return;
   cwShownWeek=days[0];
   const today=calToday();
-  const md=ds=>{const[,m,d]=ds.split('-');return `${+m}/${+d}`;};
   const cols=days.map(ds=>{const dt=new Date(ds+'T00:00:00');
     return `<div class="cw-gh${ds===today?' today':''}"><span class="w">${CW_WK[(dt.getDay()+6)%7]}</span>`+
            `<span class="d">${dt.getDate()}</span></div>`;}).join('');
@@ -13852,7 +13850,6 @@ function renderWeekCard(force){
     `<button type="button" class="cw-hd" onclick="toggleWeekCard()">`+
     // 翻到别的月份时这一周未必是「本周」，标题跟着改口，免得 7 月那一周也叫本周
     `<span class="cw-hd-t">${days.includes(today)?'本周':'那一周'}</span>`+
-    `<span class="cw-hd-rng">${md(days[0])} – ${md(days[6])}</span>`+
     CW_CHEV+`</button>`+
     `<div class="cw-body"><div class="cw-cols">${cols}</div><div class="cw-pills" id="calWeekPills"></div></div>`;
   layoutWeekPills(days);
