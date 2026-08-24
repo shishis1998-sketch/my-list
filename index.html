@@ -1344,9 +1344,8 @@ body.cal-open .content{display:none!important;}
 /* 标题栏 = 日历卡的顶部（无色白底，与下方网格拼成一张卡）*/
 /* 左右内边距都是 10：与下方网格卡 .cal-scroll 的 10px 对齐，两者内容区同宽（310），
    下面 .cal-nav 的半列偏移才能直接用百分比算。上下各 8 → 行高 8+32+8+1描边 = 49 */
-.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--sp-8) + env(safe-area-inset-top)) var(--sp-10) var(--sp-8);flex-shrink:0;
-  background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 桌面端：上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致；
-     手机端切换条已收起，这一行就是首屏第一行，顶部安全区由上面的 padding 接管 */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-8) var(--sp-10);flex-shrink:0;
+  background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
 /* 左移半列减半个箭头按钮：‹ 的图标中心落在第一列（周一）日期的中心线上，
    与右侧筛选/搜索对齐末列是同一套算法（见下面 .cal-nav） */
@@ -2610,7 +2609,14 @@ mark.shl{
 /* 有底栏的那一档（＝ .bottombar 显示的同一个条件）整条收起：视图切换改走底栏
    「日历」tab 上方弹出的小卡片。这条必须写在上面那条基础规则之后——同优先级，
    排在前面的 @media 会被后面的基础规则盖掉。 */
-@media (max-width:1024px), (pointer: coarse){ .cal-viewbar{display:none;} }
+@media (max-width:1024px), (pointer: coarse){
+  .cal-viewbar{display:none;}
+  /* 切换条收起后，这张卡就是首屏第一行。顶部安全区 + 14 的呼吸位必须走 margin：
+     写进卡片自己的 padding 只是把卡撑高，卡片上沿还贴在 6px 处，状态栏会压在白卡上。
+     14 与搜索行 .cal-searchwrap、经期视图 .home-header 的顶距一致——搜索时这两行
+     互相替换，顶距不一样会跳。 */
+  .cal-hdr{margin-top:calc(var(--sp-14) + env(safe-area-inset-top));}
+}
 /* 经期视图：整块 modal 一起滚动（月份导航 .home-sticky 仍 sticky 吸顶，
    滚动时可继续翻月）。日历视图不受影响。 */
 body.cal-view-period .cal-modal{overflow-y:visible;-webkit-overflow-scrolling:touch;
