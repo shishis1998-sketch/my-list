@@ -1610,12 +1610,12 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-card.closed .cw-body{display:none;}
 .cw-body{padding:0 var(--sp-14) var(--sp-14);}
 .cw-cols{display:grid;grid-template-columns:repeat(7,1fr);}
-.cw-gh{text-align:center;padding-bottom:var(--sp-8);}
+.cw-gh{text-align:left;padding:0 0 var(--sp-8) calc(var(--sp-8) + 1px);}
 .cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
 .cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
-  width:22px;height:22px;line-height:22px;margin:0 auto;}
+  width:22px;height:22px;line-height:22px;text-align:center;margin:0 0 0 -5px;}
 /* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
 .cw-pills{position:relative;}
 .cw-p{position:absolute;height:23px;border-radius:999px;z-index:1;cursor:pointer;
@@ -13883,13 +13883,16 @@ function layoutWeekPills(days){
     row++;
   });
   // 跨天的垫在最后：它们是这一周的底色（一趟旅行、一次搬家），
-  // 摆在上面会把「往下读 = 往后一天」那条线从中间截断
-  gs.forEach((g,i)=>{
-    if(g.dates.length<2)return;
-    const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-    const w=Math.min(Math.max((e-s+1)*col-2,need[i]),W);
-    put(i,Math.min(s*col+1,W-w),w,row++);
-  });
+  // 摆在上面会把「往下读 = 往后一天」那条线从中间截断。
+  // 短的在上、最长的压在最底下，越往下铺得越宽，像层层垫底
+  gs.map((g,i)=>i).filter(i=>gs[i].dates.length>1)
+    .sort((a,b)=>gs[a].dates.length-gs[b].dates.length||gs[a].dates[0].localeCompare(gs[b].dates[0]))
+    .forEach(i=>{
+      const g=gs[i];
+      const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
+      const w=Math.min(Math.max((e-s+1)*col-2,need[i]),W);
+      put(i,Math.min(s*col+1,W-w),w,row++);
+    });
   box.style.height=(row*(H+GAP)-GAP)+'px';
 }
 // 转屏/改字号后卡宽变了，块的 left/width 是像素算的，得重摆一遍
