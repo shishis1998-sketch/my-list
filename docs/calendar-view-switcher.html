@@ -1,0 +1,522 @@
+<title>日历视图切换比稿</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   文稿外壳：沿用 docs/ 已有的「图版」语汇（纸色 + 发丝线 + 等宽眉标）
+   屏幕内部：直接搬 index.html 的 :root token，浅色/夜间两套都钉死，
+             示意图＝真机观感，不跟随看图人的系统主题。
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#F4F4F0; --sheet:#FFFFFF; --ink:#17171A; --ink-2:#5E5E67; --ink-3:#8C8C95;
+  --hair:#DDDDD6; --hair-2:#E9E9E3; --dim:#C71F37; --acc:#1C5A48; --chip:#EAEAE4;
+  --stage:#EDEDE7;
+  /* App（= index.html 浅色 token） */
+  --a-bg:#F7F7F5; --a-surface:#FFFFFF; --a-surface2:#F2F2F0;
+  --a-border:#ECECEA; --a-border-soft:#F2F2F0;
+  --a-t1:#1A1A1A; --a-t2:#6B6B6B; --a-t3:#9B9B9B;
+  --a-accent:#2B4D3F; --a-accent-light:#E8EEEB; --a-accent-mid:#4A7B68; --a-on-accent:#fff;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+    --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+    --stage:#15151A;
+    --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+    --a-border:#2E2E33; --a-border-soft:#26262A;
+    --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+    --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-accent-mid:#8CC7AC; --a-on-accent:#10201A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --sheet:#1A1A1D; --ink:#EBEBEF; --ink-2:#9C9CA6; --ink-3:#74747E;
+  --hair:#31313A; --hair-2:#26262D; --dim:#F2718A; --acc:#5BB89A; --chip:#26262D;
+  --stage:#15151A;
+  --a-bg:#121214; --a-surface:#1C1C1F; --a-surface2:#26262A;
+  --a-border:#2E2E33; --a-border-soft:#26262A;
+  --a-t1:#EDEDEF; --a-t2:#A6A6AD; --a-t3:#77777E;
+  --a-accent:#6FB394; --a-accent-light:#1E2C26; --a-accent-mid:#8CC7AC; --a-on-accent:#10201A;
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:15px; line-height:1.7;
+  background-image:linear-gradient(var(--hair-2) 1px,transparent 1px),linear-gradient(90deg,var(--hair-2) 1px,transparent 1px);
+  background-size:32px 32px; background-position:-1px -1px;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:52px 20px 104px;display:flex;flex-direction:column;gap:50px;}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+
+/* ── 页头 ── */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;}
+.kicker{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.2em;color:var(--dim);margin:0 0 10px;}
+.masthead h1{font-family:"Songti SC","Source Han Serif SC","Noto Serif SC",Georgia,serif;
+  font-size:clamp(28px,5.2vw,42px);line-height:1.15;margin:0 0 12px;letter-spacing:.02em;text-wrap:balance;font-weight:600;}
+.masthead p{margin:0 0 8px;color:var(--ink-2);max-width:70ch;}
+.masthead p:last-child{margin-bottom:0;}
+.masthead b{color:var(--ink);font-weight:600;}
+
+/* ── 小节标题 ── */
+.sec-hd{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--hair);padding-bottom:9px;margin-bottom:6px;}
+.sec-hd h2{font-size:19px;margin:0;letter-spacing:.02em;font-weight:600;}
+.sec-hd .tag{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.16em;color:var(--ink-3);}
+.lead{margin:0;color:var(--ink-2);max-width:70ch;font-size:14px;}
+.lead b{color:var(--ink);font-weight:600;}
+.block{display:flex;flex-direction:column;gap:16px;}
+
+/* ── 比稿网格 ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:38px 30px;}
+.spec{display:flex;flex-direction:column;gap:11px;}
+.spec h3{font-size:17px;margin:0;letter-spacing:.02em;display:flex;align-items:baseline;gap:10px;font-weight:600;}
+.spec h3 .no{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;letter-spacing:.14em;
+  color:var(--dim);border:1px solid var(--dim);border-radius:2px;padding:2px 6px;flex:0 0 auto;}
+.spec .why{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.65;}
+.spec .why b{color:var(--ink);font-weight:600;}
+.tradeoff{margin:0;font-size:12.5px;color:var(--ink-3);line-height:1.6;
+  border-left:2px solid var(--hair);padding-left:10px;}
+.tradeoff b{color:var(--ink-2);font-weight:600;}
+.pick{border-left-color:var(--acc);color:var(--ink-2);}
+.pick b{color:var(--acc);}
+
+/* ══ 手机舞台 ══ */
+.stage{background:var(--stage);border:1px solid var(--hair);border-radius:4px;padding:16px;display:flex;justify-content:center;}
+.ph{position:relative;width:290px;height:548px;background:var(--a-bg);border:1px solid var(--a-border);
+  border-radius:18px;overflow:hidden;display:flex;flex-direction:column;
+  font-size:13px;color:var(--a-t1);box-shadow:0 8px 22px rgba(0,0,0,.08);}
+.ph-body{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+.ph-body>*{flex:0 0 auto;}
+
+/* 顶部：月份 + 筛选/搜索（现有 .cal-hdr） */
+.ph-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px;flex-shrink:0;}
+.ph-titlenav{display:flex;align-items:center;gap:4px;}
+.ph-nav{color:var(--a-accent);font-size:15px;line-height:1;width:18px;text-align:center;}
+.ph-title{font-size:16px;font-weight:700;color:var(--a-accent);letter-spacing:.03em;}
+.ph-tools{display:flex;gap:10px;color:var(--a-accent);}
+.ph-tools svg{width:16px;height:16px;}
+
+/* 顶部切换条（现状用） */
+.ph-vbar{display:flex;padding:10px 14px 4px;flex-shrink:0;}
+.ph-vbar.mark{outline:1px dashed var(--dim);outline-offset:1px;}
+.ph-vtoggle{position:relative;display:flex;width:100%;background:var(--a-border);border-radius:999px;padding:3px;}
+.ph-vseg{flex:1;text-align:center;font-size:12px;font-weight:600;color:var(--a-t2);padding:5px 0;border-radius:999px;position:relative;z-index:1;}
+.ph-vseg.on{color:var(--a-t1);background:var(--a-surface);box-shadow:0 1px 3px rgba(0,0,0,.14);}
+
+/* 月历卡 */
+.ph-card{background:var(--a-surface);border:1px solid var(--a-border);border-radius:16px;margin:6px 14px 0;padding:6px 10px 10px;}
+.ph-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--a-t3);padding:6px 0 2px;}
+.ph-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.ph-day{height:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;color:var(--a-t1);}
+.ph-day.mute{color:var(--a-t3);opacity:.5;}
+.ph-day.today{color:var(--a-on-accent);}
+.ph-day.today .ph-dnum{background:var(--a-accent);border-radius:50%;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;font-weight:700;}
+.ph-dnum{display:flex;align-items:center;justify-content:center;width:22px;height:22px;font-variant-numeric:tabular-nums;}
+.ph-dots{display:flex;gap:3px;height:5px;}
+.ph-dot{width:5px;height:5px;border-radius:50%;background:var(--a-accent-mid);}
+.ph-dot.b{background:#C98A3E;}
+.ph-legend{display:flex;gap:12px;padding:12px 18px;font-size:11px;color:var(--a-t3);align-items:center;}
+.ph-legend i{width:7px;height:7px;border-radius:50%;background:var(--a-accent-mid);display:inline-block;margin-right:5px;}
+.ph-legend i.b{background:#C98A3E;}
+
+/* 底栏 tab（现有 .bb-tabs） */
+.ph-bb{flex:0 0 auto;background:var(--a-surface);border-top:1px solid var(--a-border);display:flex;position:relative;z-index:3;}
+.ph-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:7px 4px 9px;color:var(--a-t3);font-size:10.5px;font-weight:600;position:relative;}
+.ph-tab svg{width:19px;height:19px;}
+.ph-tab.on{color:var(--a-accent);}
+.ph-tab.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:26px;height:3px;border-radius:2px;background:var(--a-accent);}
+
+/* 遮罩：只压内容区，底栏保持清晰（手指还看得见自己刚点的那个 tab） */
+.ph-scrim{position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(10,8,6,.18);z-index:2;}
+.ph-layer{position:relative;z-index:3;flex:0 0 auto;}
+
+/* ══ 共用：抽屉外壳 ══ */
+.sh{background:var(--a-surface);border-top:1px solid var(--a-border);
+  border-radius:18px 18px 0 0;box-shadow:0 -8px 26px rgba(0,0,0,.12);padding:8px 0 10px;}
+.sh-grab{width:34px;height:4px;border-radius:2px;background:var(--a-border);margin:2px auto 8px;}
+.sh-hd{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--a-t3);padding:2px 18px 8px;}
+
+/* 甲：说明式列表 */
+.r1{display:flex;align-items:center;gap:12px;padding:9px 18px;}
+.r1-ic{flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:var(--a-surface2);
+  display:flex;align-items:center;justify-content:center;color:var(--a-t2);}
+.r1-ic svg{width:18px;height:18px;}
+.r1.on .r1-ic{background:var(--a-accent-light);color:var(--a-accent);}
+.r1-col{flex:1;min-width:0;display:flex;flex-direction:column;}
+.r1-name{font-size:14.5px;font-weight:600;color:var(--a-t1);line-height:1.35;}
+.r1.on .r1-name{color:var(--a-accent);font-weight:700;}
+.r1-sub{font-size:11.5px;color:var(--a-t3);line-height:1.4;margin-top:1px;}
+.r1-chk{flex:0 0 auto;color:var(--a-accent);}
+.r1-chk svg{width:16px;height:16px;}
+
+/* 乙：紧凑单行 */
+.r2{display:flex;align-items:center;gap:11px;padding:0 12px;}
+.r2-in{display:flex;align-items:center;gap:11px;flex:1;padding:8px;border-radius:10px;}
+.r2.on .r2-in{background:var(--a-accent-light);}
+.r2 svg{width:17px;height:17px;color:var(--a-t2);flex:0 0 auto;}
+.r2.on svg{color:var(--a-accent);}
+.r2-name{flex:1;font-size:14.5px;line-height:1.35;color:var(--a-t1);}
+.r2.on .r2-name{color:var(--a-accent);font-weight:700;}
+.r2-hair{height:1px;background:var(--a-border-soft);margin:0 20px;}
+
+/* 丙：胶囊横排 */
+.pillbar{padding:10px 12px 12px;background:var(--a-surface);border-top:1px solid var(--a-border);
+  box-shadow:0 -6px 20px rgba(0,0,0,.10);display:flex;gap:8px;}
+.pill{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--a-t2);
+  background:var(--a-surface2);border-radius:999px;padding:8px 0;}
+.pill.on{background:var(--a-accent);color:var(--a-on-accent);}
+
+/* 丁：宽磁贴 2×2 */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:2px 14px 6px;}
+.tile{display:flex;align-items:center;gap:9px;background:var(--a-surface2);border:1px solid transparent;
+  border-radius:13px;padding:12px 11px;}
+.tile svg{width:18px;height:18px;color:var(--a-t2);flex:0 0 auto;}
+.tile span{font-size:13.5px;line-height:1.35;font-weight:600;color:var(--a-t1);}
+.tile.on{background:var(--a-accent-light);border-color:var(--a-accent-mid);}
+.tile.on svg,.tile.on span{color:var(--a-accent);}
+
+/* 戊：贴着 tab 的小卡片（＝现有 .bb-sortpanel） */
+.pop{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:170px;
+  background:var(--a-surface);border:1px solid var(--a-border-soft);border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;z-index:4;}
+.pop::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;width:12px;height:12px;
+  background:var(--a-surface);border-right:1px solid var(--a-border-soft);border-bottom:1px solid var(--a-border-soft);
+  transform:rotate(45deg);border-radius:0 0 3px 0;}
+.pop-opt{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;font-size:14px;line-height:1.35;color:var(--a-t1);}
+.pop-opt svg{width:16px;height:16px;color:var(--a-t2);flex:0 0 auto;}
+.pop-opt.on{background:var(--a-accent-light);color:var(--a-accent);font-weight:700;}
+.pop-opt.on svg{color:var(--a-accent);}
+
+/* 标注气泡 */
+.callout{position:absolute;z-index:6;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:10px;
+  letter-spacing:.06em;color:var(--dim);background:var(--paper);border:1px solid var(--dim);
+  border-radius:2px;padding:2px 6px;line-height:1.4;}
+
+/* ── 取舍表 ── */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;}
+.tbl th,.tbl td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top;}
+.tbl th{font-size:11px;letter-spacing:.12em;color:var(--ink-3);font-weight:600;
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;text-transform:uppercase;border-bottom:1px solid var(--ink);}
+.tbl td:first-child{white-space:nowrap;font-weight:600;}
+.tbl tr.best td{background:var(--chip);}
+.tbl .num{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.tblwrap{overflow-x:auto;}
+
+/* ── 结论卡 ── */
+.note{background:var(--sheet);border:1px solid var(--hair);border-left:3px solid var(--acc);
+  border-radius:3px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;}
+.note h3{margin:0;font-size:15px;letter-spacing:.02em;}
+.note p{margin:0;font-size:14px;color:var(--ink-2);max-width:74ch;}
+.note ol{margin:0;padding-left:20px;font-size:14px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px;}
+.note code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;background:var(--chip);
+  padding:1px 5px;border-radius:3px;color:var(--ink);}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="kicker">DOCS / 2026-08 / 日历页 chrome</p>
+    <h1>视图切换：从顶部胶囊条，搬到底部抽屉</h1>
+    <p>现在「日历 / 经期 / 年度 / 标签」是一条常驻在日历页最顶上的四段胶囊条（<span class="mono">.cal-vtoggle.cvt4</span>），
+       一年到头占着一整行，而真正会切换的频率很低。改法：<b>这行去掉，改成在日历页里再点一次底栏的「日历」tab，从底部弹出一张选择面板</b>——
+       手指本来就在底栏，切换动作离手最近。</p>
+    <p>参考的是 Outlook 点「应用」弹出的那张底部面板，但不照抄它的方形图标九宫格。下面五版都是<b>非方形</b>的形态，
+       分别把重点放在「说得清」「够紧凑」「零新组件」上，可以直接挑一版落地。</p>
+  </header>
+
+  <!-- ═══ 现状 ═══ -->
+  <section class="block">
+    <div class="sec-hd"><h2>现状</h2><span class="tag">BEFORE</span></div>
+    <p class="lead">顶部第一行永远是那条胶囊：四个字挤在 290 宽里，每段不到 70px，
+       且它和下面的「2026 年 8 月」标题行、周次行一起，把日历网格压到了屏幕中段。</p>
+    <div class="grid">
+      <div class="spec">
+        <div class="stage">
+          <div class="ph">
+            <div class="ph-body">
+              <div class="ph-vbar mark">
+                <div class="ph-vtoggle">
+                  <div class="ph-vseg on">日历</div><div class="ph-vseg">经期</div>
+                  <div class="ph-vseg">年度</div><div class="ph-vseg">标签</div>
+                </div>
+              </div>
+              <div class="ph-hd">
+                <div class="ph-titlenav"><span class="ph-nav">‹</span><span class="ph-title">2026 年 8 月</span><span class="ph-nav">›</span></div>
+                <div class="ph-tools">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+                </div>
+              </div>
+              <div class="ph-card" data-cal></div>
+              <div class="ph-legend"><span><i></i>记录</span><span><i class="b"></i>纪念日</span></div>
+            </div>
+            <div class="ph-bb" data-bb></div>
+            <span class="callout" style="bottom:70px;left:14px">虚线这行常驻占位 50px<br>（切换频率却很低）</span>
+          </div>
+        </div>
+      </div>
+      <div class="spec" style="justify-content:center">
+        <p class="why"><b>问题一 · 常驻但低频。</b>切视图一天可能只发生一两次，胶囊条却全天占着首屏最贵的那一行（连上下间距共 50px）。</p>
+        <p class="why"><b>问题二 · 挤。</b>四段等分后每段净宽约 68px，「日历」两字加上下 4px padding 已经贴边，再加一档就放不下了。</p>
+        <p class="why"><b>问题三 · 够不着。</b>它在屏幕最顶端，而人的拇指常年停在底栏；每次切换都要伸手到顶。</p>
+        <p class="why"><b>问题四 · 语义重复。</b>底栏已经有一个「日历」tab 亮着，顶部又有一个「日历」段亮着，同一个词在一屏里高亮两次。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 五个方案 ═══ -->
+  <section class="block">
+    <div class="sec-hd"><h2>五个方案</h2><span class="tag">AFTER · 甲乙丙丁戊</span></div>
+    <p class="lead">五版共用同一个触发：<b>人已经在日历页时，再点一次底栏「日历」tab</b>（不在日历页时这个 tab 还是老行为——进日历）。
+       遮罩只压内容区，底栏本身不变暗，手指仍能看见自己刚点的位置。</p>
+
+    <div class="grid">
+
+      <!-- 甲 -->
+      <div class="spec">
+        <h3><span class="no">甲</span>说明式列表</h3>
+        <div class="stage">
+          <div class="ph">
+            <div class="ph-body" data-screen></div>
+            <div class="ph-scrim"></div>
+            <div class="ph-layer">
+              <div class="sh">
+                <div class="sh-grab"></div>
+                <div class="r1 on">
+                  <span class="r1-ic" data-ic="cal"></span>
+                  <span class="r1-col"><span class="r1-name">日历</span><span class="r1-sub">月历格 + 当天的记录</span></span>
+                  <span class="r1-chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                </div>
+                <div class="r1">
+                  <span class="r1-ic" data-ic="period"></span>
+                  <span class="r1-col"><span class="r1-name">经期</span><span class="r1-sub">周期预测与症状记录</span></span>
+                </div>
+                <div class="r1">
+                  <span class="r1-ic" data-ic="year"></span>
+                  <span class="r1-col"><span class="r1-name">年度</span><span class="r1-sub">一整年热力，一屏看完</span></span>
+                </div>
+                <div class="r1">
+                  <span class="r1-ic" data-ic="tag"></span>
+                  <span class="r1-col"><span class="r1-name">标签</span><span class="r1-sub">按症状标签分组的月历</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="ph-bb" data-bb></div>
+          </div>
+        </div>
+        <p class="why">整屏宽的抽屉，一行一个视图：<b>图标 + 名字 + 一句话说明</b>，当前项打勾。
+           「经期」「标签」这种光看名字猜不透的视图，副标题正好补上。</p>
+        <p class="tradeoff"><b>代价</b>　高约 250px（占屏 46%），是五版里最占地方的；四个视图不算多，说明文字读一次就不再需要。</p>
+      </div>
+
+      <!-- 乙 -->
+      <div class="spec">
+        <h3><span class="no">乙</span>紧凑列表</h3>
+        <div class="stage">
+          <div class="ph">
+            <div class="ph-body" data-screen></div>
+            <div class="ph-scrim"></div>
+            <div class="ph-layer">
+              <div class="sh">
+                <div class="sh-grab"></div>
+                <div class="sh-hd">切换视图</div>
+                <div class="r2 on"><span class="r2-in" data-ic="cal" data-label="日历"></span></div>
+                <div class="r2-hair"></div>
+                <div class="r2"><span class="r2-in" data-ic="period" data-label="经期"></span></div>
+                <div class="r2-hair"></div>
+                <div class="r2"><span class="r2-in" data-ic="year" data-label="年度"></span></div>
+                <div class="r2-hair"></div>
+                <div class="r2"><span class="r2-in" data-ic="tag" data-label="标签"></span></div>
+              </div>
+            </div>
+            <div class="ph-bb" data-bb></div>
+          </div>
+        </div>
+        <p class="why">同一张抽屉去掉说明文字，行高压到 40px，发丝线分隔，当前项整行铺淡绿底。
+           <b>形态跟现有的排序 / 筛选抽屉是同一套</b>，读起来像 App 里本来就有的东西。</p>
+        <p class="tradeoff"><b>代价</b>　高约 210px，仍会盖住三分之一屏；名字之外没有任何解释。</p>
+      </div>
+
+      <!-- 丙 -->
+      <div class="spec">
+        <h3><span class="no">丙</span>胶囊横排</h3>
+        <div class="stage">
+          <div class="ph">
+            <div class="ph-body" data-screen></div>
+            <div class="ph-layer">
+              <div class="pillbar">
+                <span class="pill on">日历</span><span class="pill">经期</span>
+                <span class="pill">年度</span><span class="pill">标签</span>
+              </div>
+            </div>
+            <div class="ph-bb" data-bb></div>
+            <span class="callout" style="bottom:114px;right:10px">高 ≈ 60</span>
+          </div>
+        </div>
+        <p class="why">就是把原来顶部那条胶囊<b>原封不动挪到底栏正上方</b>，只在需要时出现。
+           高度只有约 60px，几乎不遮日历；不用遮罩，点外面任意处收起。</p>
+        <p class="tradeoff"><b>代价</b>　每段还是那么窄，视图再多一档就要横向滚动；出现时把底栏「垫高」了一层，视觉上有点像双层导航。</p>
+      </div>
+
+      <!-- 丁 -->
+      <div class="spec">
+        <h3><span class="no">丁</span>宽磁贴 2×2</h3>
+        <div class="stage">
+          <div class="ph">
+            <div class="ph-body" data-screen></div>
+            <div class="ph-scrim"></div>
+            <div class="ph-layer">
+              <div class="sh">
+                <div class="sh-grab"></div>
+                <div class="sh-hd">切换视图</div>
+                <div class="tiles">
+                  <span class="tile on" data-ic="cal" data-label="日历"></span>
+                  <span class="tile" data-ic="period" data-label="经期"></span>
+                  <span class="tile" data-ic="year" data-label="年度"></span>
+                  <span class="tile" data-ic="tag" data-label="标签"></span>
+                </div>
+              </div>
+            </div>
+            <div class="ph-bb" data-bb></div>
+          </div>
+        </div>
+        <p class="why">参考图那种面板的骨架，但磁贴是<b>横向的圆角矩形</b>——图标在左、文字在右，不是方块套文字。
+           两列四块正好填满，四个入口一眼扫完，点击面积也最大。</p>
+        <p class="tradeoff"><b>代价</b>　2×2 网格没有顺序感，而这四个视图其实是有主次的（日历是家）；再加第五档就得排成不齐整的 2+3。</p>
+      </div>
+
+      <!-- 戊 -->
+      <div class="spec">
+        <h3><span class="no">戊</span>贴着 tab 的小卡片</h3>
+        <div class="stage">
+          <div class="ph">
+            <div class="ph-body" data-screen></div>
+            <div class="ph-scrim"></div>
+            <div class="pop" style="left:62.5%">
+              <span class="pop-opt on" data-ic="cal" data-label="日历"></span>
+              <span class="pop-opt" data-ic="period" data-label="经期"></span>
+              <span class="pop-opt" data-ic="year" data-label="年度"></span>
+              <span class="pop-opt" data-ic="tag" data-label="标签"></span>
+            </div>
+            <div class="ph-bb" data-bb></div>
+            <span class="callout" style="bottom:238px;left:12px">＝ 现成的 .bb-sortpanel</span>
+          </div>
+        </div>
+        <p class="why">不是抽屉，是一张<b>从「日历」tab 头上长出来的小卡片</b>，宽度只由最长那项决定。
+           这正是 App 里排序 / 筛选已经在用的 <span class="mono">.bb-sortpanel</span>：同一套圆角、阴影、弹入动画、选中高亮，
+           <b>零新组件、零新样式</b>，只是换个锚点和一份数据。</p>
+        <p class="tradeoff pick"><b>推荐</b>　最省改动、最像原生；小箭头明确指出「这是刚才那个 tab 弹的」，解决了顶部条「两个日历同时高亮」的重复。</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ 取舍 ═══ -->
+  <section class="block">
+    <div class="sec-hd"><h2>取舍一览</h2><span class="tag">TRADE-OFFS</span></div>
+    <div class="tblwrap">
+      <table class="tbl">
+        <thead>
+          <tr><th>方案</th><th>占高</th><th>遮住日历</th><th>新增样式</th><th>能说清视图吗</th><th>加第五档</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>甲 · 说明式列表</td><td class="num">252px</td><td>约半屏</td><td>一套新抽屉</td><td>能，有副标题</td><td>随便加</td></tr>
+          <tr><td>乙 · 紧凑列表</td><td class="num">207px</td><td>三分之一</td><td>一套新抽屉</td><td>只有名字</td><td>随便加</td></tr>
+          <tr><td>丙 · 胶囊横排</td><td class="num">60px</td><td>几乎不遮</td><td>挪用顶部那条</td><td>只有名字</td><td>会挤 / 要横滚</td></tr>
+          <tr><td>丁 · 宽磁贴 2×2</td><td class="num">167px</td><td>三分之一</td><td>一套新网格</td><td>只有名字</td><td>排不齐</td></tr>
+          <tr class="best"><td>戊 · 贴 tab 小卡片</td><td class="num">162px</td><td>右下一角</td><td>无，复用现成</td><td>只有名字</td><td>随便加</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 建议 ═══ -->
+  <section class="block">
+    <div class="sec-hd"><h2>建议</h2><span class="tag">NEXT</span></div>
+    <div class="note">
+      <h3>先落 戊，它几乎是白捡的</h3>
+      <p>排序和筛选那两张小卡片（<code>.bb-sortsheet</code> + <code>.bb-sortpanel</code> + <code>placeBBPanel</code>）已经把
+         「贴着底栏某个按钮上方弹出、点外面收起、选中项高亮」整套做完了。视图切换只需要多喂一份四行的数据，
+         把锚点从排序按钮换成 <code>#bbtab-cal</code>，再给卡片补一个指向 tab 的小箭头。</p>
+      <ol>
+        <li>删掉 <code>.cal-viewbar</code> 整行（<code>.cal-vtoggle.cvt4</code> 及其 <code>.cvt-thumb</code> 相关样式），日历页首屏立刻多出 50px。</li>
+        <li><code>openCalendar()</code> 改成：已经在日历页时不重复进入，转而弹出视图卡片；不在日历页时行为不变。</li>
+        <li>底栏「日历」tab 的文字跟着当前视图走（在经期视图时就显示「经期」），这样底栏本身成了「现在在哪个视图」的指示器，顶部那个重复高亮的问题自然消失。</li>
+        <li><code>setCalView()</code> 内部不动，只是把调用方从胶囊段换成卡片行。</li>
+      </ol>
+      <p>如果更希望「一眼看懂每个视图是干嘛的」——尤其是「标签」这个名字确实不自解释——那就选<b>甲</b>，
+         代价是每次切换都要盖掉半屏。想要最不打扰、切换最快，就选<b>丙</b>。</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- 重复的手机骨架只写一遍，其余用 JS 克隆，避免五台机器手抄出五种像素 -->
+<template id="tplCal">
+  <div class="ph-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+  <div class="ph-grid"></div>
+</template>
+
+<script>
+// ── 图标：四个视图各一枚，写一遍到处用 ──
+const ICONS={
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  period:'<path d="M12 3.2s6.2 6.7 6.2 10.5A6.2 6.2 0 0 1 5.8 13.7C5.8 9.9 12 3.2 12 3.2z"/>',
+  year:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h2M11 9h2M15 9h2M7 13h2M11 13h2M15 13h2M7 17h2M11 17h2"/>',
+  tag:'<path d="M20.6 13.4 12 4.8H4.8V12l8.6 8.6a1.6 1.6 0 0 0 2.3 0l4.9-4.9a1.6 1.6 0 0 0 0-2.3z"/><circle cx="8.4" cy="8.4" r="1.3"/>',
+  all:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  note:'<path d="M4 4h13l3 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+  menu:'<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>'
+};
+const svg=k=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ICONS[k]+'</svg>';
+
+// ── 2026 年 8 月：1 号是周六，31 天；有记录的日子摆几颗点 ──
+function fillCal(card){
+  card.appendChild(document.getElementById('tplCal').content.cloneNode(true));
+  const g=card.querySelector('.ph-grid'), dots={5:1,9:1,12:2,17:1,20:1,24:1,26:2,29:1};
+  const cells=[];
+  for(let d=26;d<=31;d++) cells.push({n:d,mute:1});          // 7 月尾巴
+  for(let d=1;d<=31;d++) cells.push({n:d});                   // 8 月
+  for(let d=1;cells.length<42;d++) cells.push({n:d,mute:1});  // 9 月开头
+  g.innerHTML=cells.map(c=>{
+    const k=c.mute?0:dots[c.n]||0;
+    const dd=k?'<span class="ph-dots"><span class="ph-dot"></span>'+(k>1?'<span class="ph-dot b"></span>':'')+'</span>':'<span class="ph-dots"></span>';
+    const today=!c.mute&&c.n===24;
+    return '<span class="ph-day'+(c.mute?' mute':'')+(today?' today':'')+'"><span class="ph-dnum">'+c.n+'</span>'+dd+'</span>';
+  }).join('');
+}
+
+// ── 底栏四个 tab ──
+const BB=[['all','全部'],['note','笔记'],['cal','日历'],['menu','设置']];
+function fillBB(bb){
+  bb.innerHTML=BB.map(([k,l])=>'<span class="ph-tab'+(k==='cal'?' on':'')+'">'+svg(k)+l+'</span>').join('');
+}
+
+// ── 每台手机的内容区（月份行 + 月历卡 + 图例），现状那台是手写的，跳过 ──
+const SCREEN=
+  '<div class="ph-hd">'+
+    '<div class="ph-titlenav"><span class="ph-nav">‹</span><span class="ph-title">2026 年 8 月</span><span class="ph-nav">›</span></div>'+
+    '<div class="ph-tools">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>'+
+    '</div>'+
+  '</div>'+
+  '<div class="ph-card" data-cal></div>'+
+  '<div class="ph-legend"><span><i></i>记录</span><span><i class="b"></i>纪念日</span></div>';
+
+document.querySelectorAll('[data-screen]').forEach(el=>{el.innerHTML=SCREEN;});
+document.querySelectorAll('[data-cal]').forEach(fillCal);
+document.querySelectorAll('[data-bb]').forEach(fillBB);
+// 图标 + 文字的占位（乙丁戊三版的行内容）
+// 小卡片贴着底栏上沿：底栏高度是量出来的，改了 tab 内边距这里跟着走
+document.querySelectorAll('.pop').forEach(pop=>{
+  const bb=pop.parentElement.querySelector('.ph-bb');
+  if(bb) pop.style.bottom=(bb.getBoundingClientRect().height+8)+'px';
+});
+document.querySelectorAll('[data-ic]').forEach(el=>{
+  const lbl=el.getAttribute('data-label');
+  el.innerHTML=svg(el.getAttribute('data-ic'))+(lbl?'<span class="'+(el.classList.contains('r2-in')?'r2-name':'')+'">'+lbl+'</span>':'');
+});
+</script>
