@@ -1619,9 +1619,14 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
 .cw-pills{position:relative;}
 .cw-p{position:absolute;height:23px;border-radius:999px;z-index:1;cursor:pointer;
-  display:flex;align-items:center;overflow:hidden;}
-.cw-p span{font-size:var(--fs-foot);color:var(--text-primary);white-space:nowrap;padding:0 var(--sp-6);
-  overflow:hidden;}   /* 不给 text-overflow：一列就那么宽，宁可切齐，也不要满屏省略号 */
+  display:flex;align-items:center;justify-content:center;padding:0 var(--sp-6);overflow:hidden;}
+/* 字比 foot 再小一号：一列就 50 来像素，11px 的名字连三个字都放不下。
+   左右内边距挪到块身上、只让 span 裁字：内边距挂在 span 上时裁切边是它的 padding box，
+   字会一路铺到胶囊边缘上（看着就是「字超出胶囊」）；挂到块上，span 只有内容区那么宽，
+   裁在内边距里侧，两头的空当就留住了。放得下的名字由 justify-content 居中，
+   放不下的从左边起排、右边裁掉——不给 text-overflow，宁可切齐也不要满屏省略号。 */
+.cw-p span{font-size:calc(10px * var(--fs-scale));color:var(--text-primary);white-space:nowrap;
+  overflow:hidden;}
 .cw-p:active{opacity:.75;}
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
 /* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
@@ -13855,7 +13860,9 @@ function layoutWeekPills(days){
     const el=document.createElement('div');
     el.className='cw-p';
     el.style.cssText=`left:${left}px;top:${row*(H+GAP)}px;width:${w}px;height:${H}px`+
-      `;background:${calHexA(g.color,.16)}`;
+      // 淡底浓度 22%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
+      // 认不出是哪一类；22% 刚好分得开，字压上去仍有 12:1 上下的对比度
+      `;background:${calHexA(g.color,.22)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
