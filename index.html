@@ -13975,9 +13975,11 @@ function layoutWeekPills(days){
     el.className='cw-p'+(isSpan?' cw-span':'');
     // 高度不写死：交给 CSS 按一行/两行自己长（top 等量完再补，见下）
     el.style.cssText=`left:${left}px;width:${w}px`+
-      // 淡底浓度 28%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
-      // 认不出是哪一类；28% 几档颜色彼此拉得开，字压上去仍有 10:1 上下的对比度
-      `;background:${calHexA(g.color,.28)}`;
+      // 淡底浓度 44%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
+      // 认不出是哪一类；浓到 44% 各档颜色彼此拉得开。字压上去浅色模式最低 7.5:1，
+      // 深色模式那档暖灰的日历色最低 6.5:1——都还远在 AA(4.5:1) 之上。
+      // 再往上就得同时把 .cw-p span 的字色压深一档了。
+      `;background:${calHexA(g.color,.44)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
