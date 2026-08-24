@@ -1636,11 +1636,11 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-p.cw-span{justify-content:center;}
 .cw-p.cw-span span{text-align:center;}
 /* 10px：比 foot(11) 小一号。一列就 46 像素、去掉内边距只剩 40，一行放得下四个字。
-   最多两行（同 .cal-tl-nm 的写法），再长才在第二行末尾收省略号——两行给到 6~8 个字，
-   到这一步还没说完的名字，切一半反而认不出是哪件事。 */
+   最多两行，再长才在第二行末尾收省略号——两行给到 6~8 个字，到这一步还没说完的
+   名字，切一半反而认不出是哪件事。 */
 .cw-p span{font-size:calc(10px * var(--fs-scale));line-height:12px;color:var(--text-primary);
   text-align:left;word-break:break-word;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  display:block;max-height:24px;overflow:hidden;}   /* 24 = 两行 × 12 行高；截字和省略号交给 JS，见 clipTwoLines */
 .cw-p:active{opacity:.75;}
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
 /* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
@@ -13898,18 +13898,43 @@ function layoutWeekPills(days){
     .sort((a,b)=>a.dates.length-b.dates.length||a.dates[0].localeCompare(b.dates[0]))
     .map(g=>{
       const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
-      return put(g,s*PITCH+INSET,(e-s)*PITCH+col-INSET*2,true);
+      return {el:put(g,s*PITCH+INSET,(e-s)*PITCH+col-INSET*2,true),s,e};
     });
-  // 高度不再是一个常数（两行的块比一行的高 14），得先把块全建出来、一次量完再写
+  // 两行装不下的名字在这儿截：CSS 那边只管裁到两行高，省略号自己补。
+  // 不用 -webkit-line-clamp 的省略号——它取的是中文字体里 U+2026 的字形，那是居中的
+  // 三点，看着像浮在半空，而且没法单独换字体；三个半角点在哪个字体里都落在基线上。
+  // 顺带把「第三行探进来的那一截笔画」也解决了：截完就真的只剩两行。
+  const els=[...piles.flat(),...spans.map(sp=>sp.el)];
+  els.forEach(el=>{
+    const sp=el.firstElementChild;
+    if(sp.scrollHeight<=sp.clientHeight)return;     // 两行装得下
+    const full=sp.textContent;
+    let lo=0, hi=full.length;                       // 二分最长的、加上「...」仍是两行的前缀
+    while(lo<hi){
+      const mid=Math.ceil((lo+hi)/2);
+      sp.textContent=full.slice(0,mid)+'...';
+      if(sp.scrollHeight<=sp.clientHeight)lo=mid;else hi=mid-1;
+    }
+    sp.textContent=full.slice(0,lo)+'...';
+  });
+  // 高度不再是一个常数（两行的块比一行的高 12），得先把块全建出来、一次量完再写
   // top —— 边量边写会每块一次回流，七列十几个块就是十几次
-  const hs=new Map([...piles.flat(),...spans].map(el=>[el,el.offsetHeight]));
+  const hs=new Map(els.map(el=>[el,el.offsetHeight]));
   let bottom=0;
   piles.forEach(pile=>{
     let y=0;
     pile.forEach(el=>{el.style.top=y+'px';y+=hs.get(el)+GAP;});
     bottom=Math.max(bottom,y);            // 七列里最长的那一摞决定跨天块从哪儿起
   });
-  spans.forEach(el=>{el.style.top=bottom+'px';bottom+=hs.get(el)+GAP;});
+  // 跨天块横向岔得开的就并排放在同一行：「你回国 10–13」和「你回家 15–16」各占一行
+  // 是白白多出一行高度。行内按最高的那块定行高，仍是短的在上、最长的压在最底
+  const rows=[];
+  spans.forEach(sp=>{
+    let r=rows.find(r=>r.items.every(o=>sp.e<o.s||sp.s>o.e));
+    if(!r)rows.push(r={items:[],h:0});
+    r.items.push(sp);r.h=Math.max(r.h,hs.get(sp.el));
+  });
+  rows.forEach(r=>{r.items.forEach(sp=>{sp.el.style.top=bottom+'px';});bottom+=r.h+GAP;});
   box.style.height=Math.max(0,bottom-GAP)+'px';
 }
 // 转屏/改字号后卡宽变了，块的 left/width 是像素算的，得重摆一遍
