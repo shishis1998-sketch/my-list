@@ -14329,8 +14329,10 @@ function renderChapterSheet(){
     return `<div class="tl-para"><div class="tl-pdot"></div>`+
       `<div class="tl-pcol"><div class="tl-pbody has-rt tlseg-tap" data-tap="${i}">${renderRich(line)}</div></div></div>`;
   });
-  const add=`<div class="tl-para tl-addrow"><div class="tl-pdot"></div>`+
-    `<button type="button" class="tlseg-add" id="tlSegAdd">＋ 加一段</button></div>`;
+  // 「加一段」搬进格式条了（点某段 → ＋ 添加，就地插在它后面）。
+  // 只有章里一段都没有时才留一颗兜底的：那会儿没框可点，格式条也就无从出现
+  const add=tlSheetSegs.length?'':`<div class="tl-para tl-addrow"><div class="tl-pdot"></div>`+
+    `<button type="button" class="tlseg-add" id="tlSegAdd">＋ 添加</button></div>`;
   body.innerHTML=`<div class="tl-pts">${rows.join('')}${add}</div>`;
   // 绑定：编辑框自适应高度 + 失焦提交；读态卡点按进编辑；加一段
   const ta=body.querySelector('.tlseg-edit');
@@ -14366,7 +14368,13 @@ function renderChapterSheet(){
     el.addEventListener('click',()=>{ if(Date.now()<tlTapMuteUntil) return; tlSheetEdit=+el.dataset.tap; renderChapterSheet(); });
   });
   const addBtn=document.getElementById('tlSegAdd');
-  if(addBtn) addBtn.addEventListener('click',()=>{ if(Date.now()<tlTapMuteUntil) return; tlSheetSegs.push({text:'',gap:'\n\n'}); tlSheetEdit=tlSheetSegs.length-1; renderChapterSheet(); });
+  if(addBtn) addBtn.addEventListener('click',()=>{
+    if(Date.now()<tlTapMuteUntil) return;
+    // 首段的 gap 只算「标题后额外的空行」（buildChapterRaw 已经补了标题那个换行），给 \n\n 会空出两行
+    tlSheetSegs.push({text:'',gap:tlSheetSegs.length?'\n\n':'\n'});
+    tlSheetEdit=tlSheetSegs.length-1;
+    renderChapterSheet();
+  });
 }
 function commitTlSeg(ta){
   const i=+ta.dataset.edit;
