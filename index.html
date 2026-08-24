@@ -1971,12 +1971,12 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 章节抽屉标题栏：标题 + 右端「取消」。取消 = 关掉但不保存，和「拖下去/返回 = 保存关掉」凑成一对 */
 .tlsheet-headrow{display:flex;align-items:center;gap:var(--sp-10);}
 .tlsheet-headrow .tlsheet-title{flex:1;min-width:0;}
-.tlsheet-cancel{flex-shrink:0;background:var(--accent-dark);
+.tlsheet-cancel{flex-shrink:0;background:transparent;
   border:1px solid var(--on-accent-faint);border-radius:999px;
   padding:var(--sp-6) var(--sp-14);cursor:pointer;color:var(--on-accent);
   font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;
-  transition:opacity .12s,background .12s;}
-.tlsheet-cancel:active{opacity:.65;}
+  transition:background .12s,opacity .12s;}
+.tlsheet-cancel:active{background:var(--on-accent-faint);opacity:.85;}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
