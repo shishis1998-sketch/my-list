@@ -1638,8 +1638,11 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    最多两行，再长才在第二行末尾收省略号——两行给到 6~8 个字，到这一步还没说完的
    名字，切一半反而认不出是哪件事。 */
 .cw-p span{font-size:calc(10px * var(--fs-scale));line-height:12px;color:var(--text-primary);
-  text-align:left;word-break:break-word;
-  display:block;max-height:24px;overflow:hidden;}   /* 24 = 两行 × 12 行高；截字和省略号交给 JS，见 clipTwoLines */
+  text-align:left;word-break:break-word;display:block;}
+/* span 这里不裁：截到两行由 JS 保证（见 layoutWeekPills 里的二分）。
+   早先写过 max-height:24 + overflow:hidden，那是给两行封了个 24 的硬顶——可中文字体
+   （思源/Noto）的字形实际有 1.45em 高，10px 的字比 12px 的行盒还高，第二行的下半截
+   会被这个硬顶剃掉。现在让字自然溢出一点点，由块的 1.5px 内边距和 overflow 兜住。 */
 .cw-p:active{opacity:.75;}
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
 /* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
@@ -13897,20 +13900,25 @@ function layoutWeekPills(days){
       const s=days.indexOf(g.dates[0]), e=days.indexOf(g.dates[g.dates.length-1]);
       return {el:put(g,s*PITCH+INSET,(e-s)*PITCH+col-INSET*2,true),s,e};
     });
-  // 两行装不下的名字在这儿截：CSS 那边只管裁到两行高，省略号自己补。
-  // 不用 -webkit-line-clamp 的省略号——它取的是中文字体里 U+2026 的字形，那是居中的
-  // 三点，看着像浮在半空，而且没法单独换字体；三个半角点在哪个字体里都落在基线上。
-  // 顺带把「第三行探进来的那一截笔画」也解决了：截完就真的只剩两行。
+  // 两行装不下的名字在这儿截，省略号自己补：不用 -webkit-line-clamp 生成的那个——
+  // 它取的是中文字体里 U+2026 的字形，那是居中的三点，看着像浮在半空，而且没法单独
+  // 换字体；三个半角点在哪个字体里都落在基线上。
+  //
+  // 「几行」得数行盒，不能拿 scrollHeight 和 clientHeight 比：中文字体的字形有 1.45em
+  // 高，10px 的字比 12px 的行盒还高，那截溢出的笔画会被算进 scrollHeight——于是一行的
+  // 名字也报「放不下」，整片块全被截成「...」（线上就出过这个）。Range 数出来的是
+  // 真的行盒，与字体高矮无关。
+  const linesOf=sp=>{const r=document.createRange();r.selectNodeContents(sp);return r.getClientRects().length;};
   const els=[...piles.flat(),...spans.map(sp=>sp.el)];
   els.forEach(el=>{
     const sp=el.firstElementChild;
-    if(sp.scrollHeight<=sp.clientHeight)return;     // 两行装得下
+    if(linesOf(sp)<=2)return;                       // 两行装得下
     const full=sp.textContent;
     let lo=0, hi=full.length;                       // 二分最长的、加上「...」仍是两行的前缀
     while(lo<hi){
       const mid=Math.ceil((lo+hi)/2);
       sp.textContent=full.slice(0,mid)+'...';
-      if(sp.scrollHeight<=sp.clientHeight)lo=mid;else hi=mid-1;
+      if(linesOf(sp)<=2)lo=mid;else hi=mid-1;
     }
     sp.textContent=full.slice(0,lo)+'...';
   });
