@@ -13860,7 +13860,9 @@ function layoutWeekPills(days){
     const el=document.createElement('div');
     el.className='cw-p';
     el.style.cssText=`left:${left}px;top:${row*(H+GAP)}px;width:${w}px;height:${H}px`+
-      `;background:${calHexA(g.color,.16)}`;
+      // 淡底浓度 22%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
+      // 认不出是哪一类；22% 刚好分得开，字压上去仍有 12:1 上下的对比度
+      `;background:${calHexA(g.color,.22)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     el.onclick=()=>openCalDay(g.dates[0]);
     box.appendChild(el);
