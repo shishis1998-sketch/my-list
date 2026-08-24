@@ -1542,10 +1542,12 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    节点/竖线同一条左缘，「8」正好落在那串圆点上方；这里 100% 是 .cal-card 的
    内容宽（330），比时间线那边多 20，所以半列宽写成 (100% - 32px)/14。
    右内边距写同一个值，卡片两侧留白相等（标题本身左对齐，这里只为一致）。 */
-/* 右内边距单独写成 14，和本周卡片标题栏一致：两张卡的箭头要在同一条竖线上。
-   左边仍按半列宽算——那是为了让「8 月」压在下面第一列的圆点上方，两边本就不必相等。
-   （原来左右共用那个 calc，窄屏上算出来只有八九像素，箭头就比本周卡片的靠右好几像素）*/
-.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14) var(--sp-12) calc((100% - 32px) / 14 - 10px);
+/* 左右都写死 14，和本周卡片的标题栏对齐：两张卡上下挨着，标题左缘和箭头右缘
+   各自差几像素都看得出来。原来左右共用 calc((100% - 32px)/14 - 10px)——那是让
+   「8 月」的左缘压在下面时间线第一颗圆点的左缘上，可它随卡宽变化：360 宽算出来
+   11.3、412 宽 12.9，于是两张卡的标题和箭头在窄屏上错开好几像素。
+   改成定值后「8 月」比圆点左缘再左约 2px，比起两张卡对不齐，这点更不显眼。 */
+.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14);
   font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;
   display:flex;align-items:center;gap:var(--sp-8);cursor:pointer;}
 .cal-card-date .cw-chev{margin-left:auto;}
