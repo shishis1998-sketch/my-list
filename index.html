@@ -33,6 +33,22 @@
   --surface-fade:rgba(255,255,255,0);
   /* 极简风：次级浅灰块代替米色衬底 */
   --surface-2:#F2F2F0;
+  /* 按压反馈底色：白天比常态再深一档、夜间再亮一档，两边都是「按下去有变化」。
+     原先这三处写的是 var(--tint)，而 --tint 全仓库没定义过：无兜底的 var()
+     在计算值时刻失效，background 回落成 transparent，实际效果是「按下把自己的
+     底色抹掉、露出身后那层」。段落卡和删除钮碰巧看着还行，「＋ 加一段」本来就是
+     background:none，抹掉等于没抹，那条一直是失灵的。 */
+  --press:#E8E8E6;
+  /* 卡里再套一层的那块面（章节抽屉的段落卡）。白天是「凹」进去的：白底 #FFFFFF
+     上一块更浅的 #F7F7F5，凹陷靠「比全屏最亮的底稍暗」被认出来。
+     夜间不能照搬这套写法——那样就成了 #1C1C1F 的抽屉底上一块更黑的 #121214，
+     而描边 --border-soft #26262A 比抽屉底还亮，读着像一圈微光、不像边界，
+     几张卡连成一片。L* 差其实有 4.86（白天那对才 2.82），不是数值不够：L* 是按
+     反射媒介标定的，屏幕在接近黑的那一段输出压得很扁，手机夜里再调暗就没了。
+     所以夜间反过来「抬」起来——比抽屉底亮一档，深色界面里越靠前的层越亮。
+     用令牌而不是再加一条 :root[data-mode="dark"] .tl-pbody 覆盖：那条与
+     .tl-pbody.tlseg-tap:active 特指度同为 (0,3,0)，写在后面会把按压反馈压掉。 */
+  --panel:#F7F7F5;--panel-bd:#F2F2F0;
   --gold-soft:#EDEDEB;
   --ink:#E4E4E2;--ink-deep:#1A1A1A;          /* ink 由墨绿描边改为极浅灰，几乎无边 */
   --bd:1px;                     /* 描边粗细减细 */
@@ -121,7 +137,8 @@
   --accent-dark:#A0DDC1;--accent-rgb:127,199,166;
   --on-accent:#10201A;--on-accent-soft:rgba(16,32,26,.55);--on-accent-faint:rgba(16,32,26,.38);
   --danger:#F44E52;--danger-fill:#9B2427;--danger-bg:#2C1A1A;--danger-bg-hover:#3A2020;
-  --gold:#D2D2D9;--surface-2:#26262A;--gold-soft:#26262A;
+  --gold:#D2D2D9;--surface-2:#26262A;--gold-soft:#26262A;--press:#33333A;
+  --panel:#26262A;--panel-bd:#33333A;
   --ink:#33333A;--ink-deep:#FBFBFD;
   --surface-fade:rgba(28,28,31,0);
 }
@@ -2063,7 +2080,7 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
 .tlseg-tap{cursor:text;border-radius:var(--r);transition:background .15s,opacity .15s;}
-.tl-pbody.tlseg-tap:active{background:var(--tint);}
+.tl-pbody.tlseg-tap:active{background:var(--press);}
 .tl-phead.tlseg-tap:active{opacity:.65;}
 .tlseg-edit{width:100%;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);
   color:var(--text-primary);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
@@ -2083,7 +2100,7 @@ body.cal-searching .cw-card{display:none;}
 .tlseg-add{flex:1;min-width:0;text-align:left;font-family:var(--zh);font-size:14px;font-weight:600;
   color:var(--accent-mid);background:none;border:1.5px dashed var(--border);border-radius:var(--r);
   padding:var(--sp-8) var(--sp-12);cursor:pointer;transition:background .15s,border-color .15s;}
-.tlseg-add:active{background:var(--tint);border-color:var(--accent-mid);}
+.tlseg-add:active{background:var(--press);border-color:var(--accent-mid);}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
 /* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
@@ -2133,7 +2150,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .pe-in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
 .pe-del{flex-shrink:0;width:32px;height:32px;padding:0;border:0;border-radius:50%;
   background:var(--surface-2);color:var(--text-muted);font-size:13px;line-height:1;cursor:pointer;}
-.pe-del:active{background:var(--tint);color:var(--text-secondary);}
+.pe-del:active{background:var(--press);color:var(--text-secondary);}
 
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
@@ -2218,8 +2235,8 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 }
 .tl-pbody{
   font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-primary);
-  white-space:pre-wrap;background:var(--bg);
-  border:1px solid var(--border-soft);border-radius:var(--r);
+  white-space:pre-wrap;background:var(--panel);
+  border:1px solid var(--panel-bd);border-radius:var(--r);
   padding:var(--sp-8) var(--sp-12);
 }
 
