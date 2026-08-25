@@ -1645,7 +1645,10 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 列缝 2px：同 .cal-grid / .cal-weekrow，列心才和月历的日期数字重合 */
 .cw-cols{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);}
 .cw-gh{text-align:center;padding:0 0 var(--sp-8);}
-.cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;}
+/* 星期和日期之间留 6：两行本来只靠行高那点余量隔着（量下来 4.5），挤成一坨；
+   「今天」那天的日期是个 22 见方的实心圆，圆边比字更往上顶，贴得尤其明显 */
+.cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;
+  margin-bottom:var(--sp-6);}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
 .cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
@@ -14025,6 +14028,20 @@ function calWeekDays(){
   return [...Array(7)].map((_,i)=>{const d=new Date(base);d.setDate(base.getDate()+i);return calFmtDate(d);});
 }
 function calFmtDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+// 这一天算这一年的第几周。ISO 8601 那一套：周一起算、含当年第一个周四的那周是第 1 周——
+// 和这张卡（以及整张月历）的「周一开头」是同一套，不用另立规矩。
+// 归年也按 ISO：拿本周的周四落在哪年算哪年，所以 12 月底那几天可能是次年第 1 周、
+// 1 月初那几天可能还是上一年的第 52/53 周（调用处会把年份一起写出来）。
+// 相减用 Math.round 收尾：夏令时的地区里两个「本地零点」能差出一个钟头，直接除会掉一周。
+function calISOWeek(ds){
+  const mon=new Date(ds+'T00:00:00');
+  mon.setDate(mon.getDate()-((mon.getDay()+6)%7));        // 退到本周周一
+  const thu=new Date(mon); thu.setDate(mon.getDate()+3);  // 本周周四：它在哪年，这周就算哪年
+  const y=thu.getFullYear();
+  const w1=new Date(y+'-01-04T00:00:00');                 // 1 月 4 日必在第 1 周里
+  w1.setDate(w1.getDate()-((w1.getDay()+6)%7));           // 第 1 周的周一
+  return {year:y, week:Math.round((mon-w1)/604800000)+1};
+}
 function calToday(){return calFmtDate(new Date());}
 // 当天记录，口径和 renderCalDetail 的「① 当天记录」一致（同样按图例筛选）
 function calWeekRecs(ds){
@@ -14065,10 +14082,16 @@ function renderWeekCard(force){
     return `<div class="cw-gh${ds===today?' today':''}"><span class="w">${CW_WK[(dt.getDay()+6)%7]}</span>`+
            `<span class="d">${dt.getDate()}</span></div>`;}).join('');
   card.className='cw-card'+(calWeekOpen?'':' closed');
+  // 标题：选中日就在本周就写「本周」，翻到别的周写这一年的第几周（第 34 周这样）。
+  // 跨年那一周 ISO 会整周算给相邻的年，年份跟眼前看的这个月对不上时就一起写出来：
+  // 站在 2027 年 1 月 1 日上，光写「第 53 周」没头没脑，写「2026 年第 53 周」才说得通。
+  // 拿选中日（不是周一那天）比：它才是眼下在看的那一天
+  const sel=calSelDate||today;
+  const wk=calISOWeek(days[0]);
+  const wkTxt=wk.year===+sel.slice(0,4)?`第 ${wk.week} 周`:`${wk.year} 年第 ${wk.week} 周`;
   card.innerHTML=
     `<button type="button" class="cw-hd" onclick="toggleWeekCard()">`+
-    // 翻到别的月份时这一周未必是「本周」，标题跟着改口，免得 7 月那一周也叫本周
-    `<span class="cw-hd-t">${days.includes(today)?'本周':'那一周'}</span>`+
+    `<span class="cw-hd-t">${days.includes(today)?'本周':wkTxt}</span>`+
     CW_CHEV+`</button>`+
     `<div class="cw-body"><div class="cw-cols">${cols}</div><div class="cw-pills" id="calWeekPills"></div></div>`;
   layoutWeekPills(days);
