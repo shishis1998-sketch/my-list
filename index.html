@@ -2066,11 +2066,13 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet.dragging{transition:none;}
 /* 方案 D 墨绿标题带：紧凑、只显章节名 */
 /* 标题上下留白按「把手整块」算对称：
-   上 = 6(带顶留白) + 4(把手) + 6(把手到标题) = 16px，下 = 16px */
-.tlsheet-head{flex-shrink:0;background:var(--accent);padding:6px 16px 16px;cursor:grab;
+   上 = 4(带顶留白) + 4(把手) + 4(把手到标题) = 12px，下 = 12px。
+   原来两边各 16，整条带 59px 高，一屏里章节名上下空得发飘；收到 12 后是 51px。
+   行高本身不动——那 27px 是「取消」的点按面积，再压就不好点了 */
+.tlsheet-head{flex-shrink:0;background:var(--accent);padding:4px 16px 12px;cursor:grab;
   touch-action:none;user-select:none;-webkit-user-select:none;}
 .tlsheet-head:active{cursor:grabbing;}
-.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 6px;}
+.tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 4px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* 章节抽屉标题栏：标题 + 右端「取消」。取消 = 关掉但不保存，和「拖下去/返回 = 保存关掉」凑成一对 */
