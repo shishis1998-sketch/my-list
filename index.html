@@ -84,6 +84,15 @@
   --nav-ease:cubic-bezier(.22,1,.36,1);   /* 统一缓动曲线 */
   --nav-rise:16px;                        /* 进入时的上移距离 */
 }
+/* 上面那条 --fs-input 的 16px 下限是给 iOS 兜的：Safari 聚焦一个字号 <16px 的
+   输入框时会把整页放大，为躲开它才把输入框统一抬到至少 16。桌面浏览器没有这套
+   行为，下限在那儿换不到任何好处，只留下副作用——「小」档（headline 14.4）下
+   三处输入框（章节段落、备注抽屉、人物三栏）全被抬到 16px，比周围正文大 11%，
+   点进去编辑就"放大"一下。所以下限只在触摸设备上兜，鼠标设备照 headline 走。
+   写成 var(--fs-headline) 而不是写死 px：平板那份基线（17px）也照样跟得上。 */
+@media (pointer:fine){
+  :root{--fs-input:var(--fs-headline);}
+}
 @media (prefers-reduced-motion:reduce){
   :root{--nav-dur:1ms;--nav-dur-exit:1ms;--nav-rise:0px;}
 }
@@ -599,8 +608,6 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .dt-tl-empty{font-size:var(--fs-body);color:var(--text-muted);line-height:var(--lh-loose);}
 .dt-tl-empty b{color:var(--text-secondary);font-weight:600;}
 .dt-tl-hint{font-size:var(--fs-caption);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal);}
-.dt-tl-since{font-size:var(--fs-foot);color:var(--text-muted);font-family:var(--en);
-  font-variant-numeric:tabular-nums;margin-top:var(--sp-12);}
 .dt-tl-text{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 /* 首次添加：卡外的一行小字，够得着但不占一张卡 */
 .dt-foot{padding:var(--sp-2) var(--sp-4);font-size:var(--fs-foot);color:var(--text-muted);
@@ -11551,6 +11558,14 @@ function renderDetail(){
   const au=[item.creator,item.year].filter(Boolean).map(esc).join(' · ');
   const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
   const created=fmtCreated(createdAtOf(item));
+  // 末次编辑：updatedAtOf 已经处理了老数据没有 updatedAt 的回退（退到 date，再退到
+  // 首次添加），这里只管排版。与「首次添加」同一分钟就不画——从没改过的记录两个时间
+  // 本来就是同一个，并排写两遍一模一样的时刻反倒像出了错。
+  const upd=updatedAtOf(item);
+  const editedTxt=upd?fmtCreated(new Date(upd)):'';
+  const edited=(editedTxt&&editedTxt!==created)?editedTxt:'';
+  const footTxt=[created&&`首次添加 ${esc(created)}`,edited&&`末次编辑 ${esc(edited)}`]
+    .filter(Boolean).join(' · ');
   const T=DT_TABS.map((t,i)=>`<button class="cvt${dtTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
   const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===dtTab)]||'';
   box.innerHTML=`
@@ -11616,24 +11631,12 @@ function renderDetail(){
 
     ${dtTab==='tl'?renderDetailTL(item):''}
 
-    ${created?`<div class="dt-foot">首次添加 ${esc(created)}</div>`:''}`;
+    ${footTxt?`<div class="dt-foot">${footTxt}</div>`:''}`;
   // 重画一次就把圆钮放出来：换栏目、改完正文回来，都不该看见一颗还收着的按钮。
   // 记下时刻给 syncDetailFab 用：换栏目那一下页面高度会突变，浏览器跟着挪一次
   // 滚动位置，那一下不是用户在滑，不能算成一次「下滑」（否则刚切回来按钮又没了）
   document.body.classList.remove('fab-hidden');
   dtRenderAt = Date.now();
-}
-
-// 搬进这条记录的读书笔记，自己最早是什么时候建的。
-// 「首次添加」讲的是这本书什么时候记进清单，和「笔记什么时候开始写」是两件事，
-// 合成一个反而丢信息，所以时间线那栏单挂一行。一条记录可能并进过多篇笔记，取最早的。
-function noteOriginOf(item){
-  if(!item) return null;
-  let t=null;
-  (notes||[]).forEach(n=>{
-    if(n.movedToMedia===item.id&&n.createdAt&&(t===null||n.createdAt<t)) t=n.createdAt;
-  });
-  return t?new Date(t):null;
 }
 
 // 「读书笔记」只对书成立，电影剧集那边就叫「笔记正文」
@@ -11654,10 +11657,6 @@ const ICON_EDIT_DOC=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 function renderDetailTL(item){
   const body=(item.bookNote||'').trim();
   const lbl=bookNoteLbl(item);
-  // 与「首次添加」同一时刻就不画了——迁移新建的那些记录两个时间本来就是同一个
-  const sinceTxt=fmtCreated(noteOriginOf(item));
-  const since=(sinceTxt&&sinceTxt!==fmtCreated(createdAtOf(item)))
-    ? `<div class="dt-tl-since">笔记始于 ${esc(sinceTxt)}</div>` : '';
   if(!body){
     return `<div class="dt-card" onclick="tapNoteCard(event,'booknote')">
       <div class="dt-lbl">${lbl}</div>
@@ -11671,7 +11670,6 @@ function renderDetailTL(item){
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-text">${esc(item.bookNote)}</div>
       <div class="dt-tl-hint">没识别到章节。用 <b>第一章</b> 这样的格式分段就会排成时间线。</div>
-      ${since}
     </div>`;
   }
   const groups=parseParts(item.bookNote,chs);
@@ -11687,7 +11685,6 @@ function renderDetailTL(item){
       +`<div class="tl">${g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openDetailChapter(${x.i})">
         <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`).join('')}</div>`).join('')}
-    ${since}
   </div>
   <button type="button" class="dt-fab" aria-label="编辑全文" title="编辑全文"
     onclick="tapNoteCard(event,'booknote')">${ICON_EDIT_DOC}</button>`;
