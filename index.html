@@ -14878,6 +14878,7 @@ function commitChapterSheet(){
 // ✕ → 先问一句，存不存由这一下说了算。
 // 另外三条关法（拖下去、点遮罩、系统返回键）仍是「关掉即保存」：那是手势，
 // 顺手一划就走，中间横一张问话反而挡路；✕ 是明确的「我要关了」，才值得问。
+let tlAskArmTimer=null;   // 问话刚弹出来的那几百毫秒不收点按（见下）
 function askCloseChapterSheet(){
   if(tlSheetIdx==null) return;
   // 正在编辑的那段先收进内存：不然「保存」会漏掉框里还没提交的那几笔
@@ -14886,11 +14887,20 @@ function askCloseChapterSheet(){
   const dlg=document.getElementById('tlCloseAsk');
   if(!dlg){ closeChapterSheet(); return; }        // 兜底：问不出来就按老规矩存下关掉
   dlg.classList.add('open');
+  // ✕ 是按下即弹（pointerdown），问话当场铺满全屏，手指还没抬起来。
+  // 抬起时那声 click 正落在刚出现的遮罩上 —— 遮罩 = 继续编辑，弹窗一闪就没了；
+  // 按住久一点浏览器不再补那声 click，于是看着像「只有长按才跳窗」。
+  // 开头这几百毫秒整张问话不收点按，把那声落空的 click 让过去（它会穿到底下的 ✕ 上，
+  // 而 ✕ 只认 pointerdown，接不住 click，什么都不会发生）
+  clearTimeout(tlAskArmTimer);
+  dlg.style.pointerEvents='none';
+  tlAskArmTimer=setTimeout(()=>{ dlg.style.pointerEvents=''; }, 400);
 }
 // 继续编辑：什么都不动，只把问话收掉
 function tlAskBack(){
   const d=document.getElementById('tlCloseAsk');
-  if(d) d.classList.remove('open');
+  if(d){ d.classList.remove('open'); d.style.pointerEvents=''; }
+  clearTimeout(tlAskArmTimer);
 }
 // 保存：closeChapterSheet 自己第一步就是落盘
 function tlAskSave(){
