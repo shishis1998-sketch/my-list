@@ -471,7 +471,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   font-family:var(--en);font-variant-numeric:tabular-nums;white-space:nowrap;
   font-size:var(--fs-caption);font-weight:600;color:var(--watch-c);
 }
-/* 还没读完的：右上角写开始时间「2026/8/5 起」，用中性灰与已完成的绿区分开 */
+/* 还没读完的：右上角写开始时间「2026/8/5 起」，用中性灰与已完成的主题色区分开 */
 .mrow-date.pending{color:var(--text-muted);font-weight:500;}
 /* 状态颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP）*/
 .mrow-st{display:block;font-size:var(--fs-foot);font-weight:600;color:var(--c);margin-top:1px;}
@@ -479,12 +479,13 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .mrow-arr{flex-shrink:0;color:var(--text-muted);font-size:var(--fs-headline);line-height:1;}
 
 /* 状态文字：颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP），
-   这里只管按模式挑一个。四种状态各有一版深色，避免墨绿压在深底上看不见。 */
+   这里只管按模式挑一个。固定语义色的三种状态各有一版深色，避免深墨压在深底上看不见。 */
 .cstatus{color:var(--c);font-size:var(--fs-caption);font-weight:700;}
 :root[data-mode="dark"] .cstatus{color:var(--cd);}
-/* 右上角的观看/阅读时间：与「已完成」同色，深浅两版都跟着它走 */
-:root{--watch-c:#14532D;}
-:root[data-mode="dark"]{--watch-c:#6FB394;}
+/* 右上角的观看/阅读时间：与「已完成」同色。两者一起跟主题色走——
+   完成日期是这一行里唯一的强调项，用当前主题的 accent，整页配色才是一套；
+   原来钉死的墨绿在十套主题里只有一套对得上。深浅模式各自的亮度由 --accent 自己管。 */
+:root{--watch-c:var(--accent);}
 /* 编辑弹窗里的「首次添加」：只读的一行小字 */
 .created-val{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);padding:var(--sp-6) 0;}
 .ctag{display:inline-flex;align-items:center;height:22px;padding:0 var(--sp-10);border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:500;background:var(--bg);color:var(--text-secondary);white-space:nowrap;line-height:1;border:1px solid var(--border-soft);box-sizing:border-box;margin:var(--sp-2) var(--sp-2) var(--sp-2) 0;}
@@ -9776,10 +9777,12 @@ const DCATS=[
   {id:'music',name:'音乐', color:'#6B2D6B', emoji:'🎵'},
   {id:'other',name:'其他', color:'#4A4A4A', emoji:'📌'},
 ];
-// c = 浅色模式的文字色；cd = 深色模式的。原来只有 c，那几个深色（#14532D 等）
+// c = 浅色模式的文字色；cd = 深色模式的。原来只有 c，那几个深色（#1E40AF 等）
 // 压在深色卡片（#1C1C1F）上几乎看不见，深色模式下换成同色系的亮版。
 const SMAP={
-  completed:{lbl:'已完成',c:'#14532D',cd:'#6FB394',bg:'#DCFCE7'},
+  // 「已完成」跟主题色走（与右上角完成日期 --watch-c 同色）：--accent 在深浅两模式下
+  // 各有一档亮度，所以 c / cd 写同一个变量就够。其余三种状态是固定语义色，照旧。
+  completed:{lbl:'已完成',c:'var(--accent)',cd:'var(--accent)',bg:'#DCFCE7'},
   'in-progress':{lbl:'进行中',c:'#1E40AF',cd:'#7BA3E8',bg:'#DBEAFE'},
   want:{lbl:'待看/读',c:'#92400E',cd:'#D9A05B',bg:'#FEF3C7'},
   dropped:{lbl:'放弃',c:'#6B7280',cd:'#9AA0A6',bg:'#F3F4F6'},
