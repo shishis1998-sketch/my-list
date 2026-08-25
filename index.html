@@ -2222,18 +2222,22 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 /* 段与段的距离。22 是 24 - 2：段尾那条线拿掉之后，两段正文之间的总距离要
    维持原样（原先是 12 内边距 + 12 gap），空出来的都并到 gap 上。不在 --sp 档位上，
    因为它不是一个独立的留白档，是「24 减掉 .tl-pbody 底部那 2px」算出来的 */
-/* 右边留 8：抽屉自己两边各 16，可左边还排着圆点和竖线那一列，正文被整体推到
-   右边去了——一屏看下来左边空一大片、右边的字贴着边。这 8 是把「屏幕边到竖线」
-   和「正文末到屏幕边」凑成一对：左 16 + 圆点列一半 8 = 24，右 16 + 8（+ 正文自己那 2）≈ 24。
+/* 右边留 6。抽屉自己两边各 16，可左边还排着圆点和竖线那一列，正文被整体推到右边去了——
+   一屏看下来左边空一大片、右边的字贴着边。正文这一栏左邻竖线、右邻屏幕边，两边得等宽，
+   按 24 一档排成三段：
+     屏幕边 → 竖线    16 + 7        ≈ 24
+     竖线   → 正文    49 - 24.5     ≈ 24   （16 抽屉 + 16 圆点列 + 8 gap + 9 正文左内边距 = 49）
+     正文   → 屏幕边  16 + 6 + 2    ≈ 24   （2 是 .tl-pbody 自己那点，按压淡底不贴字用的）
    加在 .tl-pts 上而不是 .tl-pbody 上：按压那块淡底也跟着一起收，才不会单独探出去 */
-.tl-pts{position:relative;display:flex;flex-direction:column;gap:22px;padding-right:var(--sp-8);}
-/* 竖线落在圆点列正中：列宽 16 → 心在 8，线宽 1.5 → left 7（同原先 20 宽时取 9 的算法）。
+.tl-pts{position:relative;display:flex;flex-direction:column;gap:22px;padding-right:var(--sp-6);}
+/* 竖线落在圆点列正中：列宽 16、线宽 1.5 → left (16-1.5)/2 = 7.25（原先 20 宽时取的 9 是
+   9.25 抹了个零头，这回不抹：上面那三段 24 全是从这条线量的，差 0.25 就三段对不齐）。
    top/bottom 也跟着由 1(圆点 margin-top) + 10 改成 1 + 8 */
-.tl-pts::before{content:"";position:absolute;left:7px;top:9px;bottom:9px;
+.tl-pts::before{content:"";position:absolute;left:7.25px;top:9px;bottom:9px;
   width:1.5px;background:var(--border);z-index:0;}
-/* gap 由 10 收到 4：圆点列本身也从 20 收到 16，两处一共把正文往左挪 10。
-   圆点画出来还是 9px，收掉的只是它周围的空当 */
-.tl-para{position:relative;z-index:1;display:flex;gap:var(--sp-4);}
+/* gap 8：圆点列本身从 20 收到 16，正文起点由 59 挪到 49——正好离竖线 24，
+   和上面那两段对齐。圆点画出来还是 9px，收掉的只是它周围的空当 */
+.tl-para{position:relative;z-index:1;display:flex;gap:var(--sp-8);}
 .tl-pdot{flex-shrink:0;width:16px;height:16px;margin-top:1px;
   display:flex;align-items:center;justify-content:center;background:none;border:0;}
 /* 空心圆点：中心透明，让竖线从中穿过 */
