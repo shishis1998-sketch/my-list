@@ -2066,15 +2066,27 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 4px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* 章节抽屉标题栏：标题 + 右端「取消」。取消 = 关掉但不保存，和「拖下去/返回 = 保存关掉」凑成一对 */
+/* 章节抽屉标题栏：标题 + 右端一颗 ✕。
+   ✕ 不是「取消」也不是「保存」——按下先弹一句问话，存不存由那一下说了算（见 #tlCloseAsk）。
+   原先这儿是「取消」两个字的胶囊，含义是「关掉但不保存」，和「拖下去/返回 = 保存关掉」
+   凑成一对；两个都不问一声就走，按错了没有回头路。现在明确的关闭走问话这条。
+   32 见方：原来那颗胶囊只有 25 高，圆形图标按钮没有文字帮忙定位，得给够点按面积 */
 .tlsheet-headrow{display:flex;align-items:center;gap:var(--sp-10);}
 .tlsheet-headrow .tlsheet-title{flex:1;min-width:0;}
-.tlsheet-cancel{flex-shrink:0;background:transparent;
-  border:1px solid var(--on-accent-faint);border-radius:999px;
-  padding:var(--sp-6) var(--sp-14);cursor:pointer;color:var(--on-accent);
-  font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;
+.tlsheet-close{flex-shrink:0;width:32px;height:32px;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--on-accent-faint);border-radius:50%;
+  cursor:pointer;color:var(--on-accent);font-size:15px;line-height:1;
   transition:background .12s,opacity .12s;}
-.tlsheet-cancel:active{background:var(--on-accent-faint);opacity:.85;}
+.tlsheet-close:active{background:var(--on-accent-faint);opacity:.85;}
+/* 这句问话得压过章节抽屉本身（1501），.cfdlg 原本只有 150，会被整张盖住 */
+#tlCloseAsk{z-index:1550;}
+/* 三颗按钮：继续编辑 / 不保存 / 保存。窄屏一行摆不下就竖排，
+   竖排时反过来——最常按的「保存」在最上面，手指够得到 */
+@media (max-width:360px){
+  #tlCloseAsk .cfbtns{flex-direction:column-reverse;}
+  #tlCloseAsk .cfbtns .btn{justify-content:center;}
+}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 章节这张单独收到 12：它左边比别的抽屉多站着一列圆点和竖线，同样是 16 的内边距，
@@ -2239,17 +2251,27 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
    加在 .tl-pts 上而不是 .tl-pbody 上：按压那块淡底也跟着一起收，才不会单独探出去 */
 .tl-pts{position:relative;display:flex;flex-direction:column;gap:22px;padding-right:13px;}
 /* 竖线落在圆点列正中：列宽 16、线宽 1.5 → left (16-1.5)/2 = 7.25（原先 20 宽时取的 9 是
-   9.25 抹了个零头，这回不抹：上面那三段 24 全是从这条线量的，差 0.25 就三段对不齐）。
-   top/bottom 也跟着由 1(圆点 margin-top) + 10 改成 1 + 8 */
-.tl-pts::before{content:"";position:absolute;left:7.25px;top:9px;bottom:9px;
+   9.25 抹了个零头，这回不抹：三段留白全是从这条线量的，差 0.25 就三段对不齐）。
+   top 取小标题那一档的半个行高：首段是小标题时正好起于圆心；是正文时起点比圆心高
+   3 点出头，仍落在那颗 9px 圆点里面，露不出来。写死一个数是没办法的事——首段
+   是标题还是正文，CSS 这儿看不见。
+   bottom 照旧 9：末段多是好几行的正文，它那颗点离容器底远得多，本来就是个约数。 */
+.tl-pts::before{content:"";position:absolute;left:7.25px;top:calc(var(--fs-headline) * var(--lh-normal) / 2);bottom:9px;
   width:1.5px;background:var(--border);z-index:0;}
 /* gap 2：「竖线 → 正文」12，半个圆点列占去 8，剩下的 4 由这道 gap 和正文左内边距对半分。
    分开给而不是全塞进内边距：内边距那份同时是按压淡底到字的距离，四边都留 2 才匀；
    这道 gap 是圆点列和正文栏之间的缝，编辑态那排格式键也从缝这头起。
    圆点画出来只有 9 宽、列里两边各有 3.5 空当，所以字到圆点实际还有 3.5 + 4 */
 .tl-para{position:relative;z-index:1;display:flex;gap:var(--sp-2);}
-.tl-pdot{flex-shrink:0;width:16px;height:16px;margin-top:1px;
+/* 圆点盒的高度 = 它旁边那一栏第一行的行盒，上边距 = 那一栏第一行之前的留白。
+   两者一配，align-items:center 就把圆点摆在第一行的中线上。
+   原先是写死的 16 高 + 1 上边距（圆点心落在 9），可正文第一行的中线在 14.8——
+   圆点整整高了 5.8，一屏点下来全是「悬在字上方」。
+   不写死像素、跟着字号走：--fs-scale 那三档（小/中/大）各自都对得上。 */
+.tl-pdot{flex-shrink:0;width:16px;height:calc(var(--fs-headline) * var(--lh-loose));margin-top:var(--sp-2);
   display:flex;align-items:center;justify-content:center;background:none;border:0;}
+/* 编号段：这一栏第一行是 .tl-pnum 那个小号数字（行高 1），圆点跟它对，不跟底下的正文 */
+.tl-para.tl-nm .tl-pdot{height:var(--fs-caption);margin-top:0;}
 /* 空心圆点：中心透明，让竖线从中穿过 */
 .tl-pdot::after{content:"";width:9px;height:9px;border-radius:50%;box-sizing:border-box;
   background:var(--surface);border:1.5px solid var(--accent-mid);opacity:.9;}
@@ -2289,7 +2311,10 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 }
 
 /* 标题节点（行首写了「## 」的行，或没写记号的 ≤12 字非编号短行）：实心圆点 + 主题色加粗 */
-.tl-para.tl-hd{align-items:center;}
+/* 小标题这一栏的行高是 --lh-normal、上面也没有内边距，圆点盒照着换一份。
+   原先这里是 align-items:center——单行标题碰巧也能对上，可标题一旦折成两行，
+   圆点就跑到两行正中去了。改成和正文同一套「跟第一行对」。 */
+.tl-para.tl-hd .tl-pdot{height:calc(var(--fs-headline) * var(--lh-normal));margin-top:0;}
 .tl-para.tl-hd .tl-pdot::after{width:9px;height:9px;background:var(--accent);
   border:2px solid var(--surface);box-sizing:content-box;opacity:1;}
 .tl-phead{
@@ -5064,10 +5089,23 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <div class="tlsheet-grip"></div>
     <div class="tlsheet-headrow">
       <div class="tlsheet-title" id="tlSheetTitle"></div>
-      <button type="button" class="tlsheet-cancel" id="tlSheetCancel">取消</button>
+      <button type="button" class="tlsheet-close" id="tlSheetClose" aria-label="关闭">✕</button>
     </div>
   </div>
   <div class="tlsheet-body" id="tlSheetBody"></div>
+</div>
+
+<!-- 章节抽屉点 ✕：关之前先问一句存不存。点框外 = 继续编辑（什么都不动） -->
+<div class="cfdlg" id="tlCloseAsk" onclick="tlAskBack()">
+  <div class="cfbox" onclick="event.stopPropagation()">
+    <h3>这一章的改动</h3>
+    <p>关掉之前，这次打开以来改的内容要保存吗？</p>
+    <div class="cfbtns">
+      <button type="button" class="btn btn-g" onclick="tlAskBack()">继续编辑</button>
+      <button type="button" class="btn btn-d" onclick="tlAskDrop()">不保存</button>
+      <button type="button" class="btn btn-p" onclick="tlAskSave()">保存</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===== 备注底部弹窗（详情页点备注卡打开，直接可编辑，关闭即保存） ===== -->
@@ -11301,6 +11339,7 @@ const BACK_LAYERS=[
   {id:'detailRoot',         cls:'open', close:()=>closeDetail()},
   {id:'modal',              cls:'open', close:()=>closeModal()},
   {id:'noteSheet',          cls:'show', close:()=>closeNoteSheet()},
+  {id:'tlCloseAsk',         cls:'open', close:()=>tlAskBack()},   // 比 tlSheet 后开，返回先收它
   {id:'tlSheet',            cls:'show', close:()=>closeChapterSheet()},
   {id:'bbSortSheet',        cls:'open', close:()=>closeSortSheet()},
   {id:'bbTagSheet',         cls:'open', close:()=>closeTagSheet()},
@@ -14690,7 +14729,7 @@ function tlSegType(line){
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
 function openChapterSheet(idx){
-  if(Date.now()<tlTapMuteUntil) return;   // 刚按了「取消」，别被那声落空的 click 又开一章
+  if(Date.now()<tlTapMuteUntil) return;   // 刚关掉一章，别被那声落空的 click 又开一章
   const body=tlHostBody();
   if(body==null) return;
   const c=parseChapters(body)[idx];
@@ -14704,7 +14743,7 @@ function openChapterSheet(idx){
   const rest=nl<0?'':afterLead.slice(nl+1);                  // 标题行之后的原文（含段间空行）
   tlSheetSegs=parseChapterSegs(rest);                        // 分段（每段带前置空行 gap）
   tlSheetOrigRaw=buildChapterRaw(tlSheetSegs);              // 归一化原文（保留空行），用于判断是否有改动
-  tlSheetOrigSegs=tlSheetSegs.map(sg=>({text:sg.text,gap:sg.gap}));  // 原样留一份，「取消」照它还原
+  tlSheetOrigSegs=tlSheetSegs.map(sg=>({text:sg.text,gap:sg.gap}));  // 原样留一份，「不保存」照它还原
   document.getElementById('tlSheetTitle').textContent=c.title||'本章';
   renderChapterSheet();
   const sheet=document.getElementById('tlSheet');
@@ -14713,13 +14752,13 @@ function openChapterSheet(idx){
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initTlSheetDrag();
 }
-// 取消键：按下即做，理由和格式条那排一样——手指一按下焦点就离开输入框，
+// ✕：按下即做，理由和格式条那排一样——手指一按下焦点就离开输入框，
 // blur 会提交这段并重绘，抽屉高度跟着变，等手指抬起时按钮已经不在原地了，那声 click 落空。
 // 顺带 stopPropagation：标题栏整条是拖拽把手，按在按钮上别把抽屉拖走
-(function bindTlSheetCancel(){
-  const btn=document.getElementById('tlSheetCancel');
+(function bindTlSheetClose(){
+  const btn=document.getElementById('tlSheetClose');
   if(!btn) return;
-  btn.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); cancelChapterSheet(); });
+  btn.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); askCloseChapterSheet(); });
 })();
 
 // 段内格式条：和笔记页那排是同一套标记（走 noteFmt），只少一颗 H——
@@ -14759,7 +14798,7 @@ function renderChapterSheet(){
         `<div class="tl-phead tlseg-tap" data-tap="${i}">${inlineFmt(esc(line.replace(TL_HEAD_MARK,'')))}</div></div>`;
     }
     if(type==='num'){
-      return `<div class="tl-para"><div class="tl-pdot"></div>`+
+      return `<div class="tl-para tl-nm"><div class="tl-pdot"></div>`+
         `<div class="tl-pcol"><div class="tl-pnum">${num}.</div>`+
         `<div class="tl-pbody has-rt tlseg-tap" data-tap="${i}">${renderRich(line.replace(TL_PARA_RE,''))}</div></div></div>`;
     }
@@ -14836,20 +14875,38 @@ function commitChapterSheet(){
   toast('已保存');
 }
 
-// 取消 = 丢掉这次打开抽屉以来的所有改动再关掉。
-// 不另开一条「不保存地关」的路：把段落还原成打开时那份，正常关闭时提交那步
-// 会发现和原文一模一样，自己就不落盘了（见 commitChapterSheet 的 newRaw===tlSheetOrigRaw）
-function cancelChapterSheet(){
+// ✕ → 先问一句，存不存由这一下说了算。
+// 另外三条关法（拖下去、点遮罩、系统返回键）仍是「关掉即保存」：那是手势，
+// 顺手一划就走，中间横一张问话反而挡路；✕ 是明确的「我要关了」，才值得问。
+function askCloseChapterSheet(){
   if(tlSheetIdx==null) return;
-  // 先把正在编辑的那段收下来，否则「改了没有」判断不到框里还没提交的那几笔
+  // 正在编辑的那段先收进内存：不然「保存」会漏掉框里还没提交的那几笔
   const ta=document.querySelector('#tlSheetBody .tlseg-edit');
   if(ta){ const i=+ta.dataset.edit; if(tlSheetSegs[i]!=null) tlSheetSegs[i].text=ta.value.trim(); }
-  if(buildChapterRaw(tlSheetSegs)!==tlSheetOrigRaw &&
-     !confirm('放弃这一章的改动？这次打开以来改的都不保留。')) return;
+  const dlg=document.getElementById('tlCloseAsk');
+  if(!dlg){ closeChapterSheet(); return; }        // 兜底：问不出来就按老规矩存下关掉
+  dlg.classList.add('open');
+}
+// 继续编辑：什么都不动，只把问话收掉
+function tlAskBack(){
+  const d=document.getElementById('tlCloseAsk');
+  if(d) d.classList.remove('open');
+}
+// 保存：closeChapterSheet 自己第一步就是落盘
+function tlAskSave(){
+  tlAskBack();
+  tlTapMuteUntil=Date.now()+400;   // 抽屉一关，手指抬起那声 click 会落到底下的章节卡上
+  closeChapterSheet();
+}
+// 不保存 = 丢掉这次打开抽屉以来的所有改动再关掉。
+// 不另开一条「不保存地关」的路：把段落还原成打开时那份，正常关闭时提交那步
+// 会发现和原文一模一样，自己就不落盘了（见 commitChapterSheet 的 newRaw===tlSheetOrigRaw）
+function tlAskDrop(){
+  tlAskBack();
   tlSheetSegs=tlSheetOrigSegs.map(sg=>({text:sg.text,gap:sg.gap}));
   tlSheetEdit=-1;
   renderChapterSheet();   // 把输入框从页面上撤掉，关闭时那步就读不到框里的旧值了
-  tlTapMuteUntil=Date.now()+400;   // 抽屉一关，手指抬起那声 click 会落到底下的章节卡上
+  tlTapMuteUntil=Date.now()+400;
   closeChapterSheet();
 }
 
