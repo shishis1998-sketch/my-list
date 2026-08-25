@@ -1645,7 +1645,10 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 列缝 2px：同 .cal-grid / .cal-weekrow，列心才和月历的日期数字重合 */
 .cw-cols{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);}
 .cw-gh{text-align:center;padding:0 0 var(--sp-8);}
-.cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;}
+/* 星期和日期之间留 6：两行本来只靠行高那点余量隔着（量下来 4.5），挤成一坨；
+   「今天」那天的日期是个 22 见方的实心圆，圆边比字更往上顶，贴得尤其明显 */
+.cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;
+  margin-bottom:var(--sp-6);}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
 .cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
