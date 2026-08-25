@@ -14614,8 +14614,11 @@ function buildChapterRaw(segs){
   const body=segs.filter(s=>s.text!=='').map(s=>s.gap+s.text).join('');
   return (tlSheetLead+tlSheetHeading+'\n'+body).replace(/\s+$/,'');
 }
+// 句读：中文标点落在哪儿都算数（正文中间总会有一个）；英文标点只认行尾那颗，
+// 免得「Mr. Ratchett的委托」这种标题被那个缩写点判成句子
+const TL_SENT_RE=/[。！？；，、…]|[.!?;,]$/;
 // 单行推断类型：编号 / 小标题 / 正文。
-// first = 本段是章内第一段，也就是章节标题那一行——它按位置认，不数字数（见下）
+// first = 本段是章内第一段，也就是章节标题那一行——它按位置＋句读认，不数字数（见下）
 function tlSegType(line,first){
   const t=(line||'').trim();
   if(!t) return 'pre';
@@ -14626,11 +14629,11 @@ function tlSegType(line,first){
   // 「- 列点」「# 小标题」这种带标记的短行交给富文本渲染：
   // 当成小标题会把标记原样印出来（小标题那支是 inlineFmt，不认行首标记）
   if(/^([-*]|#{1,3})\s+/.test(t)) return 'pre';
-  // 章节标题按位置认：章号行底下的第一段就是它，写多长都还是标题。
-  // 原来它和章内小标题共用 ≤12 字那条规则，标题一长就掉回正文样式，整章看着没了头。
-  // 上面三道闸口照旧管着首段——多行、编号段、带标记的行都不认作标题；
-  // 剩下的漏网是「单行、无编号、又写得长」的正文首段，那种给它编个号就归位了。
-  if(first) return 'heading';
+  // 章节标题＝位置 + 不像一句话，两个条件都要：章号行底下的第一段，且一颗句读都不带。
+  // 原来它和章内小标题共用 ≤12 字那条规则，标题一长就掉回正文样式，整章看着没了头；
+  // 光看位置又会把「单行、无编号、写得长」的正文首段错认成标题——加上句读这条就分得开：
+  // 正文哪怕不打句号，中间也几乎总有个逗号，标题是个名词短语，一路到底没有停顿。
+  if(first) return TL_SENT_RE.test(t) ? 'pre' : 'heading';
   // 章中间的短行仍按长度认小标题，这条没动
   return t.length<=TL_HEADING_MAX ? 'heading' : 'pre';
 }
