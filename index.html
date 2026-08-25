@@ -9704,6 +9704,7 @@ function setCalView(v){
   if(hv)hv.style.display=isH?'':'none';
   document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
   syncCalToggle(v);
+  if(!isP&&!isH)flushWeekPills();   // 切回日历视图：本周卡片刚露出来，欠着的那摊补摆上
   if(isH&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
     PV.openHeat(prev);   // 从经期/年度切进来时跟随那边的年月
@@ -13197,7 +13198,6 @@ function openCalendar(){
       el.classList.remove('cal-animating');el.style.setProperty('--p','0');});}
   const _grab=document.getElementById('calGrabRow');if(_grab)_grab.classList.remove('cal-grab-on');
   renderCalDetail();               // 内嵌下半区：直接填入今天的记录
-  renderWeekCard(true);            // 本周卡片：重开日历一律重画
   closeCalSearch();                // 确保搜索收起
   closeCalFilter();                // 确保筛选面板收起
   setCalTabActive(true);           // 高亮底部「日历」tab
@@ -13208,6 +13208,10 @@ function openCalendar(){
   if(window.PV&&PV.resetPos)PV.resetPos();   // 重新打开日历页：经期视图也回到当前年月（与上面日历重置到今天一致）
   let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
   setCalView(_lv);   // 恢复上次视图（日历 / 经期月 / 经期年）
+  // 本周卡片放在最后画：它摆块要按像素量宽度，得等上面几位把「谁显示谁隐藏」定下来。
+  // 早先排在 setCalView 前面，上次停在经期视图时 #calViewCalendar 还挂着上一轮的
+  // display:none，量出来是 0，块就没摆——回到日历视图后卡片只剩一排日期，底下空着。
+  renderWeekCard(true);            // 本周卡片：重开日历一律重画
   saveLastView();
 }
 function closeCalendar(){
@@ -13446,11 +13450,13 @@ document.addEventListener('touchmove',function(e){
   inp.blur();
 },{passive:true});
 function closeCalSearch(){
+  const wasSearching=document.body.classList.contains('cal-searching');
   document.body.classList.remove('cal-searching');
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.remove('on');
   const inp=document.getElementById('calSearchInput');if(inp)inp.value='';
   // 关掉时把三态描边一并清掉，否则下次打开还挂着上一轮的红边/绿边
   const f=document.getElementById('calSearchField');if(f)f.classList.remove('no-result','has-result');
+  if(wasSearching)flushWeekPills();   // 搜索态把本周卡片藏了，这会儿露出来，欠着的那摊补摆上
 }
 // 收集所有「能落到某一天」的记录，跟随图例筛选（隐藏的分类不参与搜索）
 function calSearchItems(){
@@ -13935,6 +13941,17 @@ let calDayOpen=localStorage.getItem(CD_OPEN_KEY)!=='0';
 const CW_WK=['一','二','三','四','五','六','日'];
 let calWeekOpen=localStorage.getItem(CW_OPEN_KEY)!=='0';
 let cwShownWeek='';                     // 已经画出来的那一周（周一那天），周没变就不重画
+// 摆块得按像素量宽度，可这张卡有好几种「画得出、量不到」的时候：经期/标签视图把整列
+// 日历隐了（#calViewCalendar 挂 display:none）、搜索态把卡片藏了、卡片自己收起着。
+// 那时 clientWidth 是 0，只能先撂下（见 layoutWeekPills 里的 if(!W)）——撂下就记在这儿，
+// 等卡片重新上屏的那几处各叫一声 flushWeekPills 把它捡回来。
+// 早先只有「展开卡片」和「转屏」两处补摆，从别的页面切回日历那条路没人管：上次停在
+// 经期视图时 display:none 还挂着，重进日历量到 0，块就再没摆过——卡片剩一排日期、
+// 底下空着，正是这个毛病。
+// 不用 ResizeObserver：元素被 display:none 时它根本不报（没有盒子就跳过），
+// 藏起来再露出来、宽度前后一样，一声都听不到，指望不上。
+let cwPending=false;
+function flushWeekPills(){ if(cwPending) layoutWeekPills(); }
 function calWeekDays(){
   const base=new Date((calSelDate||calToday())+'T00:00:00');
   base.setDate(base.getDate()-((base.getDay()+6)%7));         // 回到周一
@@ -13996,9 +14013,11 @@ function layoutWeekPills(days){
   days=days||calWeekDays();          // 展开/转屏那两处是干摆一遍，不带日子进来
   box.innerHTML='';
   const gs=calWeekGroups(days);
-  if(!gs.length){box.innerHTML='<div class="cw-empty">这一周没有记录</div>';box.style.height='';return;}
+  if(!gs.length){box.innerHTML='<div class="cw-empty">这一周没有记录</div>';box.style.height='';cwPending=false;return;}
   const W=box.clientWidth;
-  if(!W){box.style.height='';return;}          // 收起着或还没上屏：量不到宽度，展开时再摆
+  // 收起着或还没上屏：量不到宽度，先撂下，记一笔「还欠着」（见 flushWeekPills）
+  if(!W){box.style.height='';cwPending=true;return;}
+  cwPending=false;
   // 列宽/列缝照抄月历那张卡的网格（七列 1fr、列缝 2）：块的左右缘就压在月历
   // 同一天格子的左右缘上，两张卡的「17…23」上下对成一条线
   const CG=2, col=(W-CG*6)/7, GAP=5;
