@@ -39,13 +39,14 @@
      底色抹掉、露出身后那层」。段落卡和删除钮碰巧看着还行，「＋ 加一段」本来就是
      background:none，抹掉等于没抹，那条一直是失灵的。 */
   --press:#E8E8E6;
-  /* 卡里再套一层的那块面（章节抽屉的段落卡）。白天是「凹」进去的：白底 #FFFFFF
-     上一块更浅的 #F7F7F5，凹陷靠「比全屏最亮的底稍暗」被认出来。
-     夜间这条路走不通：抽屉底 #1C1C1F 已经接近黑，往下压没有余量，往上抬又要
-     整屏跟着发灰——先试过抬一档（#26262A，ΔL* 4.9）和抬两档，都不够或太亮。
-     所以夜间干脆不要面（--panel:transparent），分界交给一条横线，
-     见下面 .tl-pbody 那条只改结构、不碰 background 的夜间规则。 */
-  --panel:#F7F7F5;--panel-bd:#F2F2F0;
+  /* 章节抽屉里段与段之间那条分隔线。
+     这里原本是一块有面有框的卡片，白天靠「比全屏最亮的底稍暗」被认出来。
+     夜间那条路走不通：抽屉底 #1C1C1F 已经接近黑，往下压没余量，往上抬又要整屏
+     跟着发灰——抬一档（#26262A，ΔL* 4.9）不够，抬两档（#36363D）太亮。
+     所以两套模式一起改成不要面，段尾一条横线，形状只有一份（见 .tl-pbody）。
+     线的深浅不必两边等幅：白天 ΔL* 9.5 就够看，夜间要 23.6，因为眼睛在接近白
+     的那一段分辨得细，接近黑的那一段分辨得粗。 */
+  --seg-line:#E4E4E2;
   --gold-soft:#EDEDEB;
   --ink:#E4E4E2;--ink-deep:#1A1A1A;          /* ink 由墨绿描边改为极浅灰，几乎无边 */
   --bd:1px;                     /* 描边粗细减细 */
@@ -144,7 +145,7 @@
   --on-accent:#10201A;--on-accent-soft:rgba(16,32,26,.55);--on-accent-faint:rgba(16,32,26,.38);
   --danger:#F44E52;--danger-fill:#9B2427;--danger-bg:#2C1A1A;--danger-bg-hover:#3A2020;
   --gold:#C6C6CE;--surface-2:#26262A;--gold-soft:#26262A;--press:#33333A;
-  --panel:transparent;--panel-bd:#4F4F5A;
+  --seg-line:#4F4F5A;
   --ink:#33333A;--ink-deep:#F2F2F5;
   --surface-fade:rgba(28,28,31,0);
 }
@@ -2240,21 +2241,18 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 }
 .tl-pbody{
   font-size:var(--fs-headline);line-height:var(--lh-loose);color:var(--text-primary);
-  white-space:pre-wrap;background:var(--panel);
-  border:1px solid var(--panel-bd);border-radius:var(--r);
-  padding:var(--sp-8) var(--sp-12);
-}
-/* 夜间的段落卡没有面，只在段尾留一条横线。这条只改结构，background 一个字不写——
-   它和 .tl-pbody.tlseg-tap:active 特指度同为 (0,3,0)，一旦在这里写 background，
-   写在后面就会把按压反馈整个压掉（上一版正是这么栽的）。面色交给 --panel。
-   左内边距用和 .tl-phead 同一个表达式：没有左边框了，得自己补上那 1px，
-   正文起点才跟章内小标题对齐。 */
-:root[data-mode="dark"] .tl-pbody{
-  border-width:0 0 1px;border-radius:0;
+  white-space:pre-wrap;background:transparent;
+  /* 段与段只靠一条底线分开，明暗共用这一份形状，两边只差 --seg-line 的深浅。
+     background 写在这条 (0,1,0) 的规则里是安全的：.tl-pbody.tlseg-tap:active
+     是 (0,3,0)，按压反馈照样盖得住。早先把它写进
+     :root[data-mode="dark"] .tl-pbody（同为 0,3,0、又在后面）就把反馈压没了。
+     左内边距和 .tl-phead 同一个表达式：没有左边框了，得自己补上那 1px，
+     正文起点才跟章内小标题对齐。 */
+  border:0 solid var(--seg-line);border-bottom-width:1px;border-radius:0;
   padding:var(--sp-2) var(--sp-2) var(--sp-12) calc(var(--sp-12) + 1px);
 }
 /* 最后一段下面不画：否则整列尾巴上吊着一条没有下文的横线 */
-:root[data-mode="dark"] .tl-para:last-child .tl-pbody{border-bottom-width:0;}
+.tl-para:last-child .tl-pbody{border-bottom-width:0;}
 
 /* 章内小标题节点（≤12 字非编号行）：实心圆点 + 墨绿加粗 */
 .tl-para.tl-hd{align-items:center;}
