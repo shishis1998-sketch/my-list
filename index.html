@@ -84,6 +84,15 @@
   --nav-ease:cubic-bezier(.22,1,.36,1);   /* 统一缓动曲线 */
   --nav-rise:16px;                        /* 进入时的上移距离 */
 }
+/* 上面那条 --fs-input 的 16px 下限是给 iOS 兜的：Safari 聚焦一个字号 <16px 的
+   输入框时会把整页放大，为躲开它才把输入框统一抬到至少 16。桌面浏览器没有这套
+   行为，下限在那儿换不到任何好处，只留下副作用——「小」档（headline 14.4）下
+   三处输入框（章节段落、备注抽屉、人物三栏）全被抬到 16px，比周围正文大 11%，
+   点进去编辑就"放大"一下。所以下限只在触摸设备上兜，鼠标设备照 headline 走。
+   写成 var(--fs-headline) 而不是写死 px：平板那份基线（17px）也照样跟得上。 */
+@media (pointer:fine){
+  :root{--fs-input:var(--fs-headline);}
+}
 @media (prefers-reduced-motion:reduce){
   :root{--nav-dur:1ms;--nav-dur-exit:1ms;--nav-rise:0px;}
 }
