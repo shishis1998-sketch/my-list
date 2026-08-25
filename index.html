@@ -2083,7 +2083,8 @@ body.cal-searching .cw-card{display:none;}
 .tl-phead.tlseg-tap:active{opacity:.65;}
 .tlseg-edit{width:100%;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);
   color:var(--text-primary);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
-  padding:var(--sp-8) var(--sp-12);outline:none;resize:none;overflow:hidden;
+  /* 横向 8（不是 12）：读态的 .tl-pbody 左边留的是 8+1，点开变输入框时字才不横向跳 */
+  padding:var(--sp-8);outline:none;resize:none;overflow:hidden;
   transition:border-color .15s,box-shadow .15s;}
 .tlseg-edit:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
 /* 段内格式条：只跟着正在编辑的那一段走，样式沿用笔记页那排（.fmt-bar/.fmt-btn） */
@@ -2221,11 +2222,19 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 /* 段与段的距离。22 是 24 - 2：段尾那条线拿掉之后，两段正文之间的总距离要
    维持原样（原先是 12 内边距 + 12 gap），空出来的都并到 gap 上。不在 --sp 档位上，
    因为它不是一个独立的留白档，是「24 减掉 .tl-pbody 底部那 2px」算出来的 */
-.tl-pts{position:relative;display:flex;flex-direction:column;gap:22px;}
-.tl-pts::before{content:"";position:absolute;left:9px;top:11px;bottom:11px;
+/* 右边留 8：抽屉自己两边各 16，可左边还排着圆点和竖线那一列，正文被整体推到
+   右边去了——一屏看下来左边空一大片、右边的字贴着边。这 8 是把「屏幕边到竖线」
+   和「正文末到屏幕边」凑成一对：左 16 + 圆点列一半 8 = 24，右 16 + 8（+ 正文自己那 2）≈ 24。
+   加在 .tl-pts 上而不是 .tl-pbody 上：按压那块淡底也跟着一起收，才不会单独探出去 */
+.tl-pts{position:relative;display:flex;flex-direction:column;gap:22px;padding-right:var(--sp-8);}
+/* 竖线落在圆点列正中：列宽 16 → 心在 8，线宽 1.5 → left 7（同原先 20 宽时取 9 的算法）。
+   top/bottom 也跟着由 1(圆点 margin-top) + 10 改成 1 + 8 */
+.tl-pts::before{content:"";position:absolute;left:7px;top:9px;bottom:9px;
   width:1.5px;background:var(--border);z-index:0;}
-.tl-para{position:relative;z-index:1;display:flex;gap:var(--sp-10);}
-.tl-pdot{flex-shrink:0;width:20px;height:20px;margin-top:1px;
+/* gap 由 10 收到 4：圆点列本身也从 20 收到 16，两处一共把正文往左挪 10。
+   圆点画出来还是 9px，收掉的只是它周围的空当 */
+.tl-para{position:relative;z-index:1;display:flex;gap:var(--sp-4);}
+.tl-pdot{flex-shrink:0;width:16px;height:16px;margin-top:1px;
   display:flex;align-items:center;justify-content:center;background:none;border:0;}
 /* 空心圆点：中心透明，让竖线从中穿过 */
 .tl-pdot::after{content:"";width:9px;height:9px;border-radius:50%;box-sizing:border-box;
@@ -2250,9 +2259,10 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
      :root[data-mode="dark"] .tl-pbody（同为 0,3,0、又在后面）就把反馈压没了。
      底部内边距和顶上一样留 2px：按压那块淡底才不会贴着字。
      左内边距和 .tl-phead 同一个表达式：没有左边框了，得自己补上那 1px，
-     正文起点才跟章内小标题对齐。 */
+     正文起点才跟章内小标题对齐。12 收到 8 是跟着 .tlseg-edit 一起收的——
+     点开那段变输入框时字不能跳，两边得同一个数。 */
   border-radius:0;
-  padding:var(--sp-2) var(--sp-2) var(--sp-2) calc(var(--sp-12) + 1px);
+  padding:var(--sp-2) var(--sp-2) var(--sp-2) calc(var(--sp-8) + 1px);
 }
 
 /* 标题节点（行首写了「## 」的行，或没写记号的 ≤12 字非编号短行）：实心圆点 + 主题色加粗 */
@@ -2262,8 +2272,8 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .tl-phead{
   flex:1;min-width:0;font-size:var(--fs-headline);font-weight:700;color:var(--accent);
   line-height:var(--lh-normal);
-  /* 左内边距对齐灰框内正文（框 border 1px + padding 12px），小标题与正文起始位置一致 */
-  padding-left:calc(var(--sp-12) + 1px);
+  /* 左内边距对齐灰框内正文（框 border 1px + padding 8px），小标题与正文起始位置一致 */
+  padding-left:calc(var(--sp-8) + 1px);
 }
 
 /* ── 富文本渲染样式（rt-* / pv-h1/h2/h3）─────────────────── */
