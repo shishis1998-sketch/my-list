@@ -1682,8 +1682,16 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 小圆角而不是胶囊：名字换到两行后块要长高，999px 的圆角把两头削成半圆，
    椭圆压在四十来像素宽的一列里显得笨。块高只有 15，6px 的圆角占掉四成块高，
    3px 才是「方块带个小角」 */
+/* 上 1 下 3（不是上下各 2）：align-items:center 居中的是「行盒」，不是字形本身。
+   中文字体的上下伸展不对称（Noto Sans CJK 一类：上 1.16em、下 0.288em），
+   行盒摆正了，字形在行盒里却是偏下的——量了一张手机截图：块高 16 的块里，
+   字上方留 21 图像像素、下方 15，折算约 1.2px 的偏差，块只有 16 高，一眼就看得出。
+   把上内边距挪 1px 给下面，总高不变（1+12+3 = 16，两行 1+24+3 = 28），字回到正中。
+   写死 1px 而不是按字体算：这一档偏差在 Noto / 雅黑一类的中文字体上都差不多，
+   iOS 的苹方上下更匀，会被这 1px 反过来抬高一点点——那边本来就只差 0.2px，抬完也
+   还在半像素上下，比 Android 上肉眼可见的那 1.2px 划算。 */
 .cw-p{position:absolute;border-radius:3px;z-index:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:flex-start;padding:2px 3px;overflow:hidden;}
+  display:flex;align-items:center;justify-content:flex-start;padding:1px 3px 3px;overflow:hidden;}
 /* 单日块靠左、跨天块居中：单日块只有一列宽，字左对齐才和它那一天的其他块连成一竖条；
    跨天块横跨好几列，靠左会把字全堆在起始日那头，看不出这条底色管的是哪几天 */
 .cw-p.cw-span{justify-content:center;}
