@@ -2089,12 +2089,19 @@ body.cal-searching .cw-card{display:none;}
 }
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
-/* 章节这张单独收到 12：它左边比别的抽屉多站着一列圆点和竖线，同样是 16 的内边距，
-   一栏字看下来就是偏窄偏挤。三段留白（屏幕边→竖线、竖线→正文、正文→屏幕边）
-   由 24 收到 20，这 4px 出在这里，另 4px 出在 .tl-para 的 gap 上。
+/* 章节这张单独收到 10：它左边比别的抽屉多站着一列圆点和竖线，同样是 16 的内边距，
+   一栏字看下来就是偏窄偏挤。三段留白怎么摊的见 .tl-pts 那处的算式（18 / 18 / 25）。
    写在 #tlSheetBody 上而不是 .tlsheet-body 上：备注、人物那两张抽屉里没有这一列，
    它们照旧 16。上下不动——那是另一码事。 */
 #tlSheetBody{padding-left:var(--sp-10);padding-right:var(--sp-10);}
+/* 章节抽屉是「读」的地方，不是列表：正文比全局的 headline 大一档（手机 16 → 18）。
+   做法是在这一层把 --fs-headline 换掉，而不是给 .tl-pbody 单写一个 font-size：
+   圆点盒的高度、竖线的起点、行高全是从 --fs-headline 算出来的（见 .tl-pdot /
+   .tl-pts::before），换变量它们才跟着一起长，圆点照旧对着第一行的中线。
+   :root 那条八级阶梯一点没动，外面的列表和其它页照旧。
+   --fs-input 得跟着补一份：它在 :root 上就已经把 var(--fs-headline) 解析成 16 了，
+   只换 headline 的话，点开那段变输入框，字会从 18 缩回 16。 */
+#tlSheetBody{--fs-headline:calc(18px * var(--fs-scale));--fs-input:max(16px,var(--fs-headline));}
 /* 方案 A：分段卡片阅读，点某段就地变输入框编辑 */
 .tlseg-tap{cursor:text;border-radius:var(--r);transition:background .15s,opacity .15s;}
 .tl-pbody.tlseg-tap:active{background:var(--press);}
@@ -4134,6 +4141,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     --fs-caption:calc(14px * var(--fs-scale));   /* 手机 13 */
     --fs-foot:calc(12px * var(--fs-scale));      /* 手机 11 */
   }
+  /* 章节抽屉的正文照旧比 headline 大两档：平板基线 17 → 19（手机是 16 → 18） */
+  #tlSheetBody{--fs-headline:calc(19px * var(--fs-scale));}
   /* 徽章/标签/小按钮是「固定高度 + line-height:1」的胶囊，字大了要跟着长高一点，
      否则字塞满整颗胶囊、上下没了呼吸 */
   .ctag{height:26px;}
