@@ -1046,7 +1046,9 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     transform:translateZ(0);
   }
   /* 抽屉顶部小抓手 */
-  #noteModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #noteModal .mhdr{position:relative;padding-top:var(--sp-20);
+    touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;}
+  #noteModal .mhdr:active{cursor:grabbing;}
   #noteModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   /* 读书时间线（章节列表）弹窗：铺满到屏幕底边，不在下方留出导航条空档（否则会露出被压暗的底栏，看着像空了一块）。
      底部内容加上安全区内边距，最后一章不被手势条压住。 */
@@ -1080,7 +1082,9 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     border-radius:var(--rxl) var(--rxl) 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.18);
     transform:translateZ(0);
   }
-  #icsColorModal .mhdr,#icsDelModal .mhdr{position:relative;padding-top:var(--sp-20);}
+  #icsColorModal .mhdr,#icsDelModal .mhdr{position:relative;padding-top:var(--sp-20);
+    touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;}
+  #icsColorModal .mhdr:active,#icsDelModal .mhdr:active{cursor:grabbing;}
   #icsColorModal .mhdr::before,#icsDelModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   .frow2{grid-template-columns:1fr;gap:0;}  /* 弹窗内双栏改单栏 */
   .fg input[type=text],.fg input[type=number],.fg input[type=month],.fg input[type=date],
@@ -13754,6 +13758,16 @@ function bindSheetDrag(box,head,close){
   head.addEventListener('pointerup',end);
   head.addEventListener('pointercancel',end);
 }
+// 另外三张同款底部抽屉（笔记编辑、日历配色、清除导入）也把抓手接上：
+// 它们的标题栏写死在页面里，开合只换类名，所以进页面绑一次就够
+// （事件预览那张是每次 showCalNotePreview 里绑的，bindSheetDrag 自己认得出重复绑）。
+// 笔记那张「关抽屉即保存」，拉下去和点 ✕ 是同一条路，不会丢东西
+[['noteModal',()=>closeNoteModal()],
+ ['icsColorModal',()=>closeIcsColor()],
+ ['icsDelModal',()=>closeIcsDel()]].forEach(([id,close])=>{
+  const dlg=document.getElementById(id);
+  if(dlg) bindSheetDrag(dlg.querySelector('.mbox'), dlg.querySelector('.mhdr'), close);
+});
 
 // ── 「离今天多久」：预览弹窗顶上那张小卡 ──────────────────────────
 // 跨天事件在导入时已被拆成每天一条（正文带「第X/Y天」），所以这里先把这一条
