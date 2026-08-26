@@ -2119,8 +2119,12 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-close:active{background:var(--on-accent-faint);opacity:.85;}
 /* 这句问话得压过章节抽屉本身（1501），.cfdlg 原本只有 150，会被整张盖住 */
 #tlCloseAsk{z-index:1550;}
-/* 三颗按钮：继续编辑 / 不保存 / 保存。窄屏一行摆不下就竖排，
+/* 三颗按钮：继续编辑 / 取消 / 保存。窄屏一行摆不下就竖排，
    竖排时反过来——最常按的「保存」在最上面，手指够得到 */
+/* 这三颗横排时居中，不跟着 .cfbtns 默认的靠右走：别的问话框只有两颗按钮，
+   靠右一排右边还剩着空当也不显眼；这张三颗几乎把 330 的框占满，再靠右就是
+   左边空一条、整排偏右，看着像没摆正 */
+#tlCloseAsk .cfbtns{justify-content:center;}
 @media (max-width:360px){
   #tlCloseAsk .cfbtns{flex-direction:column-reverse;}
   #tlCloseAsk .cfbtns .btn{justify-content:center;}
@@ -5139,7 +5143,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
     <p>关掉之前，这次打开以来改的内容要保存吗？</p>
     <div class="cfbtns">
       <button type="button" class="btn btn-g" onclick="tlAskBack()">继续编辑</button>
-      <button type="button" class="btn btn-d" onclick="tlAskDrop()">不保存</button>
+      <button type="button" class="btn btn-d" onclick="tlAskDrop()">取消</button>
       <button type="button" class="btn btn-p" onclick="tlAskSave()">保存</button>
     </div>
   </div>
