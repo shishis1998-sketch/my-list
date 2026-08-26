@@ -1063,7 +1063,9 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   /* 这条标题栏只有一个日期和一颗 ✕，原来 62px 里大半是空的，收到 51px：
      上 14（抓手跟着挪到 top:6，留 4px 呼吸）、下 10、内容行由 ✕ 的 26px 定高
      （日期文字 25.6px，正好在同一档，谁也不会顶出去）。 */
-  #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-14);padding-bottom:var(--sp-10);}
+  #calNotePreviewModal .mhdr{position:relative;padding-top:var(--sp-14);padding-bottom:var(--sp-10);
+    touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;}
+  #calNotePreviewModal .mhdr:active{cursor:grabbing;}
   #calNotePreviewModal .mhdr::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:var(--border);}
   /* ✕ 去掉描边，只留一块淡底：这一屏是纯阅读界面，一个关闭按钮不用画框强调。
      height 是 border-box，去掉那 1px 边框不影响栏高 */
@@ -13717,7 +13719,40 @@ function showCalNotePreview(id){
     calGapCard(note)+
     (bodyHtml?`<div class="cnp-text" style="color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>`:'')+
     (tagsHtml?`<div style="display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-14)">${tagsHtml}</div>`:'');
-  document.getElementById('calNotePreviewModal').classList.add('open');
+  const dlg=document.getElementById('calNotePreviewModal');
+  dlg.classList.add('open');
+  bindSheetDrag(dlg.querySelector('.mbox'), dlg.querySelector('.mhdr'), closeCalNotePreview);
+}
+
+// 底部抽屉：按住标题栏往下拉，松手过 100 就关。
+// 顶上那道小抓手原先只是画上去的，一直拉不动——横杠摆在那儿就是在说「能拉」。
+// 手势和章节抽屉那套一样（见 initTlSheetDrag），只是这里的遮罩是弹窗自己的父节点，
+// 不能跟着调透明度：opacity 落在父节点上，抽屉是它的孩子，会连抽屉一起淡掉。
+function bindSheetDrag(box,head,close){
+  if(!box||!head||head._sheetDrag)return;
+  head._sheetDrag=true;
+  let sy=0,dy=0,drag=false;
+  head.addEventListener('pointerdown',e=>{
+    // 电脑上这个弹窗是居中的对话框，没有抓手也无从下拉；只在底部抽屉那套版式里认这一手势
+    if(getComputedStyle(box.parentNode).alignItems!=='flex-end')return;
+    if(e.target.closest('button'))return;      // ✕ 自己有事做，别把它当把手
+    sy=e.clientY;dy=0;drag=true;
+    box.style.transition='none';
+    try{head.setPointerCapture(e.pointerId);}catch(_){}
+  });
+  head.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    dy=Math.max(0,e.clientY-sy);              // 只跟下拉，往上推不动
+    box.style.transform='translateY('+dy+'px)';
+  });
+  const end=()=>{
+    if(!drag)return;
+    drag=false;
+    box.style.transition='';box.style.transform='';
+    if(dy>100)close();
+  };
+  head.addEventListener('pointerup',end);
+  head.addEventListener('pointercancel',end);
 }
 
 // ── 「离今天多久」：预览弹窗顶上那张小卡 ──────────────────────────
