@@ -754,7 +754,13 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 /* z-index 要压过全站最高的那层浮层（章节抽屉 1501）。原先是 200，比章节抽屉
    1501、备忘单字段抽屉 1401、经期抽屉 201 都低——抽屉开着时弹的「已保存」
    整条被压在抽屉底下，根本看不见。 */
-.toast{position:fixed;bottom:18px;right:18px;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:1600;display:flex;align-items:center;gap:var(--sp-6);}
+/* pointer-events:none 不能少：收起靠的是 opacity:0 + translateY，元素一直在页面上，
+   而 opacity:0 照样接点击。它又是全站最高的 1600，收起后那个「看不见的方块」就横在
+   屏幕底部（bottom 是 --toast-lift 抬过底栏的高度，收起再往下挪 70），
+   谁在它底下谁就点不着——读书笔记正文框最下面几行点不动就是被它吃了。
+   手机端还更宽：那边是 width:fit-content + 居中，长句换行后几乎铺满整行。
+   条子上没有任何可点的东西，索性一直不收点击。 */
+.toast{position:fixed;bottom:18px;right:18px;pointer-events:none;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:1600;display:flex;align-items:center;gap:var(--sp-6);}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast>svg{flex-shrink:0;}   /* 长句换行时对勾不被挤扁 */
 
