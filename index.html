@@ -1633,9 +1633,28 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    （一事一行会排成一道楼梯，七天各占一行，反而看不出「一周」）。 */
 .cw-card{flex:0 0 auto;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--rxl);margin:0 var(--sp-14) var(--sp-12);overflow:hidden;}
-.cw-hd{width:100%;display:flex;align-items:center;gap:var(--sp-8);background:none;border:0;
-  padding:var(--sp-12) var(--sp-14);cursor:pointer;font-family:var(--zh);text-align:left;}
-.cw-hd-t{font-size:var(--fs-headline);font-weight:700;color:var(--accent);}
+/* 标题栏：整条不再是一颗大按钮了——右端要放 ‹ › 切周，按钮不能套按钮。
+   现在是一行 flex：标题（占满剩余宽，点它收起/展开）+ ‹ + › + 展开箭头。
+   上下内边距 12、左右 14 一点没动，和「当天」卡的标题栏还是同一条线上 */
+.cw-hd{width:100%;display:flex;align-items:center;gap:var(--sp-2);
+  padding:var(--sp-12) var(--sp-14);font-family:var(--zh);text-align:left;}
+/* 标题连同它右边那片空白都是收起/展开的开关：flex:1 让它把中间撑满，
+   点按面积和原先整条按钮时差不多 */
+.cw-hd-t{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:700;color:var(--accent);
+  background:none;border:0;padding:0;text-align:left;font-family:var(--zh);cursor:pointer;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ‹ › 切上一周/下一周。字形和顶上「‹ 2026 年 8 月 ›」那对是同一副，颜色也同为主题色；
+   26 见方是点按面积（字形本身 16），和展开箭头同高，一行三颗中线对齐。 */
+.cw-nav{flex-shrink:0;width:26px;height:26px;padding:0;border:0;background:none;
+  border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;
+  font-size:16px;line-height:1;color:var(--accent);cursor:pointer;transition:background .15s;}
+@media (hover:hover){.cw-nav:hover{background:var(--accent-light);}}
+.cw-nav:active{background:var(--accent-light);}
+/* 展开箭头也裹进一颗 26 见方的按钮里（原先是条上的裸图标），右边负 5 是把它退回原位：
+   图标 16 居中在 26 里会往左缩 5，而「当天」卡的箭头还在老地方，差这 5px 两张卡就错开了 */
+.cw-hd-x{flex-shrink:0;width:26px;height:26px;margin-right:-5px;padding:0;border:0;background:none;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+.cw-hd-x .cw-chev{margin-left:0;}
 .cw-chev{width:16px;height:16px;color:var(--text-muted);flex-shrink:0;margin-left:auto;transition:transform .2s;}
 .cw-card.closed .cw-chev{transform:rotate(-90deg);}
 .cw-card.closed .cw-body{display:none;}
@@ -1663,8 +1682,16 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 小圆角而不是胶囊：名字换到两行后块要长高，999px 的圆角把两头削成半圆，
    椭圆压在四十来像素宽的一列里显得笨。块高只有 15，6px 的圆角占掉四成块高，
    3px 才是「方块带个小角」 */
+/* 上 1 下 3（不是上下各 2）：align-items:center 居中的是「行盒」，不是字形本身。
+   中文字体的上下伸展不对称（Noto Sans CJK 一类：上 1.16em、下 0.288em），
+   行盒摆正了，字形在行盒里却是偏下的——量了一张手机截图：块高 16 的块里，
+   字上方留 21 图像像素、下方 15，折算约 1.2px 的偏差，块只有 16 高，一眼就看得出。
+   把上内边距挪 1px 给下面，总高不变（1+12+3 = 16，两行 1+24+3 = 28），字回到正中。
+   写死 1px 而不是按字体算：这一档偏差在 Noto / 雅黑一类的中文字体上都差不多，
+   iOS 的苹方上下更匀，会被这 1px 反过来抬高一点点——那边本来就只差 0.2px，抬完也
+   还在半像素上下，比 Android 上肉眼可见的那 1.2px 划算。 */
 .cw-p{position:absolute;border-radius:3px;z-index:1;cursor:pointer;
-  display:flex;align-items:center;justify-content:flex-start;padding:2px 3px;overflow:hidden;}
+  display:flex;align-items:center;justify-content:flex-start;padding:1px 3px 3px;overflow:hidden;}
 /* 单日块靠左、跨天块居中：单日块只有一列宽，字左对齐才和它那一天的其他块连成一竖条；
    跨天块横跨好几列，靠左会把字全堆在起始日那头，看不出这条底色管的是哪几天 */
 .cw-p.cw-span{justify-content:center;}
@@ -13326,6 +13353,14 @@ function calReselect(){
 }
 
 // —— 底部抽屉：点某天弹出 / 收起 ——
+// 周卡片上的 ‹ ›：把选中日整周挪一格，星期几不变（这周三 → 上周三），
+// 月历跟着切到新日子所在的月——和点月历里上/下月那些灰格是同一套（见 makeCalCell 的 onclick）
+function calWeekStep(dir){
+  const d=new Date((calSelDate||calToday())+'T00:00:00');
+  d.setDate(d.getDate()+7*dir);
+  calYear=d.getFullYear(); calMonth=d.getMonth();   // renderCal 会照这两个数重写顶上的「N 年 N 月」
+  openCalDay(calFmtDate(d));
+}
 function openCalDay(dateStr){
   calSelDate=dateStr;
   renderCal();                     // 刷新选中高亮
@@ -14090,9 +14125,12 @@ function renderWeekCard(force){
   const wk=calISOWeek(days[0]);
   const wkTxt=wk.year===+sel.slice(0,4)?`第 ${wk.week} 周`:`${wk.year} 年第 ${wk.week} 周`;
   card.innerHTML=
-    `<button type="button" class="cw-hd" onclick="toggleWeekCard()">`+
-    `<span class="cw-hd-t">${days.includes(today)?'本周':wkTxt}</span>`+
-    CW_CHEV+`</button>`+
+    `<div class="cw-hd">`+
+    `<button type="button" class="cw-hd-t" onclick="toggleWeekCard()">${days.includes(today)?'本周':wkTxt}</button>`+
+    `<button type="button" class="cw-nav" onclick="calWeekStep(-1)" aria-label="上一周">‹</button>`+
+    `<button type="button" class="cw-nav" onclick="calWeekStep(1)" aria-label="下一周">›</button>`+
+    `<button type="button" class="cw-hd-x" onclick="toggleWeekCard()" aria-label="收起或展开">${CW_CHEV}</button>`+
+    `</div>`+
     `<div class="cw-body"><div class="cw-cols">${cols}</div><div class="cw-pills" id="calWeekPills"></div></div>`;
   layoutWeekPills(days);
 }
