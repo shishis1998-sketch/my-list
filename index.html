@@ -13991,18 +13991,25 @@ function calDayRange(dateStr,x,y){
 }
 
 // 时间线一条：节点 + (封面) + 名称 + 右侧时间 tail；isCur=当天（墨绿实心节点）
+// 点开一条记录：笔记弹预览卡，收集条目回详情页。
+// 「当天」卡的时间线行和周卡片的色块共用这一条——两处点下去看到的东西才是一样的
+function openCalRec(r){
+  if(!r)return;
+  if(r._isNote){showCalNotePreview(r.id);return;}
+  hideCalSheet();closeCalendar();openEdit(r.id);
+}
 function makeCalTlRow(r,tail,isCur){
   const div=document.createElement('div');
   div.className='cal-tl-row'+(isCur?' cal-tl-cur':'');
   let main;
   if(r._isNote){
     main=`<span class="cal-tl-nm">${esc(calNoteTitle(r))}</span>`;
-    div.onclick=()=>showCalNotePreview(r.id);
+    div.onclick=()=>openCalRec(r);
   }else{
     const c=getCat(r.type);
     const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
     main=`<span class="cal-row-cover">${coverH}</span><span class="cal-tl-nm">${esc(r.name)}</span>`;
-    div.onclick=()=>{hideCalSheet();closeCalendar();openEdit(r.id);};
+    div.onclick=()=>openCalRec(r);
   }
   div.innerHTML=`<span class="cal-tl-dot"></span>${main}<span class="cal-tl-tail">${tail||''}</span>`;
   // 节点用这条记录自己的颜色（和月历格子里的圆点同一套色）：
@@ -14102,7 +14109,7 @@ function calWeekGroups(days){
     const k=r._isNote
       ? (r._ics?'ics|'+r._ics:'n|'+name+'|'+r.subCat+'|'+color)
       : 'm|'+name+'|'+r.type;
-    if(!map.has(k))map.set(k,{name,color,dates:[]});
+    if(!map.has(k))map.set(k,{name,color,dates:[],rec:r});   // rec：点色块时要打开的那条（跨天的取第一天）
     map.get(k).dates.push(ds);
   }));
   // 先按开始日，同一天里跨得久的排前面（长条先占位，短块才好往缝里塞）
@@ -14168,7 +14175,9 @@ function layoutWeekPills(days){
       // 再往上就得同时把 .cw-p span 的字色压深一档了。
       `;background:${calHexA(g.color,.44)}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
-    el.onclick=()=>openCalDay(g.dates[0]);
+    // 先把下面「当天」卡切到它那一天（跨天的取第一天），再打开这条记录——
+    // 和在「当天」卡里点这条是同一个结果（见 openCalRec）
+    el.onclick=()=>{openCalDay(g.dates[0]);openCalRec(g.rec);};
     box.appendChild(el);
     return el;
   };
