@@ -2105,9 +2105,10 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* 章节抽屉标题栏：标题 + 右端一颗 ✕。
-   ✕ 不是「取消」也不是「保存」——按下先弹一句问话，存不存由那一下说了算（见 #tlCloseAsk）。
+   ✕ 自己既不存也不丢——按下先弹一句问话，存不存由那一下说了算（见 #tlCloseAsk）。
    原先这儿是「取消」两个字的胶囊，含义是「关掉但不保存」，和「拖下去/返回 = 保存关掉」
-   凑成一对；两个都不问一声就走，按错了没有回头路。现在明确的关闭走问话这条。
+   凑成一对；两个都不问一声就走，按错了没有回头路。现在明确的关闭走问话这条，
+   「关掉但不保存」这层意思落到问话里那颗「取消」上了。
    32 见方：原来那颗胶囊只有 25 高，圆形图标按钮没有文字帮忙定位，得给够点按面积 */
 .tlsheet-headrow{display:flex;align-items:center;gap:var(--sp-10);}
 .tlsheet-headrow .tlsheet-title{flex:1;min-width:0;}
@@ -15032,7 +15033,7 @@ function tlAskSave(){
   tlTapMuteUntil=Date.now()+400;   // 抽屉一关，手指抬起那声 click 会落到底下的章节卡上
   closeChapterSheet();
 }
-// 不保存 = 丢掉这次打开抽屉以来的所有改动再关掉。
+// 取消 = 丢掉这次打开抽屉以来的所有改动再关掉。
 // 不另开一条「不保存地关」的路：把段落还原成打开时那份，正常关闭时提交那步
 // 会发现和原文一模一样，自己就不落盘了（见 commitChapterSheet 的 newRaw===tlSheetOrigRaw）
 function tlAskDrop(){
