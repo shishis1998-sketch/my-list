@@ -1692,42 +1692,46 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   min-height:0;max-height:none;overflow:visible;
   padding:var(--sp-8) var(--sp-10) var(--sp-10);
 }
-/* 选中日期与详情共用同一套外轮廓：日期格只画上/左右边，底边由详情顶边接续。 */
+/* 选中日期与详情共用同一套外轮廓。
+   关键：日期格两侧边不能一直画到底，否则会和肩部 1/4 圆弧叠成截图里的“小钩”。 */
 .cal-day.cal-selected{
   overflow:visible;border-radius:var(--r) var(--r) 0 0;
   box-shadow:none;border:1px solid var(--accent-mid);border-bottom:0;
   background:var(--accent-light);z-index:5;
 }
-/* 点击日期后整格进入主题高亮，不再只高亮数字。 */
-.cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;color:var(--accent-dark);font-weight:700;}
-.cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
-/* 连接颈部：与选中日期格严格共边。详情顶边在选中列下方留空，
-   两侧用连续竖线接下来；肩部用 8px 圆角转入详情顶边，避免 1px 断口。 */
-.cal-inline-detail::before{
-  content:"";position:absolute;top:-2px;
-  left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:3px;box-sizing:border-box;
-  background:var(--accent-light);
-  z-index:10;pointer-events:none;
+.cal-day.cal-selected .cal-daynum{
+  box-shadow:none;border-radius:0;color:var(--accent-dark);font-weight:700;
 }
-/* 只擦掉选中日期正下方的详情顶边；不再额外画左右竖线，竖线由日期格自身承担。 */
+.cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
+
+/* 把日期格左右边最后 10px 擦掉，让两条竖线在圆弧起点结束。
+   中间列擦两边；最左列保留外侧左边；最右列保留外侧右边。 */
+.cal-day.cal-selected::before,
+.cal-day.cal-selected::after{
+  content:"";position:absolute;bottom:-1px;width:2px;height:11px;
+  background:var(--accent-light);z-index:8;pointer-events:none;
+}
+.cal-day.cal-selected::before{left:-1px;}
+.cal-day.cal-selected::after{right:-1px;}
+.cal-day.cal-selected[data-edge="left"]::before{display:none;}
+.cal-day.cal-selected[data-edge="right"]::after{display:none;}
+
+/* 详情顶边在选中日期正下方完全留空；不再额外画“连接颈部”竖线。 */
+.cal-inline-detail::before{display:none;}
 .cal-inline-detail::after{
   content:"";position:absolute;top:-1px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:2px;background:var(--accent-light);
-  z-index:10;pointer-events:none;
+  width:calc((100% - 12px)/7);height:2px;
+  background:var(--accent-light);z-index:10;pointer-events:none;
 }
-/* 中间列：详情顶边在“日期标签”两侧做内凹圆角肩部，视觉上是一条连续外轮廓。 */
+/* 最左/最右列多盖 1px，避免与卡片外框在 iOS 子像素抗锯齿下露缝。 */
+.cal-inline-detail[data-col="0"]::after{left:0;width:calc((100% - 12px)/7 + 1px);}
+.cal-inline-detail[data-col="6"]::after{width:calc((100% - 12px)/7 + 1px);}
+
+/* 中间列保留卡片自身上方圆角；边缘列直接接卡片外侧边。 */
 .cal-inline-detail:not([data-col="0"]):not([data-col="6"]) .cal-card{
   border-top-left-radius:var(--r);border-top-right-radius:var(--r);
 }
-.cal-inline-detail:not([data-col="0"]):not([data-col="6"])::before{
-  border-bottom-left-radius:0;border-bottom-right-radius:0;
-}
-/* 边缘列直接共用卡片外侧边，不重复叠线。 */
-.cal-inline-detail[data-col="0"]::before{left:0;}
-.cal-inline-detail[data-col="0"]::after{left:0;width:calc((100% - 12px)/7 + 1px);}
-.cal-inline-detail[data-col="6"]::after{width:calc((100% - 12px)/7 + 1px);}
 /* 旧的独立「当天」第二张卡不再占位。 */
 .cal-sheet{display:none;}
 
@@ -14396,7 +14400,14 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
   cell.className='cal-day';
   if(isOther)cell.classList.add('cal-other');
   if(isToday)cell.classList.add('cal-today');
-  if(isSel)cell.classList.add('cal-selected');
+  if(isSel){
+    cell.classList.add('cal-selected');
+    const colIndex=new Date(dateStr+'T00:00:00').getDay();
+    // 月历是周一开头：Sunday(0)->6，其余减 1
+    const mondayCol=(colIndex+6)%7;
+    if(mondayCol===0)cell.dataset.edge='left';
+    else if(mondayCol===6)cell.dataset.edge='right';
+  }
   const num=document.createElement('div');
   num.className='cal-daynum';num.textContent=isToday?'今':day;cell.appendChild(num);
 
