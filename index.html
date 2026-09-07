@@ -1654,6 +1654,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-gridclip.has-inline{height:auto!important;overflow:visible;flex-shrink:0;}
 .cal-gridclip.has-inline .cal-grid{transform:none;}
 .cal-gridclip.has-inline .cal-fade{display:none;}
+/* 展开所在周：圆点下方留白由 4px 增至 12px，轮廓随行高自动延伸。 */
+.cal-gridclip.has-inline .cal-day.cal-focusrow{padding-bottom:var(--sp-12);}
 .cal-inline-detail{position:relative;grid-column:1 / -1!important;
   min-height:0;margin:-2px 0 var(--sp-6);padding:0;overflow:visible;}
 .cal-inline-detail .cal-card{position:relative;margin:0;width:100%;box-sizing:border-box;
