@@ -3392,11 +3392,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .day.fx-predp::before {border: 1.5px dashed var(--brand); opacity: .7;}
 #calViewPeriod .day.fx-predp {color: var(--brand);}
 /* 底部弹窗里的推算说明 */
-.pv-fert-note {margin: 10px 0 2px; padding: 8px 10px;
-      background: var(--ovu-soft); border-radius: 10px;
-      font-size: var(--fs-micro); line-height: 1.55; color: var(--ink-2);}
-.pv-fert-note b {display: block; color: var(--ovu-ink); font-size: var(--fs-footnote); margin-bottom: 1px;}
-.pv-fert-note span {display: block; margin-top: 3px; color: var(--faint);}
 /* 「当天状态栏 .day-status-bar / 症状标签云 .info-*」随「点日期改成分组列表」一并移除：
    它们的宿主元素(#dayStatusBar / #dayInfoBar)已经不再渲染，规则全是死的。
    列表本身的样式见下方 .pv-group / .pv-row 一组。 */
@@ -3421,6 +3416,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   max-height:92vh;display:flex;flex-direction:column;
   font-family:var(--zh);}
 .pv-sheet.open{transform:translateY(0);}
+/* 编辑经期不再接近全屏；超出的症状留在抽屉内部滚动。 */
+#pvSheet{max-height:82vh;}
 .pv-sheet-grab{position:relative;width:72px;height:20px;margin:-2px auto 2px;
   flex:0 0 auto;background:transparent;cursor:grab;touch-action:none;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
@@ -8484,8 +8481,7 @@ window.PV = (function(){
       return out;
     }
 
-    // 这天的一句话状态。只讲「记录」这一侧——排卵/易孕交给下面那张推算说明卡，
-    // 它头一行本来就是同一句 FERT_LABEL，两处都印就成了复读。
+    // 这天的一句话状态只讲实际记录；排卵/易孕推算不放进编辑弹窗。
     function daySheetStatusText(y, m, d) {
       const st = getDayStatus(y, m, d);
       if (st.kind === 'period')   return `经期 · 第 ${st.dayNo} 天`;
@@ -8575,7 +8571,6 @@ window.PV = (function(){
       body.innerHTML =
         `<div class="pv-group">${g1}</div>` +
         (status ? `<div class="pv-gfoot">${escapeHtml(status)}</div>` : '') +
-        fertBasisHtml(y, m, d) +
         `<div class="pv-ghd">症状${sel.length ? `（已记 ${sel.length} 条）` : ''}</div>` +
         `<div class="pv-group">${g2}</div>`;
 
@@ -9690,36 +9685,6 @@ window.PV = (function(){
       out.next = shift(last, avg);
       out.ok = true;
       return out;
-    }
-
-    const FERT_LABEL = { ovu: '排卵日 · 推算', fertile: '易孕期 · 推算', predp: '预计经期' };
-
-    // 底部弹窗里那一行推算依据：只在这天确实被标了才出现，
-    // 说明清楚是按哪几次记录算的，免得标记看着像凭空冒出来的。
-    function fertBasisHtml(y, m, d) {
-      const fk = fertKind(y, m, d);
-      if (!fk) return '';
-      const win = FERT.win || { min: 0, max: 0, auto: true };
-      let basis = FERT.n
-        ? `平均周期 ${FERT.avg} 天 · 按最近 ${FERT.n} 次经期推算` +
-          (FERT.wide ? `（周期波动 ${FERT.spread} 天，偏差可能较大）` : '')
-        : `没有落在 ${win.min}–${win.max} 天区间内的周期，暂按兜底的 ${OVU.fallback} 天推算`;
-      // 有间隔被挡掉就说清楚它去哪了，而且按成因分开讲——
-      // 「漏记」和「真实的长周期」是两回事，不该都甩一句漏记了事。
-      const dp = FERT.drop || { short: 0, missed: 0, long: 0 };
-      if (FERT.dropped > 0) {
-        const why = [];
-        if (dp.missed) why.push(`${dp.missed} 次接近周期的整数倍，像是中间漏记了`);
-        if (dp.long)   why.push(`${dp.long} 次明显偏长，可能是没有排卵的周期`);
-        if (dp.short)  why.push(`${dp.short} 次偏短，可能是同一次经期被拆成了两段`);
-        basis += `。另有 ${FERT.dropped} 次间隔不在 ${win.min}–${win.max} 天内未计入平均：` +
-                 why.join('；') +
-                 (win.auto
-                   ? (dp.long ? `。无排卵周期没有黄体期，倒推不成立，所以不给它标排卵日` : '')
-                   : `。要改区间去「设置 › 经期」`);
-      }
-      return `<div class="pv-fert-note"><b>${FERT_LABEL[fk]}</b>${escapeHtml(basis)}` +
-             `<span>推算结果仅供参考，不能作为避孕或备孕依据</span></div>`;
     }
 
     // 整轮渲染共用一份推算结果：年视图一次要画 12 个月，避免重复全量计算
