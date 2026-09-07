@@ -1641,6 +1641,18 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
 
+/* 日期内联展开：选中日期与详情面板是一体式结构，保留原「当天」卡的时间线节点/竖线。 */
+.cal-inline-detail{position:relative;margin:0 calc(-1 * var(--sp-2)) var(--sp-8);
+  padding-top:0;z-index:2;}
+.cal-inline-detail .cal-card{margin:0;border-radius:var(--rxl);background:var(--surface);}
+.cal-inline-detail .cal-card-date{display:none;}
+.cal-inline-detail .cal-tl{padding-top:var(--sp-8);padding-bottom:var(--sp-10);}
+.cal-inline-detail::before{content:"";position:absolute;top:-10px;left:calc((100% - 12px)/14 * var(--sel-col, 0) + (100% - 12px)/28 - 18px);
+  width:36px;height:14px;background:var(--surface);border-left:1px solid var(--border);border-right:1px solid var(--border);
+  z-index:3;pointer-events:none;}
+/* 旧的独立「当天」第二张卡不再占位。 */
+.cal-sheet{display:none;}
+
 /* ===== 本周卡片：月历和「当天」卡之间的一张周概览 =====
    月历格子只有圆点，看得出「有事」看不出「是什么」；这张卡把选中日所在那一周铺开。
    一件事一个色块，块按名字长短撑开、起点贴着它那一天；一行塞得下就接着塞，塞不下才换行
@@ -14217,6 +14229,22 @@ function renderCal(){
     const isOther=cd.getMonth()!==calMonth;
     grid.appendChild(makeCalCell(cd.getDate(),isOther,ds,ds===todayStr,ds===calSelDate,laneMap[ds]||null));
   }
+  // 选中日期的详情不再放在整个月历下方：插到它所在周之后，和日期格连成一体。
+  if(calSelDate){
+    const selIndex=dayIndex=>0; // 占位声明仅避免旧浏览器解析器误判，实际索引在下面直接计算
+    const sdt=new Date(calSelDate+'T00:00:00');
+    const idx=Math.round((sdt-gridStart)/86400000);
+    if(idx>=0&&idx<cellCount){
+      const anchor=document.createElement('div');
+      anchor.className='cal-inline-detail';
+      anchor.style.gridColumn='1 / -1';
+      anchor.dataset.date=calSelDate;
+      anchor.style.setProperty('--sel-col',idx%7);
+      const after=(Math.floor(idx/7)+1)*7-1;
+      const ref=grid.children[after];
+      if(ref&&ref.nextSibling)grid.insertBefore(anchor,ref.nextSibling);else grid.appendChild(anchor);
+    }
+  }
   // 拖动收起：写入网格行数 + 焦点周下标（收起时保留「选中日 → 今天 → 第 0 行」所在的一行）
   const rows=cellCount/7;
   const dayIndex=ds=>{const dt=new Date(ds+'T00:00:00');const diff=Math.round((dt-gridStart)/86400000);return (diff<0||diff>=cellCount)?-1:diff;};
@@ -14297,7 +14325,13 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
       cell.appendChild(badges);
     }
   }
-  if(dateStr) cell.onclick=()=>{const p=dateStr.split('-');calYear=+p[0];calMonth=+p[1]-1;openCalDay(dateStr);};
+  if(dateStr) cell.onclick=()=>{
+    const p=dateStr.split('-');
+    calYear=+p[0];calMonth=+p[1]-1;
+    // 再点一次同一天＝收起；点别的日期＝把一体式时间线切到新日期。
+    if(calSelDate===dateStr){calSelDate=null;renderCal();renderCalDetail();return;}
+    openCalDay(dateStr);
+  };
   return cell;
 }
 
@@ -14602,7 +14636,9 @@ function toggleWeekCard(){
 }
 
 function renderCalDetail(){
-  if(!calSelDate)return;
+  const oldInline=document.querySelector('.cal-inline-detail');
+  const oldList=document.getElementById('calDetailList');
+  if(!calSelDate){if(oldInline)oldInline.remove();if(oldList)oldList.innerHTML='';return;}
   const [cy,cm,cd]=calSelDate.split('-');
   const titleDate=`${cy}/${cm}/${cd}`;
   const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
@@ -14639,7 +14675,10 @@ function renderCalDetail(){
   document.getElementById('calDetailTitle').textContent=`${parseInt(cm)} 月 ${parseInt(cd)} 日`;
   document.getElementById('calDetailCount').textContent='';   // 本年计数去掉，只保留「往年今日」的计数
 
-  const listEl=document.getElementById('calDetailList');
+  // 优先渲染到选中日期所在周正下方的一体式区域；旧的下方详情容器只作兼容。
+  const listEl=document.querySelector('.cal-inline-detail')||document.getElementById('calDetailList');
+  const legacy=document.getElementById('calDetailList');
+  if(legacy&&legacy!==listEl)legacy.innerHTML='';
   listEl.innerHTML='';
 
   // 事件时间线（单张白卡）：当天记录（墨绿实心节点）→ 往年记录（空心节点），每条一个节点、时间在右
