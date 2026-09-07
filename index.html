@@ -3984,8 +3984,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 网格按「周」自适应高度：本周有标签才留两行标签位；整周没有记录时恢复紧凑行距。
    Grid 会以每行最高的日期格作为该周行高，因此同一周的七天仍然整齐对齐。 */
 #calViewPeriod .calendar-container.month-view .days{grid-auto-rows:minmax(38px,auto) !important;row-gap:2px !important;
-  padding:4px 0 0 !important;align-content:start !important;column-gap:2px !important;}
-/* 日期圆仍与普通日历一致，增加的高度只交给下方标签摘要。 */
+  padding:4px 0 0 !important;align-content:start !important;column-gap:0 !important;}
+/* 日期基础高度与普通日历一致，增加的高度只交给下方标签摘要。 */
 #calViewPeriod .calendar-container.month-view .daywrap{padding:3px 2px 3px;min-height:38px;border-radius:8px;
   flex-direction:column;align-items:center;justify-content:flex-start;}
 #calViewPeriod .calendar-container.month-view .day{width:24px !important;height:24px !important;
@@ -4029,6 +4029,46 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    .daywrap / .dot-slot 的间距分配）。 */
 #calViewPeriod .calendar-container.month-view .day.selected-view{outline:none !important;
   box-shadow:0 0 0 1px var(--surface), 0 0 0 2.5px var(--brand) !important;}
+/* ── 月视图连续状态带 ─────────────────────────────────────────
+   日期与标签共用 daywrap 的底色；同一段中间无缝，只给两端圆角。
+   排卵日的深蓝是内嵌圆角矩形，不贴着色带边缘，因此顶部不会像被裁平。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band{position:relative;isolation:isolate;
+  align-self:stretch;box-sizing:border-box;border-radius:0;color:var(--ink-2);
+  box-shadow:inset 1px 0 rgba(255,255,255,.28);}
+#calViewPeriod .calendar-container.month-view .daywrap.band-start{
+  border-radius:12px 0 0 12px;box-shadow:none;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-end{border-radius:0 12px 12px 0;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-start.band-end{border-radius:12px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-fert{
+  background:var(--ovu-soft);color:var(--ovu-on-soft);}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred{
+  background:transparent;color:var(--brand);border-top:1.5px dashed var(--brand);
+  border-bottom:1.5px dashed var(--brand);box-shadow:none;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start{border-left:1.5px dashed var(--brand);}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-end{border-right:1.5px dashed var(--brand);}
+#calViewPeriod .calendar-container.month-view .daywrap.band>.day,
+#calViewPeriod .calendar-container.month-view .daywrap.band>.day.today,
+#calViewPeriod .calendar-container.month-view .daywrap.band>.day.selected-view{
+  width:100% !important;background:transparent !important;color:inherit !important;
+  border-radius:0 !important;box-shadow:none !important;outline:none !important;transform:none;}
+#calViewPeriod .calendar-container.month-view .daywrap.band>.day::before{display:none !important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band .day-meta{
+  position:relative;z-index:2;color:inherit;opacity:.72;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu::before{
+  content:"";position:absolute;z-index:1;inset:2px 1px;border-radius:8px;
+  background:var(--ovu);box-shadow:0 1px 2px rgba(24,72,138,.16);pointer-events:none;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu-ring::before{
+  content:"";position:absolute;z-index:1;inset:2px 1px;border:2px solid var(--ovu);
+  border-radius:8px;pointer-events:none;box-sizing:border-box;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu>.day,
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu .day-meta{
+  position:relative;z-index:2;color:#fff !important;opacity:1;}
+/* 今天或当前选中日改为整格细框，不把圆形状态块重新带回来。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band-today::after,
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected::after,
+#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit::after{
+  content:"";position:absolute;z-index:4;inset:1px;border:1.5px solid var(--brand);
+  border-radius:10px;pointer-events:none;box-sizing:border-box;}
 /* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
    不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
    只在月视图 + 有推算结果时渲染，开关在 render()。 */
@@ -7738,6 +7778,23 @@ window.PV = (function(){
       const daysInMonth = new Date(year, month, 0).getDate();
       const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
+      // 月视图把相邻状态合成色带。经期不同流量仍属于同一段（每格保留自己的深浅），
+      // 易孕日和排卵日也属于同一段（排卵日再在色带内加深）；跨星期绝不连接。
+      const bandDays = {};
+      if (withNav) {
+        for (let d = 1; d <= daysInMonth; d++) {
+          const lv = getLevel(year, month, d);
+          const fk = fertKind(year, month, d);
+          let key = '', cls = '';
+          if (lv >= 1 && lv <= 3) { key = 'period'; cls = `band-level-${lv}`; }
+          else if (lv === 4)      { key = 'spot';   cls = 'band-level-4'; }
+          else if (fk === 'ovu')  { key = 'fert';   cls = 'band-fert band-ovu'; }
+          else if (fk === 'fertile') { key = 'fert'; cls = 'band-fert'; }
+          else if (fk === 'predp')   { key = 'predp'; cls = 'band-pred'; }
+          if (key) bandDays[d] = { key, cls };
+        }
+      }
+
       // 月视图不再在卡片内画月头（顶部「‹ 年 月 ›」导航已承担）；年视图每张迷你月保留月份标题
       const head = withNav
         ? ''
@@ -7769,7 +7826,20 @@ window.PV = (function(){
                    : fk === 'fertile' ? (lv ? '' : 'fx-fertile')
                    : fk === 'predp'   ? (lv ? '' : 'fx-predp')
                    : '';
-        html += `<div class="daywrap ${hasSym?'has-rec':''}">` +
+        const band = bandDays[day];
+        let bandCls = '';
+        if (band) {
+          const col = (startOffset + day - 1) % 7;
+          const prev = col > 0 ? bandDays[day - 1] : null;
+          const next = col < 6 ? bandDays[day + 1] : null;
+          bandCls = ` band ${band.cls}` +
+            (!prev || prev.key !== band.key ? ' band-start' : '') +
+            (!next || next.key !== band.key ? ' band-end' : '') +
+            (isToday ? ' band-today' : '') +
+            (symHit ? ' band-sym-hit' : '') +
+            (lv && fk === 'ovu' ? ' band-ovu-ring' : '');
+        }
+        html += `<div class="daywrap ${hasSym?'has-rec':''}${bandCls}">` +
                   `<div data-month="${month}" data-day="${day}"` +
                   ` class="day ${getLevelClass(lv)} ${fcls} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
                   ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
@@ -8772,12 +8842,17 @@ window.PV = (function(){
       document.querySelectorAll('.day.selected-view').forEach(el => {
         el.classList.remove('selected-view');
       });
+      document.querySelectorAll('.daywrap.band-selected').forEach(el => {
+        el.classList.remove('band-selected');
+      });
       if (homeView !== 'month') return;
       const a = cardAnchor();
       if (a.y !== year || a.m !== viewMonth) return;
       const el = document.querySelector(`[data-month="${a.m}"][data-day="${a.d}"]`);
       if (!el) return;
       el.classList.add('selected-view');
+      const wrap = el.closest('.daywrap.band');
+      if (wrap) wrap.classList.add('band-selected');
     }
 
     // 只把月视图那张卡片里的 .days 内容替换掉，保留色板和信息栏
@@ -9742,6 +9817,7 @@ window.PV = (function(){
       [1, 2, 3, 4].forEach(l => {
         const c = PALETTE[l].color;
         css += `#calViewPeriod .${LEVEL_CLASS[l]}{background-color:${c};color:${textOn(c)};--c:${c};}`;
+        css += `#calViewPeriod .calendar-container.month-view .band-level-${l}{background-color:${c};color:${textOn(c)};}`;
         css += `#calViewPeriod .${SWATCH_CLASS[l]} .swatch-dot{background:${c};}`;
         css += `#calViewPeriod .pv-callegend .${LEGEND_CLASS[l]}{background:${c};}`;
       });
