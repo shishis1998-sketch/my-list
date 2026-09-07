@@ -1522,7 +1522,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    字号以后再改也不会一边宽一边窄。column-gap 与日期网格同为 2px，两行的列心才重合。 */
 .cal-weekrow{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);height:36px;align-items:center;padding:0;position:sticky;top:0;background:var(--surface);z-index:2;border-bottom:1px solid var(--border);}
 .cal-weekcell{text-align:center;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);letter-spacing:.18em;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);grid-auto-rows:42px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-2);padding-top:var(--sp-4);grid-auto-rows:minmax(42px,auto);}
 /* —— 拖动把手收起：网格裁剪容器 + 底部把手 —— */
 /* --p：收起进度 0=整月 1=只留焦点周那一行；--cal-rows 行数、--cal-focus 焦点周下标由 renderCal 写入 */
 /* inherits 必须是 false：可继承的自定义属性一变，整棵子树的样式全部重算——哪怕子树里
@@ -1641,15 +1641,28 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
 
-/* 日期内联展开：选中日期与详情面板是一体式结构，保留原「当天」卡的时间线节点/竖线。 */
-.cal-inline-detail{position:relative;margin:0 calc(-1 * var(--sp-2)) var(--sp-8);
-  padding-top:0;z-index:2;}
-.cal-inline-detail .cal-card{margin:0;border-radius:var(--rxl);background:var(--surface);}
+/* 日期内联展开：选中日期所在周下面直接长出详情；时间线保留原卡片样式。 */
+.cal-gridclip.has-inline{height:auto!important;overflow:visible;}
+.cal-gridclip.has-inline .cal-fade{display:none;}
+.cal-inline-detail{position:relative;grid-column:1 / -1!important;
+  min-height:0;margin:-2px 0 var(--sp-6);padding:0;z-index:2;overflow:visible;}
+.cal-inline-detail .cal-card{
+  margin:0;border-radius:var(--rxl);background:var(--surface);
+  min-height:0;max-height:none;overflow:visible;contain:none;
+}
 .cal-inline-detail .cal-card-date{display:none;}
-.cal-inline-detail .cal-tl{padding-top:var(--sp-8);padding-bottom:var(--sp-10);}
-.cal-inline-detail::before{content:"";position:absolute;top:-10px;left:calc((100% - 12px)/14 * var(--sel-col, 0) + (100% - 12px)/28 - 18px);
-  width:36px;height:14px;background:var(--surface);border-left:1px solid var(--border);border-right:1px solid var(--border);
-  z-index:3;pointer-events:none;}
+.cal-inline-detail .cal-tl{
+  min-height:0;max-height:none;overflow:visible;
+  padding:var(--sp-8) var(--sp-10) var(--sp-10);
+}
+/* 与选中日期相连的「颈部」：盖住卡片顶边的一小段，形成日期和面板一体的轮廓。 */
+.cal-inline-detail::before{
+  content:"";position:absolute;top:-12px;
+  left:calc((100% - 12px)/7 * var(--sel-col,0) + (100% - 12px)/14 - 18px);
+  width:36px;height:14px;background:var(--surface);
+  border-left:1px solid var(--border);border-right:1px solid var(--border);
+  z-index:4;pointer-events:none;
+}
 /* 旧的独立「当天」第二张卡不再占位。 */
 .cal-sheet{display:none;}
 
@@ -13677,6 +13690,8 @@ function calWeekStep(dir){
 }
 function openCalDay(dateStr){
   calSelDate=dateStr;
+  const clip=document.getElementById('calGridClip');
+  if(clip){clip.style.setProperty('--p','0');clip.classList.add('has-inline');}
   renderCal();                     // 刷新选中高亮
   renderCalDetail();               // 内嵌下半区：填入当天记录
   renderWeekCard();                // 点到别的周去了才重画
@@ -14216,6 +14231,8 @@ function renderCal(){
   const now=new Date();
   const todayStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const grid=document.getElementById('calGrid');
+  const gridClip=document.getElementById('calGridClip');
+  if(gridClip)gridClip.classList.toggle('has-inline',!!calSelDate);
   grid.innerHTML='';
 
   // 整个网格（含上月/下月的灰格）都按真实日期渲染，跨月事件才能连起来
@@ -14329,7 +14346,11 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
     const p=dateStr.split('-');
     calYear=+p[0];calMonth=+p[1]-1;
     // 再点一次同一天＝收起；点别的日期＝把一体式时间线切到新日期。
-    if(calSelDate===dateStr){calSelDate=null;renderCal();renderCalDetail();return;}
+    if(calSelDate===dateStr){
+      calSelDate=null;
+      const clip=document.getElementById('calGridClip');if(clip)clip.classList.remove('has-inline');
+      renderCal();renderCalDetail();return;
+    }
     openCalDay(dateStr);
   };
   return cell;
