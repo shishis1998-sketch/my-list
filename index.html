@@ -820,6 +820,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     width:100%;max-width:none;min-width:0;
     position:static;height:auto;min-height:100vh;
     overflow:visible;                      /* 内容长就把页面顶长，由 body 统一滚 */
+    background:var(--bg);                 /* 浅灰页面底，功能分组继续使用白色 .ncard */
     padding:0 0 calc(76px + env(safe-area-inset-bottom));  /* 末尾给常驻底栏留位 */
     border-right:none;z-index:auto;box-shadow:none;
   }
@@ -3265,16 +3266,16 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   align-items:center;padding:5px 0;border-bottom:1px solid var(--line-soft);}
 #calViewPeriod .cyc-vrow:last-child{border-bottom:0;}
 #calViewPeriod .cyc-vdate{font:600 var(--fs-micro)/1.2 var(--en);color:var(--faint);
-  text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums;}
 #calViewPeriod .cyc-vlanes{display:grid;gap:3px;}
 #calViewPeriod .cyc-vlane{display:grid;grid-template-columns:minmax(0,1fr) 22px;gap:5px;align-items:center;}
-#calViewPeriod .cyc-vtrack{display:block;height:5px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
+#calViewPeriod .cyc-vtrack{display:block;height:5px;border-radius:999px;background:transparent;overflow:hidden;}
 #calViewPeriod .cyc-vtrack i{display:block;height:100%;min-width:4px;border-radius:999px;}
 #calViewPeriod .cyc-vlane.c i{background:#1c5a48;}
 #calViewPeriod .cyc-vlane.p i{background:var(--brand);}
 #calViewPeriod .cyc-vlane.s i{background:var(--disabled);box-shadow:inset 0 0 0 1px rgba(0,0,0,.07);}
 #calViewPeriod .cyc-vlane.zero{visibility:hidden;}
-#calViewPeriod .cyc-vlane b{font:700 8px/1 var(--en);text-align:right;color:var(--muted);
+#calViewPeriod .cyc-vlane b{font:600 var(--fs-micro)/1 var(--en);text-align:right;color:var(--muted);
   font-variant-numeric:tabular-nums;}
 #calViewPeriod .cyc-vlane.c b{color:var(--ink-2);}
 #calViewPeriod .cyc-vlane.p b{color:var(--brand);}
@@ -9063,9 +9064,10 @@ window.PV = (function(){
         const rowsHtml = cols.map(c => {
           // 真正的周期标到经期开始日，解决同月出现两段时月份标签重复、分不清的问题；
           // 只有点滴、没有周期的补位行仍只写月份。
+          const pad2 = n => String(n).padStart(2, '0');
           const label = c.spotOnly
-            ? `${c.start.getMonth() + 1}月`
-            : `${c.start.getMonth() + 1}/${c.start.getDate()}`;
+            ? `${pad2(c.start.getMonth() + 1)}月`
+            : `${pad2(c.start.getMonth() + 1)}/${pad2(c.start.getDate())}`;
           return `<div class="cyc-vrow"><span class="cyc-vdate">${label}</span>` +
             `<div class="cyc-vlanes">${lane('c', c.cyc)}${lane('p', c.len)}${lane('s', c.spot)}</div></div>`;
         }).join('');
