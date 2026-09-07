@@ -1666,19 +1666,24 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    右侧镜像处理。伪元素底色会顺便盖掉后面的直线，避免出现 T 字接头。 */
 .cal-inline-detail .cal-card::before,
 .cal-inline-detail .cal-card::after{
-  content:"";position:absolute;top:calc(-1 * var(--r));
-  width:var(--r);height:var(--r);box-sizing:border-box;
-  background:var(--surface);z-index:7;pointer-events:none;
+  content:"";position:absolute;top:-12px;
+  width:12px;height:12px;box-sizing:border-box;
+  background:var(--surface);z-index:9;pointer-events:none;
 }
+/* 左肩：先用白底完整盖住原来的直角，再只画“下→右”的 1/4 圆弧。
+   之前伪元素半径只有 8px，而且直角底线/竖线仍在它下面透出，iOS 上看起来仍像折角。 */
 .cal-inline-detail .cal-card::before{
-  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) - var(--r));
-  border-right:1px solid var(--accent-mid);border-bottom:1px solid var(--accent-mid);
-  border-bottom-right-radius:var(--r);
+  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) - 12px);
+  border-right:1px solid var(--accent-mid);
+  border-bottom:1px solid var(--accent-mid);
+  border-bottom-right-radius:12px;
 }
+/* 右肩镜像。 */
 .cal-inline-detail .cal-card::after{
   left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) + ((100% - 12px)/7));
-  border-left:1px solid var(--accent-mid);border-bottom:1px solid var(--accent-mid);
-  border-bottom-left-radius:var(--r);
+  border-left:1px solid var(--accent-mid);
+  border-bottom:1px solid var(--accent-mid);
+  border-bottom-left-radius:12px;
 }
 /* 选中最左/最右列时，详情框对应的上角不再单独画圆角，直接让日期格的外轮廓接下去。 */
 .cal-inline-detail[data-col="0"] .cal-card{border-top-left-radius:0;}
@@ -1692,18 +1697,20 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-selected{
   overflow:visible;border-radius:var(--r) var(--r) 0 0;
   box-shadow:none;border:1px solid var(--accent-mid);border-bottom:0;
-  background:var(--surface);z-index:5;
+  background:var(--accent-light);z-index:5;
 }
-.cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;}
+/* 点击日期后整格进入主题高亮，不再只高亮数字。 */
+.cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;color:var(--accent-dark);font-weight:700;}
+.cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
 /* 连接颈部：与选中日期格严格共边。详情顶边在选中列下方留空，
    两侧用连续竖线接下来；肩部用 8px 圆角转入详情顶边，避免 1px 断口。 */
 .cal-inline-detail::before{
   content:"";position:absolute;top:-3px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
   width:calc((100% - 12px)/7);height:5px;box-sizing:border-box;
-  background:var(--surface);
+  background:var(--accent-light);
   border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
-  z-index:6;pointer-events:none;
+  z-index:8;pointer-events:none;
 }
 /* 擦掉选中列下方的详情顶边，并多盖 1px 消除抗锯齿接缝。 */
 .cal-inline-detail::after{
