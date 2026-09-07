@@ -3425,6 +3425,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   margin:4px auto 10px;flex:0 0 auto;}
 .pv-sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex:0 0 auto;}
 .pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
+.pv-sheet-head.pv-day-head{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;}
+.pv-day-head .pv-sheet-date{grid-column:2;text-align:center;white-space:nowrap;}
+.pv-head-btn{min-width:64px;height:34px;padding:0 14px;border:0;border-radius:999px;
+  font-family:var(--zh);font-size:13px;font-weight:700;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .15s;}
+.pv-head-btn:active{transform:scale(.96);}
+.pv-head-cancel{justify-self:start;background:var(--surface-2);color:var(--text-secondary);}
+.pv-head-done{justify-self:end;background:var(--brand);color:#fff;}
 .pv-sheet-status{font-size:11px;font-weight:700;color:var(--brand);
   background:var(--brand-soft);padding:3px 9px;border-radius:20px;white-space:nowrap;}
 /* 排卵/易孕的药丸跟日历格子同一套蓝，别跟经期红混在一起 */
@@ -3499,6 +3507,16 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 清除占窄的一格：它是收尾动作，不该跟「完成」抢同样的份量 */
 .pv-btn-clear{flex:1;background:var(--surface);color:var(--danger);
   box-shadow:inset 0 0 0 1px var(--line);}
+.pv-day-actions{justify-content:center;padding-top:12px;}
+.pv-day-actions .pv-btn-clear{flex:0 0 auto;padding:9px 18px;background:transparent;box-shadow:none;}
+/* 日期格的 +N 只负责浏览完整标签；编辑仍由长按日期进入另一张抽屉。 */
+.pv-tag-sheet{max-height:46vh;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
+.pv-tag-head{text-align:center;padding:0 4px 12px;}
+.pv-tag-date{display:block;font-size:17px;font-weight:700;color:var(--text-primary);}
+.pv-tag-week{display:block;margin-top:3px;font-size:12px;color:var(--text-muted);}
+.pv-tag-list{display:flex;flex-wrap:wrap;gap:8px;padding:4px 2px 8px;}
+.pv-tag-chip{padding:7px 12px;border-radius:999px;background:var(--surface-2);
+  color:var(--text-secondary);font-size:13px;line-height:1.2;}
 /* 即便系统开启「减弱动态效果」，也保留一段克制、更短的滑入/淡入，
    让弹窗仍有可见的动态反馈(而非瞬间弹出) */
 @media (prefers-reduced-motion: reduce){
@@ -3957,21 +3975,28 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   height:36px !important;align-items:center;padding:0 !important;margin-bottom:0 !important;
   font-size:11px !important;font-weight:600;
   letter-spacing:.18em;color:var(--text-secondary);column-gap:2px !important;}
-/* 网格：行高 42px、行距 2px、顶部留白 4px、横向内边距归零，对齐普通日历 */
-#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:42px !important;row-gap:2px !important;
+/* 网格：日期圆下固定两行标签位，所有周仍保持同一行高。 */
+#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:58px !important;row-gap:2px !important;
   padding:4px 0 0 !important;align-content:start !important;column-gap:2px !important;}
-/* 格子结构/尺寸与普通日历 .cal-day 完全一致：仅把经量颜色贴成数字底下的 24px 圆 */
-/* 上内边距由 6px 收到 4px，省下的 2px 挪给下面的 .dot-slot：
-   选中环要外扩 2.5px，原来圆圈到记录点只有 3px 净空、环几乎贴着圆点；
-   这样匀一下净空变 5px，而 6+24+3 与 4+24+5 相等，整格总高仍是 42px，
-   一行都没有变高。 */
-#calViewPeriod .calendar-container.month-view .daywrap{padding:4px 2px 4px;min-height:42px;border-radius:8px;
+/* 日期圆仍与普通日历一致，增加的高度只交给下方标签摘要。 */
+#calViewPeriod .calendar-container.month-view .daywrap{padding:3px 2px 3px;min-height:58px;border-radius:8px;
   flex-direction:column;align-items:center;justify-content:flex-start;}
 #calViewPeriod .calendar-container.month-view .day{width:24px !important;height:24px !important;
   border-radius:50% !important;font-size:13px !important;font-family:var(--en);margin:0 !important;line-height:1;}
 /* 圆点槽对齐 .cal-badges；症状红点对齐 .cal-dot(5px) */
 #calViewPeriod .calendar-container.month-view .dot-slot{height:auto !important;margin-top:5px !important;}
 #calViewPeriod .calendar-container.month-view .rec-dot{width:5px !important;height:5px !important;}
+/* 当天标签直接落在日期下面。格子始终留两行高度：1~2 条直接显示，
+   超过 2 条时只留第一条，第二行换成 +N，避免某一周被单独撑高。 */
+#calViewPeriod .calendar-container.month-view .day-meta{width:100%;height:26px;margin-top:2px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  font-size:9px;line-height:12px;color:var(--text-muted);overflow:hidden;}
+#calViewPeriod .calendar-container.month-view .day-tag{display:block;width:100%;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#calViewPeriod .calendar-container.month-view .day-more{height:12px;padding:0 5px;border:0;border-radius:999px;
+  background:var(--surface-2);color:var(--text-muted);font:600 9px/12px var(--en);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;}
+#calViewPeriod .calendar-container.month-view .day-more:active{transform:scale(.92);background:var(--border);}
 /* 上/下月补位日期：灰色淡化，与普通日历 .cal-other 一致 */
 #calViewPeriod .calendar-container.month-view .day.cal-otherday{color:var(--text-muted) !important;opacity:.5;
   background:transparent !important;box-shadow:none !important;font-weight:400 !important;}
@@ -4575,19 +4600,30 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
           <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
         </div>
 
-        <!-- 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）-->
-        <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.closeDaySheet()"></div>
+        <!-- 日期标签 · 轻点 +N 后只读展开；长按日期仍进入下面的编辑抽屉 -->
+        <div class="pv-sheet-scrim" id="pvTagScrim" onclick="PV.closeTagSheet()"></div>
+        <div class="pv-sheet pv-tag-sheet" id="pvTagSheet" role="dialog" aria-modal="true" aria-label="当天标签">
+          <div class="pv-sheet-grab"></div>
+          <div class="pv-tag-head">
+            <span class="pv-tag-date" id="pvTagDate"></span>
+            <span class="pv-tag-week" id="pvTagWeek"></span>
+          </div>
+          <div class="pv-tag-list" id="pvTagList"></div>
+        </div>
+
+        <!-- 经期记录 · 长按日期后编辑经血量 + 症状 -->
+        <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.cancelDaySheet()"></div>
         <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
           <div class="pv-sheet-grab"></div>
-          <div class="pv-sheet-head">
-            <span class="pv-sheet-date">记录经期</span>
-            <button class="pv-sheet-close" onclick="PV.closeDaySheet()" aria-label="关闭">✕</button>
+          <div class="pv-sheet-head pv-day-head">
+            <button type="button" class="pv-head-btn pv-head-cancel" onclick="PV.cancelDaySheet()">取消</button>
+            <span class="pv-sheet-date">编辑经期</span>
+            <button type="button" class="pv-head-btn pv-head-done" onclick="PV.finishDaySheet()">完成</button>
           </div>
           <div class="pv-sheet-body" id="pvSheetBody"></div>
-          <div class="pv-sheet-actions">
+          <div class="pv-sheet-actions pv-day-actions">
             <!-- 「清除」这天没记录时置灰而不是抽走：按钮位置钉死，手指不用重新找 -->
-            <button class="pv-btn pv-btn-clear" id="pvBtnClear" onclick="PV.clearDayRecord()">清除</button>
-            <button class="pv-btn pv-btn-done" onclick="PV.closeDaySheet()">完成</button>
+            <button class="pv-btn pv-btn-clear" id="pvBtnClear" onclick="PV.clearDayRecord()">清除当天记录</button>
           </div>
         </div>
 
@@ -7550,9 +7586,13 @@ window.PV = (function(){
   let homeView = 'month';            // 'month' 单月 | 'year' 全年
   let homeSwapDir = null;
   let viewMonth = new Date().getMonth() + 1;
+  let dayEditSnapshot = null;        // 编辑抽屉打开期间只改内存；完成才落盘，取消则还原
 
   // ── 持久化：改动回写 my-list（localStorage + 自动 Gist 同步）──
-  function persist(){ if (typeof window.pvPersist === 'function') window.pvPersist(); }
+  function persist(){
+    if (dayEditSnapshot) return;
+    if (typeof window.pvPersist === 'function') window.pvPersist();
+  }
 
   // ── 提示：复用 my-list 的 toast ──
   function showToast(msg){ if (typeof window.toast === 'function') window.toast(msg); }
@@ -7669,8 +7709,22 @@ window.PV = (function(){
       }
     }
 
-    // 生成一个月的卡片。withNav=true 时(月视图)月头带 ‹ 月 › 翻月按钮。
-    // 每个日期 = 外壳 .daywrap(竖排):上为带色块的 .day,下为圆点槽(有记录才显示)。
+    // 月视图日期下面固定留两行给当天标签。超过两条时保留第一条，第二行显示 +N；
+    // 点 +N 只展开只读标签抽屉，编辑仍严格由长按日期触发。
+    function dayMetaHtml(y, m, d, list) {
+      const syms = Array.isArray(list) ? list : [];
+      if (!syms.length) return '<div class="day-meta"></div>';
+      const first = `<span class="day-tag">${escapeHtml(syms[0])}</span>`;
+      if (syms.length === 1) return `<div class="day-meta">${first}</div>`;
+      if (syms.length === 2) {
+        return `<div class="day-meta">${first}<span class="day-tag">${escapeHtml(syms[1])}</span></div>`;
+      }
+      return `<div class="day-meta">${first}` +
+        `<button type="button" class="day-more" aria-label="查看其余 ${syms.length - 1} 个标签" ` +
+        `onclick="event.stopPropagation();PV.openTagSheet(${y},${m},${d})">+${syms.length - 1}</button></div>`;
+    }
+
+    // 生成一个月的卡片。withNav=true 时为月视图，日期格显示当天标签摘要。
     function generateMonth(month, withNav) {
       const firstDay = new Date(year, month-1, 1).getDay();
       const daysInMonth = new Date(year, month, 0).getDate();
@@ -7711,7 +7765,8 @@ window.PV = (function(){
                   `<div data-month="${month}" data-day="${day}"` +
                   ` class="day ${getLevelClass(lv)} ${fcls} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
                   ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
-                  `<div class="dot-slot"><span class="rec-dot"></span></div>` +
+                  (withNav ? dayMetaHtml(year, month, day, symList)
+                           : `<div class="dot-slot"><span class="rec-dot"></span></div>`) +
                 `</div>`;
       }
       // 下月补位：填满最后一整周（仅月视图）
@@ -8080,6 +8135,7 @@ window.PV = (function(){
 
     function render() {
       closeDaySheet();   // 翻月/切视图/切年 等任何重画都收起底部弹窗
+      closeTagSheet();
       buildFert();       // 排卵期现算：改过经期后重画就是最新结果
       const cal = document.getElementById('calendar');
       const yl = document.getElementById('yearLabel');
@@ -8282,6 +8338,7 @@ window.PV = (function(){
       cardDay = { y: year, m: month, d: day };
       selectDayForView(year, month, day);
       refreshDayCard();
+      if (getSym(year, month, day).length > 2) openTagSheet(year, month, day);
       if (typeof haptic === 'function') haptic('tap');
     }
     // 长按某天：弹出编辑弹窗（原先长按是「清除记录」，该功能仍在弹窗里的「清除记录」按钮）
@@ -8489,11 +8546,61 @@ window.PV = (function(){
       renderDaySheetBody();
     }
 
+    function tagSheetOpen() {
+      const sheet = document.getElementById('pvTagSheet');
+      return !!sheet && sheet.classList.contains('open');
+    }
+
+    function openTagSheet(y, m, d) {
+      const list = getSym(y, m, d);
+      if (list.length < 3) return;
+      const sheet = document.getElementById('pvTagSheet');
+      const scrim = document.getElementById('pvTagScrim');
+      const dateEl = document.getElementById('pvTagDate');
+      const weekEl = document.getElementById('pvTagWeek');
+      const listEl = document.getElementById('pvTagList');
+      if (!sheet || !scrim || !dateEl || !weekEl || !listEl) return;
+      dateEl.textContent = `${m}月${d}日`;
+      weekEl.textContent = WEEKDAY_CN[new Date(y, m - 1, d).getDay()];
+      listEl.innerHTML = list.map(n => `<span class="pv-tag-chip">${escapeHtml(n)}</span>`).join('');
+      document.body.classList.add('pv-sheet-open');
+      scrim.classList.add('open');
+      requestAnimationFrame(() => sheet.classList.add('open'));
+    }
+
+    function closeTagSheet() {
+      const sheet = document.getElementById('pvTagSheet');
+      const scrim = document.getElementById('pvTagScrim');
+      if (sheet) sheet.classList.remove('open');
+      if (scrim) scrim.classList.remove('open');
+      document.body.classList.toggle('pv-sheet-open', cardsSheetOpen() || daySheetOpen());
+    }
+
+    function daySheetOpen() {
+      const sheet = document.getElementById('pvSheet');
+      return !!sheet && sheet.classList.contains('open');
+    }
+
+    function cloneJson(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function restoreObject(target, snapshot) {
+      Object.keys(target).forEach(k => delete target[k]);
+      Object.assign(target, cloneJson(snapshot));
+    }
+
     function openDaySheet(y, m, d) {
       const body = document.getElementById('pvSheetBody');
       const sheet = document.getElementById('pvSheet');
       const scrim = document.getElementById('pvSheetScrim');
       if (!body || !sheet || !scrim) return;
+      closeTagSheet();
+      dayEditSnapshot = {
+        allData: cloneJson(ALL_DATA),
+        symptomsLib: SYMPTOMS_LIB.slice(),
+        symptomsData: cloneJson(SYMPTOMS_DATA)
+      };
       selectedView = { y, m, d };
       cardDay = { y, m, d };    // 状态卡跟着点选走（selectedView 会被 closeDaySheet 清掉，这个不会）
       refreshDayCard();
@@ -8506,20 +8613,35 @@ window.PV = (function(){
       requestAnimationFrame(() => sheet.classList.add('open'));
     }
 
-    function closeDaySheet() {
+    function closeDaySheet(commit) {
       const sheet = document.getElementById('pvSheet');
       const scrim = document.getElementById('pvSheetScrim');
+      const snapshot = dayEditSnapshot;
+      dayEditSnapshot = null;
+      if (snapshot && !commit) {
+        restoreObject(ALL_DATA, snapshot.allData);
+        SYMPTOMS_LIB.splice(0, SYMPTOMS_LIB.length, ...snapshot.symptomsLib);
+        restoreObject(SYMPTOMS_DATA, snapshot.symptomsData);
+        rerenderZoomedMonth();
+      } else if (snapshot && commit) {
+        persist();
+      }
       if (sheet) sheet.classList.remove('open');
       if (scrim) scrim.classList.remove('open');
       // 底栏让位这件事是两个抽屉共用的：卡片设置还开着就不能撤（改一张卡会重画整页，
       // 顺带走这条路，撤了底栏就会从抽屉底下冒出来）
-      document.body.classList.toggle('pv-sheet-open', cardsSheetOpen());
+      document.body.classList.toggle('pv-sheet-open', cardsSheetOpen() || tagSheetOpen());
       selectedView = null;
       updateSelectedHighlight();
     }
 
-    // 列表最后一行「清除本日记录」：一键抹掉这天的经血量 + 症状。
-    // 抽屉是改动即存的，没有「取消」可退，所以这一步要问一句。
+    function cancelDaySheet() { closeDaySheet(false); }
+    function finishDaySheet() {
+      closeDaySheet(true);
+      showToast('已保存');
+    }
+
+    // 「清除当天记录」先改编辑草稿；只有点右上角「完成」才真正落盘。
     function clearDayRecord() {
       if (!selectedView) return;
       const { y, m, d } = selectedView;
@@ -8530,7 +8652,7 @@ window.PV = (function(){
       updateSelectedHighlight();
       updateSymDot(y, m, d);
       renderDaySheetBody();
-      showToast('已清除');
+      showToast('已清除，点完成保存');
     }
 
     // 给当前选中的日期上色。
@@ -8625,7 +8747,7 @@ window.PV = (function(){
       const card = cal.querySelector('.month');
       if (!card) return;
 
-      // 经血量色板 + 症状编辑都改到「点日期弹出的底部弹窗」里(openDaySheet)，
+      // 经血量 + 症状编辑都放在「长按日期弹出的底部抽屉」里(openDaySheet)，
       // 这里不再往日历下方注入常驻色板/状态栏/信息栏。
       const host = extras || cal;
 
@@ -9182,7 +9304,7 @@ window.PV = (function(){
       symAddFocus = true;
       renderDaySheetBody();
       updateSymDot(y, m, d);
-      showToast('已添加');
+      showToast('已添加，点完成保存');
     }
 
     function deleteFromLib(name) {
@@ -9205,15 +9327,18 @@ window.PV = (function(){
       updateSelectedHighlight();
     }
 
-    // 只更新某个日期的 has-sym 小圆点,避免整月重画影响视觉
+    // 只更新某个日期下面的标签摘要，避免整月重画影响视觉。
     function updateSymDot(y, m, d) {
       if (y !== year) return;
       const el = document.querySelector(`[data-month="${m}"][data-day="${d}"]`);
       if (!el) return;
       const wrap = el.closest('.daywrap');
       if (!wrap) return;
-      const has = (SYMPTOMS_DATA[`${y}-${m}-${d}`] || []).length > 0;
+      const list = SYMPTOMS_DATA[`${y}-${m}-${d}`] || [];
+      const has = list.length > 0;
       wrap.classList.toggle('has-rec', has);
+      const old = wrap.querySelector('.day-meta');
+      if (old) old.outerHTML = dayMetaHtml(y, m, d, list);
       refreshMonthSymList();
     }
 
@@ -9697,7 +9822,8 @@ window.PV = (function(){
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
     navPrev, navNext, heatShift,
-    closeDaySheet, clearDayRecord,
+    openTagSheet, closeTagSheet,
+    closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,
     // 年视图卡片：设置抽屉（显示/收起）+ 拖动排序
     openCardsSheet, closeCardsSheet, startArrangeFromSheet,
     toggleArrange, exitArrange, showCard, hideCard, resetCardLayout,
@@ -11380,6 +11506,7 @@ const BACK_LAYERS=[
   {id:'calNotePreviewModal',cls:'open', close:()=>closeCalNotePreview()},
   {id:'calFilterPop',       cls:'open', close:()=>closeCalFilter()},
   {id:'yearPickerOverlay',  cls:'show', close:()=>PV.closeYearPicker()},
+  {id:'pvTagSheet',         cls:'open', close:()=>PV.closeTagSheet()},
   {id:'pvSheet',            cls:'open', close:()=>PV.closeDaySheet()},
   {id:'pvCardsSheet',       cls:'open', close:()=>PV.closeCardsSheet()}
 ];
