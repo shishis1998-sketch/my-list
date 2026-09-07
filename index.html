@@ -4031,7 +4031,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   box-shadow:0 0 0 1px var(--surface), 0 0 0 2.5px var(--brand) !important;}
 /* ── 月视图连续状态带 ─────────────────────────────────────────
    日期与标签共用 daywrap 的底色；同一段中间无缝，只给两端圆角。
-   排卵日的深蓝是内嵌圆角矩形，不贴着色带边缘，因此顶部不会像被裁平。 */
+   排卵日是独立的深蓝状态段，与左右淡蓝分别留出间隙，不再叠加在淡蓝底上。 */
 #calViewPeriod .calendar-container.month-view .daywrap.band{position:relative;isolation:isolate;
   align-self:stretch;box-sizing:border-box;border-radius:0;color:var(--ink-2);
   box-shadow:inset 1px 0 rgba(255,255,255,.28);}
@@ -4042,6 +4042,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band-start.band-end{border-radius:12px;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-fert{
   background:var(--ovu-soft);color:var(--ovu-on-soft);}
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu{
+  background:var(--ovu);color:#fff;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-pred{
   background:transparent;color:var(--brand);box-shadow:none;}
 /* 虚线画在格子内部，不使用实体 border 撑高盒子；因此与蓝色色带严格同高。 */
@@ -4062,21 +4064,20 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band>.day::before{display:none !important;}
 #calViewPeriod .calendar-container.month-view .daywrap.band .day-meta{
   position:relative;z-index:2;color:inherit;opacity:.72;}
-#calViewPeriod .calendar-container.month-view .daywrap.band-ovu::before{
-  content:"";position:absolute;z-index:1;inset:2px 1px;border-radius:8px;
-  background:var(--ovu);box-shadow:0 1px 2px rgba(24,72,138,.16);pointer-events:none;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-ovu-ring::before{
   content:"";position:absolute;z-index:1;inset:2px 1px;border:2px solid var(--ovu);
   border-radius:8px;pointer-events:none;box-sizing:border-box;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-ovu>.day,
 #calViewPeriod .calendar-container.month-view .daywrap.band-ovu .day-meta{
   position:relative;z-index:2;color:#fff !important;opacity:1;}
-/* 今天或当前选中日改为整格细框，不把圆形状态块重新带回来。 */
-#calViewPeriod .calendar-container.month-view .daywrap.band-today::after,
-#calViewPeriod .calendar-container.month-view .daywrap.band-selected::after,
-#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit::after{
+/* 当前选中日改为整格细框；今天已有「今」字，不再重复加边框。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
+#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
   content:"";position:absolute;z-index:4;inset:1px;border:1.5px solid var(--brand);
   border-radius:10px;pointer-events:none;box-sizing:border-box;}
+#calViewPeriod .calendar-container.month-view .day.today,
+#calViewPeriod .calendar-container.month-view .day.today.selected-view{
+  outline:none !important;box-shadow:none !important;}
 /* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
    不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
    只在月视图 + 有推算结果时渲染，开关在 render()。 */
@@ -7796,7 +7797,7 @@ window.PV = (function(){
           let key = '', cls = '';
           if (lv >= 1 && lv <= 3) { key = 'period'; cls = `band-level-${lv}`; }
           else if (lv === 4)      { key = 'spot';   cls = 'band-level-4'; }
-          else if (fk === 'ovu')  { key = 'fert';   cls = 'band-fert band-ovu'; }
+          else if (fk === 'ovu')  { key = 'ovu';    cls = 'band-ovu'; }
           else if (fk === 'fertile') { key = 'fert'; cls = 'band-fert'; }
           else if (fk === 'predp')   { key = 'predp'; cls = 'band-pred'; }
           if (key) bandDays[d] = { key, cls };
