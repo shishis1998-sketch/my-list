@@ -1650,88 +1650,25 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
 
-/* 日期内联展开：详情与整个月历内容区同宽，并由选中日期的描边向下自然连接。 */
-.cal-gridclip.has-inline{height:auto!important;overflow:visible;}
+/* 日期和详情的外框由一个 SVG path 绘制，避免独立边框/遮盖层的接缝。 */
+.cal-gridclip.has-inline{height:auto!important;overflow:visible;flex-shrink:0;}
+.cal-gridclip.has-inline .cal-grid{transform:none;}
 .cal-gridclip.has-inline .cal-fade{display:none;}
 .cal-inline-detail{position:relative;grid-column:1 / -1!important;
-  min-height:0;margin:-2px 0 var(--sp-6);padding:0;z-index:2;overflow:visible;}
-.cal-inline-detail .cal-card{
-  position:relative;
-  margin:0;width:100%;box-sizing:border-box;
-  border:1px solid var(--accent-mid);border-radius:var(--r);
-  background:var(--surface);min-height:0;max-height:none;overflow:visible;contain:none;
-}
-/* 日期框与详情框共用一条外轮廓。肩部只负责把详情顶边圆滑地“拐上去”，
-   不再额外画第二组连接竖线，避免 iOS 上出现小钩/双线。 */
-.cal-inline-detail .cal-card::before,
-.cal-inline-detail .cal-card::after{
-  content:"";position:absolute;top:-10px;
-  width:10px;height:10px;box-sizing:border-box;
-  background:var(--surface);z-index:9;pointer-events:none;
-}
-.cal-inline-detail .cal-card::before{
-  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) - 10px);
-  border-right:1px solid var(--accent-mid);
-  border-bottom:1px solid var(--accent-mid);
-  border-bottom-right-radius:10px;
-}
-.cal-inline-detail .cal-card::after{
-  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) + ((100% - 12px)/7));
-  border-left:1px solid var(--accent-mid);
-  border-bottom:1px solid var(--accent-mid);
-  border-bottom-left-radius:10px;
-}
-/* 最左/最右列没有对应的外侧肩角：外侧直接沿卡片边框连续向下。 */
-.cal-inline-detail[data-col="0"] .cal-card::before{display:none;}
-.cal-inline-detail[data-col="6"] .cal-card::after{display:none;}
-/* 选中最左/最右列时，详情框对应的上角不再单独画圆角，直接让日期格的外轮廓接下去。 */
-.cal-inline-detail[data-col="0"] .cal-card{border-top-left-radius:0;}
-.cal-inline-detail[data-col="6"] .cal-card{border-top-right-radius:0;}
+  min-height:0;margin:-2px 0 var(--sp-6);padding:0;overflow:visible;}
+.cal-inline-detail .cal-card{position:relative;margin:0;width:100%;box-sizing:border-box;
+  border:0;border-radius:var(--r);background:var(--surface);
+  min-height:0;max-height:none;overflow:visible;contain:none;}
 .cal-inline-detail .cal-card-date{display:none;}
-.cal-inline-detail .cal-tl{
-  min-height:0;max-height:none;overflow:visible;
-  padding:var(--sp-8) var(--sp-10) var(--sp-10);
-}
-/* 选中日期与详情共用同一套外轮廓。
-   关键：日期格两侧边不能一直画到底，否则会和肩部 1/4 圆弧叠成截图里的“小钩”。 */
-.cal-day.cal-selected{
-  overflow:visible;border-radius:var(--r) var(--r) 0 0;
-  box-shadow:none;border:1px solid var(--accent-mid);border-bottom:0;
-  background:var(--accent-light);z-index:5;
-}
-.cal-day.cal-selected .cal-daynum{
-  box-shadow:none;border-radius:0;color:var(--accent-dark);font-weight:700;
-}
+.cal-inline-detail .cal-tl{min-height:0;max-height:none;overflow:visible;
+  padding:var(--sp-8) var(--sp-10) var(--sp-10);}
+.cal-day.cal-selected{overflow:visible;border-radius:var(--r) var(--r) 0 0;
+  box-shadow:none;border:0;background:var(--accent-light);}
+.cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;
+  color:var(--accent-dark);font-weight:700;opacity:1;}
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
-
-/* 把日期格左右边最后 10px 擦掉，让两条竖线在圆弧起点结束。
-   中间列擦两边；最左列保留外侧左边；最右列保留外侧右边。 */
-.cal-day.cal-selected::before,
-.cal-day.cal-selected::after{
-  content:"";position:absolute;bottom:-1px;width:2px;height:11px;
-  background:var(--accent-light);z-index:8;pointer-events:none;
-}
-.cal-day.cal-selected::before{left:-1px;}
-.cal-day.cal-selected::after{right:-1px;}
-.cal-day.cal-selected[data-edge="left"]::before{display:none;}
-.cal-day.cal-selected[data-edge="right"]::after{display:none;}
-
-/* 详情顶边在选中日期正下方完全留空；不再额外画“连接颈部”竖线。 */
-.cal-inline-detail::before{display:none;}
-.cal-inline-detail::after{
-  content:"";position:absolute;top:-1px;
-  left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:2px;
-  background:var(--accent-light);z-index:10;pointer-events:none;
-}
-/* 最左/最右列多盖 1px，避免与卡片外框在 iOS 子像素抗锯齿下露缝。 */
-.cal-inline-detail[data-col="0"]::after{left:0;width:calc((100% - 12px)/7 + 1px);}
-.cal-inline-detail[data-col="6"]::after{width:calc((100% - 12px)/7 + 1px);}
-
-/* 中间列保留卡片自身上方圆角；边缘列直接接卡片外侧边。 */
-.cal-inline-detail:not([data-col="0"]):not([data-col="6"]) .cal-card{
-  border-top-left-radius:var(--r);border-top-right-radius:var(--r);
-}
+.cal-inline-outline{position:absolute;left:0;overflow:visible;pointer-events:none;
+  z-index:6;fill:none;stroke:var(--accent-mid);stroke-width:1;}
 /* 旧的独立「当天」第二张卡不再占位。 */
 .cal-sheet{display:none;}
 
@@ -13767,7 +13704,11 @@ function calWeekStep(dir){
 function openCalDay(dateStr){
   calSelDate=dateStr;
   const clip=document.getElementById('calGridClip');
-  if(clip){clip.style.setProperty('--p','0');clip.classList.add('has-inline');}
+  if(clip){
+    clip.style.setProperty('--p','0');clip.classList.add('has-inline');
+    clip.querySelectorAll('.cal-grid,.cal-fade').forEach(el=>el.style.setProperty('--p','0'));
+    document.getElementById('calGrabRow').classList.remove('cal-grab-on');
+  }
   renderCal();                     // 刷新选中高亮
   renderCalDetail();               // 内嵌下半区：填入当天记录
   renderWeekCard();                // 点到别的周去了才重画
@@ -14324,7 +14265,6 @@ function renderCal(){
   }
   // 选中日期的详情不再放在整个月历下方：插到它所在周之后，和日期格连成一体。
   if(calSelDate){
-    const selIndex=dayIndex=>0; // 占位声明仅避免旧浏览器解析器误判，实际索引在下面直接计算
     const sdt=new Date(calSelDate+'T00:00:00');
     const idx=Math.round((sdt-gridStart)/86400000);
     if(idx>=0&&idx<cellCount){
@@ -14740,6 +14680,39 @@ function toggleWeekCard(){
   if(calWeekOpen)layoutWeekPills();           // 收起时量不到宽度，展开这一下才摆得出来
 }
 
+// 直接量日期格与详情的位置；小数像素、字号和转屏都使用同一组坐标。
+let _calOutlineObserver=null;
+function drawCalInlineOutline(){
+  const panel=document.querySelector('.cal-inline-detail');
+  const day=document.querySelector('#calGrid .cal-selected');
+  if(!panel||!day)return;
+  const b=panel.getBoundingClientRect(),t=day.getBoundingClientRect();
+  if(!b.width||!b.height)return;
+  const left=.5,right=b.width-.5,bottom=b.height-.5;
+  const x=t.left-b.left+.5,x2=t.right-b.left-.5,top=t.top-b.top+.5;
+  const r=Math.min(parseFloat(getComputedStyle(day).borderTopLeftRadius)||10,(x2-x)/2, -top/2,bottom/2);
+  const edgeLeft=panel.dataset.col==='0',edgeRight=panel.dataset.col==='6';
+  const shoulder=Math.min(r,edgeLeft?Infinity:(x-left)/2,edgeRight?Infinity:(right-x2)/2);
+  let d=`M ${x+r} ${top} H ${x2-r} Q ${x2} ${top} ${x2} ${top+r}`;
+  d+=edgeRight?` V ${bottom-r}`:
+    ` V ${.5-shoulder} Q ${x2} .5 ${x2+shoulder} .5 H ${right-r} Q ${right} .5 ${right} ${.5+r} V ${bottom-r}`;
+  d+=` Q ${right} ${bottom} ${right-r} ${bottom} H ${left+r} Q ${left} ${bottom} ${left} ${bottom-r}`;
+  d+=edgeLeft?` V ${top+r}`:
+    ` V ${.5+r} Q ${left} .5 ${left+r} .5 H ${x-shoulder} Q ${x} .5 ${x} ${.5-shoulder} V ${top+r}`;
+  d+=` Q ${x} ${top} ${x+r} ${top} Z`;
+  let svg=panel.querySelector('.cal-inline-outline');
+  if(!svg){
+    svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.classList.add('cal-inline-outline');svg.setAttribute('aria-hidden','true');
+    svg.appendChild(document.createElementNS(svg.namespaceURI,'path'));panel.appendChild(svg);
+  }
+  svg.style.top=(top-.5)+'px';svg.setAttribute('width',b.width);
+  svg.setAttribute('height',b.height-top+.5);
+  svg.setAttribute('viewBox',`0 ${top-.5} ${b.width} ${b.height-top+.5}`);
+  svg.firstChild.setAttribute('d',d);
+}
+window.addEventListener('resize',drawCalInlineOutline);
+
 function renderCalDetail(){
   const oldInline=document.querySelector('.cal-inline-detail');
   const oldList=document.getElementById('calDetailList');
@@ -14787,7 +14760,7 @@ function renderCalDetail(){
   listEl.innerHTML='';
 
   // 事件时间线（单张白卡）：当天记录（墨绿实心节点）→ 往年记录（空心节点），每条一个节点、时间在右
-  const card=document.createElement('div');card.className='cal-card'+(calDayOpen?'':' closed');
+  const card=document.createElement('div');card.className='cal-card'+(listEl.classList.contains('cal-inline-detail')||calDayOpen?'':' closed');
   // 卡片顶部日期标题：「N 月 N 日」，默认墨绿。整条是收起/展开的开关（同本周卡片）
   const dhd=document.createElement('div');dhd.className='cal-card-date';
   dhd.innerHTML=`<span>${parseInt(cm)} 月 ${parseInt(cd)} 日</span>`+CW_CHEV;
@@ -14812,6 +14785,15 @@ function renderCalDetail(){
     card.appendChild(tl);
   }
   listEl.appendChild(card);
+  if(listEl.classList.contains('cal-inline-detail')){
+    if(_calOutlineObserver)_calOutlineObserver.disconnect();
+    drawCalInlineOutline();
+    if(typeof ResizeObserver!=='undefined'){
+      _calOutlineObserver=new ResizeObserver(drawCalInlineOutline);
+      _calOutlineObserver.observe(listEl);
+      _calOutlineObserver.observe(document.getElementById('calGrid'));
+    }
+  }
 }
 
 // ── Notes (笔记功能) ─────────────────────────────────────────────
