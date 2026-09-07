@@ -3421,8 +3421,15 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   max-height:92vh;display:flex;flex-direction:column;
   font-family:var(--zh);}
 .pv-sheet.open{transform:translateY(0);}
-.pv-sheet-grab{width:36px;height:4px;border-radius:2px;background:var(--border);
-  margin:4px auto 10px;flex:0 0 auto;}
+.pv-sheet-grab{position:relative;width:72px;height:20px;margin:-2px auto 2px;
+  flex:0 0 auto;background:transparent;cursor:grab;touch-action:none;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
+.pv-sheet-grab::after{content:"";position:absolute;left:50%;top:8px;
+  width:36px;height:4px;border-radius:2px;background:var(--border);
+  transform:translateX(-50%);transition:background .15s,transform .15s;}
+.pv-sheet.dragging{transition:none;}
+.pv-sheet.dragging .pv-sheet-grab{cursor:grabbing;}
+.pv-sheet.dragging .pv-sheet-grab::after{background:var(--brand);transform:translateX(-50%) scaleX(1.08);}
 .pv-sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex:0 0 auto;}
 .pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
 .pv-sheet-head.pv-day-head{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;}
@@ -4603,7 +4610,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <!-- 日期标签 · 轻点 +N 后只读展开；长按日期仍进入下面的编辑抽屉 -->
         <div class="pv-sheet-scrim" id="pvTagScrim" onclick="PV.closeTagSheet()"></div>
         <div class="pv-sheet pv-tag-sheet" id="pvTagSheet" role="dialog" aria-modal="true" aria-label="当天标签">
-          <div class="pv-sheet-grab"></div>
+          <div class="pv-sheet-grab" role="button" aria-label="向下拖动关闭"></div>
           <div class="pv-tag-head">
             <span class="pv-tag-date" id="pvTagDate"></span>
             <span class="pv-tag-week" id="pvTagWeek"></span>
@@ -4614,7 +4621,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
         <!-- 经期记录 · 长按日期后编辑经血量 + 症状 -->
         <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.cancelDaySheet()"></div>
         <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
-          <div class="pv-sheet-grab"></div>
+          <div class="pv-sheet-grab" role="button" aria-label="向下拖动取消编辑"></div>
           <div class="pv-sheet-head pv-day-head">
             <button type="button" class="pv-head-btn pv-head-cancel" onclick="PV.cancelDaySheet()">取消</button>
             <span class="pv-sheet-date">编辑经期</span>
@@ -4631,7 +4638,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
              壳子直接复用经期记录抽屉那套 .pv-sheet/.pv-group/.pv-row，样式与全站一致 -->
         <div class="pv-sheet-scrim" id="pvCardsScrim" onclick="PV.closeCardsSheet()"></div>
         <div class="pv-sheet" id="pvCardsSheet" role="dialog" aria-modal="true" aria-label="年历卡片设置">
-          <div class="pv-sheet-grab"></div>
+          <div class="pv-sheet-grab" role="button" aria-label="向下拖动关闭"></div>
           <div class="pv-sheet-head">
             <span class="pv-sheet-date">年历卡片</span>
             <button class="pv-sheet-close" onclick="PV.closeCardsSheet()" aria-label="关闭">✕</button>
@@ -8247,6 +8254,65 @@ window.PV = (function(){
     let moved = false;
     const MOVE_THRESHOLD = 10; // 像素，超过此距离视为滑动而非点击
 
+    // 三张经期抽屉共用同一套抓手手势。只让顶部横杠的 72×20px 热区接管拖动，
+    // 标题栏里的「取消 / 完成」仍是普通按钮；编辑抽屉下拉关闭按取消处理，不保存草稿。
+    function bindSheetDrag(sheetId, scrimId, closeFn) {
+      const sheet = document.getElementById(sheetId);
+      const scrim = document.getElementById(scrimId);
+      const grab = sheet && sheet.querySelector('.pv-sheet-grab');
+      if (!sheet || !grab || grab.dataset.dragBound) return;
+      grab.dataset.dragBound = '1';
+
+      let pointerId = null, startY = 0, distance = 0;
+      let lastY = 0, lastT = 0, velocity = 0;
+
+      grab.addEventListener('pointerdown', e => {
+        if (!sheet.classList.contains('open') || pointerId !== null) return;
+        pointerId = e.pointerId;
+        startY = lastY = e.clientY;
+        lastT = performance.now();
+        distance = velocity = 0;
+        sheet.classList.add('dragging');
+        try { grab.setPointerCapture(pointerId); } catch (_) {}
+        e.preventDefault();
+      });
+
+      grab.addEventListener('pointermove', e => {
+        if (e.pointerId !== pointerId) return;
+        const now = performance.now();
+        const dt = Math.max(1, now - lastT);
+        velocity = (e.clientY - lastY) / dt;
+        lastY = e.clientY;
+        lastT = now;
+        distance = Math.max(0, e.clientY - startY);
+        sheet.style.transform = `translateY(${distance}px)`;
+        if (scrim) scrim.style.opacity = String(Math.max(0, 1 - distance / 320));
+        e.preventDefault();
+      });
+
+      const finish = (e, cancelled) => {
+        if (e.pointerId !== pointerId) return;
+        const shouldClose = !cancelled &&
+          (distance > Math.min(100, sheet.offsetHeight * .22) ||
+           (distance > 20 && velocity > .55));
+        try { grab.releasePointerCapture(pointerId); } catch (_) {}
+        pointerId = null;
+        sheet.classList.remove('dragging');
+        // 恢复 CSS 的过渡后再撤掉逐帧位移：未过阈值会弹回，过阈值则继续滑出。
+        sheet.style.transform = '';
+        if (scrim) scrim.style.opacity = '';
+        if (shouldClose) closeFn();
+      };
+      grab.addEventListener('pointerup', e => finish(e, false));
+      grab.addEventListener('pointercancel', e => finish(e, true));
+    }
+
+    function setupSheetDrags() {
+      bindSheetDrag('pvSheet', 'pvSheetScrim', cancelDaySheet);
+      bindSheetDrag('pvTagSheet', 'pvTagScrim', closeTagSheet);
+      bindSheetDrag('pvCardsSheet', 'pvCardsScrim', closeCardsSheet);
+    }
+
     function setupEvents() {
       const cal = document.getElementById('calendar');
 
@@ -9711,6 +9777,7 @@ window.PV = (function(){
       _inited = true;
       applyPalette();
       setupEvents();
+      setupSheetDrags();
     }
   }
   // 本次日历页会话里，经期视图是否已经停留过某个年月
