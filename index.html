@@ -3258,6 +3258,26 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .cyc-x {display: flex; margin-top: 7px;}
 #calViewPeriod .cyc-x span {flex: 3; min-width: 0; text-align: center; font-size: var(--fs-micro); color: var(--faint);}
 #calViewPeriod .cyc-x span.solo {flex: 1;}
+/* 年度趋势改为由上到下排列：每一行是一段周期（或只有点滴的月份），
+   三项数值改画横条，记录再多也只增加纵向行数，不再挤压横轴。 */
+#calViewPeriod .cyc-vlist{display:flex;flex-direction:column;margin-top:2px;}
+#calViewPeriod .cyc-vrow{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;
+  align-items:center;padding:5px 0;border-bottom:1px solid var(--line-soft);}
+#calViewPeriod .cyc-vrow:last-child{border-bottom:0;}
+#calViewPeriod .cyc-vdate{font:600 var(--fs-micro)/1.2 var(--en);color:var(--faint);
+  text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+#calViewPeriod .cyc-vlanes{display:grid;gap:3px;}
+#calViewPeriod .cyc-vlane{display:grid;grid-template-columns:minmax(0,1fr) 22px;gap:5px;align-items:center;}
+#calViewPeriod .cyc-vtrack{display:block;height:5px;border-radius:999px;background:var(--surface-2);overflow:hidden;}
+#calViewPeriod .cyc-vtrack i{display:block;height:100%;min-width:4px;border-radius:999px;}
+#calViewPeriod .cyc-vlane.c i{background:#1c5a48;}
+#calViewPeriod .cyc-vlane.p i{background:var(--brand);}
+#calViewPeriod .cyc-vlane.s i{background:var(--disabled);box-shadow:inset 0 0 0 1px rgba(0,0,0,.07);}
+#calViewPeriod .cyc-vlane.zero{visibility:hidden;}
+#calViewPeriod .cyc-vlane b{font:700 8px/1 var(--en);text-align:right;color:var(--muted);
+  font-variant-numeric:tabular-nums;}
+#calViewPeriod .cyc-vlane.c b{color:var(--ink-2);}
+#calViewPeriod .cyc-vlane.p b{color:var(--brand);}
 #calViewPeriod .cyc-empty {text-align: center; color: var(--faint); font-size: var(--fs-footnote); padding: 30px 0;}
 /* 周期趋势柱状图卡片：白底 + 描边 + 16px 圆角，与经期视图其余卡片(状态/信息/本月记录)一致 */
 /* 顶部 12px：与经期视图其余卡片(状态/信息/本月记录)之间保持一致的 12px 卡间距 */
@@ -3807,6 +3827,31 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .daywrap.has-rec .rec-dot {display: block;}
 #calViewPeriod .calendar-container.year-view .dot-slot {height: 5px; margin-top: 1px;}
 #calViewPeriod .calendar-container.year-view .rec-dot {width: 3px; height: 3px;}
+/* 年度迷你月历也使用连续色带。色带只占原日期圆的 18px 高度，下面的记录点位置不变。 */
+#calViewPeriod .calendar-container.year-view .days{column-gap:0;}
+#calViewPeriod .calendar-container.year-view .daywrap.band{box-sizing:border-box;min-width:0;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-start{padding-left:1px;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-end{padding-right:1px;}
+#calViewPeriod .calendar-container.year-view .daywrap.band>.day{
+  width:100%;height:18px;border-radius:0;transform:none;box-shadow:none;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-start>.day{border-radius:9px 0 0 9px;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-end>.day{border-radius:0 9px 9px 0;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-start.band-end>.day{border-radius:9px;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-fert>.day{
+  background:var(--ovu-soft);color:var(--ovu-on-soft);}
+#calViewPeriod .calendar-container.year-view .daywrap.band-ovu>.day{
+  background:var(--ovu);color:#fff;font-weight:700;}
+/* 预测经期的虚线只画连续段外轮廓，不在相邻日期之间重复画竖线。 */
+#calViewPeriod .calendar-container.year-view .daywrap.band-pred>.day::before{
+  inset:0;border:0;border-top:1.2px dashed var(--brand);border-bottom:1.2px dashed var(--brand);
+  border-radius:0;box-sizing:border-box;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-pred.band-start>.day::before{
+  border-left:1.2px dashed var(--brand);border-radius:9px 0 0 9px;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-pred.band-end>.day::before{
+  border-right:1.2px dashed var(--brand);border-radius:0 9px 9px 0;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-pred.band-start.band-end>.day::before{border-radius:9px;}
+#calViewPeriod .calendar-container.year-view .daywrap.band-today>.day{
+  outline:none;box-shadow:none !important;}
 #calViewPeriod .calendar-container.month-view .day.today, #calViewPeriod .calendar-container.year-view  .day.today {box-shadow: inset 0 0 0 2px var(--brand);}
 #calViewPeriod .calendar-container.month-view .sym-list {display: block; margin: var(--sp-card) 0 2px; padding: 16px 14px;
       background: #FFFFFF; border: 1px solid var(--line); border-radius: var(--r-lg);}
@@ -7787,21 +7832,19 @@ window.PV = (function(){
       const daysInMonth = new Date(year, month, 0).getDate();
       const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
-      // 月视图把相邻状态合成色带。经期不同流量仍属于同一段（每格保留自己的深浅），
-      // 易孕日和排卵日也属于同一段（排卵日再在色带内加深）；跨星期绝不连接。
+      // 月/年度视图都把相邻状态合成色带。经期不同流量仍属于同一段（每格保留自己的深浅）；
+      // 排卵日是独立深蓝段，易孕日是浅蓝段；跨星期绝不连接。
       const bandDays = {};
-      if (withNav) {
-        for (let d = 1; d <= daysInMonth; d++) {
-          const lv = getLevel(year, month, d);
-          const fk = fertKind(year, month, d);
-          let key = '', cls = '';
-          if (lv >= 1 && lv <= 3) { key = 'period'; cls = `band-level-${lv}`; }
-          else if (lv === 4)      { key = 'spot';   cls = 'band-level-4'; }
-          else if (fk === 'ovu')  { key = 'ovu';    cls = 'band-ovu'; }
-          else if (fk === 'fertile') { key = 'fert'; cls = 'band-fert'; }
-          else if (fk === 'predp')   { key = 'predp'; cls = 'band-pred'; }
-          if (key) bandDays[d] = { key, cls };
-        }
+      for (let d = 1; d <= daysInMonth; d++) {
+        const lv = getLevel(year, month, d);
+        const fk = fertKind(year, month, d);
+        let key = '', cls = '';
+        if (lv >= 1 && lv <= 3) { key = 'period'; cls = `band-level-${lv}`; }
+        else if (lv === 4)      { key = 'spot';   cls = 'band-level-4'; }
+        else if (fk === 'ovu')  { key = 'ovu';    cls = 'band-ovu'; }
+        else if (fk === 'fertile') { key = 'fert'; cls = 'band-fert'; }
+        else if (fk === 'predp')   { key = 'predp'; cls = 'band-pred'; }
+        if (key) bandDays[d] = { key, cls };
       }
 
       // 月视图不再在卡片内画月头（顶部「‹ 年 月 ›」导航已承担）；年视图每张迷你月保留月份标题
@@ -9011,32 +9054,28 @@ window.PV = (function(){
       } else {
         const spotColor = (PALETTE[4] && PALETTE[4].color) || '#CBD5E1';
         const maxV = Math.max(...cols.flatMap(c => [c.cyc, c.len, c.spot]), 1);
-        const h = v => Math.max(4, Math.round(v / maxV * 82));   // 留 ~18% 顶部空间给数字
-        // 值为 0 的柱子(没出血 / 该月没周期)只留空位，保持三柱对齐
-        const bar = (cls, v) => v
-          ? `<div class="cyc-bar ${cls}" style="height:${h(v)}%${cls === 's' ? `;background:${spotColor}` : ''}">` +
-            `<span class="num">${v}</span></div>`
-          : `<div class="cyc-bar ${cls} zero"></div>`;
-        // 只有灰柱的月份：整格只占一根柱的宽度(.solo)，也只画这一根灰柱，
-        // 不给那个月不存在的周期/经期留位置
-        const colsHtml = cols.map(c =>
-          `<div class="cyc-col${c.spotOnly ? ' solo' : ''}">` +
-            (c.spotOnly ? bar('s', c.spot) : bar('c', c.cyc) + bar('p', c.len) + bar('s', c.spot)) +
-          '</div>').join('');
-        // X 轴只标月份数字（不带「月」字），比「月/日」短一半，避免柱多时拥挤
-        const xHtml = cols.map(c =>
-          `<span${c.spotOnly ? ' class="solo"' : ''}>${c.start.getMonth() + 1}</span>`).join('');
+        const width = v => v ? Math.max(4, Math.round(v / maxV * 100)) : 0;
+        // 横条右侧固定显示数值；0 值整条隐藏，但仍保留三条轨道的对齐关系。
+        const lane = (cls, v) =>
+          `<div class="cyc-vlane ${cls}${v ? '' : ' zero'}">` +
+            `<span class="cyc-vtrack"><i style="width:${width(v)}%${cls === 's' ? `;background:${spotColor}` : ''}"></i></span>` +
+            `<b>${v || ''}</b></div>`;
+        const rowsHtml = cols.map(c => {
+          // 真正的周期标到经期开始日，解决同月出现两段时月份标签重复、分不清的问题；
+          // 只有点滴、没有周期的补位行仍只写月份。
+          const label = c.spotOnly
+            ? `${c.start.getMonth() + 1}月`
+            : `${c.start.getMonth() + 1}/${c.start.getDate()}`;
+          return `<div class="cyc-vrow"><span class="cyc-vdate">${label}</span>` +
+            `<div class="cyc-vlanes">${lane('c', c.cyc)}${lane('p', c.len)}${lane('s', c.spot)}</div></div>`;
+        }).join('');
         body =
           '<div class="cyc-legend">' +
             '<span><i style="background:#1c5a48"></i>周期</span>' +
             '<span><i style="background:var(--brand)"></i>经期</span>' +
             `<span><i class="s" style="background:${spotColor}"></i>点滴</span>` +   // 和日历图例同名，不再写「非经期出血」那一长串
           '</div>' +
-          `<div class="cyc-plot${cols.length >= 16 ? ' dense' : ''}">` +
-            '<div class="cyc-grid"><i style="top:25%"></i><i style="top:50%"></i><i style="top:75%"></i></div>' +
-            colsHtml +
-          '</div>' +
-          `<div class="cyc-x">${xHtml}</div>`;
+          `<div class="cyc-vlist">${rowsHtml}</div>`;
       }
 
       host.innerHTML = `<div class="pv-trend-card">${head}${body}</div>`;
