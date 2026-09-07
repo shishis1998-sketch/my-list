@@ -1657,9 +1657,12 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   min-height:0;margin:-2px 0 var(--sp-6);padding:0;z-index:2;overflow:visible;}
 .cal-inline-detail .cal-card{
   margin:0;width:100%;box-sizing:border-box;
-  border:1px solid var(--accent-mid);border-radius:var(--rxl);
+  border:1px solid var(--accent-mid);border-radius:var(--r);
   background:var(--surface);min-height:0;max-height:none;overflow:visible;contain:none;
 }
+/* 选中最左/最右列时，详情框对应的上角不再单独画圆角，直接让日期格的外轮廓接下去。 */
+.cal-inline-detail[data-col="0"] .cal-card{border-top-left-radius:0;}
+.cal-inline-detail[data-col="6"] .cal-card{border-top-right-radius:0;}
 .cal-inline-detail .cal-card-date{display:none;}
 .cal-inline-detail .cal-tl{
   min-height:0;max-height:none;overflow:visible;
@@ -1674,19 +1677,25 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;}
 /* 连接颈部精确覆盖日期格到详情框之间的缝，并把详情顶边在该列擦掉。 */
 .cal-inline-detail::before{
-  content:"";position:absolute;top:-17px;
+  content:"";position:absolute;top:-18px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:18px;box-sizing:border-box;
+  width:calc((100% - 12px)/7);height:19px;box-sizing:border-box;
   background:var(--surface);
   border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
   z-index:4;pointer-events:none;
 }
+/* 把详情框顶边在选中列下方完整擦掉，避免出现横线穿过连接颈部。 */
 .cal-inline-detail::after{
-  content:"";position:absolute;top:0;
-  left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0) + 1px);
-  width:calc((100% - 12px)/7 - 2px);height:2px;background:var(--surface);
+  content:"";position:absolute;top:-1px;
+  left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
+  width:calc((100% - 12px)/7);height:3px;background:var(--surface);
   z-index:5;pointer-events:none;
 }
+/* 两个边缘列直接贴住卡片外边框，避免 1px 重叠或圆角弧线露出来。 */
+.cal-inline-detail[data-col="0"]::before{border-left-color:var(--accent-mid);}
+.cal-inline-detail[data-col="6"]::before{border-right-color:var(--accent-mid);}
+.cal-inline-detail[data-col="0"]::after{left:0;width:calc((100% - 12px)/7 + 1px);}
+.cal-inline-detail[data-col="6"]::after{width:calc((100% - 12px)/7 + 1px);}
 /* 旧的独立「当天」第二张卡不再占位。 */
 .cal-sheet{display:none;}
 
@@ -14279,6 +14288,7 @@ function renderCal(){
       anchor.className='cal-inline-detail';
       anchor.style.gridColumn='1 / -1';
       anchor.dataset.date=calSelDate;
+      anchor.dataset.col=String(idx%7);
       anchor.style.setProperty('--sel-col',idx%7);
       const after=(Math.floor(idx/7)+1)*7-1;
       const ref=grid.children[after];
