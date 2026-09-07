@@ -1656,9 +1656,29 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-inline-detail{position:relative;grid-column:1 / -1!important;
   min-height:0;margin:-2px 0 var(--sp-6);padding:0;z-index:2;overflow:visible;}
 .cal-inline-detail .cal-card{
+  position:relative;
   margin:0;width:100%;box-sizing:border-box;
   border:1px solid var(--accent-mid);border-radius:var(--r);
   background:var(--surface);min-height:0;max-height:none;overflow:visible;contain:none;
+}
+/* 日期框接入详情框的两个“肩角”用真正的 1/4 圆弧，而不是直角相撞。
+   圆弧半径跟卡片圆角一致：左侧从详情顶边自然拐上去接日期框左边，
+   右侧镜像处理。伪元素底色会顺便盖掉后面的直线，避免出现 T 字接头。 */
+.cal-inline-detail .cal-card::before,
+.cal-inline-detail .cal-card::after{
+  content:"";position:absolute;top:calc(-1 * var(--r));
+  width:var(--r);height:var(--r);box-sizing:border-box;
+  background:var(--surface);z-index:7;pointer-events:none;
+}
+.cal-inline-detail .cal-card::before{
+  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) - var(--r));
+  border-right:1px solid var(--accent-mid);border-bottom:1px solid var(--accent-mid);
+  border-bottom-right-radius:var(--r);
+}
+.cal-inline-detail .cal-card::after{
+  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) + ((100% - 12px)/7));
+  border-left:1px solid var(--accent-mid);border-bottom:1px solid var(--accent-mid);
+  border-bottom-left-radius:var(--r);
 }
 /* 选中最左/最右列时，详情框对应的上角不再单独画圆角，直接让日期格的外轮廓接下去。 */
 .cal-inline-detail[data-col="0"] .cal-card{border-top-left-radius:0;}
