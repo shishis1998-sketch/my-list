@@ -1675,25 +1675,33 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   background:var(--surface);z-index:5;
 }
 .cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;}
-/* 连接颈部精确覆盖日期格到详情框之间的缝，并把详情顶边在该列擦掉。 */
+/* 连接颈部：与选中日期格严格共边。详情顶边在选中列下方留空，
+   两侧用连续竖线接下来；肩部用 8px 圆角转入详情顶边，避免 1px 断口。 */
 .cal-inline-detail::before{
-  content:"";position:absolute;top:-18px;
+  content:"";position:absolute;top:-3px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:19px;box-sizing:border-box;
+  width:calc((100% - 12px)/7);height:5px;box-sizing:border-box;
   background:var(--surface);
   border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
-  z-index:4;pointer-events:none;
+  z-index:6;pointer-events:none;
 }
-/* 把详情框顶边在选中列下方完整擦掉，避免出现横线穿过连接颈部。 */
+/* 擦掉选中列下方的详情顶边，并多盖 1px 消除抗锯齿接缝。 */
 .cal-inline-detail::after{
   content:"";position:absolute;top:-1px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
   width:calc((100% - 12px)/7);height:3px;background:var(--surface);
   z-index:5;pointer-events:none;
 }
-/* 两个边缘列直接贴住卡片外边框，避免 1px 重叠或圆角弧线露出来。 */
-.cal-inline-detail[data-col="0"]::before{border-left-color:var(--accent-mid);}
-.cal-inline-detail[data-col="6"]::before{border-right-color:var(--accent-mid);}
+/* 中间列：详情顶边在“日期标签”两侧做内凹圆角肩部，视觉上是一条连续外轮廓。 */
+.cal-inline-detail:not([data-col="0"]):not([data-col="6"]) .cal-card{
+  border-top-left-radius:var(--r);border-top-right-radius:var(--r);
+}
+.cal-inline-detail:not([data-col="0"]):not([data-col="6"])::before{
+  border-bottom-left-radius:0;border-bottom-right-radius:0;
+}
+/* 边缘列直接共用卡片外侧边，不重复叠线。 */
+.cal-inline-detail[data-col="0"]::before{left:0;border-left:0;}
+.cal-inline-detail[data-col="6"]::before{border-right:0;}
 .cal-inline-detail[data-col="0"]::after{left:0;width:calc((100% - 12px)/7 + 1px);}
 .cal-inline-detail[data-col="6"]::after{width:calc((100% - 12px)/7 + 1px);}
 /* 旧的独立「当天」第二张卡不再占位。 */
