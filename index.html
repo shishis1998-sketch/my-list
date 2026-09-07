@@ -1641,26 +1641,30 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
 
-/* 日期内联展开：选中日期所在周下面直接长出详情；时间线保留原卡片样式。 */
+/* 日期内联展开：详情与整个月历内容区同宽，并由选中日期的描边向下自然连接。 */
 .cal-gridclip.has-inline{height:auto!important;overflow:visible;}
 .cal-gridclip.has-inline .cal-fade{display:none;}
 .cal-inline-detail{position:relative;grid-column:1 / -1!important;
   min-height:0;margin:-2px 0 var(--sp-6);padding:0;z-index:2;overflow:visible;}
 .cal-inline-detail .cal-card{
-  margin:0;border-radius:var(--rxl);background:var(--surface);
-  min-height:0;max-height:none;overflow:visible;contain:none;
+  margin:0;width:100%;box-sizing:border-box;
+  border:1px solid var(--accent-mid);border-radius:var(--rxl);
+  background:var(--surface);min-height:0;max-height:none;overflow:visible;contain:none;
 }
 .cal-inline-detail .cal-card-date{display:none;}
 .cal-inline-detail .cal-tl{
   min-height:0;max-height:none;overflow:visible;
   padding:var(--sp-8) var(--sp-10) var(--sp-10);
 }
-/* 与选中日期相连的「颈部」：盖住卡片顶边的一小段，形成日期和面板一体的轮廓。 */
+/* 选中日期改成主题色描边的圆角日期格，不再使用圆形数字框。 */
+.cal-day.cal-selected{overflow:visible;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--accent-mid);}
+.cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;}
+/* 与选中日期相连的颈部：宽度跟日期格一致，和下方主题色边框连成一个整体。 */
 .cal-inline-detail::before{
-  content:"";position:absolute;top:-12px;
-  left:calc((100% - 12px)/7 * var(--sel-col,0) + (100% - 12px)/14 - 18px);
-  width:36px;height:14px;background:var(--surface);
-  border-left:1px solid var(--border);border-right:1px solid var(--border);
+  content:"";position:absolute;top:-13px;
+  left:calc((100% - 12px)/7 * var(--sel-col,0) + var(--sel-col,0) * 2px);
+  width:calc((100% - 12px)/7);height:15px;box-sizing:border-box;
+  background:var(--surface);border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
   z-index:4;pointer-events:none;
 }
 /* 旧的独立「当天」第二张卡不再占位。 */
