@@ -660,8 +660,17 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
 .mclose{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-6) var(--sp-10);cursor:pointer;color:var(--text-secondary);font-size:15px;line-height:1;transition:all .1s;}
 .mclose:hover{background:var(--border);}
-/* 编辑笔记抽屉：没有底部按钮条了，标题栏只剩 ✕，它就是「保存并关闭」。
-   底部没有按钮条兜着了，正文自己留出手势条的余量 */
+/* 编辑笔记抽屉：标题栏使用「取消 / 标题 / 完成」。
+   取消丢弃本次表单改动，完成保存；下拉/系统返回等其它关闭手势仍自动保存。 */
+#noteModal .mhdr{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:8px;align-items:center;}
+#noteModal .mtitle{text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#noteModal .note-modal-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
+  color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
+#noteModal .note-modal-action:first-child{justify-self:start;}
+#noteModal .note-modal-action:last-child{justify-self:end;}
+#noteModal .note-modal-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
+#noteModal .note-modal-done{color:var(--accent);}
 #noteModal .mbody{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
 
 .fg{margin-bottom:var(--sp-14);}
@@ -5184,10 +5193,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 <div class="moverlay" id="noteModal">
   <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
+      <button type="button" class="note-modal-action" onclick="cancelNoteModal()">取消</button>
       <div class="mtitle" id="nm-title">新建笔记</div>
-      <!-- 底部那条「删除/取消/保存」已经去掉：这里只留 ✕，关抽屉即保存。
-           删除笔记走卡片上的「删除」，弹窗里不再给一个。 -->
-      <button class="mclose" onclick="closeNoteModal()">✕</button>
+      <button type="button" class="note-modal-action note-modal-done" onclick="completeNoteModal()">完成</button>
     </div>
     <div class="mbody">
     <div class="fg">
@@ -16097,7 +16105,19 @@ function noteFormSnap(){
 }
 
 function closeNoteModal(){
+  // 下拉、系统返回等非按钮关闭方式继续自动保存，避免误丢编辑内容。
   if(noteFormSnap()!==nmOpenSnap) saveNote();
+  nmOpenSnap='';
+  document.getElementById('noteModal').classList.remove('open');
+}
+function cancelNoteModal(){
+  // 「取消」明确丢弃本次表单改动；数据尚未落盘，所以直接关闭即可。
+  nmOpenSnap='';
+  document.getElementById('noteModal').classList.remove('open');
+}
+function completeNoteModal(){
+  // 校验不通过时留在编辑窗口；保存成功才关闭。
+  if(saveNote()===false) return;
   nmOpenSnap='';
   document.getElementById('noteModal').classList.remove('open');
 }
@@ -16131,10 +16151,10 @@ function saveNote(){
       .filter(cf=>cf.key||cf.value);
     localOnly=!!curMemoLocal;
     const anyFieldFilled=!!(fields.username||fields.password||fields.note||customFields.length);
-    if(!title&&!anyFieldFilled){toast('标题和内容不能都为空');return;}
+    if(!title&&!anyFieldFilled){toast('标题和内容不能都为空');return false;}
   }else{
     body=document.getElementById('nf-body').value;
-    if(!title&&!body.trim()){toast('标题和正文不能都为空');return;}
+    if(!title&&!body.trim()){toast('标题和正文不能都为空');return false;}
   }
   if(editNoteId){
     const n=notes.find(x=>x.id===editNoteId);
@@ -16175,6 +16195,7 @@ function saveNote(){
   }
   persistNotes();
   render();
+  return true;
 }
 
 // 删除笔记只有卡片上那一个入口（askDelNoteById），编辑抽屉里不再放删除按钮
