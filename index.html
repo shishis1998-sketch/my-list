@@ -1661,30 +1661,29 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   border:1px solid var(--accent-mid);border-radius:var(--r);
   background:var(--surface);min-height:0;max-height:none;overflow:visible;contain:none;
 }
-/* 日期框接入详情框的两个“肩角”用真正的 1/4 圆弧，而不是直角相撞。
-   圆弧半径跟卡片圆角一致：左侧从详情顶边自然拐上去接日期框左边，
-   右侧镜像处理。伪元素底色会顺便盖掉后面的直线，避免出现 T 字接头。 */
+/* 日期框与详情框共用一条外轮廓。肩部只负责把详情顶边圆滑地“拐上去”，
+   不再额外画第二组连接竖线，避免 iOS 上出现小钩/双线。 */
 .cal-inline-detail .cal-card::before,
 .cal-inline-detail .cal-card::after{
-  content:"";position:absolute;top:-12px;
-  width:12px;height:12px;box-sizing:border-box;
+  content:"";position:absolute;top:-10px;
+  width:10px;height:10px;box-sizing:border-box;
   background:var(--surface);z-index:9;pointer-events:none;
 }
-/* 左肩：先用白底完整盖住原来的直角，再只画“下→右”的 1/4 圆弧。
-   之前伪元素半径只有 8px，而且直角底线/竖线仍在它下面透出，iOS 上看起来仍像折角。 */
 .cal-inline-detail .cal-card::before{
-  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) - 12px);
+  left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) - 10px);
   border-right:1px solid var(--accent-mid);
   border-bottom:1px solid var(--accent-mid);
-  border-bottom-right-radius:12px;
+  border-bottom-right-radius:10px;
 }
-/* 右肩镜像。 */
 .cal-inline-detail .cal-card::after{
   left:calc((((100% - 12px)/7 + 2px) * var(--sel-col,0)) + ((100% - 12px)/7));
   border-left:1px solid var(--accent-mid);
   border-bottom:1px solid var(--accent-mid);
-  border-bottom-left-radius:12px;
+  border-bottom-left-radius:10px;
 }
+/* 最左/最右列没有对应的外侧肩角：外侧直接沿卡片边框连续向下。 */
+.cal-inline-detail[data-col="0"] .cal-card::before{display:none;}
+.cal-inline-detail[data-col="6"] .cal-card::after{display:none;}
 /* 选中最左/最右列时，详情框对应的上角不再单独画圆角，直接让日期格的外轮廓接下去。 */
 .cal-inline-detail[data-col="0"] .cal-card{border-top-left-radius:0;}
 .cal-inline-detail[data-col="6"] .cal-card{border-top-right-radius:0;}
@@ -1705,19 +1704,18 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 连接颈部：与选中日期格严格共边。详情顶边在选中列下方留空，
    两侧用连续竖线接下来；肩部用 8px 圆角转入详情顶边，避免 1px 断口。 */
 .cal-inline-detail::before{
-  content:"";position:absolute;top:-3px;
+  content:"";position:absolute;top:-2px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:5px;box-sizing:border-box;
+  width:calc((100% - 12px)/7);height:3px;box-sizing:border-box;
   background:var(--accent-light);
-  border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
-  z-index:8;pointer-events:none;
+  z-index:10;pointer-events:none;
 }
-/* 擦掉选中列下方的详情顶边，并多盖 1px 消除抗锯齿接缝。 */
+/* 只擦掉选中日期正下方的详情顶边；不再额外画左右竖线，竖线由日期格自身承担。 */
 .cal-inline-detail::after{
   content:"";position:absolute;top:-1px;
   left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
-  width:calc((100% - 12px)/7);height:3px;background:var(--surface);
-  z-index:5;pointer-events:none;
+  width:calc((100% - 12px)/7);height:2px;background:var(--accent-light);
+  z-index:10;pointer-events:none;
 }
 /* 中间列：详情顶边在“日期标签”两侧做内凹圆角肩部，视觉上是一条连续外轮廓。 */
 .cal-inline-detail:not([data-col="0"]):not([data-col="6"]) .cal-card{
@@ -1727,8 +1725,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   border-bottom-left-radius:0;border-bottom-right-radius:0;
 }
 /* 边缘列直接共用卡片外侧边，不重复叠线。 */
-.cal-inline-detail[data-col="0"]::before{left:0;border-left:0;}
-.cal-inline-detail[data-col="6"]::before{border-right:0;}
+.cal-inline-detail[data-col="0"]::before{left:0;}
 .cal-inline-detail[data-col="0"]::after{left:0;width:calc((100% - 12px)/7 + 1px);}
 .cal-inline-detail[data-col="6"]::after{width:calc((100% - 12px)/7 + 1px);}
 /* 旧的独立「当天」第二张卡不再占位。 */
