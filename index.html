@@ -1656,16 +1656,27 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   min-height:0;max-height:none;overflow:visible;
   padding:var(--sp-8) var(--sp-10) var(--sp-10);
 }
-/* 选中日期改成主题色描边的圆角日期格，不再使用圆形数字框。 */
-.cal-day.cal-selected{overflow:visible;border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--accent-mid);}
+/* 选中日期与详情共用同一套外轮廓：日期格只画上/左右边，底边由详情顶边接续。 */
+.cal-day.cal-selected{
+  overflow:visible;border-radius:var(--r) var(--r) 0 0;
+  box-shadow:none;border:1px solid var(--accent-mid);border-bottom:0;
+  background:var(--surface);z-index:5;
+}
 .cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;}
-/* 与选中日期相连的颈部：宽度跟日期格一致，和下方主题色边框连成一个整体。 */
+/* 连接颈部精确覆盖日期格到详情框之间的缝，并把详情顶边在该列擦掉。 */
 .cal-inline-detail::before{
-  content:"";position:absolute;top:-13px;
-  left:calc((100% - 12px)/7 * var(--sel-col,0) + var(--sel-col,0) * 2px);
-  width:calc((100% - 12px)/7);height:15px;box-sizing:border-box;
-  background:var(--surface);border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
+  content:"";position:absolute;top:-17px;
+  left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0));
+  width:calc((100% - 12px)/7);height:18px;box-sizing:border-box;
+  background:var(--surface);
+  border-left:1px solid var(--accent-mid);border-right:1px solid var(--accent-mid);
   z-index:4;pointer-events:none;
+}
+.cal-inline-detail::after{
+  content:"";position:absolute;top:0;
+  left:calc(((100% - 12px)/7 + 2px) * var(--sel-col,0) + 1px);
+  width:calc((100% - 12px)/7 - 2px);height:2px;background:var(--surface);
+  z-index:5;pointer-events:none;
 }
 /* 旧的独立「当天」第二张卡不再占位。 */
 .cal-sheet{display:none;}
