@@ -3430,6 +3430,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .pv-sheet.dragging{transition:none;}
 .pv-sheet.dragging .pv-sheet-grab{cursor:grabbing;}
 .pv-sheet.dragging .pv-sheet-grab::after{background:var(--brand);transform:translateX(-50%) scaleX(1.08);}
+.pv-sheet>.pv-sheet-head,.pv-sheet>.pv-tag-head{touch-action:none;
+  -webkit-user-select:none;user-select:none;}
 .pv-sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex:0 0 auto;}
 .pv-sheet-date{font-size:15px;font-weight:700;color:var(--text-primary);}
 .pv-sheet-head.pv-day-head{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;}
@@ -8254,7 +8256,7 @@ window.PV = (function(){
     let moved = false;
     const MOVE_THRESHOLD = 10; // 像素，超过此距离视为滑动而非点击
 
-    // 三张经期抽屉共用同一套抓手手势。只让顶部横杠的 72×20px 热区接管拖动，
+    // 三张经期抽屉共用同一套下拉手势：横杠可直接拖；标题区长按片刻后也可拖。
     // 标题栏里的「取消 / 完成」仍是普通按钮；编辑抽屉下拉关闭按取消处理，不保存草稿。
     function bindSheetDrag(sheetId, scrimId, closeFn) {
       const sheet = document.getElementById(sheetId);
@@ -8265,19 +8267,33 @@ window.PV = (function(){
 
       let pointerId = null, startY = 0, distance = 0;
       let lastY = 0, lastT = 0, velocity = 0;
+      let owner = null, holdTimer = 0, dragging = false;
 
-      grab.addEventListener('pointerdown', e => {
+      const activate = () => {
+        holdTimer = 0;
+        if (pointerId === null) return;
+        dragging = true;
+        sheet.classList.add('dragging');
+        try { if (typeof window.haptic === 'function') window.haptic('tap'); } catch (_) {}
+      };
+
+      const start = (e, waitForHold) => {
+        // 胶囊按钮和关闭按钮只负责点击；长按按钮不会把弹窗拖走。
+        if (e.target.closest('button,input,textarea,select,a')) return;
         if (!sheet.classList.contains('open') || pointerId !== null) return;
         pointerId = e.pointerId;
+        owner = e.currentTarget;
         startY = lastY = e.clientY;
         lastT = performance.now();
         distance = velocity = 0;
-        sheet.classList.add('dragging');
-        try { grab.setPointerCapture(pointerId); } catch (_) {}
+        dragging = false;
+        try { owner.setPointerCapture(pointerId); } catch (_) {}
+        if (waitForHold) holdTimer = setTimeout(activate, 180);
+        else activate();
         e.preventDefault();
-      });
+      };
 
-      grab.addEventListener('pointermove', e => {
+      const move = e => {
         if (e.pointerId !== pointerId) return;
         const now = performance.now();
         const dt = Math.max(1, now - lastT);
@@ -8285,26 +8301,41 @@ window.PV = (function(){
         lastY = e.clientY;
         lastT = now;
         distance = Math.max(0, e.clientY - startY);
+        if (!dragging) return;
         sheet.style.transform = `translateY(${distance}px)`;
         if (scrim) scrim.style.opacity = String(Math.max(0, 1 - distance / 320));
         e.preventDefault();
-      });
+      };
 
       const finish = (e, cancelled) => {
         if (e.pointerId !== pointerId) return;
-        const shouldClose = !cancelled &&
+        clearTimeout(holdTimer);
+        holdTimer = 0;
+        const shouldClose = dragging && !cancelled &&
           (distance > Math.min(100, sheet.offsetHeight * .22) ||
            (distance > 20 && velocity > .55));
-        try { grab.releasePointerCapture(pointerId); } catch (_) {}
+        try { if (owner) owner.releasePointerCapture(pointerId); } catch (_) {}
         pointerId = null;
+        owner = null;
+        const wasDragging = dragging;
+        dragging = false;
         sheet.classList.remove('dragging');
         // 恢复 CSS 的过渡后再撤掉逐帧位移：未过阈值会弹回，过阈值则继续滑出。
         sheet.style.transform = '';
         if (scrim) scrim.style.opacity = '';
-        if (shouldClose) closeFn();
+        if (wasDragging && shouldClose) closeFn();
       };
-      grab.addEventListener('pointerup', e => finish(e, false));
-      grab.addEventListener('pointercancel', e => finish(e, true));
+
+      const zones = [grab, ...sheet.querySelectorAll('.pv-sheet-head,.pv-tag-head')];
+      zones.forEach(zone => {
+        zone.addEventListener('pointerdown', e => start(e, zone !== grab));
+        zone.addEventListener('pointermove', move);
+        zone.addEventListener('pointerup', e => finish(e, false));
+        zone.addEventListener('pointercancel', e => finish(e, true));
+        zone.addEventListener('contextmenu', e => {
+          if (!e.target.closest('button,input,textarea,select,a')) e.preventDefault();
+        });
+      });
     }
 
     function setupSheetDrags() {
