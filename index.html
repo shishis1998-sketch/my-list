@@ -3983,10 +3983,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   letter-spacing:.18em;color:var(--text-secondary);column-gap:2px !important;}
 /* 网格按「周」自适应高度：本周有标签才留两行标签位；整周没有记录时恢复紧凑行距。
    Grid 会以每行最高的日期格作为该周行高，因此同一周的七天仍然整齐对齐。 */
-#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:minmax(38px,auto) !important;row-gap:2px !important;
+#calViewPeriod .calendar-container.month-view .days{grid-auto-rows:auto !important;row-gap:6px !important;
   padding:4px 0 0 !important;align-content:start !important;column-gap:0 !important;}
 /* 日期基础高度与普通日历一致，增加的高度只交给下方标签摘要。 */
-#calViewPeriod .calendar-container.month-view .daywrap{padding:3px 2px 3px;min-height:38px;border-radius:8px;
+#calViewPeriod .calendar-container.month-view .daywrap{padding:3px 2px;min-height:30px;border-radius:8px;
   flex-direction:column;align-items:center;justify-content:flex-start;}
 #calViewPeriod .calendar-container.month-view .day{width:24px !important;height:24px !important;
   border-radius:50% !important;font-size:13px !important;font-family:var(--en);margin:0 !important;line-height:1;}
@@ -7804,7 +7804,7 @@ window.PV = (function(){
         <div class="weekdays"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
         <div class="days">`;
       // 灰色的上/下月补位日期（仅月视图，与普通日历一致：填满整周）
-      const otherCell = d => `<div class="daywrap"><div class="day cal-otherday">${d}</div><div class="dot-slot"></div></div>`;
+      const otherCell = d => `<div class="daywrap"><div class="day cal-otherday">${d}</div><div class="day-meta"></div></div>`;
       if (withNav) {
         const prevDays = new Date(year, month-1, 0).getDate();   // 上月天数
         for (let i = startOffset; i > 0; i--) html += otherCell(prevDays - i + 1);
