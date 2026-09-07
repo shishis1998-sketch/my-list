@@ -2154,6 +2154,9 @@ body.cal-searching .cw-card{display:none;}
 .tlseg-add:active{background:var(--press);border-color:var(--accent-mid);}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
+/* 章节时间线编辑抽屉：固定为半屏高度；正文区 .tlsheet-body 内部滚动 */
+#tlSheet{height:50vh;max-height:50vh;min-height:0;}
+
 /* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
 /* 复用 .tlsheet 的滑起/下拉/遮罩，只多一块铺满的输入框。
    没有保存/取消按钮：关掉就是存好了，同章节抽屉 */
