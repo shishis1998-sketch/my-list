@@ -2561,23 +2561,28 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 /* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
 .mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity var(--nav-dur) var(--nav-ease);z-index:1400;}
 .mfsheet-mask.show{opacity:1;pointer-events:auto;}
-.mfsheet{position:fixed;left:0;right:0;bottom:0;z-index:1401;background:var(--surface);border-top:1px solid var(--border);
-  padding:14px 16px calc(18px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
+.mfsheet{position:fixed;left:0;right:0;bottom:0;z-index:1401;background:var(--surface);border:1px solid var(--border);border-bottom:0;
+  border-radius:var(--rxl) var(--rxl) 0 0;padding:0 16px calc(18px + env(safe-area-inset-bottom));max-width:640px;margin:0 auto;
   /* 同 .tlsheet：固定像素收起，避免向上的阴影漏回屏幕底部 */
-  transform:translateY(calc(100% + 44px));transition:transform var(--nav-dur) var(--nav-ease);box-shadow:0 -8px 30px rgba(0,0,0,.12);}
+  transform:translateY(calc(100% + 44px));transition:transform var(--nav-dur) var(--nav-ease);box-shadow:0 -8px 30px rgba(0,0,0,.12);overflow:hidden;}
 .mfsheet.show{transform:translateY(0);}
-.mfsheet-grip{width:38px;height:4px;background:var(--border);border-radius:2px;margin:2px auto 14px;}
+.mfsheet-head{margin:0 -16px 16px;padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
+.mfsheet-grip{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 8px;}
+.mfsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+.mfsheet-title{text-align:center;font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
+.mfsheet-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
+  color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
+.mfsheet-action:first-child{justify-self:start;}
+.mfsheet-action:last-child{justify-self:end;color:var(--accent);}
+.mfsheet-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
 .mfsheet-label{font-size:var(--fs-foot);font-weight:600;color:var(--accent-mid);margin-bottom:8px;letter-spacing:.02em;}
 .mfsheet-label.sub{margin-top:14px;}
 .mfsheet-input{width:100%;box-sizing:border-box;font-size:16px;font-family:var(--zh);font-weight:500;color:var(--text-primary);
   background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px;outline:none;-webkit-appearance:none;line-height:1.5;}
 .mfsheet-input:focus{border-color:var(--accent);}
 textarea.mfsheet-input{min-height:110px;resize:none;white-space:pre-wrap;}
-.mfsheet-bar{display:flex;gap:10px;margin-top:16px;}
-.mfsheet-btn{flex:1;font-family:var(--zh);font-size:15px;font-weight:600;padding:13px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .1s;}
-.mfsheet-btn:active{transform:scale(0.98);}
-.mfsheet-btn.ok{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
-.mfsheet-btn.cancel{background:var(--bg);color:var(--text-secondary);}
+
 
 /* 备忘编辑器：自定义字段（键在上、值在下，各占满宽度） */
 .cf-row{display:flex;flex-direction:column;gap:var(--sp-4);margin-bottom:var(--sp-10);}
@@ -5409,13 +5414,16 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 <!-- ===== 备忘·单字段编辑弹层 ===== -->
 <div class="mfsheet-mask" id="mfSheetMask" onclick="closeMemoSheet(false)"></div>
 <div class="mfsheet" id="mfSheet" role="dialog" aria-modal="true">
-  <div class="mfsheet-grip"></div>
+  <div class="mfsheet-head">
+    <div class="mfsheet-grip"></div>
+    <div class="mfsheet-headrow">
+      <button type="button" class="mfsheet-action" onpointerdown="event.preventDefault();closeMemoSheet(false)">取消</button>
+      <div class="mfsheet-title">编辑字段</div>
+      <button type="button" class="mfsheet-action" onpointerdown="event.preventDefault();closeMemoSheet(true)">完成</button>
+    </div>
+  </div>
   <div class="mfsheet-label" id="mfSheetLabel"></div>
   <div id="mfSheetHolder"></div>
-  <div class="mfsheet-bar">
-    <button type="button" class="mfsheet-btn cancel" onpointerdown="event.preventDefault();closeMemoSheet(false)">取消</button>
-    <button type="button" class="mfsheet-btn ok" onpointerdown="event.preventDefault();closeMemoSheet(true)">保存</button>
-  </div>
 </div>
 
 <!-- ===== TOAST ===== -->
