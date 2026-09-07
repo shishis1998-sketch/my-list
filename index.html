@@ -4042,14 +4042,21 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band-fert{
   background:var(--ovu-soft);color:var(--ovu-on-soft);}
 #calViewPeriod .calendar-container.month-view .daywrap.band-pred{
-  background:transparent;color:var(--brand);border-top:1.5px dashed var(--brand);
-  border-bottom:1.5px dashed var(--brand);box-shadow:none;}
-#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start{border-left:1.5px dashed var(--brand);}
-#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-end{border-right:1.5px dashed var(--brand);}
+  background:transparent;color:var(--brand);box-shadow:none;}
+/* 虚线画在格子内部，不使用实体 border 撑高盒子；因此与蓝色色带严格同高。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred::before{
+  content:"";position:absolute;z-index:1;inset:0;border-top:1.5px dashed var(--brand);
+  border-bottom:1.5px dashed var(--brand);box-sizing:border-box;pointer-events:none;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start::before{
+  border-left:1.5px dashed var(--brand);border-radius:12px 0 0 12px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-end::before{
+  border-right:1.5px dashed var(--brand);border-radius:0 12px 12px 0;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start.band-end::before{
+  border-radius:12px;}
 #calViewPeriod .calendar-container.month-view .daywrap.band>.day,
 #calViewPeriod .calendar-container.month-view .daywrap.band>.day.today,
 #calViewPeriod .calendar-container.month-view .daywrap.band>.day.selected-view{
-  width:100% !important;background:transparent !important;color:inherit !important;
+  position:relative;z-index:2;width:100% !important;background:transparent !important;color:inherit !important;
   border-radius:0 !important;box-shadow:none !important;outline:none !important;transform:none;}
 #calViewPeriod .calendar-container.month-view .daywrap.band>.day::before{display:none !important;}
 #calViewPeriod .calendar-container.month-view .daywrap.band .day-meta{
