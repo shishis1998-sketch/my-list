@@ -1652,7 +1652,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 
 /* 日期和详情的外框由一个 SVG path 绘制，避免独立边框/遮盖层的接缝。 */
 .cal-gridclip.has-inline{height:auto!important;overflow:visible;flex-shrink:0;}
-.cal-gridclip.has-inline .cal-grid{transform:none;}
+.cal-gridclip.has-inline .cal-grid{transform:none;grid-auto-rows:auto;}
 .cal-gridclip.has-inline .cal-fade{display:none;}
 /* 展开所在周：圆点下方留白由 4px 增至 12px，轮廓随行高自动延伸。 */
 .cal-gridclip.has-inline .cal-day.cal-focusrow{padding-bottom:var(--sp-12);}
@@ -1669,6 +1669,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;
   color:var(--accent-dark);font-weight:700;opacity:1;}
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
+.cal-inline-detail.cal-motion .cal-card{height:100%;overflow:hidden;}
+.cal-inline-detail.cal-motion{min-height:0;}
 .cal-inline-outline{position:absolute;left:0;overflow:visible;pointer-events:none;
   z-index:6;fill:none;stroke:var(--accent-mid);stroke-width:1;}
 /* 旧的独立「当天」第二张卡不再占位。 */
@@ -13714,6 +13716,7 @@ function openCalDay(dateStr){
   renderCal();                     // 刷新选中高亮
   renderCalDetail();               // 内嵌下半区：填入当天记录
   renderWeekCard();                // 点到别的周去了才重画
+  animateCalInline(true);
 }
 function hideCalSheet(){
   const s=document.getElementById('calSheet'),sc=document.getElementById('calSheetScrim');
@@ -14216,6 +14219,7 @@ function triggerCalMonthPick(){
 }
 
 function renderCal(){
+  cancelCalInlineMotion();
   document.getElementById('calTitle').textContent=`${calYear} 年 ${calMonth+1} 月`;
   const firstDay=new Date(calYear,calMonth,1);
   const lastDay=new Date(calYear,calMonth+1,0);
@@ -14373,9 +14377,12 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
     calYear=+p[0];calMonth=+p[1]-1;
     // 再点一次同一天＝收起；点别的日期＝把一体式时间线切到新日期。
     if(calSelDate===dateStr){
-      calSelDate=null;
-      const clip=document.getElementById('calGridClip');if(clip)clip.classList.remove('has-inline');
-      renderCal();renderCalDetail();return;
+      if(_calMotion&&_calMotion.closing){openCalDay(dateStr);return;}
+      animateCalInline(false,()=>{
+        calSelDate=null;
+        renderCal();renderCalDetail();
+      });
+      return;
     }
     openCalDay(dateStr);
   };
@@ -14682,6 +14689,48 @@ function toggleWeekCard(){
   if(calWeekOpen)layoutWeekPills();           // 收起时量不到宽度，展开这一下才摆得出来
 }
 
+// 分段展开：220ms 撑开轮廓，随后各行依次淡入，总时长最多 420ms。
+// 关闭先淡出 100ms，再合拢 220ms；重绘/快速切换日期会取消旧回调。
+var _calMotion=null;
+function cancelCalInlineMotion(){
+  const motion=_calMotion;if(!motion)return;
+  _calMotion=null;cancelAnimationFrame(motion.frame);
+  motion.panel.classList.remove('cal-motion');
+  motion.panel.style.height='';motion.panel.style.marginBottom='';
+  motion.rows.forEach(row=>{row.style.opacity='';row.style.transform='';});
+}
+function animateCalInline(open,done){
+  cancelCalInlineMotion();
+  const panel=document.querySelector('.cal-inline-detail');
+  if(!panel){if(done)done();return;}
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){if(done)done();return;}
+  const rows=Array.from(panel.querySelectorAll('.cal-tl-row,.cal-empty'));
+  const height=panel.getBoundingClientRect().height;
+  const margin=parseFloat(getComputedStyle(panel).marginBottom)||0;
+  if(!height){if(done)done();return;}
+  const motion={panel,rows,closing:!open,frame:0};_calMotion=motion;
+  panel.classList.add('cal-motion');
+  const duration=open?420:320,start=performance.now();
+  const clamp=n=>Math.max(0,Math.min(1,n));
+  const ease=n=>1-Math.pow(1-clamp(n),3);
+  function tick(now){
+    if(_calMotion!==motion||!panel.isConnected)return;
+    const elapsed=Math.min(duration,now-start);
+    const extent=open?ease(elapsed/220):1-ease((elapsed-100)/220);
+    panel.style.height=Math.max(1,height*extent)+'px';
+    panel.style.marginBottom=(margin*extent)+'px';
+    rows.forEach((row,i)=>{
+      const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1-clamp(elapsed/100);
+      row.style.opacity=String(visible);
+      row.style.transform=`translateY(${open?4*(1-visible):0}px)`;
+    });
+    drawCalInlineOutline();
+    if(elapsed<duration)motion.frame=requestAnimationFrame(tick);
+    else{cancelCalInlineMotion();if(done)done();else drawCalInlineOutline();}
+  }
+  tick(start);
+}
+
 // 直接量日期格与详情的位置；小数像素、字号和转屏都使用同一组坐标。
 let _calOutlineObserver=null;
 function drawCalInlineOutline(){
@@ -14690,17 +14739,18 @@ function drawCalInlineOutline(){
   if(!panel||!day)return;
   const b=panel.getBoundingClientRect(),t=day.getBoundingClientRect();
   if(!b.width||!b.height)return;
-  const left=.5,right=b.width-.5,bottom=b.height-.5;
+  const left=.5,right=b.width-.5,bottom=Math.max(.5,b.height-.5);
   const x=t.left-b.left+.5,x2=t.right-b.left-.5,top=t.top-b.top+.5;
-  const r=Math.min(parseFloat(getComputedStyle(day).borderTopLeftRadius)||10,(x2-x)/2, -top/2,bottom/2);
+  const r=Math.min(parseFloat(getComputedStyle(day).borderTopLeftRadius)||10,(x2-x)/2, -top/2);
+  const bodyR=Math.min(r,Math.max(0,(bottom-.5)/2));
   const edgeLeft=panel.dataset.col==='0',edgeRight=panel.dataset.col==='6';
   const shoulder=Math.min(r,edgeLeft?Infinity:(x-left)/2,edgeRight?Infinity:(right-x2)/2);
   let d=`M ${x+r} ${top} H ${x2-r} Q ${x2} ${top} ${x2} ${top+r}`;
-  d+=edgeRight?` V ${bottom-r}`:
-    ` V ${.5-shoulder} Q ${x2} .5 ${x2+shoulder} .5 H ${right-r} Q ${right} .5 ${right} ${.5+r} V ${bottom-r}`;
-  d+=` Q ${right} ${bottom} ${right-r} ${bottom} H ${left+r} Q ${left} ${bottom} ${left} ${bottom-r}`;
+  d+=edgeRight?` V ${bottom-bodyR}`:
+    ` V ${.5-shoulder} Q ${x2} .5 ${x2+shoulder} .5 H ${right-bodyR} Q ${right} .5 ${right} ${.5+bodyR} V ${bottom-bodyR}`;
+  d+=` Q ${right} ${bottom} ${right-bodyR} ${bottom} H ${left+bodyR} Q ${left} ${bottom} ${left} ${bottom-bodyR}`;
   d+=edgeLeft?` V ${top+r}`:
-    ` V ${.5+r} Q ${left} .5 ${left+r} .5 H ${x-shoulder} Q ${x} .5 ${x} ${.5-shoulder} V ${top+r}`;
+    ` V ${.5+bodyR} Q ${left} .5 ${left+bodyR} .5 H ${x-shoulder} Q ${x} .5 ${x} ${.5-shoulder} V ${top+r}`;
   d+=` Q ${x} ${top} ${x+r} ${top} Z`;
   let svg=panel.querySelector('.cal-inline-outline');
   if(!svg){
@@ -16641,3 +16691,4 @@ checkIncomingSyncLink();
 </script>
 </body>
 </html>
+
