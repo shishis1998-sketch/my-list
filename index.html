@@ -1671,6 +1671,13 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
 .cal-inline-detail.cal-motion .cal-card{height:100%;overflow:hidden;}
 .cal-inline-detail.cal-motion{min-height:0;}
+/* 收起背景独立遮罩，日期数字和圆点保持可见。 */
+.cal-day.cal-selected.cal-wipe-closing{background:transparent!important;}
+.cal-day.cal-wipe-closing::before{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:var(--cal-wipe-bg);pointer-events:none;
+  -webkit-mask-image:var(--cal-wipe-mask);mask-image:var(--cal-wipe-mask);}
+.cal-day.cal-wipe-closing>.cal-daynum,.cal-day.cal-wipe-closing>.cal-badges{position:relative;z-index:1;}
+
 .cal-inline-outline{position:absolute;left:0;overflow:visible;pointer-events:none;
   z-index:6;fill:none;stroke:var(--accent-mid);stroke-width:1;}
 /* 旧的独立「当天」第二张卡不再占位。 */
@@ -14698,6 +14705,10 @@ function cancelCalInlineMotion(){
   motion.panel.classList.remove('cal-motion');
   motion.panel.style.height='';motion.panel.style.marginBottom='';
   if(motion.outline)motion.outline.style.opacity='';
+  motion.selected.classList.remove('cal-wipe-closing');
+  motion.selected.style.removeProperty('--cal-wipe-bg');
+  motion.selected.style.removeProperty('--cal-wipe-mask');
+  [motion.outline,motion.card].forEach(el=>{if(el){el.style.maskImage='';el.style.webkitMaskImage='';}});
   motion.colorAnimations.forEach(animation=>animation.cancel());
   motion.days.forEach(day=>{day.style.paddingBottom='';});
   motion.rows.forEach(row=>{row.style.opacity='';row.style.transform='';});
@@ -14723,18 +14734,15 @@ function animateCalInline(open,done){
     const number=selected.querySelector('.cal-daynum');
     const selectedStyle=getComputedStyle(selected);
     const numberStyle=number?getComputedStyle(number):null;
-    // 颜色和描边由浏览器使用同一缓动曲线渐隐，避免两套动画节奏不一致。
-    if(outline)colorAnimations.push(outline.animate([{opacity:1},{opacity:0}],fadeTiming));
-    colorAnimations.push(selected.animate([
-      {backgroundColor:selectedStyle.backgroundColor},
-      {backgroundColor:'transparent'}
-    ],fadeTiming));
+    selected.style.setProperty('--cal-wipe-bg',selectedStyle.backgroundColor);
+    selected.classList.add('cal-wipe-closing');
     if(number)colorAnimations.push(number.animate([
       {color:numberStyle.color},
       {color:selectedStyle.getPropertyValue(selected.classList.contains('cal-today')?'--accent':'--text-primary').trim()}
     ],fadeTiming));
   }
-  const motion={panel,rows,outline,days,colorAnimations,closing:!open,frame:0,done};_calMotion=motion;
+  const card=panel.querySelector('.cal-card');
+  const motion={panel,rows,outline,card,selected,days,colorAnimations,closing:!open,frame:0,done};_calMotion=motion;
   panel.classList.add('cal-motion');
   const duration=open?420:400,start=performance.now();
   const clamp=n=>Math.max(0,Math.min(1,n));
@@ -14746,6 +14754,16 @@ function animateCalInline(open,done){
     const extent=open?ease(elapsed/220):1-soft(elapsed/400);
     const currentHeight=Math.max(1,height*extent);
     panel.style.height=currentHeight+'px';
+    if(!open){
+      // 24px 柔和过渡带自底部向上扫过，框线、底色和事件共用同一个位置。
+      const tabHeight=bounds.top-tab.top;
+      const edge=(tabHeight+currentHeight+24)*(1-soft(elapsed/320));
+      const mask=end=>`linear-gradient(to bottom,#000 ${end-24}px,transparent ${end}px)`;
+      const outlineMask=mask(edge);
+      if(outline){outline.style.maskImage=outlineMask;outline.style.webkitMaskImage=outlineMask;}
+      selected.style.setProperty('--cal-wipe-mask',outlineMask);
+      if(card){const contentMask=mask(edge-tabHeight);card.style.maskImage=contentMask;card.style.webkitMaskImage=contentMask;}
+    }
     // 日期行及其 12px 留白保持原尺寸，仅事件框底边从下往上合拢。
     panel.style.marginBottom=(margin*extent)+'px';
     if(!open&&elapsed>=320){
@@ -14753,7 +14771,7 @@ function animateCalInline(open,done){
       days.forEach((day,i)=>{day.style.paddingBottom=(padding[i]+(4-padding[i])*settle)+'px';});
     }
     rows.forEach((row,i)=>{
-      const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1-soft(elapsed/200);
+      const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1;
       row.style.opacity=String(visible);
       row.style.transform=`translateY(${open?4*(1-visible):0}px)`;
     });
