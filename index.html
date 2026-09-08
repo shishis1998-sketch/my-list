@@ -4236,6 +4236,17 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
   top:3px;bottom:auto;height:24px;}
 
+
+/* 底部整行切换日期标签；每周由最多标签的日期自然撑高。 */
+#calViewPeriod .calendar-container.month-view .day-meta{display:none;height:auto;overflow:visible;}
+#calViewPeriod .calendar-container.month-view.labels-expanded .day-meta:not(:empty){display:flex;}
+#calViewPeriod .calendar-container.month-view .day-tag{white-space:normal;overflow:visible;overflow-wrap:anywhere;flex-shrink:0;}
+#calViewPeriod #pvLabelsToggle{width:100%;box-sizing:border-box;padding:0;border:0;
+  border-top:1px solid var(--border-soft);background:transparent;color:inherit;cursor:pointer;touch-action:manipulation;}
+#calViewPeriod #pvLabelsToggle[hidden]{display:none;}
+#calViewPeriod #pvLabelsToggle.cal-grab-on .cal-grab-bar,
+#calViewPeriod #pvLabelsToggle:active .cal-grab-bar{background:var(--brand);}
+
 /* 所有日期统一在日期格上画胶囊选中框，不再依赖数字本身的 24px 圆形。 */
 #calViewPeriod .calendar-container.month-view .daywrap.pv-date-selected{position:relative;}
 #calViewPeriod .calendar-container.month-view .daywrap>.day.selected-view{
@@ -4824,6 +4835,9 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
             <span><i class="lg-predp"></i>预测经期</span>
             <span><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
           </div>
+          <button type="button" id="pvLabelsToggle" class="cal-grabrow" hidden
+            aria-expanded="false" aria-controls="calendar" aria-label="展开日期标签"
+            onclick="PV.toggleLabelsExpanded()"><span class="cal-grab-bar" aria-hidden="true"></span></button>
         </div>
         <!-- 已隐藏的卡片放这儿（只在整理模式出现），点一下放回原位 -->
         <div class="pv-hiddenbox" id="pvHiddenBox"></div>
@@ -7895,6 +7909,22 @@ window.PV = (function(){
 
     // 首页症状标签筛选(置顶标签条)：'全部' 或某个标签名 → 高亮当年记过该标签的日期
     let homeSymFilter = '全部';
+    let labelsExpanded = false;
+    function syncLabelsExpanded() {
+      const cal = document.getElementById('calendar');
+      const button = document.getElementById('pvLabelsToggle');
+      cal?.classList.toggle('labels-expanded', labelsExpanded);
+      if (button) {
+        button.hidden = homeView !== 'month';
+        button.setAttribute('aria-expanded', String(labelsExpanded));
+        button.setAttribute('aria-label', labelsExpanded ? '收起日期标签' : '展开日期标签');
+        button.classList.toggle('cal-grab-on', labelsExpanded);
+      }
+    }
+    function toggleLabelsExpanded() {
+      labelsExpanded = !labelsExpanded;
+      syncLabelsExpanded();
+    }
     function renderHomeChips() {
       const wrap = document.getElementById('homeFilter');
       const btn = document.getElementById('homeFilterBtn');
@@ -7995,15 +8025,11 @@ window.PV = (function(){
     function dayMetaHtml(y, m, d, list) {
       const syms = Array.isArray(list) ? list : [];
       if (!syms.length) return '<div class="day-meta"></div>';
-      const first = '<span class="day-tag">'+escapeHtml(syms[0])+'</span>';
-      if (syms.length === 1) return '<div class="day-meta">'+first+'</div>';
-      const second = '<span class="day-tag">'+escapeHtml(syms[1])+'</span>';
-      const more = syms.length > 2 ?
-        '<button type="button" class="day-more" aria-expanded="false" aria-label="展开其余 '+(syms.length-2)+' 个症状" onclick="event.stopPropagation();PV.toggleMoreSymptoms('+y+','+m+','+d+',this)">+'+(syms.length-2)+'</button>' : '';
-      return '<div class="day-meta">'+first+'<div class="day-meta-row">'+second+more+'</div></div>';
+      return '<div class="day-meta">'+syms.map(name =>
+        '<span class="day-tag">'+escapeHtml(name)+'</span>').join('')+'</div>';
     }
 
-    // 生成一个月的卡片。withNav=true 时为月视图，日期格显示前两项症状。
+    // 生成一个月的卡片。withNav=true 时为月视图，展开时显示全部症状。
     function generateMonth(month, withNav) {
       const firstDay = new Date(year, month-1, 1).getDay();
       const daysInMonth = new Date(year, month, 0).getDate();
@@ -8482,6 +8508,7 @@ window.PV = (function(){
         cal.classList.add('month-view');
         cal.classList.remove('year-view', 'one-col');
       }
+      syncLabelsExpanded();
       cal.classList.toggle('sym-on', !!homeSymFilter && homeSymFilter !== '全部');
       // 切月度/年度时内容横向滑入(与热力图一致);仅切视图时触发
       const dir = homeSwapDir; homeSwapDir = null;
@@ -10171,7 +10198,7 @@ window.PV = (function(){
     openHeat, renderHeat,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
-    toggleHomeFilter, setHomeView, changeViewMonth,
+    toggleHomeFilter, toggleLabelsExpanded, setHomeView, changeViewMonth,
     navPrev, navNext, heatShift,
     openTagSheet, closeTagSheet, toggleMoreSymptoms,
     closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,
