@@ -4235,6 +4235,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   top:3px;bottom:auto;height:24px;}
 
 
+/* 两档深红底日期使用白字；症状标签继续使用灰色。 */
+#calViewPeriod .calendar-container .daywrap.band-level-2>.day,
+#calViewPeriod .calendar-container .daywrap.band-level-3>.day{color:#fff!important;}
+
 /* 底部整行切换日期标签；每周由最多标签的日期自然撑高。 */
 #calViewPeriod .calendar-container.month-view .day-meta{display:none;height:auto;overflow:visible;}
 #calViewPeriod .calendar-container.month-view.labels-expanded .day-meta:not(:empty){display:flex;}
@@ -8065,14 +8069,14 @@ window.PV = (function(){
       const daysInMonth = new Date(year, month, 0).getDate();
       const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
-      // 月/年度视图都把相邻状态合成色带。经期不同流量仍属于同一段（每格保留自己的深浅）；
+      // 月/年度视图都把相邻状态合成色带。同档颜色连续连接，不同流量各自形成胶囊；
       // 排卵日是独立深蓝段，易孕日是浅蓝段；跨星期绝不连接。
       const bandDays = {};
       for (let d = 1; d <= daysInMonth; d++) {
         const lv = getLevel(year, month, d);
         const fk = fertKind(year, month, d);
         let key = '', cls = '';
-        if (lv >= 1 && lv <= 3) { key = 'period'; cls = `band-level-${lv}`; }
+        if (lv >= 1 && lv <= 3) { key = `period-${lv}`; cls = `band-level-${lv}`; }
         else if (lv === 4)      { key = 'spot';   cls = 'band-level-4'; }
         else if (fk === 'ovu')  { key = 'ovu';    cls = 'band-ovu'; }
         else if (fk === 'fertile') { key = 'fert'; cls = 'band-fert'; }
