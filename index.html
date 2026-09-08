@@ -4187,24 +4187,29 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .day.today.selected-view{
   outline:none !important;box-shadow:none !important;}
 
-/* 月视图标签：当周下方自然展开，透明底色和灰色胶囊。 */
-#calViewPeriod .calendar-container.month-view .day-meta{height:7px;margin-top:3px;}
-#calViewPeriod .calendar-container.month-view .day-meta .rec-dot{display:block;background:currentColor;opacity:.55;}
-#calViewPeriod .calendar-container.month-view .daywrap{min-height:42px;cursor:pointer;}
-#calViewPeriod .calendar-container.month-view .daywrap.pv-tag-selected::after{display:none;}
-#calViewPeriod .calendar-container.month-view .daywrap.pv-tag-selected>.day{box-shadow:none!important;}
-#calViewPeriod .pv-inline-tags{position:relative;grid-column:1 / -1;min-width:0;margin:0 0 0;
-  padding:6px 12px 6px;background:transparent;border:0;box-shadow:none;}
-/* 周行间距 6px + 展开区上下内边距 6px，胶囊与上下日期各留 12px。 */
-#calViewPeriod .pv-inline-chips{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:8px;}
-#calViewPeriod .pv-inline-chip{display:inline-block;max-width:100%;overflow-wrap:anywhere;
-  border-radius:999px;padding:6px 11px;font-size:var(--fs-caption);line-height:1.4;
+
+/* 两项症状直接显示，额外症状从 +N 在日期旁展开。 */
+#calViewPeriod .calendar-container.month-view .day-meta{height:26px;margin-top:2px;overflow:visible;}
+#calViewPeriod .calendar-container.month-view .daywrap{min-height:30px;cursor:pointer;}
+#calViewPeriod .calendar-container.month-view .day-meta-row{display:flex;align-items:center;justify-content:center;gap:2px;width:100%;min-width:0;}
+#calViewPeriod .calendar-container.month-view .day-meta-row .day-tag{width:auto;min-width:0;flex:0 1 auto;}
+#calViewPeriod .calendar-container.month-view .day-meta-row .day-more{flex:none;padding:0 3px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-start{border-radius:999px 0 0 999px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-end{border-radius:0 999px 999px 0;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-start.band-end{border-radius:999px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start::before{border-radius:999px 0 0 999px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-end::before{border-radius:0 999px 999px 0;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start.band-end::before,
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu-ring::before,
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
+#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{border-radius:999px;}
+.pv-sym-popover{position:fixed;z-index:180;display:flex;flex-wrap:wrap;gap:6px;
+  width:max-content;max-width:min(220px,calc(100vw - 24px));max-height:40vh;overflow-y:auto;
+  padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 4px 18px rgba(0,0,0,.12);overscroll-behavior:contain;}
+.pv-sym-popover span{max-width:100%;overflow-wrap:anywhere;border-radius:999px;padding:5px 9px;
   background:color-mix(in srgb,var(--text-muted) 12%,var(--surface));
-  color:var(--text-secondary);}
-#calViewPeriod .pv-inline-empty{font-size:var(--fs-caption);color:var(--text-secondary);
-  background:color-mix(in srgb,var(--text-muted) 12%,var(--surface));border-radius:999px;padding:6px 11px;}
-/* 标签已移入日期展开区，状态卡只保留经期/排卵日说明。 */
-#calViewPeriod:not(.pv-year) .dc-right{display:none;}
+  color:var(--text-secondary);font-size:var(--fs-caption);line-height:1.4;}
 
 /* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
    不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
@@ -7896,50 +7901,66 @@ window.PV = (function(){
       }
     }
 
-    // 月视图只以圆点提示有标签；点击日期后在当周下方展开，长按继续编辑。
+    // 月视图直接显示前两项症状，+N 在日期旁显示其余症状。
 
-    let inlineTagDay = null;
-    function clearInlineTags() {
-      document.querySelectorAll('#calendar .pv-inline-tags').forEach(el => el.remove());
-      document.querySelectorAll('#calendar .pv-tag-selected').forEach(el => {
-        el.classList.remove('pv-tag-selected');
-        el.setAttribute('aria-expanded', 'false');
-        el.removeAttribute('aria-controls');
-      });
+
+    let moreSymAnchor = null;
+    function closeMoreSymptoms() {
+      document.getElementById('pvMoreSymptoms')?.remove();
+      if (moreSymAnchor) {
+        moreSymAnchor.setAttribute('aria-expanded','false');
+        moreSymAnchor.removeAttribute('aria-controls');
+      }
+      moreSymAnchor = null;
     }
-    function renderInlineTags() {
-      clearInlineTags();
-      if (homeView !== 'month' || !inlineTagDay) return;
-      const { y, m, d } = inlineTagDay;
-      if (y !== year || m !== viewMonth) return;
-      const day = document.querySelector('#calendar .day[data-month="'+m+'"][data-day="'+d+'"]');
-      if (!day) return;
-      const wrap = day.closest('.daywrap'), grid = wrap.parentElement;
-      const cells = Array.from(grid.children).filter(el => el.classList.contains('daywrap'));
-      const index = cells.indexOf(wrap), col = index % 7;
-      const rowEnd = cells[Math.min(cells.length - 1, index - col + 6)];
-      const panel = document.createElement('div');
-      panel.className = 'pv-inline-tags';
-      panel.id = 'pvInlineTags';
-      panel.setAttribute('role', 'region');
-      panel.setAttribute('aria-label', m+'月'+d+'日标签');
-      const tags = getSym(y, m, d);
-      panel.innerHTML = '<div class="pv-inline-chips">' + (tags.length ?
-        tags.map(n => '<span class="pv-inline-chip">'+escapeHtml(n)+'</span>').join('') :
-        '<span class="pv-inline-empty">当天暂无标签</span>') + '</div>';
-      rowEnd.after(panel);
-      wrap.classList.add('pv-tag-selected');
-      wrap.setAttribute('aria-expanded', 'true');
-      wrap.setAttribute('aria-controls', 'pvInlineTags');
+    function toggleMoreSymptoms(y, m, d, button) {
+      const same = moreSymAnchor === button;
+      closeMoreSymptoms();
+      if (same || !button || !button.isConnected) return;
+      const extra = getSym(y,m,d).slice(2);
+      if (!extra.length) return;
+      const pop = document.createElement('div');
+      pop.id = 'pvMoreSymptoms'; pop.className = 'pv-sym-popover';
+      pop.setAttribute('role','region');
+      pop.setAttribute('aria-label',m+'月'+d+'日其余症状');
+      pop.innerHTML = extra.map(n=>'<span>'+escapeHtml(n)+'</span>').join('');
+      document.body.appendChild(pop);
+      moreSymAnchor = button;
+      button.setAttribute('aria-expanded','true');
+      button.setAttribute('aria-controls',pop.id);
+      const date = button.closest('.daywrap').getBoundingClientRect();
+      const box = pop.getBoundingClientRect(), gap=8, inset=12;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      // 优先在日期右边展开；右边不足则放左边，窄屏再约束在视口内。
+      let left = date.right + gap;
+      if (left + box.width > vw-inset) left = date.left-gap-box.width;
+      left = Math.max(inset,Math.min(left,vw-inset-box.width));
+      pop.style.left = left+'px';
+      pop.style.top = Math.max(inset,Math.min(date.top+(date.height-box.height)/2,vh-inset-box.height))+'px';
     }
+    document.addEventListener('pointerdown',e=>{
+      if (!e.target.closest('.pv-sym-popover,.day-more')) closeMoreSymptoms();
+    });
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape') closeMoreSymptoms();
+    });
+    window.addEventListener('resize',closeMoreSymptoms);
+    document.addEventListener('scroll',e=>{
+      if (!(e.target instanceof Element) || !e.target.closest('.pv-sym-popover')) closeMoreSymptoms();
+    },true);
 
     function dayMetaHtml(y, m, d, list) {
-      return Array.isArray(list) && list.length
-        ? '<div class="day-meta"><span class="rec-dot"></span></div>'
-        : '<div class="day-meta"></div>';
+      const syms = Array.isArray(list) ? list : [];
+      if (!syms.length) return '<div class="day-meta"></div>';
+      const first = '<span class="day-tag">'+escapeHtml(syms[0])+'</span>';
+      if (syms.length === 1) return '<div class="day-meta">'+first+'</div>';
+      const second = '<span class="day-tag">'+escapeHtml(syms[1])+'</span>';
+      const more = syms.length > 2 ?
+        '<button type="button" class="day-more" aria-expanded="false" aria-label="展开其余 '+(syms.length-2)+' 个症状" onclick="event.stopPropagation();PV.toggleMoreSymptoms('+y+','+m+','+d+',this)">+'+(syms.length-2)+'</button>' : '';
+      return '<div class="day-meta">'+first+'<div class="day-meta-row">'+second+more+'</div></div>';
     }
 
-    // 生成一个月的卡片。withNav=true 时为月视图，日期格只显示标签记录点。
+    // 生成一个月的卡片。withNav=true 时为月视图，日期格显示前两项症状。
     function generateMonth(month, withNav) {
       const firstDay = new Date(year, month-1, 1).getDay();
       const daysInMonth = new Date(year, month, 0).getDate();
@@ -8377,8 +8398,7 @@ window.PV = (function(){
     }
 
     function render() {
-      inlineTagDay = null;
-      clearInlineTags();
+      closeMoreSymptoms();
       closeDaySheet();   // 翻月/切视图/切年 等任何重画都收起底部弹窗
       closeTagSheet();
       buildFert();       // 排卵期现算：改过经期后重画就是最新结果
@@ -8584,6 +8604,7 @@ window.PV = (function(){
       const cal = document.getElementById('calendar');
 
       cal.addEventListener('touchstart', e => {
+        if (e.target.closest('.day-more')) { clearTimeout(pressTimer); pressDay = 0; return; }
         const el = e.target.closest('[data-day]') || e.target.closest('.daywrap')?.querySelector('.day[data-day]');
         if (!el) return;
         // 只有月视图才允许编辑日期(年视图点整月是放大)
@@ -8627,6 +8648,7 @@ window.PV = (function(){
 
       // 桌面鼠标
       cal.addEventListener('mousedown', e => {
+        if (e.target.closest('.day-more')) { clearTimeout(pressTimer); pressDay = 0; return; }
         const el = e.target.closest('[data-day]') || e.target.closest('.daywrap')?.querySelector('.day[data-day]');
         if (!el) return;
         // 只有月视图才允许编辑日期(年视图点整月是放大)
@@ -8668,8 +8690,7 @@ window.PV = (function(){
     // 长按才进编辑弹窗——记录经血量／症状是低频动作，浏览才是高频的。
     function pickDay(month, day) {
       if (homeView !== 'month') return;
-      const same = inlineTagDay && inlineTagDay.y === year && inlineTagDay.m === month && inlineTagDay.d === day;
-      inlineTagDay = same ? null : { y: year, m: month, d: day };
+      closeMoreSymptoms();
       cardDay = { y: year, m: month, d: day };
       selectDayForView(year, month, day);
       refreshDayCard();
@@ -9021,7 +9042,7 @@ window.PV = (function(){
       el.classList.add('selected-view');
       const wrap = el.closest('.daywrap.band');
       if (wrap) wrap.classList.add('band-selected');
-      renderInlineTags();
+      closeMoreSymptoms();
     }
 
     // 只把月视图那张卡片里的 .days 内容替换掉，保留色板和信息栏
@@ -9670,7 +9691,7 @@ window.PV = (function(){
       const old = wrap.querySelector('.day-meta');
       if (old) old.outerHTML = dayMetaHtml(y, m, d, list);
       refreshMonthSymList();
-      renderInlineTags();
+      closeMoreSymptoms();
     }
 
     // 症状变动后刷新月视图下方「本月状态记录」汇总
@@ -10125,7 +10146,7 @@ window.PV = (function(){
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, setHomeView, changeViewMonth,
     navPrev, navNext, heatShift,
-    openTagSheet, closeTagSheet,
+    openTagSheet, closeTagSheet, toggleMoreSymptoms,
     closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,
     // 年视图卡片：设置抽屉（显示/收起）+ 拖动排序
     openCardsSheet, closeCardsSheet, startArrangeFromSheet,
