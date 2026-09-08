@@ -4242,7 +4242,16 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.pv-date-selected::after{
   content:"";position:absolute;left:1px;right:1px;top:3px;bottom:auto;height:24px;
   border:1.5px solid var(--brand);border-radius:999px;box-sizing:border-box;
-  background:transparent;box-shadow:none;pointer-events:none;z-index:4;}
+  background:transparent;box-shadow:none;pointer-events:none;z-index:4;
+  transform-origin:center;transform:scale(1.05);
+  animation:pvDateRingGrow 180ms cubic-bezier(.22,.61,.36,1);}
+@keyframes pvDateRingGrow{
+  from{transform:scale(1);opacity:.35;}
+  to{transform:scale(1.05);opacity:1;}
+}
+@media (prefers-reduced-motion:reduce){
+  #calViewPeriod .calendar-container.month-view .daywrap.pv-date-selected::after{animation:none;}
+}
 
 /* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
    不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
