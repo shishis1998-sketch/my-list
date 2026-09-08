@@ -1650,7 +1650,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
 .cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
 
-/* 日期和详情的外框由一个 SVG path 绘制，避免独立边框/遮盖层的接缝。 */
+/* 日期和详情共用一个 SVG path 描边和填色，连接处也保持完整的浅主题色背景。 */
 .cal-gridclip.has-inline{height:auto!important;overflow:visible;flex-shrink:0;}
 .cal-gridclip.has-inline .cal-grid{transform:none;grid-auto-rows:auto;}
 .cal-gridclip.has-inline .cal-fade{display:none;}
@@ -1658,14 +1658,14 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-gridclip.has-inline .cal-day.cal-focusrow{padding-bottom:var(--sp-12);}
 .cal-inline-detail{position:relative;grid-column:1 / -1!important;
   min-height:0;margin:-2px 0 var(--sp-6);padding:0;overflow:visible;}
-.cal-inline-detail .cal-card{position:relative;margin:0;width:100%;box-sizing:border-box;
-  border:0;border-radius:var(--r);background:var(--surface);
+.cal-inline-detail .cal-card{position:relative;z-index:1;margin:0;width:100%;box-sizing:border-box;
+  border:0;border-radius:var(--r);background:transparent;
   min-height:0;max-height:none;overflow:visible;contain:none;}
 .cal-inline-detail .cal-card-date{display:none;}
 .cal-inline-detail .cal-tl{min-height:0;max-height:none;overflow:visible;
   padding:var(--sp-8) var(--sp-10) var(--sp-10);}
-.cal-day.cal-selected{overflow:visible;border-radius:var(--r) var(--r) 0 0;
-  box-shadow:none;border:0;background:var(--accent-light);}
+.cal-day.cal-selected{overflow:visible;z-index:1;border-radius:var(--r) var(--r) 0 0;
+  box-shadow:none;border:0;background:transparent;}
 .cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;
   color:var(--accent-dark);font-weight:700;opacity:1;}
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
@@ -1679,7 +1679,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-wipe-closing>.cal-daynum,.cal-day.cal-wipe-closing>.cal-badges{position:relative;z-index:1;}
 
 .cal-inline-outline{position:absolute;left:0;overflow:visible;pointer-events:none;
-  z-index:6;fill:none;stroke:var(--accent-mid);stroke-width:1;}
+  z-index:0;fill:var(--accent-light);stroke:var(--accent-mid);stroke-width:1;}
 /* 旧的独立「当天」第二张卡不再占位。 */
 .cal-sheet{display:none;}
 
