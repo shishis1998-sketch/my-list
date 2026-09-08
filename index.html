@@ -4165,9 +4165,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   border-right:1.5px dashed var(--brand);border-radius:0 12px 12px 0;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start.band-end::before{
   border-radius:12px;}
-#calViewPeriod .calendar-container.month-view .daywrap.band>.day,
-#calViewPeriod .calendar-container.month-view .daywrap.band>.day.today,
-#calViewPeriod .calendar-container.month-view .daywrap.band>.day.selected-view{
+#calViewPeriod .calendar-container.month-view .daywrap.band>.day{
   position:relative;z-index:2;width:100% !important;background:transparent !important;color:inherit !important;
   border-radius:0 !important;box-shadow:none !important;outline:none !important;transform:none;}
 #calViewPeriod .calendar-container.month-view .daywrap.band>.day::before{display:none !important;}
@@ -7922,8 +7920,40 @@ window.PV = (function(){
       }
     }
     function toggleLabelsExpanded() {
+      const cal = document.getElementById('calendar');
+      const metas = Array.from(cal.querySelectorAll('.day-meta')).filter(el => el.childElementCount);
+      // 连点时从当前屏幕高度继续，避免旧动画完成回调把新状态盖掉。
+      const starts = metas.map(el => ({
+        height: el.getBoundingClientRect().height,
+        opacity: getComputedStyle(el).display === 'none' ? 0 : +getComputedStyle(el).opacity,
+        margin: getComputedStyle(el).display === 'none' ? 0 : parseFloat(getComputedStyle(el).marginTop)
+      }));
+      metas.forEach(el => {
+        if (el._labelAnimation) { el._labelAnimation.cancel(); el._labelAnimation = null; }
+        el.style.removeProperty('display');
+        el.style.removeProperty('overflow');
+      });
       labelsExpanded = !labelsExpanded;
       syncLabelsExpanded();
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      metas.forEach((el, i) => {
+        const endHeight = labelsExpanded ? el.getBoundingClientRect().height : 0;
+        const endMargin = labelsExpanded ? parseFloat(getComputedStyle(el).marginTop) : 0;
+        el.style.display = 'flex';
+        el.style.overflow = 'hidden';
+        const animation = el.animate([
+          { height: starts[i].height + 'px', opacity: starts[i].opacity, marginTop: starts[i].margin + 'px' },
+          { height: endHeight + 'px', opacity: labelsExpanded ? 1 : 0, marginTop: endMargin + 'px' }
+        ], { duration: 250, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'both' });
+        el._labelAnimation = animation;
+        animation.onfinish = () => {
+          if (el._labelAnimation !== animation) return;
+          el.style.removeProperty('display');
+          el.style.removeProperty('overflow');
+          el._labelAnimation = null;
+          animation.cancel();
+        };
+      });
     }
     function renderHomeChips() {
       const wrap = document.getElementById('homeFilter');
