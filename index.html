@@ -4123,7 +4123,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 今天：经期红加粗数字 + 经期红细圈，与经期主题(经血量/症状标签)统一。
    透明底 + 红字只给「今天没记经血量」的情况——记录是事实，「今天」这个标记不该盖掉它，
    和上面排卵期让位给记录是同一条原则。 */
-#calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--brand) !important;
+#calViewPeriod .calendar-container.month-view .day.today{box-shadow:none !important;
   font-weight:700;}
 #calViewPeriod .calendar-container.month-view .day.today:not(.level-1):not(.level-2):not(.level-3):not(.level-g){
   color:var(--brand) !important;} /* 今天也保留排卵期/易孕期实际底色，避免色带断开。 */
@@ -4134,7 +4134,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .day.today.level-2:not(.selected-view),
 #calViewPeriod .calendar-container.month-view .day.today.level-3:not(.selected-view),
 #calViewPeriod .calendar-container.month-view .day.today.level-g:not(.selected-view){
-  box-shadow:0 0 0 1px var(--surface),0 0 0 2px var(--brand) !important;}
+  box-shadow:none !important;}
 /* 选中日：日期圆外面一圈经期红。
    靠一圈卡片底色把红环和格子填充隔开，深红的 MUCHO 上也一眼可见；
    总外扩 2.5px，比记录点让出的 5px 净空小，环不会压到圆点上（见下方
