@@ -4235,9 +4235,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
   top:3px;bottom:auto;height:24px;}
 
-/* 今天的选中框独立画在日期数字范围内，不受色带 box-shadow 和端点圆角影响。 */
-#calViewPeriod .calendar-container.month-view .day.today.selected-view::after{
-  content:"";position:absolute;inset:0;width:auto;height:auto;
+/* 所有日期统一在日期格上画胶囊选中框，不再依赖数字本身的 24px 圆形。 */
+#calViewPeriod .calendar-container.month-view .daywrap.pv-date-selected{position:relative;}
+#calViewPeriod .calendar-container.month-view .daywrap>.day.selected-view{
+  outline:none!important;box-shadow:none!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.pv-date-selected::after{
+  content:"";position:absolute;left:1px;right:1px;top:3px;bottom:auto;height:24px;
   border:1.5px solid var(--brand);border-radius:999px;box-sizing:border-box;
   background:transparent;box-shadow:none;pointer-events:none;z-index:4;}
 
@@ -9061,8 +9064,8 @@ window.PV = (function(){
       document.querySelectorAll('.day.selected-view').forEach(el => {
         el.classList.remove('selected-view');
       });
-      document.querySelectorAll('.daywrap.band-selected').forEach(el => {
-        el.classList.remove('band-selected');
+      document.querySelectorAll('#calendar .daywrap.pv-date-selected, #calendar .daywrap.band-selected').forEach(el => {
+        el.classList.remove('pv-date-selected', 'band-selected');
       });
       if (homeView !== 'month') return;
       const a = cardAnchor();
@@ -9070,8 +9073,8 @@ window.PV = (function(){
       const el = document.querySelector(`[data-month="${a.m}"][data-day="${a.d}"]`);
       if (!el) return;
       el.classList.add('selected-view');
-      const wrap = el.closest('.daywrap.band');
-      if (wrap) wrap.classList.add('band-selected');
+      const wrap = el.closest('.daywrap');
+      if (wrap) wrap.classList.add('pv-date-selected');
       closeMoreSymptoms();
     }
 
