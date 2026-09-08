@@ -8084,7 +8084,11 @@ window.PV = (function(){
     },true);
 
     function dayMetaHtml(y, m, d, list) {
-      const syms = Array.isArray(list) ? list : [];
+      // 日期下方标签只调整展示顺序，不改动实际保存的数据：
+      // 中文按拼音 A-Z 排列，英文/数字同样按自然升序。
+      const syms = Array.isArray(list)
+        ? list.slice().sort((a, b) => String(a).localeCompare(String(b), 'zh-CN-u-co-pinyin', { sensitivity: 'base' }))
+        : [];
       if (!syms.length) return '<div class="day-meta"></div>';
       return '<div class="day-meta">'+syms.map(name =>
         '<span class="day-tag">'+escapeHtml(name)+'</span>').join('')+'</div>';
