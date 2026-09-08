@@ -14697,7 +14697,6 @@ function cancelCalInlineMotion(){
   _calMotion=null;cancelAnimationFrame(motion.frame);
   motion.panel.classList.remove('cal-motion');
   motion.panel.style.height='';motion.panel.style.marginBottom='';
-  motion.days.forEach(day=>{day.style.paddingBottom='';});
   motion.rows.forEach(row=>{row.style.opacity='';row.style.transform='';});
 }
 function animateCalInline(open,done){
@@ -14709,12 +14708,10 @@ function animateCalInline(open,done){
   const height=panel.getBoundingClientRect().height;
   const margin=parseFloat(getComputedStyle(panel).marginBottom)||0;
   if(!height){if(done)done();return;}
-  const days=Array.from(document.querySelectorAll('#calGrid .cal-focusrow'));
   const selected=document.querySelector('#calGrid .cal-selected');
   const bounds=panel.getBoundingClientRect(),tab=selected.getBoundingClientRect();
   const radius=parseFloat(getComputedStyle(selected).borderTopLeftRadius)||10;
-  const padding=days.map(day=>parseFloat(getComputedStyle(day).paddingBottom)||12);
-  const motion={panel,rows,days,closing:!open,frame:0,done};_calMotion=motion;
+  const motion={panel,rows,closing:!open,frame:0,done};_calMotion=motion;
   panel.classList.add('cal-motion');
   const duration=open?420:240,start=performance.now();
   const clamp=n=>Math.max(0,Math.min(1,n));
@@ -14725,16 +14722,14 @@ function animateCalInline(open,done){
     const extent=open?ease(elapsed/220):1-ease((elapsed-30)/210);
     const currentHeight=Math.max(1,height*extent);
     panel.style.height=currentHeight+'px';
-    // 只在收起时同步撤回展开周的 8px 留白，避免完成帧整周突然上跳。
-    if(!open)days.forEach((day,i)=>{day.style.paddingBottom=(4+(padding[i]-4)*extent)+'px';});
+    // 日期行及其 12px 留白保持原尺寸，仅事件框底边从下往上合拢。
     panel.style.marginBottom=(margin*extent)+'px';
     rows.forEach((row,i)=>{
       const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1-clamp(elapsed/80);
       row.style.opacity=String(visible);
       row.style.transform=`translateY(${open?4*(1-visible):0}px)`;
     });
-    const retreat=open?0:Math.max(0,(padding[0]||12)-4)*(1-extent);
-    drawCalInlineOutline({bounds:{left:bounds.left,top:bounds.top-retreat,width:bounds.width,height:currentHeight},tab,radius});
+    drawCalInlineOutline({bounds:{left:bounds.left,top:bounds.top,width:bounds.width,height:currentHeight},tab,radius});
     if(elapsed<duration)motion.frame=requestAnimationFrame(tick);
     else{cancelCalInlineMotion();if(done)done();else drawCalInlineOutline();}
   }
