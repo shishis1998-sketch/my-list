@@ -1427,7 +1427,9 @@ body.cal-open.cal-searching .cal-scroll{flex:0 0 auto;border-top:1px solid var(-
 /* 左右 18 = 页边 14 + 结果区那 4px 内边距：输入框的边正好压在结果卡片的边上
    （卡片 18→375）。「取消」已经搬进输入框里，这一行只剩输入框，撑满即与卡片等长。 */
 .cal-searchwrap{display:none;align-items:center;gap:var(--sp-10);padding:calc(var(--sp-14) + env(safe-area-inset-top)) 18px var(--sp-12);flex-shrink:0;}
-body.cal-searching .cal-searchwrap{display:flex;}
+/* 搜索框随整页滚动吸顶；祖先不能用 overflow:hidden 截断 sticky 的滚动参照。 */
+body.cal-open.cal-searching .main{overflow:visible;}
+body.cal-searching .cal-searchwrap{display:flex;position:sticky;top:0;z-index:10;background:var(--bg);}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
 body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
@@ -1662,8 +1664,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   border:0;border-radius:var(--rlg);background:transparent;
   min-height:0;max-height:none;overflow:visible;contain:none;}
 .cal-inline-detail .cal-card-date{display:none;}
-/* 浅主题色底上的时间线使用中灰，提高节点连接线的可见度。 */
-.cal-inline-detail .cal-tl-row::before{background:var(--text-muted);}
+/* 中灰降低至 60% 不透明度，让连接线清楚但不抢眼。 */
+.cal-inline-detail .cal-tl-row::before{background:var(--text-muted);opacity:.6;}
 .cal-inline-detail .cal-tl{min-height:0;max-height:none;overflow:visible;
   padding:var(--sp-8) var(--sp-10) var(--sp-10);}
 .cal-day.cal-selected{overflow:visible;z-index:1;border-radius:var(--rlg) var(--rlg) 0 0;
