@@ -4254,6 +4254,25 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod #pvLabelsToggle.cal-grab-on .cal-grab-bar,
 #calViewPeriod #pvLabelsToggle:active .cal-grab-bar{background:var(--brand);}
 
+/* 选中日从连续色带中独立出来；相邻段只补断开侧圆角，不改原始连接标记。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band.pv-date-selected{
+  margin-left:1px;margin-right:1px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band.pv-date-selected>.day{
+  border-radius:999px!important;box-shadow:none!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band.pv-band-cut-start{margin-left:1px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band.pv-band-cut-end{margin-right:1px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band.pv-band-cut-start>.day{
+  border-top-left-radius:999px!important;border-bottom-left-radius:999px!important;box-shadow:none!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band.pv-band-cut-end>.day{
+  border-top-right-radius:999px!important;border-bottom-right-radius:999px!important;}
+/* 预测经期的虚线边界也随选中状态拆分。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.pv-band-cut-start::before{
+  border-left:1.5px dashed var(--brand);border-top-left-radius:999px;border-bottom-left-radius:999px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.pv-band-cut-end::before{
+  border-right:1.5px dashed var(--brand);border-top-right-radius:999px;border-bottom-right-radius:999px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred.pv-date-selected::before{
+  border-left:1.5px dashed var(--brand);border-right:1.5px dashed var(--brand);border-radius:999px;}
+
 /* 所有日期统一在日期格上画胶囊选中框，不再依赖数字本身的 24px 圆形。 */
 #calViewPeriod .calendar-container.month-view .daywrap.pv-date-selected{position:relative;}
 #calViewPeriod .calendar-container.month-view .daywrap>.day.selected-view{
@@ -9140,8 +9159,8 @@ window.PV = (function(){
       document.querySelectorAll('.day.selected-view').forEach(el => {
         el.classList.remove('selected-view');
       });
-      document.querySelectorAll('#calendar .daywrap.pv-date-selected, #calendar .daywrap.band-selected').forEach(el => {
-        el.classList.remove('pv-date-selected', 'band-selected');
+      document.querySelectorAll('#calendar .daywrap.pv-date-selected, #calendar .daywrap.band-selected, #calendar .daywrap.pv-band-cut-start, #calendar .daywrap.pv-band-cut-end').forEach(el => {
+        el.classList.remove('pv-date-selected', 'band-selected', 'pv-band-cut-start', 'pv-band-cut-end');
       });
       if (homeView !== 'month') return;
       const a = cardAnchor();
@@ -9150,7 +9169,16 @@ window.PV = (function(){
       if (!el) return;
       el.classList.add('selected-view');
       const wrap = el.closest('.daywrap');
-      if (wrap) wrap.classList.add('pv-date-selected');
+      if (wrap) {
+        wrap.classList.add('pv-date-selected');
+        // 原 band-start/end 已包含颜色变化和跨周边界，仅拆开实际相连的两侧。
+        if (wrap.classList.contains('band')) {
+          if (!wrap.classList.contains('band-start'))
+            wrap.previousElementSibling?.classList.add('pv-band-cut-end');
+          if (!wrap.classList.contains('band-end'))
+            wrap.nextElementSibling?.classList.add('pv-band-cut-start');
+        }
+      }
       closeMoreSymptoms();
     }
 
