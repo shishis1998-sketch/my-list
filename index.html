@@ -3503,7 +3503,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   font-family:var(--zh);}
 .pv-sheet.open{transform:translateY(0);}
 /* 编辑经期不再接近全屏；超出的症状留在抽屉内部滚动。 */
-#pvSheet{height:calc(100dvh - 450px);max-height:calc(100dvh - 450px);min-height:560px;padding-left:20px;padding-right:20px;}
+#pvSheet{height:calc(100dvh - 460px);max-height:calc(100dvh - 460px);min-height:0;padding-left:20px;padding-right:20px;}
 .pv-sheet-grab{position:relative;width:72px;height:20px;margin:-2px auto 2px;
   flex:0 0 auto;background:transparent;cursor:grab;touch-action:none;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
@@ -4898,10 +4898,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
             <button type="button" class="pv-head-btn pv-head-done" onclick="PV.finishDaySheet()">完成</button>
           </div>
           <div class="pv-sheet-body" id="pvSheetBody"></div>
-          <div class="pv-sheet-actions pv-day-actions">
-            <!-- 「清除」这天没记录时置灰而不是抽走：按钮位置钉死，手指不用重新找 -->
-            <button class="pv-btn pv-btn-clear" id="pvBtnClear" onclick="PV.clearDayRecord()">清除当天记录</button>
-          </div>
         </div>
 
         <!-- 年历卡片设置 · 底部弹窗（标题栏「⋯」打开）：一行一张卡，开关控制显示/收起。
