@@ -14697,6 +14697,7 @@ function cancelCalInlineMotion(){
   _calMotion=null;cancelAnimationFrame(motion.frame);
   motion.panel.classList.remove('cal-motion');
   motion.panel.style.height='';motion.panel.style.marginBottom='';
+  if(motion.outline)motion.outline.style.opacity='';
   motion.rows.forEach(row=>{row.style.opacity='';row.style.transform='';});
 }
 function animateCalInline(open,done){
@@ -14711,7 +14712,8 @@ function animateCalInline(open,done){
   const selected=document.querySelector('#calGrid .cal-selected');
   const bounds=panel.getBoundingClientRect(),tab=selected.getBoundingClientRect();
   const radius=parseFloat(getComputedStyle(selected).borderTopLeftRadius)||10;
-  const motion={panel,rows,closing:!open,frame:0,done};_calMotion=motion;
+  const outline=panel.querySelector('.cal-inline-outline');
+  const motion={panel,rows,outline,closing:!open,frame:0,done};_calMotion=motion;
   panel.classList.add('cal-motion');
   const duration=open?420:240,start=performance.now();
   const clamp=n=>Math.max(0,Math.min(1,n));
@@ -14720,6 +14722,9 @@ function animateCalInline(open,done){
     if(_calMotion!==motion||!panel.isConnected)return;
     const elapsed=Math.min(duration,now-start);
     const extent=open?ease(elapsed/220):1-ease((elapsed-30)/210);
+    // 框线在前 180ms 渐隐，早于 240ms 的布局收拢结束，避免留下实线后突然删除。
+    const fade=clamp(elapsed/180);
+    if(outline)outline.style.opacity=open?'':String(1-fade*fade*(3-2*fade));
     const currentHeight=Math.max(1,height*extent);
     panel.style.height=currentHeight+'px';
     // 日期行及其 12px 留白保持原尺寸，仅事件框底边从下往上合拢。
