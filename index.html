@@ -4211,6 +4211,30 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:color-mix(in srgb,var(--text-muted) 12%,var(--surface));
   color:var(--text-secondary);font-size:var(--fs-caption);line-height:1.4;}
 
+/* 色带仅包住 24px 日期数字，灰色症状文字独立排在下方。 */
+#calViewPeriod .calendar-container.month-view .daywrap.band{
+  background:transparent!important;box-shadow:none;padding-left:0;padding-right:0;}
+#calViewPeriod .calendar-container.month-view .daywrap.band>.day{
+  flex-shrink:0;box-shadow:inset 1px 0 rgba(255,255,255,.28)!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-start>.day{
+  border-radius:999px 0 0 999px!important;box-shadow:none!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-end>.day{border-radius:0 999px 999px 0!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-start.band-end>.day{border-radius:999px!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-level-1>.day,
+#calViewPeriod .calendar-container.month-view .daywrap.band-level-2>.day,
+#calViewPeriod .calendar-container.month-view .daywrap.band-level-3>.day,
+#calViewPeriod .calendar-container.month-view .daywrap.band-level-4>.day{background:var(--c)!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-fert>.day{background:var(--ovu-soft)!important;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu>.day{background:var(--ovu)!important;}
+#calViewPeriod .calendar-container.month-view .day-meta,
+#calViewPeriod .calendar-container.month-view .daywrap.band .day-meta{
+  margin-top:5px;color:var(--text-muted)!important;opacity:1;background:transparent;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-pred::before,
+#calViewPeriod .calendar-container.month-view .daywrap.band-ovu-ring::before,
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
+#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
+  top:3px;bottom:auto;height:24px;}
+
 /* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
    不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
    只在月视图 + 有推算结果时渲染，开关在 render()。 */
