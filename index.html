@@ -4240,7 +4240,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band-level-3>.day{color:#fff!important;}
 
 /* 底部整行切换日期标签；每周由最多标签的日期自然撑高。 */
-#calViewPeriod .calendar-container.month-view .day-meta{display:none;height:auto;overflow:visible;}
+/* 标签左侧浅灰细线：跟随整个标签区一起展开、收起和淡出。 */
+#calViewPeriod .calendar-container.month-view .day-meta{
+  display:none;height:auto;overflow:visible;position:relative;padding-left:6px;}
+#calViewPeriod .calendar-container.month-view .day-meta:not(:empty)::before{
+  content:"";position:absolute;left:1px;top:1px;bottom:1px;width:1px;
+  border-radius:999px;background:var(--text-muted);opacity:.45;pointer-events:none;}
 #calViewPeriod .calendar-container.month-view.labels-expanded .day-meta:not(:empty){display:flex;}
 #calViewPeriod .calendar-container.month-view .day-tag{white-space:normal;overflow:visible;overflow-wrap:anywhere;flex-shrink:0;}
 #calViewPeriod #pvLabelsToggle{width:100%;box-sizing:border-box;padding:0;border:0;
