@@ -15393,7 +15393,7 @@ function tlSegType(line){
 }
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
-// 用卡片的实际屏幕位置定位，地址栏或窗口尺寸变化时重新对齐。
+// 用卡片未滚动时的位置定位，地址栏或窗口尺寸变化时重新对齐。
 function alignChapterSheetToCard(){
   const sheet=document.getElementById('tlSheet');
   const card=tlHostMedia&&document.querySelector('#detailRoot.open #detailBookNoteCard');
@@ -15402,7 +15402,13 @@ function alignChapterSheetToCard(){
     sheet.style.removeProperty('--tl-card-top');
     return;
   }
-  const top=Math.max(0,card.getBoundingClientRect().top);
+  // 卡片滚出视口后 rect.top 会变成负数；补回各层滚动量，
+  // 始终使用页面未滚动时的卡片顶部，避免后面章节的抽屉撑满全屏。
+  let top=card.getBoundingClientRect().top+(window.scrollY||0);
+  for(let parent=card.parentElement;parent&&parent!==document.body&&parent!==document.documentElement;parent=parent.parentElement){
+    top+=parent.scrollTop||0;
+  }
+  top=Math.max(0,top);
   sheet.style.setProperty('--tl-card-top',top+'px');
   sheet.classList.add('card-aligned');
 }
