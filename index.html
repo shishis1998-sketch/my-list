@@ -14690,7 +14690,7 @@ function toggleWeekCard(){
 }
 
 // 分段展开：220ms 撑开轮廓，随后各行依次淡入，总时长最多 420ms。
-// 收起先同步淡出底色/框线 220ms，再用 80ms 撤回留白；缓存轮廓坐标。
+// 收起统一渐隐 320ms，布局用 400ms 柔和合拢；缓存轮廓坐标。
 var _calMotion=null;
 function cancelCalInlineMotion(){
   const motion=_calMotion;if(!motion)return;
@@ -14718,46 +14718,46 @@ function animateCalInline(open,done){
   const days=Array.from(document.querySelectorAll('#calGrid .cal-focusrow'));
   const padding=days.map(day=>parseFloat(getComputedStyle(day).paddingBottom)||12);
   const colorAnimations=[];
+  const fadeTiming={duration:320,easing:'ease-in-out',fill:'forwards'};
   if(!open){
     const number=selected.querySelector('.cal-daynum');
     const selectedStyle=getComputedStyle(selected);
     const numberStyle=number?getComputedStyle(number):null;
-    // 仅背景和文字颜色过渡，不降低日期数字/圆点本身的透明度。
+    // 颜色和描边由浏览器使用同一缓动曲线渐隐，避免两套动画节奏不一致。
+    if(outline)colorAnimations.push(outline.animate([{opacity:1},{opacity:0}],fadeTiming));
     colorAnimations.push(selected.animate([
       {backgroundColor:selectedStyle.backgroundColor},
       {backgroundColor:'transparent'}
-    ],{duration:220,easing:'ease-in-out',fill:'forwards'}));
+    ],fadeTiming));
     if(number)colorAnimations.push(number.animate([
       {color:numberStyle.color},
       {color:selectedStyle.getPropertyValue(selected.classList.contains('cal-today')?'--accent':'--text-primary').trim()}
-    ],{duration:220,easing:'ease-in-out',fill:'forwards'}));
+    ],fadeTiming));
   }
   const motion={panel,rows,outline,days,colorAnimations,closing:!open,frame:0,done};_calMotion=motion;
   panel.classList.add('cal-motion');
-  const duration=open?420:300,start=performance.now();
+  const duration=open?420:400,start=performance.now();
   const clamp=n=>Math.max(0,Math.min(1,n));
   const ease=n=>1-Math.pow(1-clamp(n),3);
+  const soft=n=>{const p=clamp(n);return p*p*(3-2*p);};
   function tick(now){
     if(_calMotion!==motion||!panel.isConnected)return;
     const elapsed=Math.min(duration,now-start);
-    const extent=open?ease(elapsed/220):1-ease((elapsed-30)/210);
-    // 框线和日期底色用相同的 220ms 节奏渐隐，完全透明后才撤掉留白。
-    const fade=clamp(elapsed/220);
-    if(outline)outline.style.opacity=open?'':String(1-fade*fade*(3-2*fade));
+    const extent=open?ease(elapsed/220):1-soft(elapsed/400);
     const currentHeight=Math.max(1,height*extent);
     panel.style.height=currentHeight+'px';
     // 日期行及其 12px 留白保持原尺寸，仅事件框底边从下往上合拢。
     panel.style.marginBottom=(margin*extent)+'px';
-    if(!open&&elapsed>=220){
-      const settle=ease((elapsed-220)/80);
+    if(!open&&elapsed>=320){
+      const settle=soft((elapsed-320)/80);
       days.forEach((day,i)=>{day.style.paddingBottom=(padding[i]+(4-padding[i])*settle)+'px';});
     }
     rows.forEach((row,i)=>{
-      const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1-clamp(elapsed/80);
+      const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1-soft(elapsed/200);
       row.style.opacity=String(visible);
       row.style.transform=`translateY(${open?4*(1-visible):0}px)`;
     });
-    if(open||elapsed<220)drawCalInlineOutline({bounds:{left:bounds.left,top:bounds.top,width:bounds.width,height:currentHeight},tab,radius});
+    if(open||elapsed<320)drawCalInlineOutline({bounds:{left:bounds.left,top:bounds.top,width:bounds.width,height:currentHeight},tab,radius});
     if(elapsed<duration)motion.frame=requestAnimationFrame(tick);
     else if(!open&&done){
       // 保持最终的透明/收拢状态直到旧节点移除，不能先恢复颜色和自然高度。
