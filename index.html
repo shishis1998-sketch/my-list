@@ -2196,8 +2196,9 @@ body.cal-searching .cw-card{display:none;}
 .tlseg-add:active{background:var(--press);border-color:var(--accent-mid);}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
-/* 章节时间线编辑抽屉：固定为半屏高度；正文区 .tlsheet-body 内部滚动 */
+/* 章节抽屉与读书笔记卡片顶部重合；独立时间线入口保留原高度。 */
 #tlSheet{height:70vh;max-height:70vh;min-height:0;}
+#tlSheet.card-aligned{top:var(--tl-card-top);height:auto;max-height:none;}
 
 /* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
 /* 复用 .tlsheet 的滑起/下拉/遮罩，只多一块铺满的输入框。
@@ -12149,7 +12150,7 @@ function renderDetailTL(item){
   const np=groups.filter(g=>g.part).length;
   // 时间线本身是拿来读的：点章节卡只进那一章的抽屉，改章名、加一章、动部名都得改原文。
   // 所以这里给一颗直通原文大框的按钮，省得为了改一行标题绕回概览页
-  return `<div class="dt-card" style="cursor:default">
+  return `<div class="dt-card" id="detailBookNoteCard" style="cursor:default">
     <div class="dt-lbl-row">
       <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
       <button type="button" class="dt-lnk dt-lnk-tl" onclick="tapNoteCard(event,'booknote')">编辑全文</button>
@@ -15392,6 +15393,28 @@ function tlSegType(line){
 }
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
+// 用卡片的实际屏幕位置定位，地址栏或窗口尺寸变化时重新对齐。
+function alignChapterSheetToCard(){
+  const sheet=document.getElementById('tlSheet');
+  const card=tlHostMedia&&document.querySelector('#detailRoot.open #detailBookNoteCard');
+  if(!card||!card.getClientRects().length){
+    sheet.classList.remove('card-aligned');
+    sheet.style.removeProperty('--tl-card-top');
+    return;
+  }
+  const top=Math.max(0,card.getBoundingClientRect().top);
+  sheet.style.setProperty('--tl-card-top',top+'px');
+  sheet.classList.add('card-aligned');
+}
+function refreshChapterSheetAlignment(){
+  if(tlSheetIdx!=null) alignChapterSheetToCard();
+}
+window.addEventListener('resize',refreshChapterSheetAlignment);
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',refreshChapterSheetAlignment);
+  window.visualViewport.addEventListener('scroll',refreshChapterSheetAlignment);
+}
+
 function openChapterSheet(idx){
   if(Date.now()<tlTapMuteUntil) return;   // 刚关掉一章，别被那声落空的 click 又开一章
   const body=tlHostBody();
@@ -15412,6 +15435,7 @@ function openChapterSheet(idx){
   renderChapterSheet();
   const sheet=document.getElementById('tlSheet');
   sheet.classList.remove('dragging'); sheet.style.transform='';
+  alignChapterSheetToCard();
   document.getElementById('tlSheetMask').classList.add('show');
   requestAnimationFrame(()=>sheet.classList.add('show'));
   initTlSheetDrag();
