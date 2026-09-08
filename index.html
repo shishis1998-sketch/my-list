@@ -4122,7 +4122,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .day.today{box-shadow:0 0 0 1px var(--brand) !important;
   font-weight:700;}
 #calViewPeriod .calendar-container.month-view .day.today:not(.level-1):not(.level-2):not(.level-3):not(.level-g){
-  background:transparent !important;color:var(--brand) !important;}
+  color:var(--brand) !important;} /* 今天也保留排卵期/易孕期实际底色，避免色带断开。 */
 /* 今天又有经血量：填充色留着，红细圈往外让 1px 卡片底色，免得细圈糊在填充色边上
    （和下面选中日一个做法，总外扩 2px）。选中日自己那圈更外(2.5px)，
    别被这条压小，所以排除 .selected-view。 */
@@ -4234,6 +4234,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
 #calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
   top:3px;bottom:auto;height:24px;}
+
+/* 今天的选中框独立画在日期数字范围内，不受色带 box-shadow 和端点圆角影响。 */
+#calViewPeriod .calendar-container.month-view .day.today.selected-view::after{
+  content:"";position:absolute;inset:0;width:auto;height:auto;
+  border:1.5px solid var(--brand);border-radius:999px;box-sizing:border-box;
+  background:transparent;box-shadow:none;pointer-events:none;z-index:4;}
 
 /* ── 卡内标记图例：网格正下方居中的一行小字，解释格子里的三种标记 ──
    不加分隔线——卡里已经有星期行那一条，再来一条会把一张卡切成三段。
