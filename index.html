@@ -1662,6 +1662,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   border:0;border-radius:var(--rlg);background:transparent;
   min-height:0;max-height:none;overflow:visible;contain:none;}
 .cal-inline-detail .cal-card-date{display:none;}
+/* 浅主题色底上的时间线使用中灰，提高节点连接线的可见度。 */
+.cal-inline-detail .cal-tl-row::before{background:var(--text-muted);}
 .cal-inline-detail .cal-tl{min-height:0;max-height:none;overflow:visible;
   padding:var(--sp-8) var(--sp-10) var(--sp-10);}
 .cal-day.cal-selected{overflow:visible;z-index:1;border-radius:var(--rlg) var(--rlg) 0 0;
