@@ -2889,6 +2889,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 经期视图：去掉粉色背景，与日历页统一纯色；月份导航沿用日历页「‹ 年 月 ›」样式 */
 #calViewPeriod,
 #calViewPeriod .home-sticky{background:var(--bg) !important;background-image:none !important;}
+/* 经期页顶部年份 + 翻年 / 筛选 / 更多操作随页面滚动固定在顶部。
+   不加描边或阴影，吸顶后仍保持当前纯色背景规范。 */
+body.cal-view-period #calViewPeriod .home-sticky{
+  position:sticky !important;
+  top:0 !important;
+  z-index:50;
+}
 #calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-6px;}
 #calViewPeriod .pv-navlabel{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
   padding:0 4px;cursor:pointer;user-select:none;letter-spacing:.01em;white-space:nowrap;}
