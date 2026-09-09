@@ -910,8 +910,8 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
      方块比它小一点，靠 min-height 把三行拉平、内容各自垂直居中。
      带分隔线的两行下留白写 9：那条 1px 也算在 52 里（box-sizing:border-box），
      不扣的话前两行会各高出 1，三行就又不齐了。 */
-  .sidebar #themeRow .nitem{min-height:52px;padding:10px 15px 9px;}
-  .sidebar #themeRow .theme-sws{min-height:52px;align-items:center;padding:10px 15px;}
+  .sidebar #themeRow .nitem{height:48px;min-height:48px;padding:8px 15px 7px;}
+  .sidebar #themeRow .theme-sws{height:48px;min-height:48px;align-items:center;padding:8px 15px;}
   /* 字号那行与色块那行共用同一张十列网格（列宽 1fr、列距 8），
      两行的方块因此永远同宽、同节距，小 / 中 / 大正对着最后三个色块。
      列距用 8 不用 4：十个色块挨着 4 的缝会糊成一条彩带，看不出是十颗。
