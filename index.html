@@ -2890,11 +2890,13 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewPeriod,
 #calViewPeriod .home-sticky{background:var(--bg) !important;background-image:none !important;}
 /* 经期页顶部年份 + 翻年 / 筛选 / 更多操作随页面滚动固定在顶部。
-   不加描边或阴影，吸顶后仍保持当前纯色背景规范。 */
-body.cal-view-period #calViewPeriod .home-sticky{
+   实际标题节点是 .home-header；旧的 .home-sticky 已不在 DOM 中，之前规则因此没有生效。
+   吸顶后用页面底色遮住下方内容，不加描边或阴影。 */
+body.cal-view-period #calViewPeriod .home-header{
   position:sticky !important;
   top:0 !important;
   z-index:50;
+  background:var(--bg) !important;
 }
 #calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-6px;}
 #calViewPeriod .pv-navlabel{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
