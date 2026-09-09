@@ -4861,8 +4861,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
           <div class="pv-callegend" id="pvCalLegend" style="display:none" aria-label="日历标记说明">
             <span><span class="lg-dots"><i class="lg-f1"></i><i class="lg-f2"></i><i class="lg-f3"></i></span>经期</span>
             <span><i class="lg-gotas"></i>点滴</span>
-            <span><i class="lg-predp"></i>预测经期</span>
-            <span><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
+            <span class="pv-fert-legend"><i class="lg-predp"></i>预测经期</span>
+            <span class="pv-fert-legend"><span class="lg-dots"><i class="lg-fert"></i><i class="lg-ovu"></i></span>排卵期</span>
           </div>
           <button type="button" id="pvLabelsToggle" class="cal-grabrow" hidden
             aria-expanded="false" aria-controls="calendar" aria-label="展开日期标签"
@@ -8552,10 +8552,15 @@ window.PV = (function(){
       // 底部 VOLUMEN 图例只在年视图显示(月视图下方色板已是图例,避免重复)
       const bl = document.getElementById('bottomLegend');
       if (bl) bl.style.display = homeView === 'year' ? '' : 'none';
-      // 卡内标记图例：只在月视图出现（年视图一屏 12 个迷你月，格子小到看不出虚线圈）。
-      // 推算关掉或记录不够两段时 FERT.ok=false，卡里只剩经血量色块，三项里两项无处对应 → 整行不渲染。
+      // 卡内标记图例：月视图始终保留经期/点滴的颜色说明。
+      // 排卵期推算关闭或记录不足时，只隐藏“预测经期 / 排卵期”两项，不能把整条图例一起隐藏。
       const cl = document.getElementById('pvCalLegend');
-      if (cl) cl.style.display = (homeView !== 'year' && FERT.ok) ? '' : 'none';
+      if (cl) {
+        cl.style.display = homeView !== 'year' ? '' : 'none';
+        cl.querySelectorAll('.pv-fert-legend').forEach(el => {
+          el.style.display = FERT.ok ? '' : 'none';
+        });
+      }
 
       if (homeView === 'year') {
         let html = '';
