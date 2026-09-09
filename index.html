@@ -4550,11 +4550,22 @@ body.cal-view-period #calViewPeriod .home-header{
 .chapter-more summary::-webkit-details-marker{display:none;}
 .chapter-more[open]>.dt-lnk{position:absolute;right:0;top:100%;z-index:2;white-space:nowrap;padding:12px 16px;background:var(--surface);border:1px solid var(--ink);border-radius:var(--rlg);}
 #tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;}
-.chapter-title-label{font-size:var(--fs-caption);color:var(--text-muted);}
 .chapter-title-input{flex-shrink:0;width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;font:inherit;font-size:var(--fs-input);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-format{flex-shrink:0;margin:0;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-whole-text:focus,.chapter-title-input:focus{outline:1px solid var(--accent);}
+
+
+/* 键盘打开时整章编辑占满可见区域；阅读和收起键盘后沿用原卡片对齐。 */
+#tlSheet.chapter-keyboard{
+  top:var(--chapter-keyboard-top,0px);bottom:auto;
+  height:var(--chapter-keyboard-height,100dvh);max-height:var(--chapter-keyboard-height,100dvh);
+}
+#tlSheet.chapter-keyboard #tlSheetBody{gap:8px;padding:10px 16px 8px;overflow:hidden;}
+#tlSheet.chapter-keyboard .chapter-title-input{min-height:40px;padding:6px 10px;}
+#tlSheet.chapter-keyboard .chapter-format{gap:6px;padding:0;}
+#tlSheet.chapter-keyboard .chapter-format .fmt-btn{min-height:32px;height:32px;padding:4px 10px;}
+#tlSheet.chapter-keyboard .chapter-whole-text{min-height:0;}
 
 </style>
 <script>
@@ -15622,8 +15633,24 @@ function alignChapterSheetToCard(){
   sheet.style.setProperty('--tl-card-top',top+'px');
   sheet.classList.add('card-aligned');
 }
+function syncChapterKeyboardLayout(){
+  const sheet=document.getElementById('tlSheet');
+  if(!sheet) return;
+  const editing=document.getElementById('tlSheetBody').classList.contains('chapter-editing');
+  const active=editing && document.body.classList.contains('kb-open');
+  sheet.classList.toggle('chapter-keyboard',active);
+  if(!active) return;
+  // 布局视口已缩小时不再扣一次键盘；悬浮键盘使用 visualViewport。
+  const vv=window.visualViewport;
+  const overlay=document.body.classList.contains('vv-track') && vv;
+  const top=overlay?vv.offsetTop:0;
+  const height=overlay?vv.height:window.innerHeight;
+  sheet.style.setProperty('--chapter-keyboard-top',top+'px');
+  sheet.style.setProperty('--chapter-keyboard-height',height+'px');
+}
 function refreshChapterSheetAlignment(){
   if(tlSheetIdx!=null) alignChapterSheetToCard();
+  syncChapterKeyboardLayout();
 }
 window.addEventListener('resize',refreshChapterSheetAlignment);
 if(window.visualViewport){
@@ -15715,6 +15742,7 @@ function renderChapterSheet(){
     `<button type="button" class="tlseg-add" id="tlSegAdd">＋ 添加</button></div>`;
   body.innerHTML=`<div class="tl-pts">${rows.join('')}${add}</div>`;
   body.classList.remove('chapter-editing');
+  document.getElementById('tlSheet').classList.remove('chapter-keyboard');
   document.getElementById('tlSheetCancel').textContent='关闭';
   document.getElementById('tlSheetDone').textContent='编辑';
   body.querySelectorAll('.tlseg-tap, #tlSegAdd').forEach(el=>{
@@ -15736,8 +15764,8 @@ function enterWholeChapterEdit(segIndex=0){
   const title=nl<0?raw:raw.slice(0,nl), content=nl<0?'':raw.slice(nl+1);
   const body=document.getElementById('tlSheetBody');
   body.classList.add('chapter-editing');
-  body.innerHTML=`<label class="chapter-title-label" for="chapterTitleInput">章节标题</label>
-    <input id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="第十章 团结">
+  syncChapterKeyboardLayout();
+  body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="第十章 团结">
     <div class="fmt-bar chapter-format">${[['h','H'],['b','<b>B</b>'],['i','<i>I</i>'],['u','<u>U</u>'],['li','•']].map(([kind,label])=>`<button type="button" class="fmt-btn" data-fmt="${kind}">${label}</button>`).join('')}</div>
     <textarea id="chapterWholeText" class="chapter-whole-text" aria-label="本章正文" placeholder="写下这一章的笔记…">${esc(content)}</textarea>`;
   document.getElementById('tlSheetTitle').textContent=tlChapterNew?'新增章节':'编辑本章';
@@ -15824,6 +15852,7 @@ function cancelChapterSheet(){
 function closeChapterSheet(){
   // 编辑仅通过「完成」保存；新建取消或关闭不会追加空章节。
   tlWholeEditing=false;
+  document.getElementById('tlSheet').classList.remove('chapter-keyboard');
   document.getElementById('tlSheetMask').classList.remove('show');
   document.getElementById('tlSheet').classList.remove('show');
   tlSheetIdx=null;tlSheetEdit=-1;tlChapterNew=false;
@@ -16835,6 +16864,7 @@ document.getElementById('ntinput').addEventListener('keydown',function(e){
       document.body.classList.remove('vv-track');
       root.style.setProperty('--kb','0px');
     }
+    syncChapterKeyboardLayout();
   }
   function onChange(){
     if(scheduled) return;
