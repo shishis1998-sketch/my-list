@@ -3338,7 +3338,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   background:var(--surface-2);overflow:hidden;}
 #calViewPeriod .cyc-vfill{display:flex;align-items:center;height:100%;min-width:38px;border-radius:999px;
   padding:0 7px;box-sizing:border-box;font:700 var(--fs-micro)/1 var(--en);white-space:nowrap;
-  font-variant-numeric:tabular-nums;transform:translateY(.5px);}
+  font-variant-numeric:tabular-nums;}
+#calViewPeriod .cyc-vlabel{display:block;line-height:1;transform:translateY(1px);}
 #calViewPeriod .cyc-vfill.c{background:var(--ovu-soft);color:var(--ovu-on-soft);}
 #calViewPeriod .cyc-vfill.p{background:#ffd5dc;color:#834047;}
 #calViewPeriod .cyc-vfill.s{background:#dbdbdf;color:var(--text-secondary);}
@@ -9313,7 +9314,7 @@ window.PV = (function(){
           ? '<div class="cyc-vlist">' + rows.map(r =>
               `<div class="cyc-vrow">` +
                 `<span class="cyc-vdate">${fmtDate(r.start)}</span>` +
-                `<span class="cyc-vtrack"><span class="cyc-vfill ${cls}" style="width:${width(r.days)}%">${r.days}天</span></span>` +
+                `<span class="cyc-vtrack"><span class="cyc-vfill ${cls}" style="width:${width(r.days)}%"><span class="cyc-vlabel">${r.days}天</span></span></span>` +
               '</div>'
             ).join('') + '</div>'
           : `<div class="cyc-empty">${emptyText}</div>`;
