@@ -1,0 +1,41 @@
+name: Preserve period header backgrounds by view
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-period-header-view-bg.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep sticky behavior without overriding each view background
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '''body.cal-view-period #calViewPeriod .home-header{\n  position:sticky !important;\n  top:0 !important;\n  z-index:50;\n  background:var(--bg) !important;\n}'''
+          new = '''body.cal-view-period #calViewPeriod .home-header{\n  position:sticky !important;\n  top:0 !important;\n  z-index:50;\n}'''
+          if old not in s:
+              raise SystemExit('Sticky period header rule not found')
+          s = s.replace(old, new, 1)
+          old2 = '#calViewPeriod.pv-year .home-header{background:transparent;border:none;border-radius:0;'
+          new2 = '#calViewPeriod.pv-year .home-header{background:var(--bg);border:none;border-radius:0;'
+          if old2 not in s:
+              raise SystemExit('Year-view header rule not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit fix and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/fix-period-header-view-bg.yml
+          git add index.html .github/workflows/fix-period-header-view-bg.yml
+          git commit -m "fix: preserve period header background per view"
+          git push
