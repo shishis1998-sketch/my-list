@@ -1035,15 +1035,13 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   #modal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
   #modal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
   #modal .mbox{
-    width:100%;max-width:100%;height:auto;max-height:min(88vh,100%);
+    width:100%;max-width:100%;height:70vh;max-height:70vh;min-height:0;
     border-radius:var(--rxl) var(--rxl) 0 0;
     box-shadow:0 -4px 24px rgba(0,0,0,.18);
     transform:translateZ(0);            /* 同 #noteModal：安卓 Chrome 的圆角裁剪 */
   }
   /* 抽屉顶部小抓手；贴底的面板不需要给刘海让位，把通用规则那份 padding-top 收回来 */
-  #modal .mhdr{position:relative;padding-top:var(--sp-20);}
-  #modal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
-    width:36px;height:4px;border-radius:2px;background:var(--border);}
+  #modal .tlsheet-head{position:relative;}
 
   /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
   /* padding-bottom:0 覆盖下方为导航条留白的通用规则，让抽屉真正贴到屏幕底边，不悬空 */
@@ -2153,13 +2151,13 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 4px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#tlSheet .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
-#tlSheet .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
+#tlSheet .tlsheet-head,#modal .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
+#tlSheet .tlsheet-grip,#modal .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
   transition:background .14s ease,transform .14s ease;}
-#tlSheet .tlsheet-head:active .tlsheet-grip,
-#tlSheet.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
-#tlSheet .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#tlSheet .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
+#tlSheet .tlsheet-head:active .tlsheet-grip,#modal .tlsheet-head:active .tlsheet-grip,
+#tlSheet.dragging .tlsheet-grip,#modal .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
+#tlSheet .tlsheet-headrow,#modal .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#tlSheet .tlsheet-title,#modal .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
 .tlsheet-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
   color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
@@ -4593,16 +4591,6 @@ body.cal-view-period #pvEditFab{display:grid;}
 
 /* ADD/EDIT 记录抽屉：与时间线章节编辑统一顶部操作栏和高度 */
 #modal .mbox{height:70vh;max-height:70vh;min-height:0;}
-#modal .modal-edit-head{display:block;background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);flex:0 0 auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;}
-#modal .modal-edit-head:active{cursor:grabbing;}
-#modal .modal-edit-grip{width:36px;height:4px;border-radius:2px;margin:0 auto 8px;background:rgba(86,86,90,.34);transition:background .14s ease,transform .14s ease;}
-#modal .modal-edit-head:active .modal-edit-grip,#modal .mbox.dragging .modal-edit-grip{background:var(--accent);transform:scaleX(1.08);}
-#modal .modal-edit-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#modal .modal-edit-headrow .mtitle{min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#modal .modal-edit-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
-#modal .modal-edit-action:first-child{justify-self:start;}
-#modal .modal-edit-action:last-child{justify-self:end;color:var(--accent);}
-#modal .modal-edit-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
 
 </style>
 <script>
@@ -5073,12 +5061,12 @@ body.cal-view-period #pvEditFab{display:grid;}
 <!-- ===== ADD/EDIT MODAL ===== -->
 <div class="moverlay" id="modal">
   <div class="mbox" onclick="event.stopPropagation()">
-    <div class="mhdr modal-edit-head">
-      <div class="modal-edit-grip"></div>
-      <div class="modal-edit-headrow">
-        <button type="button" class="modal-edit-action" onclick="closeModal()">取消</button>
-        <div class="mtitle" id="mtitle">添加记录</div>
-        <button type="button" class="modal-edit-action" onclick="saveRec()">完成</button>
+    <div class="tlsheet-head" id="modalSheetHead">
+      <div class="tlsheet-grip"></div>
+      <div class="tlsheet-headrow">
+        <button type="button" class="tlsheet-action" onclick="closeModal()">取消</button>
+        <div class="tlsheet-title" id="mtitle">添加记录</div>
+        <button type="button" class="tlsheet-action" onclick="saveRec()">完成</button>
       </div>
     </div>
     <div class="mbody">
@@ -14276,8 +14264,9 @@ function bindSheetDrag(box,head,close){
   head.addEventListener('pointerdown',e=>{
     // 电脑上这个弹窗是居中的对话框，没有抓手也无从下拉；只在底部抽屉那套版式里认这一手势
     if(getComputedStyle(box.parentNode).alignItems!=='flex-end')return;
-    if(e.target.closest('button'))return;      // ✕ 自己有事做，别把它当把手
+    if(e.target.closest('button'))return;      // 按钮自己有事做，别把它当把手
     sy=e.clientY;dy=0;drag=true;
+    box.classList.add('dragging');
     box.style.transition='none';
     try{head.setPointerCapture(e.pointerId);}catch(_){}
   });
@@ -14289,6 +14278,7 @@ function bindSheetDrag(box,head,close){
   const end=()=>{
     if(!drag)return;
     drag=false;
+    box.classList.remove('dragging');
     box.style.transition='';box.style.transform='';
     if(dy>100)close();
   };
@@ -14304,7 +14294,11 @@ function bindSheetDrag(box,head,close){
  ['icsColorModal',()=>closeIcsColor()],
  ['icsDelModal',()=>closeIcsDel()]].forEach(([id,close])=>{
   const dlg=document.getElementById(id);
-  if(dlg) bindSheetDrag(dlg.querySelector('.mbox'), dlg.querySelector('.mhdr'), close);
+  if(dlg) bindSheetDrag(
+    dlg.querySelector('.mbox'),
+    id==='modal'?document.getElementById('modalSheetHead'):dlg.querySelector('.mhdr'),
+    close
+  );
 });
 
 // ── 「离今天多久」：预览弹窗顶上那张小卡 ──────────────────────────
