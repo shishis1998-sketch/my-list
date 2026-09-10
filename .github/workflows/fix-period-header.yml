@@ -1,0 +1,46 @@
+name: Fix period header background
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-period-header.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore period sticky header to white
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '''body.cal-view-period #calViewPeriod .home-header{
+            position:sticky !important;
+            top:0 !important;
+            z-index:50;
+            background:var(--bg) !important;
+          }'''
+          new = '''body.cal-view-period #calViewPeriod .home-header{
+            position:sticky !important;
+            top:0 !important;
+            z-index:50;
+            background:#FFFFFF !important;
+          }'''
+          if old not in s:
+              raise SystemExit('Target CSS block not found; aborting without changes.')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: restore period header white background"
+          git push
