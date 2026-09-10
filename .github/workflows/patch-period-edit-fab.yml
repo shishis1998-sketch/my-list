@@ -17,107 +17,14 @@ jobs:
       - name: Patch index.html
         shell: bash
         run: |
-          python3 <<'PY'
-          from pathlib import Path
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          def once(old, new, name):
-              global s
-              n = s.count(old)
-              if n != 1:
-                  raise SystemExit(f'{name}: expected 1 match, found {n}')
-              s = s.replace(old, new, 1)
-
-          # 1) FAB style: same size/placement/flat treatment as the note FAB,
-          # but use the period brand red. Its z-index stays below period scrim/sheet (200/201).
-          css_anchor = "#calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}\n\n/* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */"
-          css_insert = """#calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}
-
-/* 经期月视图 · 右下角编辑按钮。尺寸、位置和详情/笔记页的 .dt-fab 对齐；
-   全站纯平面，不加阴影。按钮层级固定在 80，经期遮罩/抽屉是 200/201，
-   所以打开编辑抽屉后按钮自然留在弹窗后面，不会浮到最上层。 */
-#calViewPeriod .pv-edit-fab{
-  display:none;place-items:center;position:fixed;z-index:80;
-  right:16px;bottom:calc(16px + 64px + env(safe-area-inset-bottom));
-  width:48px;height:48px;padding:0;border:0;border-radius:50%;
-  color:#fff;
-  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--brand);
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
-  transition:transform .16s ease,opacity .16s ease;
-}
-body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
-#calViewPeriod .pv-edit-fab[hidden]{display:none !important;}
-#calViewPeriod .pv-edit-fab:active{transform:scale(.92);}
-#calViewPeriod .pv-edit-fab svg{width:22px;height:22px;}
-
-/* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */"""
-          once(css_anchor, css_insert, 'period FAB css anchor')
-
-          # 2) Add the fixed button immediately before the edit sheet markup.
-          html_anchor = """        <!-- 经期记录 · 长按日期后编辑经血量 + 症状 -->
-        <div class=\"pv-sheet-scrim\" id=\"pvSheetScrim\" onclick=\"PV.cancelDaySheet()\"></div>"""
-          html_insert = """        <!-- 经期月视图右下角编辑入口：选中日期后点这里编辑。 -->
-        <button type=\"button\" class=\"pv-edit-fab\" id=\"pvEditFab\" aria-label=\"编辑经期\" title=\"编辑经期\"
-          onclick=\"PV.openEditFab()\" hidden>
-          <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">
-            <path d=\"M4 19.5V21h1.5L16.8 9.7a2 2 0 0 0-2.8-2.8L4 17v2.5Z\"/>
-            <path d=\"M12.9 8l2.8 2.8\"/>
-            <path d=\"M12 17h8\"/>
-            <path d=\"M14.5 20h5.5\"/>
-          </svg>
-        </button>
-
-        <!-- 经期记录 · 右下角编辑按钮打开；原抽屉内容不变 -->
-        <div class=\"pv-sheet-scrim\" id=\"pvSheetScrim\" onclick=\"PV.cancelDaySheet()\"></div>"""
-          once(html_anchor, html_insert, 'period FAB html anchor')
-
-          # 3) FAB opens the currently highlighted day (or today / day 1 fallback from cardAnchor).
-          js_anchor = """    function openDaySheet(y, m, d) {
-      const body = document.getElementById('pvSheetBody');"""
-          js_insert = """    function openEditFab() {
-      if (homeView !== 'month') return;
-      const a = cardAnchor();
-      cardDay = { y: a.y, m: a.m, d: a.d };
-      selectDayForView(a.y, a.m, a.d);
-      openDaySheet(a.y, a.m, a.d);
-    }
-
-    function openDaySheet(y, m, d) {
-      const body = document.getElementById('pvSheetBody');"""
-          once(js_anchor, js_insert, 'openDaySheet anchor')
-
-          # 4) Show the button only in period month view, never in year view.
-          render_anchor = """    function afterRender() {
-      const cal = document.getElementById('calendar');
-      const extras = document.getElementById('pvExtras');"""
-          render_insert = """    function afterRender() {
-      const cal = document.getElementById('calendar');
-      const editFab = document.getElementById('pvEditFab');
-      if (editFab) editFab.hidden = homeView !== 'month';
-      const extras = document.getElementById('pvExtras');"""
-          once(render_anchor, render_insert, 'afterRender anchor')
-
-          # 5) Export click handler for the inline button.
-          export_anchor = """    openTagSheet, closeTagSheet, toggleMoreSymptoms,
-    closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,"""
-          export_insert = """    openTagSheet, closeTagSheet, toggleMoreSymptoms,
-    openEditFab, closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,"""
-          once(export_anchor, export_insert, 'PV export anchor')
-
-          p.write_text(s, encoding='utf-8')
-          PY
-
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnAgPSBQYXRoKCJpbmRleC5odG1sIikKcyA9IHAucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCgpkZWYgb25jZShvbGQsIG5ldywgbmFtZSk6CiAgICBnbG9iYWwgcyAgCiAgICBuID0gcy5jb3VudChvbGQpCiAgICBpZiBuICE9IDE6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdChmIntuYW1lfTogZXhwZWN0ZWQgMSBtYXRjaCwgZm91bmQge259IikKICAgIHMgPSBzLnJlcGxhY2Uob2xkLCBuZXcsIDEpCgpjc3NfYW5jaG9yID0gIiNjYWxWaWV3UGVyaW9kIHtwYWRkaW5nLWJvdHRvbTogY2FsYyg2NHB4ICsgZW52KHNhZmUtYXJlYS1pbnNldC1ib3R0b20pKTt9XG5cbi8qIOKVk+KVk+KVkCDnu4/miJ/orrDlvZXlvIDmnIDpg6jlvLnnsJfvvIjnorbml6XmnJ/ku47luJXpg6jmu5Hlh7rvvIzkuIDmrKHnvJbovpHnu4/ooYDph48gKyDnl4fnirbvvInilpPilpPilpMgKi8iCmNzc19pbnNlcnQgPSAiIiIjY2FsVmlld1BlcmlvZCB7cGFkZGluZy1ib3R0b206IGNhbGMoNjRweCArIGVudihzYWZlLWFyZWEtaW5zZXQtYm90dG9tKSk7fQoKLyo g57uP5pyf5pyI6KeG5Zu+wrflj7PkuIvop5LnvJbovpHmjInpkq7jgILlsLrlr7jjgIHkvY3nva7lkozor6bmg73pnaLnmoQgLmR0LWZhYiDlr7npvZDvvJsKICAg5YWo56uZ57qv5bmz6Z2i77yM5LiN5Yqg6Zi05b2x44CC5oyJ6ZSu5bGC57qn5Zu65a6a5ZyoIDgw77yM57uP5pyf6YGt572pL+aKveWxieaYr+KAiDIwMC8yMDE77yM CiAgIOaJgOS7peaJk+W8gOe8lui+keaKveWxieWQjuaMiemSruS4reiHqueEtuWImeWcqOW8ueeti+WQjumdou+8jOS4jeS8mua1ruWIsOacgOS4iuWxguOAgiAqLy8KI2NhbFZpZXdQZXJpb2QgLnB2LWVkaXQtZmFiewogIGRpc3BsYXk6bm9uZTtwbGFjZS1pdGVtczpjZW50ZXI7cG9zaXRpb246Zml4ZWQ7ei1pbmRleDo4MDsKICByaWdodDoxNnB4O2JvdHRvbTpjYWxjKDE2cHggKyA2NHB4ICsgZW52KHNhZmUtYXJlYS1pbnNldC1ib3R0b20pKTsKICB3aWR0aDo0OHB4O2hlaWdodDo0OHB4O3BhZGRpbmc6MDtib3JkZXI6MDtib3JkZXItcmFkaXVzOjUwJTsKICBjb2xvcjojZmZmOwogIGJhY2tncm91bmQ6bGluZWFyLWdyYWRpZW50KDE2MGRlZyxyZ2JhKDI1NSwyNTUsMjU1LC4yMikscmdiYSgyNTUsMjU1LDI1NSwwKSA0NiUscmdiYSgwLDAsMCwuMjApKSx2YXIoLS1icmFuZCk7CiAgY3Vyc29yOnBvaW50ZXI7LXdlYmtpdC10YXAtaGlnaGxpZ2h0LWNvbG9yOnRyYW5zcGFyZW50OwogIHRyYW5zaXRpb246dHJhbnNmb3JtIC4xNnMgZWFzZSxvcGFjaXR5IC4xNnMgZWFzZTsKfQpib2R5LmNhbC12aWV3LXBlcmlvZCAjY2FsVmlld1BlcmlvZCAucHYtZWRpdC1mYWJ7ZGlzcGxheTpncmlkO30KI2NhbFZpZXdQZXJpb2QgLnB2LWVkaXQtZmFiW2hpZGRlbl17ZGlzcGxheTpub25lICFpbXBvcnRhbnQ7fQojY2FsVmlld1BlcmlvZCAucHYtZWRpdC1mYWI6YWN0aXZle3RyYW5zZm9ybTpzY2FsZSguOTIpO30KI2NhbFZpZXdQZXJpb2QgLnB2LWVkaXQtZmFiIHN2Z3t3aWR0aDoyMnB4O2hlaWdodDoyMnB4O30KCi8qIOKVk+KVk+KVkCDnu4/miJ/orrDlvZXlvIDmnIDpg6jlvLnnsJfvvIjnorbml6XmnJ/ku47luJXpg6jmu5Hlh7rvvIzkuIDmrKHnvJbovpHnu4/ooYDph48gKyDnl4fnirbvvInilpPilpPilpMgKi8iIiIKb25jZShjc3NfYW5jaG9yLCBjc3NfaW5zZXJ0LCAicGVyaW9kIEZBQiBjc3MgYW5jaG9yIikKCmh0bWxfYW5jaG9yID0gIiIiICAgICAgICA8IS0tIOe7j+acn+iusOW9lSDCtSDplb/mjInml6XmnJ/lkI7nvJbovpHnu4/ooYDph48gKyDnl4fnirYgLS0+CiAgICAgICAgPGRpdiBjbGFzcz0icHYtc2hlZXQtc2NyaW0iIGlkPSJwdlNoZWV0U2NyaW0iIG9uY2xpY2s9IlBWLmNhbmNlbERheVNoZWV0KCkiPjwvZGl2PiIiIgpodG1sX2luc2VydCA9ICIiIiAgICAgICAgPCEtLSDnu4/miJ/mnIjop4blj7PkuIvop5LnvJbovpHl入5Y+j77ya6YCJ5Lit5pel5pyf5ZCO54K56L+Z6YeM57yW6L6R44CCIC0tPgogICAgICAgIDxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0icHYtZWRpdC1mYWIiIGlkPSJwdkVkaXRGYWIiIGFyaWEtbGFiZWw9Iue8lui+kee7j+acnyIgdGl0bGU9Iue8lui+kee7j+acnyIKICAgICAgICAgIG9uY2xpY2s9IlBWLm9wZW5FZGl0RmFiKCkiIGhpZGRlbj4KICAgICAgICAgIDxzdmcgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGFyaWEtaGlkZGVuPSJ0cnVlIj4KICAgICAgICAgICAgPHBhdGggZD0iTTQgMTkuNVYyMWgxLjVMMTYuOCA5LjdhMiAyIDAgMCAwLTIuOC0yLjhMNCAxN3YyLjVaIi8+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0xMi45IDhsMi44IDIuOCIvPgogICAgICAgICAgICA8cGF0aCBkPSJNMjAgMTdIMTIiLz4KICAgICAgICAgICAgPHBhdGggZD0iTTIwIDIwaC01LjUiLz4KICAgICAgICAgIDwvc3ZnPgogICAgICAgIDwvYnV0dG9uPgoKICAgICAgICA8IS0tIOe7j+acn+iusOW9lSDCtSDlj7PkuIvop5LnvJbovpHmjInpkq7miZPlvIDvvJvljp_mir3lsaLlhoXlrrnkuI3lj5ggLS0+CiAgICAgICAgPGRpdiBjbGFzcz0icHYtc2hlZXQtc2NyaW0iIGlkPSJwdlNoZWV0U2NyaW0iIG9uY2xpY2s9IlBWLmNhbmNlbERheVNoZWV0KCkiPjwvZGl2PiIiIgpvbmNlKGh0bWxfYW5jaG9yLCBodG1sX2luc2VydCwgInBlcmlvZCBGQUIgaHRtbCBhbmNob3IiKQoKanNfYW5jaG9yID0gIiIiICAgIGZ1bmN0aW9uIG9wZW5EYXlTaGVldCh5LCBtLCBkKSB7CiAgICAgIGNvbnN0IGJvZHkgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncHZTaGVldEJvZHknKTsiIiIKanNfaW5zZXJ0ID0gIiIiICAgIGZ1bmN0aW9uIG9wZW5FZGl0RmFiKCkgewogICAgICBpZiAoaG9tZVZpZXcgIT09ICdtb250aCcpIHJldHVybjsKICAgICAgY29uc3QgYSA9IGNhcmRBbmNob3IoKTsKICAgICAgY2FyZERheSA9IHsgeTogYS55LCBtOiBhLm0sIGQ6IGEuZCB9OwogICAgICBzZWxlY3REYXlGb3JWaWV3KGEueSwgYS5tLCBhLmQpOwogICAgICBvcGVuRGF5U2hlZXQoYS55LCBhLm0sIGEuZCk7CiAgICB9CgogICAgZnVuY3Rpb24gb3BlbkRheVNoZWV0KHksIG0sIGQpIHsKICAgICAgY29uc3QgYm9keSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwdlNoZWV0Qm9keScpOyIiIgpvbmNlKGpzX2FuY2hvciwganNfaW5zZXJ0LCAib3BlbkRheVNoZWV0IGFuY2hvciIpCgpyZW5kZXJfYW5jaG9yID0gIiIiICAgIGZ1bmN0aW9uIGFmdGVyUmVuZGVyKCkgewogICAgICBjb25zdCBjYWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2FsZW5kYXInKTsKICAgICAgY29uc3QgZXh0cmFzID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3B2RXh0cmFzJyk7IiIiCnJlbmRlcl9pbnNlcnQgPSAiIiIgICAgZnVuY3Rpb24gYWZ0ZXJSZW5kZXIoKSB7CiAgICAgIGNvbnN0IGNhbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjYWxlbmRhcicpOwogICAgICBjb25zdCBlZGl0RmFiID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3B2RWRpdEZhYicpOwogICAgICBpZiAoZWRpdEZhYikgZWRpdEZhYi5oaWRkZW4gPSBob21lVmlldyAhPT0gJ21vbnRoJzsKICAgICAgY29uc3QgZXh0cmFzID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3B2RXh0cmFzJyk7IiIiCm9uY2UocmVuZGVyX2FuY2hvciwgcmVuZGVyX2luc2VydCwgImFmdGVyUmVuZGVyIGFuY2hvciIpCgpleHBvcnRfYW5jaG9yID0gIiIiICAgIG9wZW5UYWdTaGVldCwgY2xvc2VUYWdTaGVldCwgdG9nZ2xlTW9yZVN5bXB0b21zLAogICAgY2xvc2VEYXlTaGVldCwgY2FuY2VsRGF5U2hlZXQsIGZpbmlzaERheVNoZWV0LCBjbGVhckRheVJlY29yZCwiIiIKZXhwb3J0X2luc2VydCA9ICIiIiAgICBvcGVuVGFnU2hlZXQsIGNsb3NlVGFnU2hlZXQsIHRvZ2dsZU1vcmVTeW1wdG9tcywKICAgIG9wZW5FZGl0RmFiLCBjbG9zZURheVNoZWV0LCBjYW5jZWxEYXlTaGVldCwgZmluaXNoRGF5U2hlZXQsIGNsZWFyRGF5UmVjb3JkLCIiIgpvbmNlKGV4cG9ydF9hbmNob3IsIGV4cG9ydF9pbnNlcnQsICJQViBleHBvcnQgYW5jaG9yIikKCnAud3JpdGVfdGV4dChzLCBlbmNvZGluZz0idXRmLTgiKQo=' | base64 -d > /tmp/patch.py
+          python3 /tmp/patch.py
       - name: Commit patch
         shell: bash
         run: |
-          if git diff --quiet -- index.html; then
-            echo 'No changes to commit'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m 'feat: add period edit floating button'
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add period edit floating button"
           git push
