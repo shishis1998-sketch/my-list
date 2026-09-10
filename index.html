@@ -3497,17 +3497,16 @@ body.cal-view-period #calViewPeriod .home-header{
    所以打开编辑抽屉后按钮自然留在弹窗后面，不会浮到最上层。 */
 #calViewPeriod .pv-edit-fab{
   display:none;place-items:center;position:fixed;z-index:80;
-  right:16px;bottom:calc(16px + 64px + env(safe-area-inset-bottom));
+  right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
   width:48px;height:48px;padding:0;border:0;border-radius:50%;
   color:#fff;
   background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--brand);
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
-  transition:transform .16s ease,opacity .16s ease;
+  cursor:pointer;transition:transform .16s ease,opacity .16s ease;
 }
 body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
 #calViewPeriod .pv-edit-fab[hidden]{display:none !important;}
 #calViewPeriod .pv-edit-fab:active{transform:scale(.92);}
-#calViewPeriod .pv-edit-fab svg{width:22px;height:22px;}
+#calViewPeriod .pv-edit-fab svg{width:20px;height:20px;}
 
 /* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */
 .pv-sheet-scrim{position:fixed;inset:0;background:rgba(20,10,14,.30);
@@ -4946,11 +4945,9 @@ body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
         <!-- 经期月视图右下角编辑入口：选中日期后点这里编辑。 -->
         <button type="button" class="pv-edit-fab" id="pvEditFab" aria-label="编辑经期" title="编辑经期"
           onclick="PV.openEditFab()" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 19.5V21h1.5L16.8 9.7a2 2 0 0 0-2.8-2.8L4 17v2.5Z"/>
-            <path d="M12.9 8l2.8 2.8"/>
-            <path d="M12 17h8"/>
-            <path d="M14.5 20h5.5"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
 
