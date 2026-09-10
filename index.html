@@ -3495,18 +3495,18 @@ body.cal-view-period #calViewPeriod .home-header{
 /* 经期月视图 · 右下角编辑按钮。尺寸、位置和详情/笔记页的 .dt-fab 对齐；
    全站纯平面，不加阴影。按钮层级固定在 80，经期遮罩/抽屉是 200/201，
    所以打开编辑抽屉后按钮自然留在弹窗后面，不会浮到最上层。 */
-#calViewPeriod .pv-edit-fab{
+#pvEditFab{
   display:none;place-items:center;position:fixed;z-index:80;
   right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
   width:48px;height:48px;padding:0;border:0;border-radius:50%;
   color:#fff;
-  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--brand);
+  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),#C72F49;
   cursor:pointer;transition:transform .16s ease,opacity .16s ease;
 }
-body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
-#calViewPeriod .pv-edit-fab[hidden]{display:none !important;}
-#calViewPeriod .pv-edit-fab:active{transform:scale(.92);}
-#calViewPeriod .pv-edit-fab svg{width:20px;height:20px;}
+body.cal-view-period #pvEditFab{display:grid;}
+#pvEditFab[hidden]{display:none !important;}
+#pvEditFab:active{transform:scale(.92);}
+#pvEditFab svg{width:20px;height:20px;}
 
 /* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */
 .pv-sheet-scrim{position:fixed;inset:0;background:rgba(20,10,14,.30);
@@ -4942,15 +4942,6 @@ body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
           <div class="pv-tag-list" id="pvTagList"></div>
         </div>
 
-        <!-- 经期月视图右下角编辑入口：选中日期后点这里编辑。 -->
-        <button type="button" class="pv-edit-fab" id="pvEditFab" aria-label="编辑经期" title="编辑经期"
-          onclick="PV.openEditFab()" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-
         <!-- 经期记录 · 右下角编辑按钮打开；原抽屉内容不变 -->
         <div class="pv-sheet-scrim" id="pvSheetScrim" onclick="PV.cancelDaySheet()"></div>
         <div class="pv-sheet" id="pvSheet" role="dialog" aria-modal="true" aria-label="经期记录">
@@ -4998,6 +4989,15 @@ body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
   </div>
 </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- 经期月视图右下角编辑入口：放在 app 根节点外，确保 fixed 永远按视口定位。 -->
+<button type="button" class="pv-edit-fab" id="pvEditFab" aria-label="编辑经期" title="编辑经期"
+  onclick="PV.openEditFab()" hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
 
 <!-- ===== 手机端底部栏（仅 ≤1024px 显示）===== -->
 <div class="bottombar" id="bottombar">
