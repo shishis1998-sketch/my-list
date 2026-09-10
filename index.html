@@ -12077,8 +12077,13 @@ let dtTab='info';
 
   root.addEventListener('touchcancel',()=>{tracking=false;clearDrag(true);},{passive:true});
 })();
+let dtTabTransitionDir=0;
 function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（顺序落手时已存）
-  dtTab=DT_TABS.some(t=>t.id===v)?v:'info'; renderDetail(); }
+  const next=DT_TABS.some(t=>t.id===v)?v:'info';
+  const oldI=DT_TABS.findIndex(t=>t.id===dtTab);
+  const newI=DT_TABS.findIndex(t=>t.id===next);
+  dtTabTransitionDir=newI>oldI?1:(newI<oldI?-1:0);
+  dtTab=next; renderDetail(); }
 
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
@@ -12398,6 +12403,31 @@ function renderDetail(){
     ${dtTab==='tl'?renderDetailTL(item):''}
 
     ${footTxt?`<div class="dt-foot">${footTxt}</div>`:''}`;
+
+  // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
+  // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
+  if(dtTabTransitionDir){
+    const dir=dtTabTransitionDir;
+    dtTabTransitionDir=0;
+    const parts=Array.from(box.children).filter(el=>
+      !el.classList.contains('dt-top') && !el.classList.contains('dt-fab')
+    );
+    parts.forEach(el=>{
+      el.style.transition='none';
+      el.style.opacity='.82';
+      el.style.transform=`translate3d(${dir*22}px,0,0)`;
+      el.style.willChange='transform,opacity';
+    });
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      parts.forEach(el=>{
+        el.style.transition='transform .18s cubic-bezier(.22,1,.36,1), opacity .16s ease';
+        el.style.opacity='';
+        el.style.transform='';
+      });
+      setTimeout(()=>parts.forEach(el=>{el.style.transition='';el.style.willChange='';}),210);
+    }));
+  }
+
   // 重画一次就把圆钮放出来：换栏目、改完正文回来，都不该看见一颗还收着的按钮。
   // 记下时刻给 syncDetailFab 用：换栏目那一下页面高度会突变，浏览器跟着挪一次
   // 滚动位置，那一下不是用户在滑，不能算成一次「下滑」（否则刚切回来按钮又没了）
