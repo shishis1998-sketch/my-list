@@ -4590,8 +4590,11 @@ body.cal-view-period #pvEditFab{display:grid;}
 
 
 /* ADD/EDIT 记录抽屉：与时间线章节编辑统一顶部操作栏和高度 */
-#modal .mbox{height:70vh;max-height:70vh;min-height:0;}
+#modal .mbox{height:70vh;max-height:70vh;min-height:0;background:var(--bg);}
 
+
+/* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
+#modal .tlsheet-head{background:var(--bg);}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
