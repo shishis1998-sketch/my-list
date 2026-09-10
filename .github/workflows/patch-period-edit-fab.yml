@@ -1,0 +1,123 @@
+name: Patch period edit FAB
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-period-edit-fab.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index.html
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          def once(old, new, name):
+              global s
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{name}: expected 1 match, found {n}')
+              s = s.replace(old, new, 1)
+
+          # 1) FAB style: same size/placement/flat treatment as the note FAB,
+          # but use the period brand red. Its z-index stays below period scrim/sheet (200/201).
+          css_anchor = "#calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}\n\n/* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */"
+          css_insert = """#calViewPeriod {padding-bottom: calc(64px + env(safe-area-inset-bottom));}
+
+/* 经期月视图 · 右下角编辑按钮。尺寸、位置和详情/笔记页的 .dt-fab 对齐；
+   全站纯平面，不加阴影。按钮层级固定在 80，经期遮罩/抽屉是 200/201，
+   所以打开编辑抽屉后按钮自然留在弹窗后面，不会浮到最上层。 */
+#calViewPeriod .pv-edit-fab{
+  display:none;place-items:center;position:fixed;z-index:80;
+  right:16px;bottom:calc(16px + 64px + env(safe-area-inset-bottom));
+  width:48px;height:48px;padding:0;border:0;border-radius:50%;
+  color:#fff;
+  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--brand);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .16s ease,opacity .16s ease;
+}
+body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
+#calViewPeriod .pv-edit-fab[hidden]{display:none !important;}
+#calViewPeriod .pv-edit-fab:active{transform:scale(.92);}
+#calViewPeriod .pv-edit-fab svg{width:22px;height:22px;}
+
+/* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */"""
+          once(css_anchor, css_insert, 'period FAB css anchor')
+
+          # 2) Add the fixed button immediately before the edit sheet markup.
+          html_anchor = """        <!-- 经期记录 · 长按日期后编辑经血量 + 症状 -->
+        <div class=\"pv-sheet-scrim\" id=\"pvSheetScrim\" onclick=\"PV.cancelDaySheet()\"></div>"""
+          html_insert = """        <!-- 经期月视图右下角编辑入口：选中日期后点这里编辑。 -->
+        <button type=\"button\" class=\"pv-edit-fab\" id=\"pvEditFab\" aria-label=\"编辑经期\" title=\"编辑经期\"
+          onclick=\"PV.openEditFab()\" hidden>
+          <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\">
+            <path d=\"M4 19.5V21h1.5L16.8 9.7a2 2 0 0 0-2.8-2.8L4 17v2.5Z\"/>
+            <path d=\"M12.9 8l2.8 2.8\"/>
+            <path d=\"M12 17h8\"/>
+            <path d=\"M14.5 20h5.5\"/>
+          </svg>
+        </button>
+
+        <!-- 经期记录 · 右下角编辑按钮打开；原抽屉内容不变 -->
+        <div class=\"pv-sheet-scrim\" id=\"pvSheetScrim\" onclick=\"PV.cancelDaySheet()\"></div>"""
+          once(html_anchor, html_insert, 'period FAB html anchor')
+
+          # 3) FAB opens the currently highlighted day (or today / day 1 fallback from cardAnchor).
+          js_anchor = """    function openDaySheet(y, m, d) {
+      const body = document.getElementById('pvSheetBody');"""
+          js_insert = """    function openEditFab() {
+      if (homeView !== 'month') return;
+      const a = cardAnchor();
+      cardDay = { y: a.y, m: a.m, d: a.d };
+      selectDayForView(a.y, a.m, a.d);
+      openDaySheet(a.y, a.m, a.d);
+    }
+
+    function openDaySheet(y, m, d) {
+      const body = document.getElementById('pvSheetBody');"""
+          once(js_anchor, js_insert, 'openDaySheet anchor')
+
+          # 4) Show the button only in period month view, never in year view.
+          render_anchor = """    function afterRender() {
+      const cal = document.getElementById('calendar');
+      const extras = document.getElementById('pvExtras');"""
+          render_insert = """    function afterRender() {
+      const cal = document.getElementById('calendar');
+      const editFab = document.getElementById('pvEditFab');
+      if (editFab) editFab.hidden = homeView !== 'month';
+      const extras = document.getElementById('pvExtras');"""
+          once(render_anchor, render_insert, 'afterRender anchor')
+
+          # 5) Export click handler for the inline button.
+          export_anchor = """    openTagSheet, closeTagSheet, toggleMoreSymptoms,
+    closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,"""
+          export_insert = """    openTagSheet, closeTagSheet, toggleMoreSymptoms,
+    openEditFab, closeDaySheet, cancelDaySheet, finishDaySheet, clearDayRecord,"""
+          once(export_anchor, export_insert, 'PV export anchor')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'feat: add period edit floating button'
+          git push
