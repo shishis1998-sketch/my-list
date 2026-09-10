@@ -11,67 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Move period FAB to viewport root
-        shell: python
+        shell: bash
         run: |
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          btn='''        <!-- 经期月视图右下角编辑入口：选中日期后点这里编辑。 -->
-        <button type="button" class="pv-edit-fab" id="pvEditFab" aria-label="编辑经期" title="编辑经期"
-          onclick="PV.openEditFab()" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-
-'''
-          if btn not in s: raise SystemExit('period FAB markup not found')
-          s=s.replace(btn,'',1)
-          root='''</div><!-- /app -->
-
-<!-- ===== 手机端底部栏（仅 ≤1024px 显示）===== -->'''
-          root_insert='''</div><!-- /app -->
-
-<!-- 经期月视图右下角编辑入口：放在 app 根节点外，确保 fixed 永远按视口定位。 -->
-<button type="button" class="pv-edit-fab" id="pvEditFab" aria-label="编辑经期" title="编辑经期"
-  onclick="PV.openEditFab()" hidden>
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
-    <line x1="12" y1="5" x2="12" y2="19"/>
-    <line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-</button>
-
-<!-- ===== 手机端底部栏（仅 ≤1024px 显示）===== -->'''
-          if root not in s: raise SystemExit('app root anchor not found')
-          s=s.replace(root,root_insert,1)
-          old='''#calViewPeriod .pv-edit-fab{
-  display:none;place-items:center;position:fixed;z-index:80;
-  right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
-  width:48px;height:48px;padding:0;border:0;border-radius:50%;
-  color:#fff;
-  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--brand);
-  cursor:pointer;transition:transform .16s ease,opacity .16s ease;
-}
-body.cal-view-period #calViewPeriod .pv-edit-fab{display:grid;}
-#calViewPeriod .pv-edit-fab[hidden]{display:none !important;}
-#calViewPeriod .pv-edit-fab:active{transform:scale(.92);}
-#calViewPeriod .pv-edit-fab svg{width:20px;height:20px;}'''
-          new='''#pvEditFab{
-  display:none;place-items:center;position:fixed;z-index:80;
-  right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));
-  width:48px;height:48px;padding:0;border:0;border-radius:50%;
-  color:#fff;
-  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),#C72F49;
-  cursor:pointer;transition:transform .16s ease,opacity .16s ease;
-}
-body.cal-view-period #pvEditFab{display:grid;}
-#pvEditFab[hidden]{display:none !important;}
-#pvEditFab:active{transform:scale(.92);}
-#pvEditFab svg{width:20px;height:20px;}'''
-          if old not in s: raise SystemExit('period FAB CSS not found')
-          s=s.replace(old,new,1)
-          p.write_text(s,encoding='utf-8')
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgiaW5kZXguaHRtbCIpCnM9cC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKYnRuPScgICAgICAgIDwhLS0g57uP5pyf5pyI6KeG5Zu+5Y+z5LiL6KeS57yW6L6R5YWl5Y+j77ya6YCJ5Lit5pel5pyf5ZCO54K56L+Z6YeM57yW6L6R44CCIC0tPlxuICAgICAgICA8YnV0dG9uIHR5cGU9ImJ1dHRvbiIgY2xhc3M9InB2LWVkaXQtZmFiIiBpZD0icHZFZGl0RmFiIiBhcmlhLWxhYmVsPSLnvJbovpHnu4/mnJ8iIHRpdGxlPSLnvJbovpHnu4/mnJ8iXG4gICAgICAgICAgb25jbGljaz0iUFYub3BlbkVkaXRGYWIoKSIgaGlkZGVuPlxuICAgICAgICAgIDxzdmcgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgYXJpYS1oaWRkZW49InRydWUiPlxuICAgICAgICAgICAgPGxpbmUgeDE9IjEyIiB5MT0iNSIgeDI9IjEyIiB5Mj0iMTkiLz5cbiAgICAgICAgICAgIDxsaW5lIHgxPSI1IiB5MT0iMTIiIHgyPSIxOSIgeTI9IjEyIi8+XG4gICAgICAgICAgPC9zdmc+XG4gICAgICAgIDwvYnV0dG9uPlxuXG4nCmlmIGJ0biBub3QgaW4gczogcmFpc2UgU3lzdGVtRXhpdCgicGVyaW9kIEZBQiBtYXJrdXAgbm90IGZvdW5kIikKcz1zLnJlcGxhY2UoYnRuLCIiLDEpCnJvb3Q9JzwvZGl2PjwhLS0gL2FwcCAtLT5cblxuPCEtLSA9PT09PSDmiYvmnLrnq6/lupXpg6jmoI/vvIjku4Ug4omkMTAyNHB4IOaYvuekuu+8iT09PT09IC0tPicKcm9vdF9pbnNlcnQ9JzwvZGl2PjwhLS0gL2FwcCAtLT5cblxuPCEtLSDnu4/mnJ/mnIjop4blm77lj7PkuIvop5LnvJbovpHlhaXlj6PvvJrmlL7lnKggYXBwIOagueiKgueCueWklu+8jOehruS/nSBmaXhlZCDmsLjov5zmjInop4blj6PlrprkvY3jgIIgLS0+XG48YnV0dG9uIHR5cGU9ImJ1dHRvbiIgY2xhc3M9InB2LWVkaXQtZmFiIiBpZD0icHZFZGl0RmFiIiBhcmlhLWxhYmVsPSLnvJbovpHnu4/mnJ8iIHRpdGxlPSLnvJbovpHnu4/mnJ8iXG4gIG9uY2xpY2s9IlBWLm9wZW5FZGl0RmFiKCkiIGhpZGRlbj5cbiAgPHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjIuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBhcmlhLWhpZGRlbj0idHJ1ZSI+XG4gICAgPGxpbmUgeDE9IjEyIiB5MT0iNSIgeDI9IjEyIiB5Mj0iMTkiLz5cbiAgICA8bGluZSB4MT0iNSIgeTE9IjEyIiB4Mj0iMTkiIHkyPSIxMiIvPlxuICA8L3N2Zz5cbjwvYnV0dG9uPlxuXG48IS0tID09PT09IOaJi+acuuerr+W6lemDqOagj++8iOS7hSDiiaQxMDI0cHgg5pi+56S677yJPT09PT0gLS0+JwppZiByb290IG5vdCBpbiBzOiByYWlzZSBTeXN0ZW1FeGl0KCJhcHAgcm9vdCBhbmNob3Igbm90IGZvdW5kIikKcz1zLnJlcGxhY2Uocm9vdCxyb290X2luc2VydCwxKQpvbGQ9JyNjYWxWaWV3UGVyaW9kIC5wdi1lZGl0LWZhYntcbiAgZGlzcGxheTpub25lO3BsYWNlLWl0ZW1zOmNlbnRlcjtwb3NpdGlvbjpmaXhlZDt6LWluZGV4OjgwO1xuICByaWdodDp2YXIoLS1zcC0xNik7Ym90dG9tOmNhbGModmFyKC0tc3AtMTYpICsgNjRweCArIGVudihzYWZlLWFyZWEtaW5zZXQtYm90dG9tKSk7XG4gIHdpZHRoOjQ4cHg7aGVpZ2h0OjQ4cHg7cGFkZGluZzowO2JvcmRlcjowO2JvcmRlci1yYWRpdXM6NTAlO1xuICBjb2xvcjojZmZmO1xuICBiYWNrZ3JvdW5kOmxpbmVhci1ncmFkaWVudCgxNjBkZWcscmdiYSgyNTUsMjU1LDI1NSwuMjIpLHJnYmEoMjU1LDI1NSwyNTUsMCkgNDYlLHJnYmEoMCwwLDAsLjIwKSksdmFyKC0tYnJhbmQpO1xuICBjdXJzb3I6cG9pbnRlcjt0cmFuc2l0aW9uOnRyYW5zZm9ybSAuMTZzIGVhc2Usb3BhY2l0eSAuMTZzIGVhc2U7XG59XG5ib2R5LmNhbC12aWV3LXBlcmlvZCAjY2FsVmlld1BlcmlvZCAucHYtZWRpdC1mYWJ7ZGlzcGxheTpncmlkO31cbiNjYWxWaWV3UGVyaW9kIC5wdi1lZGl0LWZhYltoaWRkZW5de2Rpc3BsYXk6bm9uZSAhaW1wb3J0YW50O31cbiNjYWxWaWV3UGVyaW9kIC5wdi1lZGl0LWZhYjphY3RpdmV7dHJhbnNmb3JtOnNjYWxlKC45Mik7fVxuI2NhbFZpZXdQZXJpb2QgLnB2LWVkaXQtZmFiIHN2Z3t3aWR0aDoyMHB4O2hlaWdodDoyMHB4O30nCm5ldz0nI3B2RWRpdEZhYntcbiAgZGlzcGxheTpub25lO3BsYWNlLWl0ZW1zOmNlbnRlcjtwb3NpdGlvbjpmaXhlZDt6LWluZGV4OjgwO1xuICByaWdodDp2YXIoLS1zcC0xNik7Ym90dG9tOmNhbGModmFyKC0tc3AtMTYpICsgNjRweCArIGVudihzYWZlLWFyZWEtaW5zZXQtYm90dG9tKSk7XG4gIHdpZHRoOjQ4cHg7aGVpZ2h0OjQ4cHg7cGFkZGluZzowO2JvcmRlcjowO2JvcmRlci1yYWRpdXM6NTAlO1xuICBjb2xvcjojZmZmO1xuICBiYWNrZ3JvdW5kOmxpbmVhci1ncmFkaWVudCgxNjBkZWcscmdiYSgyNTUsMjU1LDI1NSwuMjIpLHJnYmEoMjU1LDI1NSwyNTUsMCkgNDYlLHJnYmEoMCwwLDAsLjIwKSksI0M3MkY0OTtcbiAgY3Vyc29yOnBvaW50ZXI7dHJhbnNpdGlvbjp0cmFuc2Zvcm0gLjE2cyBlYXNlLG9wYWNpdHkgLjE2cyBlYXNlO1xufVxuYm9keS5jYWwtdmlldy1wZXJpb2QgI3B2RWRpdEZhYntkaXNwbGF5OmdyaWQ7fVxuI3B2RWRpdEZhYltoaWRkZW5de2Rpc3BsYXk6bm9uZSAhaW1wb3J0YW50O31cbiNwdkVkaXRGYWI6YWN0aXZle3RyYW5zZm9ybTpzY2FsZSguOTIpO31cbiNwdkVkaXRGYWIgc3Zne3dpZHRoOjIwcHg7aGVpZ2h0OjIwcHg7fScKaWYgb2xkIG5vdCBpbiBzOiByYWlzZSBTeXN0ZW1FeGl0KCJwZXJpb2QgRkFCIENTUyBub3QgZm91bmQiKQpzPXMucmVwbGFjZShvbGQsbmV3LDEpCnAud3JpdGVfdGV4dChzLGVuY29kaW5nPSJ1dGYtOCIpCg==' | base64 -d > /tmp/patch.py
+          python3 /tmp/patch.py
       - name: Commit
         shell: bash
         run: |
