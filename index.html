@@ -2153,13 +2153,13 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 4px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#tlSheet .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
-#tlSheet .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
+#tlSheet .tlsheet-head,#modal .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
+#tlSheet .tlsheet-grip,#modal .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
   transition:background .14s ease,transform .14s ease;}
-#tlSheet .tlsheet-head:active .tlsheet-grip,
-#tlSheet.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
-#tlSheet .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#tlSheet .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
+#tlSheet .tlsheet-head:active .tlsheet-grip,#modal .tlsheet-head:active .tlsheet-grip,
+#tlSheet.dragging .tlsheet-grip,#modal .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
+#tlSheet .tlsheet-headrow,#modal .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#tlSheet .tlsheet-title,#modal .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
 .tlsheet-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
   color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
@@ -4605,18 +4605,6 @@ body.cal-view-period #pvEditFab{display:grid;}
 #modal .modal-edit-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
 
 
-/* 记录编辑顶部：直接照搬时间线章节抽屉的把手/标题栏 */
-#modal .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);display:block;flex:0 0 auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
-#modal .tlsheet-head:active{cursor:grabbing;}
-#modal .tlsheet-grip{width:36px;height:4px;border-radius:2px;margin:0 auto 8px;background:rgba(86,86,90,.34);transition:background .14s ease,transform .14s ease;}
-#modal .tlsheet-head:active .tlsheet-grip,#modal .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
-#modal .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#modal .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#modal .tlsheet-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
-#modal .tlsheet-action:first-child{justify-self:start;}
-#modal .tlsheet-action:last-child{justify-self:end;color:var(--accent);}
-#modal .tlsheet-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
-
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5086,11 +5074,11 @@ body.cal-view-period #pvEditFab{display:grid;}
 <!-- ===== ADD/EDIT MODAL ===== -->
 <div class="moverlay" id="modal">
   <div class="mbox" onclick="event.stopPropagation()">
-    <div class="mhdr tlsheet-head" id="modalSheetHead">
+    <div class="tlsheet-head" id="modalSheetHead">
       <div class="tlsheet-grip"></div>
       <div class="tlsheet-headrow">
         <button type="button" class="tlsheet-action" onclick="closeModal()">取消</button>
-        <div class="mtitle tlsheet-title" id="mtitle">添加记录</div>
+        <div class="tlsheet-title" id="mtitle">添加记录</div>
         <button type="button" class="tlsheet-action" onclick="saveRec()">完成</button>
       </div>
     </div>
@@ -14317,7 +14305,7 @@ function bindSheetDrag(box,head,close){
  ['icsColorModal',()=>closeIcsColor()],
  ['icsDelModal',()=>closeIcsDel()]].forEach(([id,close])=>{
   const dlg=document.getElementById(id);
-  if(dlg) bindSheetDrag(dlg.querySelector('.mbox'), dlg.querySelector('.mhdr'), close);
+  if(dlg) bindSheetDrag(dlg.querySelector('.mbox'), id==='modal'?document.getElementById('modalSheetHead'):dlg.querySelector('.mhdr'), close);
 });
 
 // ── 「离今天多久」：预览弹窗顶上那张小卡 ──────────────────────────
