@@ -1005,6 +1005,8 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     cursor:pointer;transition:transform .16s ease,opacity .16s ease;}
   .dt-fab:active{transform:scale(.92);}
   .dt-fab svg{width:20px;height:20px;}
+  /* 进入详情页时按钮直接就位，不播放淡入；滚动隐藏/恢复仍沿用 .dt-fab 的 transition。 */
+  body.detail-fab-entering .dt-fab{transition:none!important;}
   /* 往下读就让开，往回滑再回来（方向判定见 syncDetailFab）。
      落下去而不是原地淡出：手指是往下推的，按钮顺着推走才跟手 */
   body.fab-hidden .dt-fab{opacity:0;pointer-events:none;
@@ -11974,7 +11976,12 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
   detailId=id; dtTab='info';
+  // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
+  // 若不先关 transition，按钮就会从上一个页面遗留的隐藏态淡入/滑入。
+  // 下一帧立即恢复，因此用户真正上下滚动时的隐藏/出现动效完全不受影响。
+  document.body.classList.add('detail-fab-entering');
   renderDetail();
+  requestAnimationFrame(()=>document.body.classList.remove('detail-fab-entering'));
   document.body.classList.remove('tabs-hidden');   // 同 openCalendar：这页底栏是唯一导航
   document.body.classList.add('detail-open');
   document.getElementById('detailRoot').classList.add('open');
