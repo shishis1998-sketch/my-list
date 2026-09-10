@@ -491,7 +491,10 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
    底下没有第二层可漏，整页滚是安全的（详见 .cal-view 那段注释）。 */
 .detail-view{display:none;}
 .detail-view.open{display:flex;flex-direction:column;flex:1;overflow-y:auto;background:var(--bg);
-  animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
+  /* 详情页直接显示，不在整个父容器上做淡入。
+     FAB 位于 detailRoot 内，父级 opacity 动画会连固定按钮一起淡入，
+     单独关闭 .dt-fab 自身 transition 也挡不住父级透明度。 */
+  animation:none;}
 /* 详情激活时列表页那一套整体让位（同级切换，不是叠加，与 body.cal-open 一致）*/
 body.detail-open .topbar,
 body.detail-open .frow,
