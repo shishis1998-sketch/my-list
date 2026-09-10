@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/move-detail-edit-to-fab.yml'
+      - '.github/scripts/move_detail_edit_fab.py'
   workflow_dispatch:
 
 permissions:
