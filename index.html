@@ -3448,7 +3448,7 @@ body.cal-view-period #calViewPeriod .home-header{
 #calViewPeriod .swatch-1 .swatch-dot {background: var(--brand-tint);}
 #calViewPeriod .swatch-2 .swatch-dot {background: #cf4865;}
 #calViewPeriod .swatch-3 .swatch-dot {background: #834047;}
-/* 长按现在是「打开编辑弹窗」，iOS 上要挡掉系统自己的长按选择/复制菜单 */
+/* 日期格保持不可选中文字，避免触屏浏览时误选文本 */
 #calViewPeriod .day {position: relative;
   -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;}
 #calViewPeriod .day.has-sym {z-index: 2;}
@@ -3631,7 +3631,7 @@ body.cal-view-period #pvEditFab{display:grid;}
   box-shadow:inset 0 0 0 1px var(--line);}
 .pv-day-actions{justify-content:center;padding-top:12px;}
 .pv-day-actions .pv-btn-clear{flex:0 0 auto;padding:9px 18px;background:transparent;color:var(--brand);box-shadow:none;}
-/* 日期格的 +N 只负责浏览完整标签；编辑仍由长按日期进入另一张抽屉。 */
+/* 日期格的 +N 只负责浏览完整标签；编辑由右下角按钮进入。 */
 .pv-tag-sheet{max-height:46vh;padding-bottom:calc(20px + env(safe-area-inset-bottom));}
 .pv-tag-head{text-align:center;padding:0 4px 12px;}
 .pv-tag-date{display:block;font-size:17px;font-weight:700;color:var(--text-primary);}
@@ -4931,7 +4931,7 @@ body.cal-view-period #pvEditFab{display:grid;}
           <div class="legend" style="font-size:var(--fs-micro);gap:8px;margin:4px 0 8px;"></div>
         </div>
 
-        <!-- 日期标签 · 轻点 +N 后只读展开；长按日期仍进入下面的编辑抽屉 -->
+        <!-- 日期标签 · 轻点 +N 后只读展开；编辑由右下角按钮进入 -->
         <div class="pv-sheet-scrim" id="pvTagScrim" onclick="PV.closeTagSheet()"></div>
         <div class="pv-sheet pv-tag-sheet" id="pvTagSheet" role="dialog" aria-modal="true" aria-label="当天标签">
           <div class="pv-sheet-grab" role="button" aria-label="向下拖动关闭"></div>
@@ -8704,14 +8704,6 @@ window.PV = (function(){
       render();
     }
 
-    // ── 事件处理：长按取消 / 单击循环（带滑动检测防误触）──
-    let pressTimer = null;
-    let didLongPress = false;
-    let pressMonth = 0, pressDay = 0;
-    let startX = 0, startY = 0;
-    let moved = false;
-    const MOVE_THRESHOLD = 10; // 像素，超过此距离视为滑动而非点击
-
     // 三张经期抽屉共用同一套下拉手势：横杠可直接拖；标题区长按片刻后也可拖。
     // 标题栏里的「取消 / 完成」仍是普通按钮；编辑抽屉下拉关闭按取消处理，不保存草稿。
     function bindSheetDrag(sheetId, scrimId, closeFn) {
@@ -8802,92 +8794,16 @@ window.PV = (function(){
 
     function setupEvents() {
       const cal = document.getElementById('calendar');
-
-      cal.addEventListener('touchstart', e => {
-        if (e.target.closest('.day-more')) { clearTimeout(pressTimer); pressDay = 0; return; }
+      // 日期只保留单击选择；编辑统一由右下角「＋」按钮进入。
+      cal.addEventListener('click', e => {
+        if (e.target.closest('.day-more')) return;
         const el = e.target.closest('[data-day]') || e.target.closest('.daywrap')?.querySelector('.day[data-day]');
-        if (!el) return;
-        // 只有月视图才允许编辑日期(年视图点整月是放大)
-        if (homeView !== 'month') return;
-        pressMonth = +el.dataset.month;
-        pressDay   = +el.dataset.day;
-        didLongPress = false;
-        moved = false;
-        const t = e.touches[0];
-        startX = t.clientX;
-        startY = t.clientY;
-        pressTimer = setTimeout(() => {
-          if (moved) return;
-          didLongPress = true;
-          editDay(pressMonth, pressDay);   // 长按才进编辑弹窗
-        }, 500);
-      }, { passive: true });
-
-      cal.addEventListener('touchmove', e => {
-        if (!pressDay) return;
-        const t = e.touches[0];
-        if (Math.abs(t.clientX - startX) > MOVE_THRESHOLD ||
-            Math.abs(t.clientY - startY) > MOVE_THRESHOLD) {
-          moved = true;
-          clearTimeout(pressTimer);
-        }
-      }, { passive: true });
-
-      cal.addEventListener('touchend', e => {
-        clearTimeout(pressTimer);
-        if (!moved && !didLongPress && pressDay) {
-          e.preventDefault();
-          pickDay(pressMonth, pressDay);   // 单击只切换选中日
-        }
-        pressDay = 0;
-      });
-
-      cal.addEventListener('touchcancel', () => {
-        clearTimeout(pressTimer); pressDay = 0;
-      });
-
-      // 桌面鼠标
-      cal.addEventListener('mousedown', e => {
-        if (e.target.closest('.day-more')) { clearTimeout(pressTimer); pressDay = 0; return; }
-        const el = e.target.closest('[data-day]') || e.target.closest('.daywrap')?.querySelector('.day[data-day]');
-        if (!el) return;
-        // 只有月视图才允许编辑日期(年视图点整月是放大)
-        if (homeView !== 'month') return;
-        pressMonth = +el.dataset.month;
-        pressDay   = +el.dataset.day;
-        didLongPress = false;
-        moved = false;
-        startX = e.clientX;
-        startY = e.clientY;
-        pressTimer = setTimeout(() => {
-          if (moved) return;
-          didLongPress = true;
-          editDay(pressMonth, pressDay);   // 长按才进编辑弹窗
-        }, 500);
-      });
-
-      cal.addEventListener('mousemove', e => {
-        if (!pressDay) return;
-        if (Math.abs(e.clientX - startX) > MOVE_THRESHOLD ||
-            Math.abs(e.clientY - startY) > MOVE_THRESHOLD) {
-          moved = true;
-          clearTimeout(pressTimer);
-        }
-      });
-
-      cal.addEventListener('mouseup', () => {
-        clearTimeout(pressTimer);
-        if (!moved && !didLongPress && pressDay) pickDay(pressMonth, pressDay);
-        pressDay = 0;
-      });
-
-      cal.addEventListener('mouseleave', () => {
-        clearTimeout(pressTimer); pressDay = 0;
+        if (!el || homeView !== 'month') return;
+        pickDay(+el.dataset.month, +el.dataset.day);
       });
     }
 
     // 单击某天：只把选中日切过去（状态卡跟着换），不打断视线弹窗。
-    // 长按才进编辑弹窗——记录经血量／症状是低频动作，浏览才是高频的。
     function pickDay(month, day) {
       if (homeView !== 'month') return;
       closeMoreSymptoms();
@@ -8896,14 +8812,6 @@ window.PV = (function(){
       refreshDayCard();
       if (typeof haptic === 'function') haptic('tap');
     }
-    // 长按某天：弹出编辑弹窗（原先长按是「清除记录」，该功能仍在弹窗里的「清除记录」按钮）
-    function editDay(month, day) {
-      if (homeView !== 'month') return;
-      cardDay = { y: year, m: month, d: day };
-      selectDayForView(year, month, day);
-      openDaySheet(year, month, day);
-    }
-
     // 选中某天用于查看/编辑(放大态下)
     function selectDayForView(y, m, d) {
       selectedView = { y, m, d };
