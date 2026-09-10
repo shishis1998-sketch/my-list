@@ -1,0 +1,22 @@
+name: Set record edit sheet gray
+on:
+  push:
+    paths:
+      - '.github/scripts/set_record_edit_sheet_gray.py'
+      - '.github/workflows/set-record-edit-sheet-gray.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python .github/scripts/set_record_edit_sheet_gray.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Match record edit sheet background to period editor"
+          git push
