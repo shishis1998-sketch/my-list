@@ -3,25 +3,56 @@ from pathlib import Path
 p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 
-replacements = [
-    ('<div class="dt-card dt-hd" onclick="editFromDetail(event)" data-edit="f-name">', '<div class="dt-card dt-hd">'),
-    ('<div class="dt-card" onclick="editFromDetail(event)" data-edit="f-watch">', '<div class="dt-card">'),
-    ('<div class="dt-card" onclick="editFromDetail(event)" data-edit="tinput">', '<div class="dt-card">'),
-]
-for old, new in replacements:
-    count = s.count(old)
-    if count != 1:
-        raise SystemExit(f'Expected exactly one occurrence, got {count}: {old}')
-    s = s.replace(old, new, 1)
-
-old = '''        ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签</div>'}
-      </div>`:''}'''
-new = '''        ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签</div>'}
+old_header = '''    <div class="mhdr">
+      <div class="mtitle" id="mtitle">添加记录</div>
+      <button class="mclose" onclick="closeModal()">✕</button>
+    </div>'''
+new_header = '''    <div class="mhdr modal-edit-head">
+      <div class="modal-edit-grip"></div>
+      <div class="modal-edit-headrow">
+        <button type="button" class="modal-edit-action" onclick="closeModal()">取消</button>
+        <div class="mtitle" id="mtitle">添加记录</div>
+        <button type="button" class="modal-edit-action" onclick="saveRec()">完成</button>
       </div>
-      <button class="dt-fab dt-edit-fab" onclick="openEdit(detailId)" aria-label="编辑记录"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:''}'''
-count = s.count(old)
-if count != 1:
-    raise SystemExit(f'Expected one overview tag-card ending, got {count}')
-s = s.replace(old, new, 1)
+    </div>'''
+if old_header not in s:
+    raise SystemExit('Edit modal header not found')
+s = s.replace(old_header, new_header, 1)
+
+old_footer = '''    </div><!-- /mbody -->
+    <div class="mftr">
+      <button class="btn btn-g" onclick="closeModal()">取消</button>
+      <button class="btn btn-p" onclick="saveRec()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CAT MANAGER ===== -->'''
+new_footer = '''    </div><!-- /mbody -->
+  </div>
+</div>
+
+<!-- ===== CAT MANAGER ===== -->'''
+if old_footer not in s:
+    raise SystemExit('Edit modal footer not found')
+s = s.replace(old_footer, new_footer, 1)
+
+css = r'''
+/* ADD/EDIT 记录抽屉：与时间线章节编辑统一顶部操作栏和高度 */
+#modal .mbox{height:70vh;max-height:70vh;min-height:0;}
+#modal .modal-edit-head{display:block;background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
+#modal .modal-edit-grip{width:36px;height:4px;border-radius:2px;margin:0 auto 8px;background:rgba(86,86,90,.34);}
+#modal .modal-edit-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#modal .modal-edit-headrow .mtitle{min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#modal .modal-edit-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
+#modal .modal-edit-action:first-child{justify-self:start;}
+#modal .modal-edit-action:last-child{justify-self:end;color:var(--accent);}
+#modal .modal-edit-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
+'''
+marker = '</style>'
+if css.strip() not in s:
+    if marker not in s:
+        raise SystemExit('style end not found')
+    s = s.replace(marker, css + '\n' + marker, 1)
 
 p.write_text(s, encoding='utf-8')
