@@ -1,0 +1,51 @@
+name: Fix record edit sheet match timeline
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-record-edit-sheet-match-timeline.yml'
+      - '.github/scripts/fix_record_edit_sheet_match_timeline.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch record edit sheet
+        run: python3 .github/scripts/fix_record_edit_sheet_match_timeline.py
+      - name: Validate patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          checks = [
+              '<div class="tlsheet-head" id="modalSheetHead">',
+              '#modal .mbox{height:70vh;max-height:70vh;min-height:0;}',
+              '#tlSheet .tlsheet-grip,#modal .tlsheet-grip{width:36px;height:4px;',
+              '#tlSheet.dragging .tlsheet-grip,#modal .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}',
+              "box.classList.add('dragging');",
+              "box.classList.remove('dragging');",
+              "id==='modal'?document.getElementById('modalSheetHead'):dlg.querySelector('.mhdr')",
+          ]
+          missing = [x for x in checks if x not in s]
+          if missing:
+              raise SystemExit('validation failed: ' + repr(missing))
+          if '#modal .mhdr::before' in s:
+              raise SystemExit('old duplicate modal pseudo-grip still present')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No index changes"
+            exit 0
+          fi
+          git commit -m "Fix record edit sheet layout and drag feedback"
+          git push
