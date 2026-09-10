@@ -12057,7 +12057,10 @@ let dtTab='info';
     if(i<0)return;
     const ni=i+(dx<0?1:-1);
     const hasNext=ni>=0&&ni<DT_TABS.length;
-    const px=hasNext?dx:dx*.22;
+    const w=root.getBoundingClientRect().width||window.innerWidth;
+    const raw=hasNext?dx:dx*.22;
+    const progress=Math.max(-1,Math.min(1,raw/w));
+    const px=progress*w;
 
     moved.forEach(el=>{
       el.style.transition='none';
@@ -12067,16 +12070,19 @@ let dtTab='info';
 
     const p=hasNext?ensurePeek(dx):null;
     if(p){
-      const w=root.getBoundingClientRect().width||window.innerWidth;
-      const base=dx<0?w:-w;
+      const dir=dx<0?1:-1;
+      // 相邻页与当前页严格共用同一个 progress：
+      // 当前页走 50%，相邻页也只进入 50%。
       p.style.transition='none';
-      p.style.transform=`translate3d(${base+dx}px,0,0)`;
+      p.style.transform=`translate3d(${dir*w+px}px,0,0)`;
     }
 
     const thumb=root.querySelector('.dt-tabs .cvt-thumb');
     if(thumb){
       const step=thumb.getBoundingClientRect().width;
-      const target=Math.max(0,Math.min(step*(DT_TABS.length-1),i*step-dx));
+      // 白色胶囊也按同一个 progress 换算到一个 tab 的位移。
+      // 这样页面进度和顶部指示条始终 1:1 同步。
+      const target=Math.max(0,Math.min(step*(DT_TABS.length-1),i*step-progress*step));
       thumb.style.transition='none';
       thumb.style.transform=`translate3d(${target}px,0,0)`;
     }
