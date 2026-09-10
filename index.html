@@ -2896,7 +2896,6 @@ body.cal-view-period #calViewPeriod .home-header{
   position:sticky !important;
   top:0 !important;
   z-index:50;
-  background:var(--bg) !important;
 }
 #calViewPeriod .pv-nav{display:flex;align-items:center;gap:0;margin-left:-6px;}
 #calViewPeriod .pv-navlabel{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
@@ -3967,7 +3966,7 @@ body.cal-view-period #pvEditFab{display:grid;}
    标题栏与外层卡壳都退成透明，让每个月自己成卡，参照标签页的卡片语言。
    选择器带 .pv-year 且比上面那些年视图规则更靠后，才压得住 3109 行那条
    nth-child 分割线（两者特异性相同，靠源码顺序决胜）。 */
-#calViewPeriod.pv-year .home-header{background:transparent;border:none;border-radius:0;
+#calViewPeriod.pv-year .home-header{background:var(--bg);border:none;border-radius:0;
   margin:6px 14px 0;padding:8px 10px;}
 #calViewPeriod.pv-year .pv-cardwrap{background:transparent;border:none;border-radius:0;
   margin:0 14px 12px;padding:0;}
