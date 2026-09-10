@@ -4605,6 +4605,9 @@ body.cal-view-period #pvEditFab{display:grid;}
 #modal .modal-edit-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
 
 
+
+/* record edit grip explicit pressed state */
+#modal .tlsheet-grip.is-pressed{background:var(--accent);transform:scaleX(1.08);}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -17011,7 +17014,7 @@ checkIncomingSyncLink();
     e.preventDefault(); // 在遮罩或其他区域,拦截
   }, {passive:false});
 })();
-</script>
+\n/* record edit grip explicit pointer feedback */\n(function(){\n  const head=document.getElementById('modalSheetHead');\n  if(!head || head.dataset.gripFeedbackBound==='1') return;\n  const grip=head.querySelector('.tlsheet-grip');\n  if(!grip) return;\n  head.dataset.gripFeedbackBound='1';\n  const on=()=>grip.classList.add('is-pressed');\n  const off=()=>grip.classList.remove('is-pressed');\n  head.addEventListener('pointerdown',e=>{\n    if(e.target.closest('button')) return;\n    on();\n  });\n  head.addEventListener('pointerup',off);\n  head.addEventListener('pointercancel',off);\n  head.addEventListener('lostpointercapture',off);\n  window.addEventListener('pointerup',off);\n})();\n</script>
 </body>
 </html>
 
