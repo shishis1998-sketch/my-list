@@ -4593,8 +4593,10 @@ body.cal-view-period #pvEditFab{display:grid;}
 
 /* ADD/EDIT 记录抽屉：与时间线章节编辑统一顶部操作栏和高度 */
 #modal .mbox{height:70vh;max-height:70vh;min-height:0;}
-#modal .modal-edit-head{display:block;background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
-#modal .modal-edit-grip{width:36px;height:4px;border-radius:2px;margin:0 auto 8px;background:rgba(86,86,90,.34);}
+#modal .modal-edit-head{display:block;background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);flex:0 0 auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;}
+#modal .modal-edit-head:active{cursor:grabbing;}
+#modal .modal-edit-grip{width:36px;height:4px;border-radius:2px;margin:0 auto 8px;background:rgba(86,86,90,.34);transition:background .14s ease,transform .14s ease;}
+#modal .modal-edit-head:active .modal-edit-grip,#modal .mbox.dragging .modal-edit-grip{background:var(--accent);transform:scaleX(1.08);}
 #modal .modal-edit-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
 #modal .modal-edit-headrow .mtitle{min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #modal .modal-edit-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
@@ -14297,7 +14299,8 @@ function bindSheetDrag(box,head,close){
 // 它们的标题栏写死在页面里，开合只换类名，所以进页面绑一次就够
 // （事件预览那张是每次 showCalNotePreview 里绑的，bindSheetDrag 自己认得出重复绑）。
 // 笔记那张「关抽屉即保存」，拉下去和点 ✕ 是同一条路，不会丢东西
-[['noteModal',()=>closeNoteModal()],
+[['modal',()=>closeModal()],
+ ['noteModal',()=>closeNoteModal()],
  ['icsColorModal',()=>closeIcsColor()],
  ['icsDelModal',()=>closeIcsDel()]].forEach(([id,close])=>{
   const dlg=document.getElementById(id);
