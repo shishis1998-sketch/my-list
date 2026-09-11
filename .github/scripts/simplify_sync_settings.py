@@ -5,19 +5,18 @@ p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 before = s
 
-old = '''if(tid){
-    sb.innerHTML='<b style="color:var(--success)">✓ 云同步已启用</b><br>数据会在保存时自动同步，也可以手动拉取/推送。';
-  }else{
-    sb.innerHTML='<b>尚未启用云同步</b><br>填入 token 后，所有修改会自动同步到你的 GitHub 私密 Gist；在任何设备打开同一份 HTML 都能看到最新数据。';
-  }'''
-new = '''if(tid){
-    sb.innerHTML='<b style="color:var(--success)">✓ 云同步已启用</b>';
-  }else{
-    sb.innerHTML='<b>尚未启用云同步</b>';
-  }'''
-if old not in s:
-    raise SystemExit('sync status block not found')
-s = s.replace(old, new, 1)
+# Keep only the no-token status title; remove its explanatory paragraph.
+status_pattern = re.compile(
+    r'''(if\(!getToken\(\)\)\{\s*sb\.innerHTML=)'<b style="color:var\(--text-primary\)">尚未启用云同步</b><br>[^']*';''',
+    re.S,
+)
+s, count = status_pattern.subn(
+    r'''\1'<b style="color:var(--text-primary)">尚未启用云同步</b>';''',
+    s,
+    count=1,
+)
+if count != 1:
+    raise SystemExit(f'sync status block: expected 1 match, found {count}')
 
 patches = [
     (
