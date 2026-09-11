@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [.github/workflows/simplify-sync-settings.yml]
+    paths:
+      - .github/workflows/simplify-sync-settings.yml
+      - .github/scripts/run_simplify_sync_settings.txt
 
 permissions:
   contents: write
@@ -75,5 +77,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m 'Simplify cloud sync settings'
           git push
-
-# trigger
