@@ -5,7 +5,6 @@ p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 before = s
 
-# Keep only the no-token status title; remove its explanatory paragraph.
 status_pattern = re.compile(
     r'''(if\(!getToken\(\)\)\{\s*sb\.innerHTML=)'<b style="color:var\(--text-primary\)">尚未启用云同步</b><br>[^']*';''',
     re.S,
@@ -20,8 +19,8 @@ if count != 1:
 
 patches = [
     (
-        r'\n\s*<!-- 二维码配置传输：新设备扫码一键接入，无需手填 token -->\s*\n\s*<div style="display:flex;gap:var\(--sp-8\);margin-top:var\(--sp-14\)">.*?</div>\s*\n\s*<div style="font-size:var\(--fs-foot\);color:var\(--text-muted\);margin-top:var\(--sp-6\);line-height:var\(--lh-normal\)">.*?</div>',
-        '',
+        r'\n\s*<!-- 二维码配置传输：新设备扫码一键接入，无需手填 token -->.*?(?=\n\s*<!-- 覆盖前的本机备份)',
+        '\n',
         'QR controls',
     ),
     (
