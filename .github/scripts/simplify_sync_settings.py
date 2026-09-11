@@ -63,6 +63,26 @@ patches = [
         '\n',
         'QR startup hook',
     ),
+    (
+        r'\n/\* 二维码 / 扫码取景框：.*?#scanModal \.mbox\{max-width:360px;\}',
+        '',
+        'QR modal styles',
+    ),
+    (
+        r'\n\s*/\* 上面那些各自钉着一个桌面宽度的弹窗，平板上一并跟着屏幕放开。.*?放宽了只是两边空着。 \*/',
+        '',
+        'QR desktop note',
+    ),
+    (
+        r"\n\s*\{id:'qrModal',\s*cls:'open',\s*close:\(\)=>closeSyncQR\(\)\},",
+        '',
+        'QR modal registry hook',
+    ),
+    (
+        r"\n\s*\{id:'scanModal',\s*cls:'open',\s*close:\(\)=>closeSyncScan\(\)\},",
+        '',
+        'scanner modal registry hook',
+    ),
 ]
 
 for pattern, replacement, label in patches:
