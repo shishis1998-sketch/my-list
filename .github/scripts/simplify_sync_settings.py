@@ -24,7 +24,7 @@ patches = [
         'QR controls',
     ),
     (
-        r'(<span class="local-toggle-title">👀 只读模式（这台设备只看不传）</span>)\s*<span class="local-toggle-desc">.*?</span>',
+        r'(<div class="local-toggle-title">👀 只读模式（这台设备只看不传）</div>)\s*<div class="local-toggle-desc">.*?</div>',
         r'\1',
         'read-only explanation',
     ),
