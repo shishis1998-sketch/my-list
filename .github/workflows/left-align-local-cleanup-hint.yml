@@ -1,0 +1,36 @@
+name: Left align local cleanup hint
+
+on:
+  push:
+    paths:
+      - '.github/workflows/left-align-local-cleanup-hint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch alignment
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='''<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)">\n        仅清除本机数据，云端不受影响。\n      </div>'''
+          new='''<div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">\n        仅清除本机数据，云端不受影响。\n      </div>'''
+          if old not in s:
+              raise SystemExit('target block not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --check
+          git commit -m "Left align local cleanup hint"
+          git push
