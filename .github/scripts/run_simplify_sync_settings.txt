@@ -1,1 +1,2 @@
 Trigger the cloud sync settings cleanup workflow.
+run=2
