@@ -1,11 +1,11 @@
 name: Simplify sync settings
 
 on:
-  workflow_dispatch:
   push:
     paths:
       - '.github/workflows/simplify-sync-settings.yml'
-      - '.github/scripts/run_simplify_sync_settings.txt'
+      - '.github/scripts/simplify_sync_settings.py'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,54 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Patch index
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('index.html'); s=p.read_text(encoding='utf-8'); before=s
-          old='''if(tid){
-    sb.innerHTML='<b style="color:var(--success)">✓ 云同步已启用</b><br>数据会在保存时自动同步，也可以手动拉取/推送。';
-  }else{
-    sb.innerHTML='<b>尚未启用云同步</b><br>填入 token 后，所有修改会自动同步到你的 GitHub 私密 Gist；在任何设备打开同一份 HTML 都能看到最新数据。';
-  }'''
-          new='''if(tid){
-    sb.innerHTML='<b style="color:var(--success)">✓ 云同步已启用</b>';
-  }else{
-    sb.innerHTML='<b>尚未启用云同步</b>';
-  }'''
-          if old not in s: raise SystemExit('status block not found')
-          s=s.replace(old,new,1)
-          patterns=[
-            (r'\n\s*<!-- 二维码配置传输：新设备扫码一键接入，无需手填 token -->\s*\n\s*<div style="display:flex;gap:var\(--sp-8\);margin-top:var\(--sp-14\)">.*?</div>\s*\n\s*<div style="font-size:var\(--fs-foot\);color:var\(--text-muted\);margin-top:var\(--sp-6\);line-height:var\(--lh-normal\)">.*?</div>','',1),
-            (r'(<span class="local-toggle-title">👀 只读模式（这台设备只看不传）</span>)\s*<span class="local-toggle-desc">.*?</span>',r'\1',1),
-            (r'(<input type="password" id="f-gh-pw"[^>]*>\s*<div style="font-size:var\(--fs-foot\);color:var\(--text-muted\);margin-top:var\(--sp-6\);line-height:var\(--lh-normal\)">)\s*.*?\s*(</div>)',r'\1\n        主密码只存本机，<b>不会上传</b>；换设备时填写同一密码即可解密。忘记后无法恢复云端备忘。\n      \2',1),
-            (r'\n<!-- ===== SYNC QR SHOW MODAL ===== -->.*?(?=\n<!-- ===== [A-Z])','\n',1),
-            (r'\n<!-- ===== SYNC SCAN MODAL ===== -->.*?(?=\n<!-- ===== [A-Z])','\n',1),
-            (r'\n<!-- jsQR \(QR decoder, Apache-2\.0\).*?</script>\s*','\n',1),
-            (r'<!-- QR Code Generator \(Kazuhiko Arase, MIT\).*?</script>\s*','',1),
-            (r'\n// ── 二维码配置传输（token \+ Gist ID，无需手填/不显示明文）.*?(?=\n// ── Filter & Sort)','\n',1),
-            (r'\ncheckIncomingSyncLink\(\);\s*','\n',1),
-          ]
-          for i,(pat,repl,want) in enumerate(patterns,1):
-            s,n=re.subn(pat,repl,s,count=want,flags=re.S)
-            if n!=want: raise SystemExit(f'patch {i} matches={n}, expected={want}')
-          if s==before: raise SystemExit('no changes')
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Verify
-        run: |
-          grep -q '尚未启用云同步' index.html
-          grep -q '只读模式（这台设备只看不传）' index.html
-          grep -q '清除这台设备的本机数据' index.html
-          grep -q '主密码只存本机' index.html
-          ! grep -q '扫码导入' index.html
-          ! grep -q '生成二维码' index.html
-          ! grep -q 'showSyncQR' index.html
-          ! grep -q 'openSyncScan' index.html
-          ! grep -q 'qrModal' index.html
-          ! grep -q 'scanModal' index.html
-          ! grep -q 'checkIncomingSyncLink' index.html
-          ! grep -q 'jsQR v1.4.0' index.html
+        run: python3 .github/scripts/simplify_sync_settings.py
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
