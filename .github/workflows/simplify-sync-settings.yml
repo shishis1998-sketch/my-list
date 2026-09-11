@@ -3,17 +3,15 @@ name: Simplify sync settings
 on:
   workflow_dispatch:
   push:
-    branches: [main]
     paths:
-      - .github/workflows/simplify-sync-settings.yml
-      - .github/scripts/run_simplify_sync_settings.txt
+      - '.github/workflows/simplify-sync-settings.yml'
+      - '.github/scripts/run_simplify_sync_settings.txt'
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +21,6 @@ jobs:
           from pathlib import Path
           import re
           p=Path('index.html'); s=p.read_text(encoding='utf-8'); before=s
-
           old='''if(tid){
     sb.innerHTML='<b style="color:var(--success)">✓ 云同步已启用</b><br>数据会在保存时自动同步，也可以手动拉取/推送。';
   }else{
@@ -36,7 +33,6 @@ jobs:
   }'''
           if old not in s: raise SystemExit('status block not found')
           s=s.replace(old,new,1)
-
           patterns=[
             (r'\n\s*<!-- 二维码配置传输：新设备扫码一键接入，无需手填 token -->\s*\n\s*<div style="display:flex;gap:var\(--sp-8\);margin-top:var\(--sp-14\)">.*?</div>\s*\n\s*<div style="font-size:var\(--fs-foot\);color:var\(--text-muted\);margin-top:var\(--sp-6\);line-height:var\(--lh-normal\)">.*?</div>','',1),
             (r'(<span class="local-toggle-title">👀 只读模式（这台设备只看不传）</span>)\s*<span class="local-toggle-desc">.*?</span>',r'\1',1),
@@ -51,7 +47,6 @@ jobs:
           for i,(pat,repl,want) in enumerate(patterns,1):
             s,n=re.subn(pat,repl,s,count=want,flags=re.S)
             if n!=want: raise SystemExit(f'patch {i} matches={n}, expected={want}')
-
           if s==before: raise SystemExit('no changes')
           p.write_text(s,encoding='utf-8')
           PY
@@ -69,11 +64,11 @@ jobs:
           ! grep -q 'scanModal' index.html
           ! grep -q 'checkIncomingSyncLink' index.html
           ! grep -q 'jsQR v1.4.0' index.html
-      - name: Commit
+      - name: Commit changes
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m 'Simplify cloud sync settings'
+          git diff --cached --check
+          git commit -m "Simplify cloud sync settings"
           git push
