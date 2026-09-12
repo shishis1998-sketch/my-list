@@ -4600,6 +4600,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 #modal .tlsheet-head{background:var(--bg);}
+/* 食记只保留日期和简短内容，沿用取消/完成抽屉。 */
+#noteModal.food-editor .mbody > :not(#nf-title-group):not(#nf-body-group),
+#noteModal.food-editor .fmt-bar,
+#noteModal.food-editor #nf-thumb{display:none !important;}
+#noteModal.food-editor .mbox{height:auto;min-height:0;max-height:min(76vh,100%);}
+#noteModal.food-editor #nf-body{height:100px;min-height:100px;max-height:160px;resize:vertical;}
+#noteModal.food-editor #nf-body-group{margin-bottom:0;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5346,7 +5353,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <button type="button" class="note-modal-action note-modal-done" onclick="completeNoteModal()">完成</button>
     </div>
     <div class="mbody">
-    <div class="fg">
+    <div class="fg" id="nf-title-group">
       <label>标题</label>
       <input type="text" id="nf-title" placeholder="可留空">
     </div>
@@ -11587,11 +11594,20 @@ function toast(msg,hap='tap'){
 }
 
 // Food calendar shares calendar rendering; only records with this explicit ID belong to it.
-function calendarNotes(){return notes.filter(n=>calView==='food'?n.calendarId==='food':n.calendarId!=='food');}
+function calendarNotes(){
+  if(calView!=='food')return notes.filter(n=>n.calendarId!=='food');
+  // 新增记录在 notes 头部；先反转，保证同一毫秒添加的记录也按先后排列。
+  return notes.filter(n=>n.calendarId==='food').reverse().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+}
 function calendarMedia(){return calView==='food'?[]:data;}
 let foodEditor=false;
 function setFoodEditor(on){
   foodEditor=on;
+  document.getElementById('noteModal').classList.toggle('food-editor',on);
+  const body=document.getElementById('nf-body');
+  if(body.dataset.notePlaceholder===undefined)body.dataset.notePlaceholder=body.placeholder;
+  body.placeholder=on?'吃了什么…':body.dataset.notePlaceholder;
+  document.querySelector('#nf-body-group > label').textContent=on?'内容':'正文';
   document.getElementById('nf-sub').closest('.fg').style.display=on?'none':'';
   const input=document.getElementById('nf-title');
   input.previousElementSibling.textContent=on?'日期':'标题';
@@ -12475,6 +12491,7 @@ function makeCalTlEmpty(text){
 
 // 当天记录右侧信息：笔记→跨天「第X天」(带起止日区间)；影音→分类(+评分)
 function calCurTail(r){
+  if(calView==='food')return '';
   if(r._isNote){
     const dm=(r.body||'').match(/第(\d+)\/(\d+)天/);
     if(dm){
@@ -14869,5 +14886,4 @@ boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger(); restoreLa
 </script>
 </body>
 </html>
-
 
