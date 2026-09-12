@@ -1675,6 +1675,21 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-gridclip.has-inline{height:auto!important;overflow:visible;flex-shrink:0;}
 .cal-gridclip.has-inline .cal-grid{transform:none;grid-auto-rows:auto;}
 .cal-gridclip.has-inline .cal-fade{display:none;}
+.cal-gridclip.has-inline.inline-measured{
+  height:calc(var(--inline-full) - (var(--inline-full) - var(--inline-closed)) * var(--p)) !important;
+  overflow:hidden;
+}
+.cal-gridclip.has-inline.inline-measured .cal-grid{
+  transform:translateY(calc(-1 * var(--inline-shift) * var(--p)));
+}
+.cal-gridclip.has-inline.inline-measured.cal-animating,
+.cal-gridclip.has-inline.inline-measured .cal-grid.cal-animating{
+  transition:--p .3s cubic-bezier(.22,1,.36,1);
+}
+@media (prefers-reduced-motion:reduce){
+  .cal-gridclip.has-inline.inline-measured.cal-animating,
+  .cal-gridclip.has-inline.inline-measured .cal-grid.cal-animating{transition:none;}
+}
 /* 展开所在周：圆点下方留白由 4px 增至 12px，轮廓随行高自动延伸。 */
 .cal-gridclip.has-inline .cal-day.cal-focusrow{padding-bottom:var(--sp-12);}
 .cal-inline-detail{position:relative;grid-column:1 / -1!important;
@@ -11804,6 +11819,24 @@ function closeCalSheet(){
   window.addEventListener('mouseup',onEnd);
 })();
 
+function measureInlineCalCollapse(){
+  const clip=document.getElementById('calGridClip'),grid=document.getElementById('calGrid');
+  if(!clip||!grid||!clip.classList.contains('has-inline'))return;
+  const selected=grid.querySelector('.cal-selected'),detail=grid.querySelector('.cal-inline-detail');
+  if(!selected||!detail||!grid.getBoundingClientRect().height)return;
+  const cells=Array.from(grid.children).filter(el=>el.classList.contains('cal-day'));
+  const index=cells.indexOf(selected),week=cells.slice(Math.floor(index/7)*7,Math.floor(index/7)*7+7);
+  const bounds=grid.getBoundingClientRect();
+  const top=Math.max(0,Math.min(...week.map(el=>el.getBoundingClientRect().top))-bounds.top-2);
+  const full=bounds.height;
+  const collapsed=Math.min(full,detail.getBoundingClientRect().bottom-bounds.top-top+8);
+  clip.style.setProperty('--inline-full',full+'px');
+  clip.style.setProperty('--inline-closed',collapsed+'px');
+  clip.style.setProperty('--inline-shift',top+'px');
+  clip.classList.add('inline-measured');
+  calCollapseTravel=Math.max(1,full-collapsed);
+}
+
 // —— 拖动日历卡底部把手：整月 ⇄ 焦点周那一行 ——
 (function calGridDrag(){
   const clip=document.getElementById('calGridClip');
@@ -11819,7 +11852,8 @@ function closeCalSheet(){
               document.getElementById('calFadeBot')].filter(Boolean);
   const writeP=p=>{p=Math.max(0,Math.min(1,p));clip.style.setProperty('--p',p);
     for(const el of kids)el.style.setProperty('--p',p);
-    grab.classList.toggle('cal-grab-on',p>0.98);};
+    grab.classList.toggle('cal-grab-on',p>0.98);
+    grab.setAttribute('aria-expanded',String(p<0.5));};
   // 拖动按帧节流：一帧只写一次 --p，避免同一帧多次改高度反复回流（卡顿主因）
   const schedule=p=>{pendingP=p;if(!rafId)rafId=requestAnimationFrame(()=>{rafId=0;if(pendingP!=null){writeP(pendingP);pendingP=null;}});};
   function snap(to){
@@ -11831,6 +11865,7 @@ function closeCalSheet(){
     try{haptic('tap');}catch(e){}
   }
   function down(e){
+    measureInlineCalCollapse();
     dragging=true;moved=false;startY=e.clientY;startP=curP();
     lastY=e.clientY;lastT=performance.now();vel=0;
     clip.classList.remove('cal-animating');for(const el of kids)el.classList.remove('cal-animating');
@@ -11856,7 +11891,7 @@ function closeCalSheet(){
   grab.addEventListener('pointerup',up);
   grab.addEventListener('pointercancel',up);
   grab.addEventListener('keydown',e=>{
-    if(e.key==='Enter'||e.key===' '){e.preventDefault();snap(curP()>0.5?0:1);}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();measureInlineCalCollapse();snap(curP()>0.5?0:1);}
   });
 })();
 
@@ -13051,8 +13086,9 @@ function renderCalDetail(){
   if(listEl.classList.contains('cal-inline-detail')){
     if(_calOutlineObserver)_calOutlineObserver.disconnect();
     drawCalInlineOutline();
+    measureInlineCalCollapse();
     if(typeof ResizeObserver!=='undefined'){
-      _calOutlineObserver=new ResizeObserver(()=>{if(!_calMotion)drawCalInlineOutline();});
+      _calOutlineObserver=new ResizeObserver(()=>{if(!_calMotion){drawCalInlineOutline();measureInlineCalCollapse();}});
       _calOutlineObserver.observe(listEl);
       _calOutlineObserver.observe(document.getElementById('calGrid'));
     }
