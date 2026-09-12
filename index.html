@@ -11827,7 +11827,7 @@ function measureInlineCalCollapse(){
   const cells=Array.from(grid.children).filter(el=>el.classList.contains('cal-day'));
   const index=cells.indexOf(selected),week=cells.slice(Math.floor(index/7)*7,Math.floor(index/7)*7+7);
   const bounds=grid.getBoundingClientRect();
-  const top=Math.max(0,Math.min(...week.map(el=>el.getBoundingClientRect().top))-bounds.top-2);
+  const top=Math.max(0,Math.min(...week.map(el=>el.getBoundingClientRect().top))-bounds.top-10);
   const full=bounds.height;
   const collapsed=Math.min(full,detail.getBoundingClientRect().bottom-bounds.top-top+8);
   clip.style.setProperty('--inline-full',full+'px');
