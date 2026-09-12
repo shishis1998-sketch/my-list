@@ -1680,6 +1680,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   overflow:hidden;
 }
 .cal-gridclip.has-inline.inline-measured .cal-grid{
+  /* 留白只显示卡片背景；裁掉上一周，保留选中轮廓上方 2px 绘制余量。 */
+  clip-path:inset(calc(var(--inline-mask-top,0px) * var(--p)) 0 0);
   transform:translateY(calc(-1 * var(--inline-shift) * var(--p)));
 }
 .cal-gridclip.has-inline.inline-measured.cal-animating,
@@ -11827,7 +11829,9 @@ function measureInlineCalCollapse(){
   const cells=Array.from(grid.children).filter(el=>el.classList.contains('cal-day'));
   const index=cells.indexOf(selected),week=cells.slice(Math.floor(index/7)*7,Math.floor(index/7)*7+7);
   const bounds=grid.getBoundingClientRect();
-  const top=Math.max(0,Math.min(...week.map(el=>el.getBoundingClientRect().top))-bounds.top-10);
+  const weekTop=Math.min(...week.map(el=>el.getBoundingClientRect().top))-bounds.top;
+  const top=Math.max(0,weekTop-10);
+  clip.style.setProperty('--inline-mask-top',Math.max(0,weekTop-2)+'px');
   const full=bounds.height;
   const collapsed=Math.min(full,detail.getBoundingClientRect().bottom-bounds.top-top+8);
   clip.style.setProperty('--inline-full',full+'px');
