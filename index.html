@@ -14435,7 +14435,7 @@ function saveNote(){
         delete n.localOnly;
       }
     }
-    toast('笔记已更新');
+    toast(foodEditor?'已添加':'笔记已更新');
   }else{
     const newNote={id:nuid(),title,subCat:sub,tags:curNoteTags.slice(),createdAt:now,updatedAt:now};
     if(isMemo){
@@ -14450,7 +14450,7 @@ function saveNote(){
     notes.unshift(newNote);
     // 新增后把 editNoteId 切换到刚创建的笔记，以便继续编辑
     editNoteId=newNote.id;
-    toast('已添加笔记');
+    toast(foodEditor?'已添加':'已添加笔记');
   }
   persistNotes();
   render();
