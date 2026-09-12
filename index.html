@@ -2896,23 +2896,18 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 天数推到行尾，与标签名分列两端 */
 #calViewHeat .hm-card-meta{font-size:var(--fs-foot);color:var(--text-muted);flex:0 0 auto;margin-left:auto;}
 #calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
-/* 色带：当月天数列等分整宽。列数用 --dim 传进来，28~31 天都能自适应 */
-/* 格子宽度不写死：1fr 等分，宽 = (色带宽 − (天数−1)×4) ÷ 天数。
-   31 天的月份落在 7.06（393 视口），28 天的宽到 8.86——铺满卡片优先于统一宽度。 */
-#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim,31),1fr);gap:4px;}
-/* 圆角 1.5 而不是 3：格子只有 7 出头宽，3px 两边一吃就只剩 1px 平直边，
-   形状读起来是胶囊不是方块。1.5 留出 4px 平边，还能看出是「带圆角的方块」。
-   注意这个值是跟着格子宽度定的——格子再变窄就得跟着往下调。 */
+/* 日期按 1–15 / 16–月底拆成两段，每段独占一行；每行最多 16 格，
+   因此可以把每天的数字都写出来，不必再隔天省略。 */
+#calViewHeat .hm-periods{display:flex;flex-direction:column;gap:var(--sp-8);}
+#calViewHeat .hm-period{--dim:15;}
+#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),minmax(0,1fr));gap:4px;}
 #calViewHeat .hm-cell{height:12px;border-radius:1.5px;background:var(--surface-2);}
 #calViewHeat .hm-cell.on{background:var(--accent);}
 /* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
    后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
    色带只表达「这天记没记」，参照交给下方刻度尺。 */
-/* 刻度尺：每 2 天一个数字（1、3、5…），列宽与色带严格对齐。
-   minmax(0,1fr) 不能省：1fr 的最小值是 auto，两位数会把自己那列撑宽，
-   等分被打破后刻度就和下面的色块对不上了。gap 也必须和色带一样（4px），
-   否则两个网格的列心会逐格漂移。改色带间隙时这里要一起改。 */
-#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim,31),minmax(0,1fr));gap:4px;
+/* 刻度尺与色带使用相同列数和间距，每一格都显示对应日期。 */
+#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim),minmax(0,1fr));gap:4px;
   margin-top:var(--sp-4);font-family:var(--en);font-size:9px;line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-ruler span{text-align:center;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
@@ -7929,27 +7924,29 @@ window.PV = (function(){
         '<small>在「经期」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
       return;
     }
-    // 刻度：每 2 天一个数字，从 1 号起（1、3、5…）。3 天一个太疏，色带中段没有参照。
-    // 末尾那格若不落在节拍上就补一个，让两端都有参照；但只在它离前一个刻度 ≥2 格时才补——
-    // 紧挨着的话两个两位数会贴在一起（30 天、28 天的月份正是这种情况）。
-    const RULER_STEP = 2;
-    let ruler = '';
-    for (let d = 1; d <= dim; d++) {
-      const show = (d - 1) % RULER_STEP === 0 || (d === dim && (dim - 1) % RULER_STEP >= 2);
-      ruler += `<span>${show ? d : ''}</span>`;
-    }
     box.innerHTML = '<div class="hm-cards">' + cards.map(c => {
-      let cells = '';
-      for (let d = 1; d <= dim; d++) {
-        const on = c.days.includes(d) ? ' on' : '';
-        cells += `<div class="hm-cell${on}"></div>`;
-      }
-      return `<div class="hm-card" style="--dim:${dim}">` +
+      const hasFirst = c.days.some(d => d <= 15);
+      const hasSecond = c.days.some(d => d >= 16);
+      // 正常有记录的卡片至少命中一段；保留第一段兜底，避免异常空数据生成空卡。
+      const periods = [];
+      if (hasFirst || (!hasFirst && !hasSecond)) periods.push([1, Math.min(15, dim)]);
+      if (hasSecond) periods.push([16, dim]);
+      const rows = periods.map(([start, end]) => {
+        let cells = '', ruler = '';
+        for (let d = start; d <= end; d++) {
+          cells += `<div class="hm-cell${c.days.includes(d) ? ' on' : ''}"></div>`;
+          ruler += `<span>${d}</span>`;
+        }
+        const count = end - start + 1;
+        return `<div class="hm-period" style="--dim:${count}">` +
+          `<div class="hm-strip">${cells}</div><div class="hm-ruler">${ruler}</div></div>`;
+      }).join('');
+      return '<div class="hm-card">' +
         '<div class="hm-card-hd">' +
           `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
           `<span class="hm-card-meta">本月 <b>${c.days.length}</b> 天</span>` +
         '</div>' +
-        `<div class="hm-strip">${cells}</div><div class="hm-ruler">${ruler}</div></div>`;
+        `<div class="hm-periods">${rows}</div></div>`;
     }).join('') + '</div>';
   }
 
