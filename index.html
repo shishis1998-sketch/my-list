@@ -13039,7 +13039,7 @@ function renderCalDetail(){
     if(recs.length){
       recs.forEach(r=>tl.appendChild(makeCalTlRow(r,calCurTail(r),true)));
     }else{
-      tl.appendChild(makeCalTlEmpty('今天还没有新记录'));   // 当天无记录时的占位节点
+      tl.appendChild(makeCalTlEmpty('这天还没有新记录'));   // 当天无记录时的占位节点
     }
     otherYears.forEach(y=>{
       const ago=parseInt(cy)-parseInt(y);
