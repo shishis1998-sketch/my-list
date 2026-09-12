@@ -1635,6 +1635,17 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .food-drag-placeholder{opacity:.25;}
 .food-drag-ghost{z-index:130;pointer-events:none;background:var(--accent-light);border-radius:var(--r);opacity:.96;}
 .food-drag-ghost::before{display:none;}
+.food-drag-ghost .food-drag-handle{
+  transform:translateY(-50%) scale(1.65);
+  animation:foodDragDotReady .16s ease-out;
+}
+@keyframes foodDragDotReady{
+  from{transform:translateY(-50%) scale(1);}
+  to{transform:translateY(-50%) scale(1.65);}
+}
+@media (prefers-reduced-motion:reduce){
+  .food-drag-ghost .food-drag-handle{animation:none;}
+}
 .cal-tl-cur .cal-tl-dot{background:var(--accent);border-color:var(--accent);}   /* 当天：墨绿实心 */
 .cal-row-cover{width:24px;height:24px;border-radius:var(--rsm);background:var(--border-soft);flex-shrink:0;
   display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;}
@@ -11566,6 +11577,7 @@ function haptic(type){
   if(typeof navigator==='undefined'||typeof navigator.vibrate!=='function')return;
   const P={
     tap:12,          // 通用轻点：普通提示
+    drag:30,         // 长按成功：一次明确的短震动
     success:[14],    // 保存/添加成功：干脆一下
     warn:[24],       // 输入校验失败：略重提醒
     delete:[22,50,22]// 删除：两下顿挫，与其它操作区分
@@ -12504,7 +12516,7 @@ function bindFoodDrag(row,dot,rec){
       Object.assign(ghost.style,{position:'fixed',left:rect.left+'px',top:rect.top+'px',
         width:rect.width+'px',height:rect.height+'px',margin:'0',boxSizing:'border-box'});
       document.body.appendChild(ghost);state.ghost=ghost;
-      row.classList.add('food-drag-placeholder');haptic('tap');
+      row.classList.add('food-drag-placeholder');haptic('drag');
     },350);
   });
   const move=e=>{
