@@ -226,7 +226,10 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   cursor:pointer;color:var(--text-secondary);font-size:var(--fs-caption);font-weight:500;
   transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:var(--zh);
 }
-.nitem:hover{background:var(--bg);color:var(--text-primary);}
+/* 仅鼠标设备启用悬停反馈，避免触屏留下灰底；字号容器本身不可点击。 */
+@media (hover:hover) and (pointer:fine){
+  .nitem:not(.nitem-fs):hover{background:var(--bg);color:var(--text-primary);}
+}
 .nitem.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
 .nitem.parent-on{color:var(--accent);font-weight:700;}
 .nitem.parent-on .chev{color:var(--accent);}
@@ -895,7 +898,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     border-bottom:1px solid var(--border-soft);
   }
   .sidebar .ncard .nitem:last-child{border-bottom:none;}
-  .sidebar .ncard .nitem:active{background:var(--bg);}
+  /* 触屏设置行不染按压底色，避免轻触或滚动时整行变灰。 */
   .sidebar .ncard .nitem.on{background:var(--accent-light);color:var(--accent);}
   /* 卡内一切从 30 起排：页边距 14 + 卡片描边 1 + 15 = 30。
      15 是凑出来的数，不走 --sp-* 那把尺——尺上没有能补掉描边那 1px 的档。
