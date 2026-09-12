@@ -4617,7 +4617,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 #modal .tlsheet-head{background:var(--bg);}
 /* 食记内容点击菜单：只显示删除和编辑。 */
-#calNotePreviewModal.food-actions{z-index:120 !important;align-items:flex-end;justify-content:center;padding:var(--sp-16);padding-bottom:calc(var(--sp-16) + env(safe-area-inset-bottom));}
+#calNotePreviewModal.food-actions{z-index:120 !important;align-items:center;justify-content:center;padding:var(--sp-16);}
+#calNotePreviewModal.food-actions.open .mbox{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
 #calNotePreviewModal.food-actions .mbox{height:auto;min-height:0;max-width:320px;width:100%;border-radius:var(--rxl);}
 #calNotePreviewModal.food-actions .mhdr{display:none;}
 #calNotePreviewModal.food-actions .mbody{padding:var(--sp-12);}
