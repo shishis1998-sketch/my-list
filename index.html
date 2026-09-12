@@ -2818,7 +2818,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle .cvt-thumb{width:calc(50% - 3px);}
 .cal-vtoggle.cvt3 .cvt-thumb{width:calc((100% - 6px)/3);}
 .cal-vtoggle.cvt4{display:flex;width:100%;}   /* 四段视图切换铺满整行（等分） */
-.cal-vtoggle.cvt4 .cvt-thumb{width:calc((100% - 6px)/4);}
+.cal-vtoggle.cvt4 .cvt-thumb{width:calc((100% - 6px)/5);}
 .cal-vtoggle .cvt-thumb.period,
 .cal-vtoggle .cvt-thumb.m{transform:translateX(100%);}
 .cal-vtoggle .cvt-thumb.y{transform:translateX(200%);}
@@ -4812,6 +4812,7 @@ body.cal-view-period #pvEditFab{display:grid;}
         <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
           <span class="cvt-thumb" id="cvtThumb"></span>
           <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
+          <button class="cvt" data-cv="food" onclick="setCalView('food')">食记</button>
           <button class="cvt" data-cv="month" onclick="setCalView('month')">经期</button>
           <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
           <button class="cvt" data-cv="heat" onclick="setCalView('heat')">标签</button>
@@ -4826,6 +4827,7 @@ body.cal-view-period #pvEditFab{display:grid;}
         </div>
         <input type="month" id="calMonthPicker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
         <div class="cal-nav">
+          <button type="button" class="cal-navbtn" id="foodAddBtn" style="display:none" onclick="openFoodEntry()" aria-label="添加食记">＋</button>
           <button class="cal-navbtn cal-filterbtn" id="calFilterBtn" onclick="toggleCalFilter()" aria-label="筛选分类">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
             <span class="cal-filter-ind" id="calFilterInd"></span>
@@ -7946,6 +7948,7 @@ function refreshCalPeriodView(){
 function syncCalToggle(v){
   document.querySelectorAll('.cal-viewbar .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   const thumb=document.getElementById('cvtThumb');
+  if(thumb)thumb.style.transform='translateX('+(['cal','food','month','year','heat'].indexOf(v)*100)+'%)';
   if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
             thumb.classList.toggle('h',v==='heat');}
   document.querySelectorAll('#calViewPanel .cal-viewopt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
@@ -7970,7 +7973,7 @@ window.onPvHomeViewChange=function(v){
 };
 function setCalView(v){
   // v: 'cal'（日历） | 'month'（经期·月） | 'year'（经期·年） | 'heat'（标签）——合并成一个四段控件
-  if(v!=='cal'&&v!=='month'&&v!=='year'&&v!=='heat')v='cal';
+  if(v!=='cal'&&v!=='food'&&v!=='month'&&v!=='year'&&v!=='heat')v='cal';
   const prev=calView; calView=v;
   const isP=(v==='month'||v==='year');   // 经期日历
   const isH=(v==='heat');                // 标签视图
@@ -7982,6 +7985,10 @@ function setCalView(v){
   if(hv)hv.style.display=isH?'':'none';
   document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
   syncCalToggle(v);
+  closeCalSearch();closeCalFilter();
+  calHiddenCats=loadCalHidden();
+  document.getElementById('foodAddBtn').style.display=v==='food'?'':'none';
+  renderCalLegend();renderCal();renderCalDetail();renderWeekCard(true);
   if(!isP&&!isH)flushWeekPills();   // 切回日历视图：本周卡片刚露出来，欠着的那摊补摆上
   if(isH&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
@@ -7990,7 +7997,7 @@ function setCalView(v){
   if(isP&&window.PV&&periodData){
     if(!_pvInited){PV.init(periodData);_pvInited=true;}
     // 从日历进入（或刚重开日历页、位置已重置）→ 停在上次停留的年月，首次才回当前月
-    if(prev==='cal'||prev==='heat'||!PV.hasPos())PV.open(v);
+    if(prev==='cal'||prev==='food'||prev==='heat'||!PV.hasPos())PV.open(v);
     else PV.setHomeView(v);            // 月↔年 只换缩放层级，保留当前位置
   }
 }
@@ -8000,6 +8007,7 @@ function setCalView(v){
 // 卡片本身就是排序/筛选那张 .bb-sortpanel，只是改成对准 tab 居中、加一个小三角。
 const CAL_VIEWS=[
   {id:'cal',  lbl:'日历', ic:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'},
+  {id:'food',lbl:'食记',ic:'<path d="M5 3v7m3-7v7M3 3v5a3 3 0 0 0 6 0V3M6 11v10M18 3v18M18 3c-4 3-4 9 0 9"/>'},
   {id:'month',lbl:'经期', ic:'<path d="M12 3.2s6.2 6.7 6.2 10.5A6.2 6.2 0 0 1 5.8 13.7C5.8 9.9 12 3.2 12 3.2z"/>'},
   {id:'year', lbl:'年度', ic:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h2M11 9h2M15 9h2M7 13h2M11 13h2M15 13h2"/>'},
   {id:'heat', lbl:'标签', ic:'<path d="M20.6 13.4 12 4.8H4.8V12l8.6 8.6a1.6 1.6 0 0 0 2.3 0l4.9-4.9a1.6 1.6 0 0 0 0-2.3z"/><circle cx="8.4" cy="8.4" r="1.3"/>'}
@@ -9368,7 +9376,7 @@ function renderMobileCatMgr(){
 // 从 .ics 导入的日历事件：只在日历页显示，不算作「笔记」
 function isCalEvent(n){return ('_ics' in n)||(n.tags||[]).includes('日历导入');}
 // 已搬进媒体记录的读书笔记不再露面（数据还留着，见 migrateBookNotes）
-function userNotes(){return notes.filter(n=>!isCalEvent(n)&&!n.movedToMedia);}
+function userNotes(){return notes.filter(n=>n.calendarId!=='food'&&!isCalEvent(n)&&!n.movedToMedia);}
 function renderNotesSidebar(){
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
@@ -11570,6 +11578,35 @@ function toast(msg,hap='tap'){
   haptic(hap);
 }
 
+// Food calendar shares calendar rendering; only records with this explicit ID belong to it.
+function calendarNotes(){return notes.filter(n=>calView==='food'?n.calendarId==='food':n.calendarId!=='food');}
+function calendarMedia(){return calView==='food'?[]:data;}
+let foodEditor=false;
+function setFoodEditor(on){
+  foodEditor=on;
+  document.getElementById('nf-sub').closest('.fg').style.display=on?'none':'';
+  const input=document.getElementById('nf-title');
+  input.previousElementSibling.textContent=on?'日期':'标题';
+  input.placeholder=on?'YYYY/MM/DD':'可留空';
+}
+function validFoodDate(value){
+  if(!/^\d{4}\/\d{2}\/\d{2}$/.test(value))return false;
+  const [y,m,d]=value.split('/').map(Number),dt=new Date(y,m-1,d);
+  return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d;
+}
+function openFoodEntry(id){
+  if(id)openNoteEdit(id);else openNoteNew();
+  setFoodEditor(true);
+  renderNoteSubSelect('食记');document.getElementById('nf-sub').value='食记';
+  if(!id)document.getElementById('nf-title').value=(calSelDate||calToday()).replace(/-/g,'/');
+  document.getElementById('nm-title').textContent=id?'编辑食记':'添加食记';
+  applyMemoEditorMode();nmOpenSnap=noteFormSnap();
+  setTimeout(()=>document.getElementById('nf-body').focus(),80);
+}
+function refreshFoodCalendar(){
+  renderCalLegend();renderCal();renderCalDetail();renderWeekCard(true);
+}
+
 // ── Calendar ─────────────────────────────────────────────────────
 let calYear, calMonth, calSelDate=null;
 let calGridRows=6;                 // 当前月网格行数（拖动收起时算全程距离用）
@@ -11777,8 +11814,10 @@ const CAL_CATS=[
   {key:'note',     name:'笔记',    color:'#1A5F7A'},
   {key:'calendar', name:'日历',    color:'#A09A8E'},   // 导入的日历事件（暖灰）
 ];
-let calHiddenCats=(()=>{try{return new Set(JSON.parse(localStorage.getItem('my_list_cal_hidden_v1'))||[]);}catch{return new Set();}})();
-function persistCalHidden(){localStorage.setItem('my_list_cal_hidden_v1',JSON.stringify([...calHiddenCats]));}
+function calStorageKey(key){return calView==='food'?key+'_food':key;}
+function loadCalHidden(){try{return new Set(JSON.parse(localStorage.getItem(calStorageKey('my_list_cal_hidden_v1')))||[]);}catch{return new Set();}}
+let calHiddenCats=loadCalHidden();
+function persistCalHidden(){localStorage.setItem(calStorageKey('my_list_cal_hidden_v1'),JSON.stringify([...calHiddenCats]));}
 // 一条日历记录属于哪个分类
 function calRecCat(r){
   if(!r._isNote)return 'media';
@@ -11802,13 +11841,13 @@ function renderCalLegend(){
   const el=document.getElementById('calLegend');
   // 统计每类在日历里的条目数（仅计入会进日历的记录）
   const counts={};CAL_CATS.forEach(c=>counts[c.key]=0);
-  data.forEach(r=>{if(/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))counts.media++;});
-  notes.forEach(n=>{if(/^\d{4}\/\d{2}\/\d{2}$/.test(n.title||''))counts[calRecCat({_isNote:true,subCat:n.subCat})]++;});
+  calendarMedia().forEach(r=>{if(/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))counts.media++;});
+  calendarNotes().forEach(n=>{if(/^\d{4}\/\d{2}\/\d{2}$/.test(n.title||''))counts[calRecCat({_isNote:true,subCat:n.subCat})]++;});
   // 面板里每类一行；点击切换显示/隐藏（只列有内容的分类）
   el.innerHTML=CAL_CATS.filter(c=>counts[c.key]>0).map(c=>{
     const off=calHiddenCats.has(c.key)?' off':'';
     return `<button type="button" class="cal-filter-row${off}" data-key="${esc(c.key)}">`+
-      `<span class="cal-filter-name">${esc(c.name)}</span>`+
+      `<span class="cal-filter-name">${esc(calView==='food'&&c.key==='note'?'食记':c.name)}</span>`+
       `<svg class="cal-filter-chk" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>`;
   }).join('');
   el.querySelectorAll('.cal-filter-row').forEach(b=>b.onclick=()=>toggleCalCat(b.dataset.key));
@@ -11872,7 +11911,7 @@ function closeCalSearch(){
 // 收集所有「能落到某一天」的记录，跟随图例筛选（隐藏的分类不参与搜索）
 function calSearchItems(){
   const items=[];
-  if(calCatVisible('media'))data.forEach(r=>{
+  if(calCatVisible('media'))calendarMedia().forEach(r=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))return;
     const c=getCat(r.type);
     items.push({date:r.watchDate,uid:'',title:r.name||'(未命名)',dayLabel:'',
@@ -11880,7 +11919,7 @@ function calSearchItems(){
       hay:[r.name,r.creator,r.note,peopleText(r.people),(r.tags||[]).join(' ')].join(' ').toLowerCase()});
   });
   const re=/^(\d{4})\/(\d{2})\/(\d{2})$/;
-  notes.forEach(n=>{
+  calendarNotes().forEach(n=>{
     const m=(n.title||'').match(re);if(!m)return;
     if(!calRecVisible({_isNote:true,subCat:n.subCat}))return;
     const dm=(n.body||'').match(/第(\d+)\/(\d+)天/);   // 跨天事件正文里的「第X/Y天」
@@ -11928,10 +11967,10 @@ function calRelTime(dateStr){
 // 按 oninput 实时记会把每个前缀都存进去（「生」「生日」…），列表立刻就废了。
 const CAL_RECENT_KEY='my_list_cal_recent_v1', CAL_RECENT_MAX=8;
 function getCalRecent(){
-  try{const a=JSON.parse(localStorage.getItem(CAL_RECENT_KEY));
+  try{const a=JSON.parse(localStorage.getItem(calStorageKey(CAL_RECENT_KEY)));
       return Array.isArray(a)?a.filter(x=>typeof x==='string'&&x.trim()):[];}catch(e){return [];}
 }
-function saveCalRecent(list){try{localStorage.setItem(CAL_RECENT_KEY,JSON.stringify(list));}catch(e){}}
+function saveCalRecent(list){try{localStorage.setItem(calStorageKey(CAL_RECENT_KEY),JSON.stringify(list));}catch(e){}}
 function pushCalRecent(raw){
   const q=(raw||'').trim(); if(!q) return;
   // 同词去重后顶到最前：重复搜的词自然浮上来，不会被一堆一次性的词挤掉
@@ -12021,6 +12060,11 @@ function showCalNotePreview(id){
     calGapCard(note)+
     (bodyHtml?`<div class="cnp-text" style="color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>`:'')+
     (tagsHtml?`<div style="display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-14)">${tagsHtml}</div>`:'');
+  if(note.calendarId==='food'){
+    const actions=document.createElement('div');actions.style.cssText='display:flex;gap:12px;margin-top:16px';
+    [['编辑',()=>{closeCalNotePreview();openFoodEntry(note.id);}],['删除',()=>{askDelNoteById(note.id);if(!notes.some(n=>n.id===note.id))closeCalNotePreview();refreshFoodCalendar();}]].forEach(([label,fn])=>{const btn=document.createElement('button');btn.type='button';btn.className='note-modal-action';btn.textContent=label;btn.onclick=fn;actions.appendChild(btn);});
+    document.getElementById('cnp-body').appendChild(actions);
+  }
   const dlg=document.getElementById('calNotePreviewModal');
   dlg.classList.add('open');
   bindSheetDrag(dlg.querySelector('.mbox'), dlg.querySelector('.mhdr'), closeCalNotePreview);
@@ -12192,12 +12236,12 @@ function renderCal(){
   // 收集当月网格里的所有日历项（媒体 + 日期笔记）
   const items=[];
   const mediaOn=calCatVisible('media');
-  if(mediaOn)data.forEach(item=>{
+  if(mediaOn)calendarMedia().forEach(item=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(item.watchDate||''))return;
     items.push({date:item.watchDate,uid:'',title:item.name||'(未命名)',color:getCat(item.type).color,isCal:false});
   });
   const _noteCalRe=/^(\d{4})\/(\d{2})\/(\d{2})$/;
-  notes.forEach(note=>{
+  calendarNotes().forEach(note=>{
     const m=note.title&&note.title.match(_noteCalRe);
     if(!m)return;
     if(!calRecVisible({_isNote:true,subCat:note.subCat}))return;   // 按图例筛选
@@ -12483,8 +12527,8 @@ function calToday(){return calFmtDate(new Date());}
 // 当天记录，口径和 renderCalDetail 的「① 当天记录」一致（同样按图例筛选）
 function calWeekRecs(ds){
   const [y,m,d]=ds.split('-');
-  const media=calCatVisible('media')?data.filter(r=>r.watchDate===ds):[];
-  const nts=notes.filter(n=>n.title===`${y}/${m}/${d}`).map(toCalNoteRec).filter(calRecVisible);
+  const media=calCatVisible('media')?calendarMedia().filter(r=>r.watchDate===ds):[];
+  const nts=calendarNotes().filter(n=>n.title===`${y}/${m}/${d}`).map(toCalNoteRec).filter(calRecVisible);
   return [...media,...nts];
 }
 // 跨天事件在数据里是每天一条，这里并回一件事，免得一趟旅行铺满七格。
@@ -12791,19 +12835,19 @@ function renderCalDetail(){
   const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
 
   // ① 当天记录（同年同月同日）——按图例筛选
-  const mediaRecs=calCatVisible('media')?data.filter(r=>r.watchDate===calSelDate):[];
-  const noteRecs=notes.filter(n=>n.title===titleDate).map(toCalNoteRec).filter(calRecVisible);
+  const mediaRecs=calCatVisible('media')?calendarMedia().filter(r=>r.watchDate===calSelDate):[];
+  const noteRecs=calendarNotes().filter(n=>n.title===titleDate).map(toCalNoteRec).filter(calRecVisible);
   const recs=[...mediaRecs,...noteRecs];
 
   // ② 别的年份的这一天：同月同日、不同年，按年份分组——同样按图例筛选。
   //    注意不只是「往年」：记录可以填未来日期（到期日、保质期之类），这里一并收进来。
   const otherByYear={};
-  if(calCatVisible('media'))data.forEach(r=>{
+  if(calCatVisible('media'))calendarMedia().forEach(r=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(r.watchDate||''))return;
     const [ry,rm,rd]=r.watchDate.split('-');
     if(rm===cm&&rd===cd&&ry!==cy)(otherByYear[ry]=otherByYear[ry]||[]).push(r);
   });
-  notes.forEach(n=>{
+  calendarNotes().forEach(n=>{
     const mm=(n.title||'').match(_nre);if(!mm)return;
     if(!calRecVisible({_isNote:true,subCat:n.subCat}))return;
     const[,ry,rm,rd]=mm;
@@ -14218,6 +14262,7 @@ function openNoteEdit(id){
   if(!n)return;
   // 密文态备忘禁止编辑（避免保存空字段覆盖掉云端内容）
   if(isEncLocked(n)){toast('🔒 这条备忘已加密，请先在云同步设置中填入正确的主密码');openSyncCfg();return;}
+  setFoodEditor(n.calendarId==='food');
   editNoteId=id;
   curNoteTags=(n.tags||[]).slice();
   document.getElementById('nm-title').textContent='编辑笔记';
@@ -14244,6 +14289,7 @@ function openNoteEdit(id){
 }
 
 function openNoteNew(){
+  setFoodEditor(false);
   editNoteId=null;
   curNoteTags=[];
   fillCreatedRow('nf-created-row','nf-created',null);   // 新建时没有首次添加可言
@@ -14316,7 +14362,9 @@ function renderNoteSubSelect(cur){
 
 function saveNote(){
   const title=document.getElementById('nf-title').value.trim();
-  const sub=document.getElementById('nf-sub').value;
+  const sub=foodEditor?'食记':document.getElementById('nf-sub').value;
+  if(foodEditor&&!validFoodDate(title)){toast('日期请填写 YYYY/MM/DD');return false;}
+  if(foodEditor&&!document.getElementById('nf-body').value.trim()){toast('请填写食记内容');return false;}
   const isMemo=(sub==='备忘');
   const now=Date.now();
   let body='', fields=null, customFields=null, localOnly=false;
@@ -14371,6 +14419,7 @@ function saveNote(){
     }else{
       newNote.body=body;
     }
+    if(foodEditor)newNote.calendarId='food';
     notes.unshift(newNote);
     // 新增后把 editNoteId 切换到刚创建的笔记，以便继续编辑
     editNoteId=newNote.id;
@@ -14378,6 +14427,7 @@ function saveNote(){
   }
   persistNotes();
   render();
+  if(foodEditor)refreshFoodCalendar();
   return true;
 }
 
@@ -14514,7 +14564,7 @@ function saveNoteSubs(){
   persistNoteSubs();
   // 把已不存在子分类的笔记归入第一个
   const valid=new Set(noteSubs);
-  notes.forEach(n=>{if(!isCalEvent(n)&&!valid.has(n.subCat))n.subCat=noteSubs[0];});
+  notes.forEach(n=>{if(n.calendarId!=='food'&&!isCalEvent(n)&&!valid.has(n.subCat))n.subCat=noteSubs[0];});
   persistNotes();
   // 若当前筛选的子分类被删,回到全部
   if(curNoteSub!=='all'&&!valid.has(curNoteSub)){curNoteSub='all';curCat='notes:all';}
