@@ -4616,6 +4616,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 #modal .tlsheet-head{background:var(--bg);}
+/* 食记内容点击菜单：只显示删除和编辑。 */
+#calNotePreviewModal.food-actions{z-index:120 !important;align-items:flex-end;justify-content:center;padding:var(--sp-16);padding-bottom:calc(var(--sp-16) + env(safe-area-inset-bottom));}
+#calNotePreviewModal.food-actions .mbox{height:auto;min-height:0;max-width:320px;width:100%;border-radius:var(--rxl);}
+#calNotePreviewModal.food-actions .mhdr{display:none;}
+#calNotePreviewModal.food-actions .mbody{padding:var(--sp-12);}
+.food-action-buttons{display:flex;gap:var(--sp-12);}
+.food-action-buttons button{flex:1;min-height:48px;border:0;border-radius:var(--r);background:var(--surface-2);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;}
+.food-action-delete{color:var(--danger);}
+.food-action-edit{color:var(--accent);}
+.food-action-buttons button:active{background:var(--press);}
 /* 食记只保留日期和简短内容，沿用取消/完成抽屉。 */
 /* 日历底栏为 115；食记抽屉必须盖过它，避免内容框底部被遮住。 */
 #noteModal.food-editor{z-index:120;}
@@ -12093,9 +12103,35 @@ function jumpCalSearch(dateStr){
   openCalDay(dateStr);                   // 切到该月 + 弹出当天记录
 }
 
+function deleteFoodEntry(id){
+  const note=notes.find(n=>n.id===id&&n.calendarId==='food');
+  if(!note)return;
+  trashPush('note',note);
+  notes=notes.filter(n=>n.id!==id);
+  persistNotes();
+  closeCalNotePreview();
+  refreshFoodCalendar();
+  toast('已删除','delete');
+}
+function openFoodActions(note){
+  const dlg=document.getElementById('calNotePreviewModal');
+  const body=document.getElementById('cnp-body');
+  body.replaceChildren();
+  const actions=document.createElement('div');actions.className='food-action-buttons';
+  [['删除',()=>deleteFoodEntry(note.id)],['编辑',()=>{closeCalNotePreview();openFoodEntry(note.id);}]].forEach(([label,fn])=>{
+    const btn=document.createElement('button');btn.type='button';btn.textContent=label;
+    btn.className=label==='删除'?'food-action-delete':'food-action-edit';
+    btn.onclick=fn;actions.appendChild(btn);
+  });
+  body.appendChild(actions);
+  dlg.classList.add('food-actions','open');
+}
+
 function showCalNotePreview(id){
   const note=notes.find(n=>n.id===id);
   if(!note)return;
+  if(note.calendarId==='food'){openFoodActions(note);return;}
+  document.getElementById('calNotePreviewModal').classList.remove('food-actions');
   // 事件名进了天数卡，正文里就别再重复一遍
   const rest=calNoteBodyRest(note);
   const bodyHtml=esc(rest).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
@@ -12105,11 +12141,6 @@ function showCalNotePreview(id){
     calGapCard(note)+
     (bodyHtml?`<div class="cnp-text" style="color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:break-word">${bodyHtml}</div>`:'')+
     (tagsHtml?`<div style="display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-14)">${tagsHtml}</div>`:'');
-  if(note.calendarId==='food'){
-    const actions=document.createElement('div');actions.style.cssText='display:flex;gap:12px;margin-top:16px';
-    [['编辑',()=>{closeCalNotePreview();openFoodEntry(note.id);}],['删除',()=>{askDelNoteById(note.id);if(!notes.some(n=>n.id===note.id))closeCalNotePreview();refreshFoodCalendar();}]].forEach(([label,fn])=>{const btn=document.createElement('button');btn.type='button';btn.className='note-modal-action';btn.textContent=label;btn.onclick=fn;actions.appendChild(btn);});
-    document.getElementById('cnp-body').appendChild(actions);
-  }
   const dlg=document.getElementById('calNotePreviewModal');
   dlg.classList.add('open');
   bindSheetDrag(dlg.querySelector('.mbox'), dlg.querySelector('.mhdr'), closeCalNotePreview);
