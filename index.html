@@ -4601,6 +4601,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 #modal .tlsheet-head{background:var(--bg);}
 /* 食记只保留日期和简短内容，沿用取消/完成抽屉。 */
+/* 日历底栏为 115；食记抽屉必须盖过它，避免内容框底部被遮住。 */
+#noteModal.food-editor{z-index:120;}
 #noteModal.food-editor .mbody > :not(#nf-title-group):not(#nf-body-group),
 #noteModal.food-editor .fmt-bar,
 #noteModal.food-editor #nf-thumb{display:none !important;}
