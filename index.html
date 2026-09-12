@@ -1717,9 +1717,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    上下内边距 12、左右 14 一点没动，和「当天」卡的标题栏还是同一条线上 */
 .cw-hd{width:100%;display:flex;align-items:center;gap:var(--sp-2);
   padding:var(--sp-12) var(--sp-14);font-family:var(--zh);text-align:left;}
-/* 标题连同它右边那片空白都是收起/展开的开关：flex:1 让它把中间撑满，
-   点按面积和原先整条按钮时差不多 */
-.cw-hd-t{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:700;color:var(--accent);
+/* 周标题由上一周/下一周按钮夹在两侧，右端保留收起/展开按钮。 */
+.cw-hd-t{flex:0 1 auto;min-width:0;font-size:var(--fs-headline);font-weight:700;color:var(--accent);
   background:none;border:0;padding:0;text-align:left;font-family:var(--zh);cursor:pointer;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* ‹ › 切上一周/下一周。字形和顶上「‹ 2026 年 8 月 ›」那对是同一副，颜色也同为主题色；
@@ -1731,7 +1730,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-nav:active{background:var(--accent-light);}
 /* 展开箭头也裹进一颗 26 见方的按钮里（原先是条上的裸图标），右边负 5 是把它退回原位：
    图标 16 居中在 26 里会往左缩 5，而「当天」卡的箭头还在老地方，差这 5px 两张卡就错开了 */
-.cw-hd-x{flex-shrink:0;width:26px;height:26px;margin-right:-5px;padding:0;border:0;background:none;
+.cw-hd-x{flex-shrink:0;width:26px;height:26px;margin-left:auto;margin-right:-5px;padding:0;border:0;background:none;
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
 .cw-hd-x .cw-chev{margin-left:0;}
 .cw-chev{width:16px;height:16px;color:var(--text-muted);flex-shrink:0;margin-left:auto;transition:transform .2s;}
@@ -12723,8 +12722,8 @@ function renderWeekCard(force){
   const wkTxt=wk.year===+sel.slice(0,4)?`第 ${wk.week} 周`:`${wk.year} 年第 ${wk.week} 周`;
   card.innerHTML=
     `<div class="cw-hd">`+
-    `<button type="button" class="cw-hd-t" onclick="toggleWeekCard()">${days.includes(today)?'本周':wkTxt}</button>`+
     `<button type="button" class="cw-nav" onclick="calWeekStep(-1)" aria-label="上一周">‹</button>`+
+    `<button type="button" class="cw-hd-t" onclick="toggleWeekCard()">${days.includes(today)?'本周':wkTxt}</button>`+
     `<button type="button" class="cw-nav" onclick="calWeekStep(1)" aria-label="下一周">›</button>`+
     `<button type="button" class="cw-hd-x" onclick="toggleWeekCard()" aria-label="收起或展开">${CW_CHEV}</button>`+
     `</div>`+
