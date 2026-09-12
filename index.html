@@ -898,7 +898,8 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     border-bottom:1px solid var(--border-soft);
   }
   .sidebar .ncard .nitem:last-child{border-bottom:none;}
-  /* 触屏设置行不染按压底色，避免轻触或滚动时整行变灰。 */
+  /* 由指针事件控制短暂灰底，松手或开始滑动立即恢复。 */
+  .sidebar .ncard .nitem.is-pressed:not(.nitem-fs){background:var(--bg);transition:none;}
   .sidebar .ncard .nitem.on{background:var(--accent-light);color:var(--accent);}
   /* 卡内一切从 30 起排：页边距 14 + 卡片描边 1 + 15 = 30。
      15 是凑出来的数，不走 --sp-* 那把尺——尺上没有能补掉描边那 1px 的档。
@@ -14700,6 +14701,39 @@ document.addEventListener('touchstart', function(){}, {passive:true});
     ticking = true;
     requestAnimationFrame(apply);
   }, {passive:true});
+})();
+
+// 设置行触屏反馈：松手、滑动或系统取消触摸时清除，不依赖粘滞的 :hover。
+(function(){
+  let row = null, pointerId = null, startX = 0, startY = 0;
+  function clearPress(){
+    if(row) row.classList.remove('is-pressed');
+    row = null;
+    pointerId = null;
+  }
+  document.addEventListener('pointerdown', function(e){
+    clearPress();
+    if(e.pointerType === 'mouse' || !e.isPrimary) return;
+    const target = e.target.closest('.sidebar .ncard .nitem:not(.nitem-fs)');
+    if(!target || target.matches(':disabled, [aria-disabled="true"]')) return;
+    row = target;
+    pointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    row.classList.add('is-pressed');
+  }, {passive:true});
+  document.addEventListener('pointermove', function(e){
+    if(e.pointerId === pointerId &&
+       Math.hypot(e.clientX-startX, e.clientY-startY) > 6) clearPress();
+  }, {passive:true});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(type){
+    document.addEventListener(type, function(e){
+      if(e.pointerId === pointerId) clearPress();
+    }, {passive:true});
+  });
+  document.addEventListener('scroll', clearPress, {capture:true, passive:true});
+  document.addEventListener('visibilitychange', clearPress);
+  window.addEventListener('blur', clearPress);
 })();
 
 // ── Init ─────────────────────────────────────────────────────────
