@@ -1864,8 +1864,7 @@ body.cal-searching .cw-card{display:none;}
   padding:var(--sp-8) var(--sp-24);display:flex;align-items:center;gap:var(--sp-8);flex-wrap:wrap;
 }
 .nfrow .flbl{font-size:var(--fs-foot);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-family:var(--en);flex-shrink:0;}
-/* 用真实 flex 容器承接点击。Android Chromium 在可横向滚动区域里对
-   display:contents 的点击命中偶尔会丢失，表现为分类要点好几次才切换。 */
+/* 真实 flex 容器承接分类导航事件，同时保留手机端横向滚动。 */
 .nfrow #nfchips{display:flex;align-items:center;gap:var(--sp-8);flex-wrap:wrap;}
 .nfrow .nfchip{
   display:inline-flex;align-items:center;padding:var(--sp-4) var(--sp-12);border-radius:var(--rchip);
@@ -1874,7 +1873,7 @@ body.cal-searching .cw-card{display:none;}
   font-family:var(--zh);transition:all .12s;white-space:nowrap;flex-shrink:0;
   touch-action:manipulation;-webkit-appearance:none;appearance:none;
 }
-.nfrow .nfchip:hover{border-color:var(--accent-mid);color:var(--accent);}
+@media (hover:hover) and (pointer:fine){.nfrow .nfchip:hover{border-color:var(--accent-mid);color:var(--accent);}}
 .nfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .nfrow .nfchip-cnt{font-size:var(--fs-foot);opacity:.7;margin-left:var(--sp-4);font-family:var(--en);}
 .nfrow .nfchip.on .nfchip-cnt{opacity:.85;}
@@ -14697,17 +14696,52 @@ async function toggleNoteLocal(id){
   }
 }
 
+// 触屏轻点在 pointerup 直接切换，不依赖浏览器随后合成的 click。
+// 超过阈值的移动 / pointercancel 交还滚动；合成 click 去重，键盘 click 保留。
+function bindNoteChipNavigation(box){
+  if(box._noteNavigationBound)return;
+  box._noteNavigationBound=true;
+  let press=null, consumedSub=null, consumedUntil=0;
+  const chipOf=e=>e.target.closest('button[data-note-sub]');
+  box.addEventListener('pointerdown',e=>{
+    press=null;
+    const chip=chipOf(e);
+    if(!chip||!e.isPrimary||e.pointerType==='mouse')return;
+    press={id:e.pointerId,sub:chip.dataset.noteSub,x:e.clientX,y:e.clientY,moved:false};
+  },{passive:true});
+  box.addEventListener('pointermove',e=>{
+    if(press&&e.pointerId===press.id&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)press.moved=true;
+  },{passive:true});
+  box.addEventListener('pointercancel',()=>{press=null;},{passive:true});
+  box.addEventListener('pointerup',e=>{
+    if(!press||e.pointerId!==press.id)return;
+    const p=press,chip=chipOf(e);press=null;
+    consumedSub=p.sub;consumedUntil=Date.now()+700;
+    if(p.moved||Math.hypot(e.clientX-p.x,e.clientY-p.y)>10||!chip||chip.dataset.noteSub!==p.sub)return;
+    e.preventDefault();
+    filterCat('notes:'+p.sub);
+  });
+  box.addEventListener('click',e=>{
+    const chip=chipOf(e);if(!chip)return;
+    e.preventDefault();
+    if(e.detail!==0&&chip.dataset.noteSub===consumedSub&&Date.now()<consumedUntil)return;
+    filterCat('notes:'+chip.dataset.noteSub);
+  });
+}
+
 function renderNoteChips(){
   const un=userNotes();
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
   un.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
-  const chips=[`<button type="button" class="nfchip ${curNoteSub==='all'?'on':''}" data-note-sub="all" onclick="filterCat('notes:all')">全部<span class="nfchip-cnt">${un.length}</span></button>`];
+  const chips=[`<button type="button" class="nfchip ${curNoteSub==='all'?'on':''}" data-note-sub="all">全部<span class="nfchip-cnt">${un.length}</span></button>`];
   noteSubs.forEach(s=>{
-    const safe=esc(s).replace(/'/g,"\\'");
-    chips.push(`<button type="button" class="nfchip ${curNoteSub===s?'on':''}" data-note-sub="${esc(s)}" onclick="filterCat('notes:${safe}')">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></button>`);
+    chips.push(`<button type="button" class="nfchip ${curNoteSub===s?'on':''}" data-note-sub="${esc(s)}">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></button>`);
   });
-  document.getElementById('nfchips').innerHTML=chips.join('');
+  const box=document.getElementById('nfchips'),html=chips.join('');
+  // 无关的列表更新不替换按钮，避免手指按下与松开之间点击目标消失。
+  if(box._noteChipsHTML!==html){box.innerHTML=html;box._noteChipsHTML=html;}
+  bindNoteChipNavigation(box);
 }
 
 // 编辑器
