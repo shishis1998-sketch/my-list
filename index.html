@@ -1864,13 +1864,15 @@ body.cal-searching .cw-card{display:none;}
   padding:var(--sp-8) var(--sp-24);display:flex;align-items:center;gap:var(--sp-8);flex-wrap:wrap;
 }
 .nfrow .flbl{font-size:var(--fs-foot);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-family:var(--en);flex-shrink:0;}
-/* nfchips 容器透明化,让胶囊直接参与父级 flex */
-.nfrow #nfchips{display:contents;}
+/* 用真实 flex 容器承接点击。Android Chromium 在可横向滚动区域里对
+   display:contents 的点击命中偶尔会丢失，表现为分类要点好几次才切换。 */
+.nfrow #nfchips{display:flex;align-items:center;gap:var(--sp-8);flex-wrap:wrap;}
 .nfrow .nfchip{
   display:inline-flex;align-items:center;padding:var(--sp-4) var(--sp-12);border-radius:var(--rchip);
   font-size:var(--fs-caption);font-weight:600;cursor:pointer;
   border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);
   font-family:var(--zh);transition:all .12s;white-space:nowrap;flex-shrink:0;
+  touch-action:manipulation;-webkit-appearance:none;appearance:none;
 }
 .nfrow .nfchip:hover{border-color:var(--accent-mid);color:var(--accent);}
 .nfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
@@ -2552,6 +2554,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
     padding:var(--sp-8) var(--sp-14);flex-wrap:nowrap;overflow-x:auto;
     -webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
+  .nfrow #nfchips{flex-wrap:nowrap;flex-shrink:0;}
   .nfrow::-webkit-scrollbar{display:none;}
   .nfrow .nfchip{padding:var(--sp-6) var(--sp-14);font-size:var(--fs-caption);}
   .nfrow .flbl{font-size:var(--fs-foot);}
@@ -10608,6 +10611,10 @@ function filterCat(cat){
   if(isNoteMode()){
     const parts=cat.split(':');
     curNoteSub=parts[1]||'all';
+    // 列表渲染可能较重，先立刻点亮已选胶囊，让单次触摸马上有反馈。
+    document.querySelectorAll('#nfchips .nfchip[data-note-sub]').forEach(el=>{
+      el.classList.toggle('on',el.dataset.noteSub===curNoteSub);
+    });
   }
   applyModeUI();
   // 手机端点完分类自动关闭抽屉。必须赶在 syncBottomTabs 之前——它会看 body.sb-open，
@@ -14690,10 +14697,10 @@ function renderNoteChips(){
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
   un.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
-  const chips=[`<span class="nfchip ${curNoteSub==='all'?'on':''}" onclick="filterCat('notes:all')">全部<span class="nfchip-cnt">${un.length}</span></span>`];
+  const chips=[`<button type="button" class="nfchip ${curNoteSub==='all'?'on':''}" data-note-sub="all" onclick="filterCat('notes:all')">全部<span class="nfchip-cnt">${un.length}</span></button>`];
   noteSubs.forEach(s=>{
     const safe=esc(s).replace(/'/g,"\\'");
-    chips.push(`<span class="nfchip ${curNoteSub===s?'on':''}" onclick="filterCat('notes:${safe}')">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></span>`);
+    chips.push(`<button type="button" class="nfchip ${curNoteSub===s?'on':''}" data-note-sub="${esc(s)}" onclick="filterCat('notes:${safe}')">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></button>`);
   });
   document.getElementById('nfchips').innerHTML=chips.join('');
 }
