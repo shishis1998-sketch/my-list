@@ -2901,9 +2901,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-periods{display:flex;flex-direction:column;gap:var(--sp-8);}
 #calViewHeat .hm-period{--dim:15;}
 #calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),minmax(0,1fr));}
-#calViewHeat .hm-slot{height:14px;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;}
+#calViewHeat .hm-slot{--slot-color:var(--surface-2);height:14px;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;}
+#calViewHeat .hm-slot.on{--slot-color:var(--accent);}
 #calViewHeat .hm-slot.join-prev::before,
-#calViewHeat .hm-slot.join-next::after{content:'';position:absolute;top:0;bottom:0;background:var(--accent);}
+#calViewHeat .hm-slot.join-next::after{content:'';position:absolute;top:0;bottom:0;background:var(--slot-color);}
 #calViewHeat .hm-slot.join-prev::before{left:0;right:50%;}
 #calViewHeat .hm-slot.join-next::after{left:50%;right:0;}
 #calViewHeat .hm-cell{width:15px;height:14px;position:relative;z-index:1;border-radius:var(--rsm);background:var(--surface-2);}
@@ -8017,9 +8018,9 @@ window.PV = (function(){
         let cells = '', ruler = '';
         for (let d = start; d <= end; d++) {
           const on = c.days.includes(d);
-          const joinPrev = on && d > start && c.days.includes(d - 1);
-          const joinNext = on && d < end && c.days.includes(d + 1);
-          cells += `<div class="hm-slot${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}">` +
+          const joinPrev = d > start && c.days.includes(d - 1) === on;
+          const joinNext = d < end && c.days.includes(d + 1) === on;
+          cells += `<div class="hm-slot${on ? ' on' : ''}${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}">` +
             `<div class="hm-cell${on ? ' on' : ''}"></div></div>`;
           ruler += `<span>${d}</span>`;
         }
