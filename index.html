@@ -1896,7 +1896,6 @@ body.cal-searching .cw-card{display:none;}
 }
 .note-month-row:last-child{border-bottom:0;}
 @media (hover:hover){.note-month-row:hover{background:var(--bg);}}
-.note-month-row:active{background:var(--bg);}
 .note-month-ico{
   width:30px;height:30px;flex:none;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
   color:var(--accent);background:var(--accent-light);
@@ -1911,6 +1910,12 @@ body.cal-searching .cw-card{display:none;}
 }
 .note-month-back svg{width:16px;height:16px;display:block;}
 @media (hover:hover){.note-month-back:hover{background:var(--accent-light);border-color:var(--accent-mid);}}
+/* 月份进入 / 返回：按下时整块主题色，文字与图标使用对应的对比色。 */
+.note-month-row:active,.note-month-back:active{
+  background:var(--accent);color:var(--on-accent);border-color:var(--accent);
+}
+.note-month-row:active .note-month-count{color:var(--on-accent);}
+.note-month-row:active .note-month-ico{background:transparent;color:var(--on-accent);}
 .note-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:var(--sp-14) var(--sp-16);cursor:pointer;box-shadow:var(--shadow);
