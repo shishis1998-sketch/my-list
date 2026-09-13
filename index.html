@@ -2901,7 +2901,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-periods{display:flex;flex-direction:column;gap:var(--sp-8);}
 #calViewHeat .hm-period{--dim:15;}
 #calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),minmax(0,1fr));gap:4px;}
-#calViewHeat .hm-cell{height:12px;border-radius:1.5px;background:var(--surface-2);}
+#calViewHeat .hm-cell{width:100%;aspect-ratio:1 / 1;border-radius:var(--rsm);background:var(--surface-2);}
 #calViewHeat .hm-cell.on{background:var(--accent);}
 /* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
    后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
