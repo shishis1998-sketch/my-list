@@ -13387,12 +13387,25 @@ function noteMonthLabel(key){
   return p.length===2?(Number(p[0])+'年'+Number(p[1])+'月'):key;
 }
 
+// 只在月份导航时播放：进入向上淡入，返回向下淡入；不延迟实际切换。
+function animateNoteMonthNavigation(back){
+  const list=document.getElementById('nlist');
+  if(!list)return;
+  if(list._monthTransition)list._monthTransition.cancel();
+  if(!list.animate||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  list._monthTransition=list.animate([
+    {opacity:0,transform:'translateY('+(back?-8:8)+'px)'},
+    {opacity:1,transform:'translateY(0)'}
+  ],{duration:240,easing:'cubic-bezier(.22,.61,.36,1)'});
+}
+
 function openNoteMonth(key){
   curNoteMonth=key;
   haptic('tap');
   renderNotes();
   const content=document.querySelector('.content');
   if(content) content.scrollTop=0;
+  animateNoteMonthNavigation(false);
 }
 
 function closeNoteMonth(){
@@ -13401,6 +13414,7 @@ function closeNoteMonth(){
   renderNotes();
   const content=document.querySelector('.content');
   if(content) content.scrollTop=0;
+  animateNoteMonthNavigation(true);
 }
 
 function renderNoteMonthOverview(L){
@@ -13434,6 +13448,7 @@ function renderNotes(){
   const sb=document.getElementById('sbar'); sb.style.display='none'; sb.innerHTML='';
   // 渲染列表
   const list=document.getElementById('nlist');
+  if(list._monthTransition){list._monthTransition.cancel();list._monthTransition=null;}
   const empty=document.getElementById('nempty');
   if(!L.length){
     list.style.display='none';
