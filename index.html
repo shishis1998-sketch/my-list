@@ -10596,15 +10596,9 @@ function filterCat(cat){
   const onList = !document.body.classList.contains('cal-open')
               && !document.body.classList.contains('sb-open')
               && !detailId;
-  // 已经停在这个 tab、也没有别的页盖着 → 什么都不用做。
-  // 少了这个短路，点已经选中的 tab 也会把整个列表重建一遍。
-  // curFilterTags 那个条件是故意留的：「再点一次当前 tab 顺手清空标签筛选」
-  // 是原有行为，保留。
-  if(onList && curCat===cat && !curFilterTags.length){
-    // 月份明细里再次点击当前「收集 / 日记」分类，回到月份总览。
-    if(curNoteMonth){curNoteMonth='';scheduleCatRender();return;}
-    return;
-  }
+  // 媒体分类保留重复点击短路；笔记分类始终同步状态并渲染，
+  // 包括恢复页面后分类与子分类状态不一致、以及从月份明细返回总览。
+  if(onList && curCat===cat && !curFilterTags.length && !isNoteMode()) return;
 
   if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
   closeDetail();                                                     // 从详情页切回列表
@@ -10661,7 +10655,10 @@ function validCat(c){
 function restoreLastCat(){
   const v=readLastView();
   const c=v&&validCat(v.cat);
-  if(c) curCat=c;
+  if(c){
+    curCat=c;
+    curNoteSub=c.startsWith('notes:')?c.slice(6):'all';
+  }
 }
 // 页面本身等首次 render 之后再切：日历/设置都要在列表渲染好之后才叠上去
 function restoreLastPage(){
@@ -14736,52 +14733,24 @@ async function toggleNoteLocal(id){
   }
 }
 
-// 触屏轻点在 pointerup 直接切换，不依赖浏览器随后合成的 click。
-// 超过阈值的移动 / pointercancel 交还滚动；合成 click 去重，键盘 click 保留。
-function bindNoteChipNavigation(box){
-  if(box._noteNavigationBound)return;
-  box._noteNavigationBound=true;
-  let press=null, consumedSub=null, consumedUntil=0;
-  const chipOf=e=>e.target.closest('button[data-note-sub]');
-  box.addEventListener('pointerdown',e=>{
-    press=null;
-    const chip=chipOf(e);
-    if(!chip||!e.isPrimary||e.pointerType==='mouse')return;
-    press={id:e.pointerId,sub:chip.dataset.noteSub,x:e.clientX,y:e.clientY,moved:false};
-  },{passive:true});
-  box.addEventListener('pointermove',e=>{
-    if(press&&e.pointerId===press.id&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)press.moved=true;
-  },{passive:true});
-  box.addEventListener('pointercancel',()=>{press=null;},{passive:true});
-  box.addEventListener('pointerup',e=>{
-    if(!press||e.pointerId!==press.id)return;
-    const p=press,chip=chipOf(e);press=null;
-    consumedSub=p.sub;consumedUntil=Date.now()+700;
-    if(p.moved||Math.hypot(e.clientX-p.x,e.clientY-p.y)>10||!chip||chip.dataset.noteSub!==p.sub)return;
-    e.preventDefault();
-    filterCat('notes:'+p.sub);
-  });
-  box.addEventListener('click',e=>{
-    const chip=chipOf(e);if(!chip)return;
-    e.preventDefault();
-    if(e.detail!==0&&chip.dataset.noteSub===consumedSub&&Date.now()<consumedUntil)return;
-    filterCat('notes:'+chip.dataset.noteSub);
-  });
-}
-
+// 分类按钮只使用原生 click：不拦截 pointerup，也不吞掉浏览器合成的点击。
+// 分类/数量未变时保留按钮节点；选中样式单独更新，避免按下后目标被重建。
 function renderNoteChips(){
   const un=userNotes();
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
   un.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
-  const chips=[`<button type="button" class="nfchip ${curNoteSub==='all'?'on':''}" data-note-sub="all">全部<span class="nfchip-cnt">${un.length}</span></button>`];
+  const chips=[`<button type="button" class="nfchip" data-note-sub="all" onclick="filterCat('notes:'+this.dataset.noteSub)">全部<span class="nfchip-cnt">${un.length}</span></button>`];
   noteSubs.forEach(s=>{
-    chips.push(`<button type="button" class="nfchip ${curNoteSub===s?'on':''}" data-note-sub="${esc(s)}">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></button>`);
+    chips.push(`<button type="button" class="nfchip" data-note-sub="${esc(s)}" onclick="filterCat('notes:'+this.dataset.noteSub)">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></button>`);
   });
   const box=document.getElementById('nfchips'),html=chips.join('');
-  // 无关的列表更新不替换按钮，避免手指按下与松开之间点击目标消失。
   if(box._noteChipsHTML!==html){box.innerHTML=html;box._noteChipsHTML=html;}
-  bindNoteChipNavigation(box);
+  box.querySelectorAll('[data-note-sub]').forEach(chip=>{
+    const on=chip.dataset.noteSub===curNoteSub;
+    chip.classList.toggle('on',on);
+    chip.setAttribute('aria-pressed',String(on));
+  });
 }
 
 // 编辑器
