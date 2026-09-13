@@ -2900,14 +2900,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    因此可以把每天的数字都写出来，不必再隔天省略。 */
 #calViewHeat .hm-periods{display:flex;flex-direction:column;gap:var(--sp-8);}
 #calViewHeat .hm-period{--dim:15;}
-#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),14px);justify-content:space-between;}
-#calViewHeat .hm-cell{width:14px;height:18px;border-radius:var(--rsm);background:var(--surface-2);}
+#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),15px);justify-content:space-between;}
+#calViewHeat .hm-cell{width:15px;height:15px;border-radius:var(--rsm);background:var(--surface-2);}
 #calViewHeat .hm-cell.on{background:var(--accent);}
 /* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
    后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
    色带只表达「这天记没记」，参照交给下方刻度尺。 */
 /* 刻度尺与色带使用相同列数和间距，每一格都显示对应日期。 */
-#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim),14px);justify-content:space-between;
+#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim),15px);justify-content:space-between;
   margin-top:var(--sp-4);font-family:var(--en);font-size:9px;line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-ruler span{text-align:center;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
