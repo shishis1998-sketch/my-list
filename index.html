@@ -15228,6 +15228,31 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   let lastY = window.scrollY || 0;
   let ticking = false;
   const THRESH = 6;
+  // 笔记页按手势方向控制，即使没有足够内容产生 scroll 事件也能收起。
+  // 只监听正文区域，分类栏横滑、底部操作、弹窗和其他页面不参与。
+  let noteTouch=null;
+  function noteGestureEnabled(){
+    return isMobileLayout()&&isNoteMode()&&
+      !['cal-open','detail-open','sb-open','modal-open','kb-open'].some(c=>document.body.classList.contains(c));
+  }
+  document.addEventListener('touchstart',e=>{
+    noteTouch=null;
+    if(!noteGestureEnabled()||e.touches.length!==1||!e.target.closest('.content'))return;
+    const t=e.touches[0];
+    noteTouch={x:t.clientX,y:t.clientY};
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!noteTouch)return;
+    if(!noteGestureEnabled()||e.touches.length!==1){noteTouch=null;return;}
+    const t=e.touches[0],dx=t.clientX-noteTouch.x,dy=t.clientY-noteTouch.y;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<=THRESH)return;
+    if(Math.abs(dx)>=Math.abs(dy)){noteTouch=null;return;}
+    document.body.classList.toggle('tabs-hidden',dy<0);
+    noteTouch={x:t.clientX,y:t.clientY};
+  },{passive:true});
+  ['touchend','touchcancel'].forEach(type=>{
+    document.addEventListener(type,()=>{noteTouch=null;},{passive:true});
+  });
   function apply(){
     ticking = false;
     if(!isMobileLayout()){
@@ -15249,6 +15274,8 @@ document.addEventListener('touchstart', function(){}, {passive:true});
     if(document.body.classList.contains('modal-open') ||
        document.body.classList.contains('kb-open')){ return; }
     const y = window.scrollY || 0;
+    // 笔记由上面的手势统一控制，不让短页面/顶部回弹的 scroll 覆盖手势结果。
+    if(isNoteMode()){lastY=y;return;}
     // 内容只比一屏多出一点点时不收。记录很少时文档只高出几十像素，
     // 手一抖就滚过了阈值，整条导航跟着消失，看着像界面坏了；
     // 而且本来也没多少地方可滚，腾这点空间毫无意义。要求至少还有半屏可滚。
