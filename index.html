@@ -13360,7 +13360,13 @@ function fmtNoteDate(ts){
 }
 
 function noteMonthKey(n){
-  const d=new Date(n.createdAt||n.updatedAt||0);
+  // 「收集 / 日记」的标题本身就是记录日期，月份归档必须跟标题走；
+  // 不能用 updatedAt，否则只是改几个字，整条记录就会被挪到本月。
+  // 兼容 2026/09/13、2026-09-13、2026.09.13、2026年9月13日（日期部分可省略）。
+  const m=String(n.title||'').match(/((?:19|20)\d{2})\s*(?:年|[\/.\-])\s*(1[0-2]|0?[1-9])(?:\s*(?:月|[\/.\-])\s*(?:3[01]|[12]\d|0?[1-9])\s*日?)?/);
+  if(m) return m[1]+'-'+String(Number(m[2])).padStart(2,'0');
+  // 旧记录若标题没有可识别日期，只按首次创建月份兜底，也绝不使用编辑时间。
+  const d=new Date(n.createdAt||0);
   if(!isFinite(d.getTime())) return '';
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
