@@ -1909,12 +1909,11 @@ body.cal-searching .cw-card{display:none;}
 }
 .note-month-back svg{width:16px;height:16px;display:block;}
 @media (hover:hover){.note-month-back:hover{background:var(--accent-light);border-color:var(--accent-mid);}}
-/* 月份进入 / 返回：按下时整块主题色，文字与图标使用对应的对比色。 */
-.note-month-row:active,.note-month-back:active{
-  background:var(--accent);color:var(--on-accent);border-color:var(--accent);
+/* 淡主题色点击反馈保留至导航开始，文字沿用原来的可读颜色。 */
+.note-month-row:active,.note-month-back:active,
+.note-month-row.month-tap,.note-month-back.month-tap{
+  background:rgba(var(--accent-rgb),.08);
 }
-.note-month-row:active .note-month-count{color:var(--on-accent);}
-.note-month-row:active .note-month-ico{background:transparent;color:var(--on-accent);}
 .note-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:var(--sp-14) var(--sp-16);cursor:pointer;box-shadow:var(--shadow);
@@ -10593,6 +10592,7 @@ function scheduleCatRender(){
   _catRenderRAF=requestAnimationFrame(()=>{ _catRenderRAF=0; render(); playCatStagger(); });
 }
 function filterCat(cat){
+  cancelNoteMonthTap();
   const onList = !document.body.classList.contains('cal-open')
               && !document.body.classList.contains('sb-open')
               && !detailId;
@@ -13387,7 +13387,29 @@ function noteMonthLabel(key){
   return p.length===2?(Number(p[0])+'年'+Number(p[1])+'月'):key;
 }
 
-// 只在月份导航时播放：进入向上淡入，返回向下淡入；不延迟实际切换。
+let noteMonthTapTimer=null, noteMonthTapButton=null;
+function cancelNoteMonthTap(){
+  clearTimeout(noteMonthTapTimer);
+  noteMonthTapTimer=null;
+  if(noteMonthTapButton)noteMonthTapButton.classList.remove('month-tap');
+  noteMonthTapButton=null;
+}
+function withNoteMonthFeedback(button,go){
+  cancelNoteMonthTap();
+  haptic('tap');
+  if(!button){go();return;}
+  button.classList.add('month-tap');
+  noteMonthTapButton=button;
+  const category=curCat;
+  noteMonthTapTimer=setTimeout(()=>{
+    const valid=button.isConnected&&curCat===category&&
+      !document.body.classList.contains('cal-open')&&!document.body.classList.contains('sb-open');
+    cancelNoteMonthTap();
+    if(valid)go();
+  },120);
+}
+
+// 只在月份导航时播放：点击反馈后，进入向上淡入，返回向下淡入。
 function animateNoteMonthNavigation(back){
   const list=document.getElementById('nlist');
   if(!list)return;
@@ -13399,22 +13421,24 @@ function animateNoteMonthNavigation(back){
   ],{duration:240,easing:'cubic-bezier(.22,.61,.36,1)'});
 }
 
-function openNoteMonth(key){
-  curNoteMonth=key;
-  haptic('tap');
-  renderNotes();
-  const content=document.querySelector('.content');
-  if(content) content.scrollTop=0;
-  animateNoteMonthNavigation(false);
+function openNoteMonth(key,button){
+  withNoteMonthFeedback(button,()=>{
+    curNoteMonth=key;
+    renderNotes();
+    const content=document.querySelector('.content');
+    if(content)content.scrollTop=0;
+    animateNoteMonthNavigation(false);
+  });
 }
 
-function closeNoteMonth(){
-  curNoteMonth='';
-  haptic('tap');
-  renderNotes();
-  const content=document.querySelector('.content');
-  if(content) content.scrollTop=0;
-  animateNoteMonthNavigation(true);
+function closeNoteMonth(button){
+  withNoteMonthFeedback(button,()=>{
+    curNoteMonth='';
+    renderNotes();
+    const content=document.querySelector('.content');
+    if(content)content.scrollTop=0;
+    animateNoteMonthNavigation(true);
+  });
 }
 
 function renderNoteMonthOverview(L){
@@ -13423,7 +13447,7 @@ function renderNoteMonthOverview(L){
   const keys=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
   const cal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>';
   return '<div class="note-month-card" role="list">'+keys.map(key=>
-    `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}')">`+
+    `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}',this)">`+
       `<span class="note-month-ico">${cal}</span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
@@ -13432,6 +13456,7 @@ function renderNoteMonthOverview(L){
 }
 
 function renderNotes(){
+  cancelNoteMonthTap();
   // 顶部子分类胶囊条
   renderNoteChips();
   // 标题
@@ -13462,7 +13487,7 @@ function renderNotes(){
     return;
   }
   const back=monthMode
-    ? '<button type="button" class="note-month-back" onclick="closeNoteMonth()" aria-label="返回全部月份"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>全部月份</span></button>'
+    ? '<button type="button" class="note-month-back" onclick="closeNoteMonth(this)" aria-label="返回全部月份"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>全部月份</span></button>'
     : '';
   list.innerHTML=back+L.map(n=>{
     // 备忘子分类用结构化卡片
