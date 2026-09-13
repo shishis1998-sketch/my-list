@@ -2877,11 +2877,31 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   padding:calc(env(safe-area-inset-top) + var(--sp-8)) var(--sp-14) var(--sp-20);}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
-#calViewHeat .hm-hdr{display:flex;align-items:center;padding:var(--sp-6) 0 var(--sp-12);}
-#calViewHeat .hm-titlenav{display:flex;align-items:center;gap:0;margin-left:-10px;}
-#calViewHeat .hm-titlenav .cal-navbtn{width:26px;color:var(--text-primary);}
+#calViewHeat .hm-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:var(--sp-6) var(--sp-12) var(--sp-12);}
+#calViewHeat .hm-hdr-actions{display:flex;align-items:center;gap:var(--sp-8);}
+#calViewHeat .hm-hdr-actions>.cal-navbtn,
+#calViewHeat .hm-filter-btn{width:28px;height:28px;flex:0 0 28px;border:none;border-radius:50%;
+  background:var(--surface);color:var(--text-primary);display:inline-flex;align-items:center;
+  justify-content:center;cursor:pointer;padding:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
+#calViewHeat .hm-hdr-actions>.cal-navbtn{font-size:16px;line-height:1;}
+#calViewHeat .hm-filter{position:relative;display:flex;}
+#calViewHeat .hm-filter-btn svg{width:16px;height:16px;}
+#calViewHeat .hm-filter-btn:active,
+#calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
+#calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
+#calViewHeat .hm-filter-btn.act{color:var(--accent);}
+#calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
+  width:max-content;min-width:108px;max-width:min(72vw,240px);max-height:60vh;overflow-y:auto;
+  display:none;padding:6px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.10);scrollbar-width:none;}
+#calViewHeat .hm-filter-menu.show{display:block;}
+#calViewHeat .hm-filter-menu::-webkit-scrollbar{display:none;}
+#calViewHeat .hm-filter-item{padding:9px 12px;border-radius:var(--r);font-size:var(--fs-caption);
+  color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+#calViewHeat .hm-filter-item.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
-  letter-spacing:.03em;padding:0 var(--sp-2);white-space:nowrap;}
+  letter-spacing:.03em;padding:0;white-space:nowrap;}
 /* 标签行：一个标签一条长条月历带。
    原本是「一标签一张整月网格卡」，每个标签一个月通常只记 1~3 天，
    用 31 格的七列网格去显示 2 个点，六个标签要滑三屏。改成单行色带后
@@ -5040,10 +5060,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <!-- 标签视图：当月记过的每个症状标签一张卡（移植自经期 App 热力图的「月」视图）-->
       <div id="calViewHeat" style="display:none">
         <div class="hm-hdr">
-          <div class="hm-titlenav">
+          <div class="hm-title" id="hmTitle">2026 年 1 月</div>
+          <div class="hm-hdr-actions">
             <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月">‹</button>
-            <div class="hm-title" id="hmTitle">2026 年 1 月</div>
             <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
+            <div class="hm-filter" id="hmFilter">
+              <button class="hm-filter-btn" id="hmFilterBtn" onclick="PV.toggleHeatFilter(event)" aria-label="筛选症状">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+              </button>
+              <div class="hm-filter-menu" id="hmFilterMenu"></div>
+            </div>
           </div>
         </div>
         <div id="hmContent"></div>
@@ -7952,6 +7978,7 @@ window.PV = (function(){
   // 当月记过的每个症状标签一条长条月历带，记过的那天填深色。
   // 移植自经期 App 热力图的「月」视图（renderTagCards），只读 SYMPTOMS_*，不写数据。
   let heatYear = 0, heatMonth = 0, heatPos = false;
+  let heatSymFilter = '全部';
 
   // 从「经期 / 年度」切进来 → 跟随那边当前停留的年月；
   // 从「日历」切进来 → 保留自己的位置，本次日历页会话里第一次进入才回到当前月
@@ -7977,12 +8004,59 @@ window.PV = (function(){
     renderHeat();
   }
 
+  function renderHeatFilter(){
+    const wrap = document.getElementById('hmFilter');
+    const btn = document.getElementById('hmFilterBtn');
+    const menu = document.getElementById('hmFilterMenu');
+    if (!wrap || !btn || !menu) return;
+    if (!SYMPTOMS_LIB || !SYMPTOMS_LIB.length) {
+      wrap.style.display = 'none';
+      heatSymFilter = '全部';
+      return;
+    }
+    wrap.style.display = '';
+    if (heatSymFilter !== '全部' && !SYMPTOMS_LIB.includes(heatSymFilter)) heatSymFilter = '全部';
+    const names = ['全部'].concat(SYMPTOMS_LIB);
+    menu.innerHTML = names.map(name =>
+      `<div class="hm-filter-item${name === heatSymFilter ? ' on' : ''}" data-name="${escapeAttr(name)}">${escapeHtml(name)}</div>`
+    ).join('');
+    menu.querySelectorAll('.hm-filter-item').forEach(el => {
+      el.onclick = ev => {
+        ev.stopPropagation();
+        heatSymFilter = el.dataset.name;
+        closeHeatFilter();
+        renderHeat();
+      };
+    });
+    btn.classList.toggle('act', heatSymFilter !== '全部');
+  }
+
+  function toggleHeatFilter(event){
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('hmFilterMenu');
+    const btn = document.getElementById('hmFilterBtn');
+    if (!menu) return;
+    const open = menu.classList.toggle('show');
+    if (btn) btn.classList.toggle('open', open);
+  }
+
+  function closeHeatFilter(){
+    document.getElementById('hmFilterMenu')?.classList.remove('show');
+    document.getElementById('hmFilterBtn')?.classList.remove('open');
+  }
+
+  document.addEventListener('click', event => {
+    const filter = document.getElementById('hmFilter');
+    if (filter && !filter.contains(event.target)) closeHeatFilter();
+  });
+
   function renderHeat(){
     const box = document.getElementById('hmContent');
     if (!box) return;
     if (!heatPos) heatToToday();
     const title = document.getElementById('hmTitle');
     if (title) title.textContent = `${heatYear} 年 ${heatMonth} 月`;
+    renderHeatFilter();
 
     const dim = new Date(heatYear, heatMonth, 0).getDate();
 
@@ -8001,13 +8075,17 @@ window.PV = (function(){
     // sort 稳定，天数相同的仍保持库内原序（与记录面板一致）。
     cards.sort((a, b) => b.days.length - a.days.length);
 
-    if (!cards.length) {
+    const visibleCards = heatSymFilter === '全部'
+      ? cards
+      : cards.filter(card => card.tag === heatSymFilter);
+
+    if (!visibleCards.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
-        '<p>这个月还没有标签记录</p>' +
+        `<p>${heatSymFilter === '全部' ? '这个月还没有标签记录' : `「${escapeHtml(heatSymFilter)}」这个月还没有记录`}</p>` +
         '<small>在「经期」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
       return;
     }
-    box.innerHTML = '<div class="hm-cards">' + cards.map(c => {
+    box.innerHTML = '<div class="hm-cards">' + visibleCards.map(c => {
       const hasFirst = c.days.some(d => d <= 15);
       const hasSecond = c.days.some(d => d >= 16);
       // 正常有记录的卡片至少命中一段；保留第一段兜底，避免异常空数据生成空卡。
@@ -8039,7 +8117,7 @@ window.PV = (function(){
 
   return {
     init, open, render, resetPos, hasPos,
-    openHeat, renderHeat,
+    openHeat, renderHeat, toggleHeatFilter,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, toggleLabelsExpanded, setHomeView, changeViewMonth,
