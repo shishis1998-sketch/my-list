@@ -2900,14 +2900,19 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    因此可以把每天的数字都写出来，不必再隔天省略。 */
 #calViewHeat .hm-periods{display:flex;flex-direction:column;gap:var(--sp-8);}
 #calViewHeat .hm-period{--dim:15;}
-#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),15px);justify-content:space-between;}
-#calViewHeat .hm-cell{width:15px;height:15px;border-radius:var(--rsm);background:var(--surface-2);}
+#calViewHeat .hm-strip{display:grid;grid-template-columns:repeat(var(--dim),minmax(0,1fr));}
+#calViewHeat .hm-slot{height:15px;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;}
+#calViewHeat .hm-slot.join-prev::before,
+#calViewHeat .hm-slot.join-next::after{content:'';position:absolute;top:0;bottom:0;background:var(--accent);}
+#calViewHeat .hm-slot.join-prev::before{left:0;right:50%;}
+#calViewHeat .hm-slot.join-next::after{left:50%;right:0;}
+#calViewHeat .hm-cell{width:15px;height:15px;position:relative;z-index:1;border-radius:var(--rsm);background:var(--surface-2);}
 #calViewHeat .hm-cell.on{background:var(--accent);}
 /* 今天不再单独标记：原来空心格用描边、记录日再压一道浅色内描边，
    后者把实心色块从内侧啃掉一圈，看起来比旁边的块小一号。
    色带只表达「这天记没记」，参照交给下方刻度尺。 */
 /* 刻度尺与色带使用相同列数和间距，每一格都显示对应日期。 */
-#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim),15px);justify-content:space-between;
+#calViewHeat .hm-ruler{display:grid;grid-template-columns:repeat(var(--dim),minmax(0,1fr));
   margin-top:var(--sp-4);font-family:var(--en);font-size:9px;line-height:1;color:var(--text-muted);}
 #calViewHeat .hm-ruler span{text-align:center;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
@@ -8011,7 +8016,11 @@ window.PV = (function(){
       const rows = periods.map(([start, end]) => {
         let cells = '', ruler = '';
         for (let d = start; d <= end; d++) {
-          cells += `<div class="hm-cell${c.days.includes(d) ? ' on' : ''}"></div>`;
+          const on = c.days.includes(d);
+          const joinPrev = on && d > start && c.days.includes(d - 1);
+          const joinNext = on && d < end && c.days.includes(d + 1);
+          cells += `<div class="hm-slot${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}">` +
+            `<div class="hm-cell${on ? ' on' : ''}"></div></div>`;
           ruler += `<span>${d}</span>`;
         }
         const count = end - start + 1;
