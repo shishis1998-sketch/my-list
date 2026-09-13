@@ -3649,6 +3649,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   background:var(--brand);color:#fff;font-family:var(--zh);font-size:var(--fs-callout);
   font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .pv-inp-btn:active{transform:scale(.97);}
+.pv-inp-del{background:transparent;color:var(--brand);padding-left:6px;padding-right:6px;}
 /* 不画上边框：列表最后一组与按钮之间本来就隔着 16px，再来一条横线是多的 */
 .pv-sheet-actions{flex:0 0 auto;display:flex;gap:8px;padding-top:16px;}
 .pv-btn{border:none;border-radius:12px;padding:12px 0;font-size:14px;font-weight:700;
@@ -6544,6 +6545,8 @@ window.PV = (function(){
     let symAllOpen = false;    // 「全部症状」是否展开
     let symAddOpen = false;    // 「新建症状」输入行是否展开
     let symAddFocus = false;   // 这一次重画要不要把焦点送进输入框（只在刚展开/刚添加完时）
+    let symEditName = '';      // 长按后正在原地编辑的已有症状
+    let symEditFocus = false;
     let symRows = [];          // 这一次打开要列出的症状（打开时定好，之后不再重排）
 
     // 这一屏列哪 5 条症状：已记的一定露出来，其余按最近 60 天用得多少补齐。
@@ -6571,6 +6574,13 @@ window.PV = (function(){
     }
 
     function symRow(name, on) {
+      if (symEditName === name) {
+        return `<div class="pv-inprow" data-sym-editor="${escapeAttr(name)}">` +
+                 `<input type="text" class="pv-inp" id="pvEditSym" value="${escapeAttr(name)}" maxlength="20" aria-label="编辑症状名称">` +
+                 `<button type="button" class="pv-inp-btn pv-inp-del" data-sym-delete="${escapeAttr(name)}">删除</button>` +
+                 `<button type="button" class="pv-inp-btn" data-sym-save="${escapeAttr(name)}">保存</button>` +
+               `</div>`;
+      }
       return `<button type="button" class="pv-row${on ? ' on' : ''}" data-sym="${escapeAttr(name)}" ` +
                `aria-pressed="${on}">` +
                `<span class="pv-row-l">${escapeHtml(name)}</span>` +
@@ -6674,12 +6684,12 @@ window.PV = (function(){
           applySelectedColor(+el.dataset.lv, true);
         };
       });
-      // 症状：点整行切换；长按删标签（原先是胶囊右上角那个 × ，太容易误触）
+      // 症状：点整行切换；长按后原地编辑，并在编辑行里保留删除入口。
       body.querySelectorAll('[data-sym]').forEach(el => {
         let timer = 0, longPressed = false;
         const start = () => {
           longPressed = false;
-          timer = setTimeout(() => { longPressed = true; deleteFromLib(el.dataset.sym); }, 600);
+          timer = setTimeout(() => { longPressed = true; startEditSymptom(el.dataset.sym); }, 600);
         };
         const cancel = () => clearTimeout(timer);
         el.addEventListener('touchstart', start, { passive: true });
@@ -6694,6 +6704,34 @@ window.PV = (function(){
           toggleSym(el.dataset.sym);
         };
       });
+      body.querySelectorAll('[data-sym-save]').forEach(el => {
+        el.onclick = ev => {
+          ev.stopPropagation();
+          const input = body.querySelector('#pvEditSym');
+          renameSymptom(el.dataset.symSave, input ? input.value : '');
+        };
+      });
+      body.querySelectorAll('[data-sym-delete]').forEach(el => {
+        el.onclick = ev => { ev.stopPropagation(); deleteFromLib(el.dataset.symDelete); };
+      });
+      const editInp = body.querySelector('#pvEditSym');
+      if (editInp) {
+        editInp.onclick = ev => ev.stopPropagation();
+        editInp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            renameSymptom(symEditName, editInp.value);
+          } else if (e.key === 'Escape') {
+            symEditName = '';
+            renderDaySheetBody();
+          }
+        });
+        if (symEditFocus) {
+          symEditFocus = false;
+          editInp.focus();
+          editInp.select();
+        }
+      }
       const symInp = body.querySelector('#pvNewSym');
       if (symInp) {
         symInp.onclick = (ev) => ev.stopPropagation();
@@ -6788,6 +6826,7 @@ window.PV = (function(){
       cardDay = { y, m, d };    // 状态卡跟着点选走（selectedView 会被 closeDaySheet 清掉，这个不会）
       refreshDayCard();
       flowOpen = false; symAllOpen = false; symAddOpen = false; symAddFocus = false;
+      symEditName = ''; symEditFocus = false;
       symRows = pickSymRows(y, m, d);
       renderDaySheetBody();
       updateSelectedHighlight();
@@ -7479,6 +7518,43 @@ window.PV = (function(){
       showToast('已添加，点完成保存');
     }
 
+    function startEditSymptom(name) {
+      symEditName = name;
+      symEditFocus = true;
+      symAddOpen = false;
+      symAddFocus = false;
+      renderDaySheetBody();
+    }
+
+    function renameSymptom(oldName, value) {
+      const name = (value || '').trim();
+      if (!name) { showToast('症状名称不能为空'); return; }
+      if (name.length > 20) { showToast('标签太长(最多 20 字)'); return; }
+      if (name !== oldName && SYMPTOMS_LIB.includes(name)) {
+        showToast('已经有同名症状');
+        return;
+      }
+      if (name === oldName) {
+        symEditName = '';
+        renderDaySheetBody();
+        return;
+      }
+      const idx = SYMPTOMS_LIB.indexOf(oldName);
+      if (idx >= 0) SYMPTOMS_LIB[idx] = name;
+      Object.keys(SYMPTOMS_DATA).forEach(key => {
+        if (!(SYMPTOMS_DATA[key] || []).includes(oldName)) return;
+        // 去重兜底：历史数据异常时，改名也不会让同一天出现两份同名标签。
+        SYMPTOMS_DATA[key] = [...new Set(SYMPTOMS_DATA[key].map(n => n === oldName ? name : n))];
+      });
+      symRows = [...new Set(symRows.map(n => n === oldName ? name : n))];
+      symEditName = '';
+      markUnsaved();
+      renderDaySheetBody();
+      rerenderZoomedMonth();
+      updateSelectedHighlight();
+      showToast('已修改，点完成保存');
+    }
+
     function deleteFromLib(name) {
       if (!confirm(`确定删除标签"${name}"吗?\n所有日子里这个标签的记录也会被清除。`)) return;
       const idx = SYMPTOMS_LIB.indexOf(name);
@@ -7492,6 +7568,7 @@ window.PV = (function(){
         else SYMPTOMS_DATA[key] = filtered;
       });
       markUnsaved();
+      symEditName = '';
       symRows = symRows.filter(n => n !== name);   // 这一屏也别再留着那一行
       renderDaySheetBody();
       // 整月重画一下,刷新所有小圆点
