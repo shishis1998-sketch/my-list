@@ -1883,6 +1883,32 @@ body.cal-searching .cw-card{display:none;}
 
 /* 笔记卡片列表 */
 .note-list{display:flex;flex-direction:column;gap:var(--sp-10);}
+.note-month-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
+  overflow:hidden;
+}
+.note-month-row{
+  width:100%;min-height:60px;padding:0 var(--sp-16);display:flex;align-items:center;gap:var(--sp-12);
+  border:0;border-bottom:1px solid var(--border-soft);background:transparent;color:var(--text-primary);
+  cursor:pointer;font-family:var(--zh);text-align:left;
+}
+.note-month-row:last-child{border-bottom:0;}
+@media (hover:hover){.note-month-row:hover{background:var(--bg);}}
+.note-month-row:active{background:var(--bg);}
+.note-month-ico{
+  width:30px;height:30px;flex:none;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
+  color:var(--accent);background:var(--accent-light);
+}
+.note-month-ico svg{width:17px;height:17px;display:block;}
+.note-month-name{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:600;line-height:1.2;}
+.note-month-count{font-family:var(--en);font-size:var(--fs-body);color:var(--text-muted);font-variant-numeric:tabular-nums;}
+.note-month-back{
+  align-self:flex-start;display:inline-flex;align-items:center;gap:var(--sp-4);height:36px;padding:0 var(--sp-12) 0 var(--sp-8);
+  border:1px solid var(--border);border-radius:var(--rchip);background:var(--surface);color:var(--accent);
+  cursor:pointer;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;
+}
+.note-month-back svg{width:16px;height:16px;display:block;}
+@media (hover:hover){.note-month-back:hover{background:var(--accent-light);border-color:var(--accent-mid);}}
 .note-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:var(--sp-14) var(--sp-16);cursor:pointer;box-shadow:var(--shadow);
@@ -8296,6 +8322,7 @@ let curCat='notes:all', curSearch='', curSort='upd-desc', curStatus='all', curSc
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
 let curNoteSub='all'; // 笔记子分类筛选
+let curNoteMonth='';  // 收集/日记的月份明细；空值=月份总览
 let editId=null, curTags=[], delId=null, editCats=[];
 let editNoteId=null, curNoteTags=[], editNoteSubs=[];
 let syncTimer=null, isSyncing=false, lastSyncErr=null;
@@ -10566,12 +10593,17 @@ function filterCat(cat){
   // 少了这个短路，点已经选中的 tab 也会把整个列表重建一遍。
   // curFilterTags 那个条件是故意留的：「再点一次当前 tab 顺手清空标签筛选」
   // 是原有行为，保留。
-  if(onList && curCat===cat && !curFilterTags.length) return;
+  if(onList && curCat===cat && !curFilterTags.length){
+    // 月份明细里再次点击当前「收集 / 日记」分类，回到月份总览。
+    if(curNoteMonth){curNoteMonth='';scheduleCatRender();return;}
+    return;
+  }
 
   if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
   closeDetail();                                                     // 从详情页切回列表
   curCat=cat;
   curFilterTags=[];
+  curNoteMonth='';
   // 解析笔记模式的子分类
   if(isNoteMode()){
     const parts=cat.split(':');
@@ -13327,14 +13359,59 @@ function fmtNoteDate(ts){
   return sameYear?(mm+'-'+dd):(d.getFullYear()+'-'+mm+'-'+dd);
 }
 
+function noteMonthKey(n){
+  const d=new Date(n.createdAt||n.updatedAt||0);
+  if(!isFinite(d.getTime())) return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+function noteMonthLabel(key){
+  const p=String(key||'').split('-');
+  return p.length===2?(Number(p[0])+'年'+Number(p[1])+'月'):key;
+}
+
+function openNoteMonth(key){
+  curNoteMonth=key;
+  haptic('tap');
+  renderNotes();
+  const content=document.querySelector('.content');
+  if(content) content.scrollTop=0;
+}
+
+function closeNoteMonth(){
+  curNoteMonth='';
+  haptic('tap');
+  renderNotes();
+  const content=document.querySelector('.content');
+  if(content) content.scrollTop=0;
+}
+
+function renderNoteMonthOverview(L){
+  const groups={};
+  L.forEach(n=>{const key=noteMonthKey(n);if(key)(groups[key]||(groups[key]=[])).push(n);});
+  const keys=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  const cal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>';
+  return '<div class="note-month-card" role="list">'+keys.map(key=>
+    `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}')">`+
+      `<span class="note-month-ico">${cal}</span>`+
+      `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
+      `<span class="note-month-count">${groups[key].length}</span>`+
+    `</button>`
+  ).join('')+'</div>';
+}
+
 function renderNotes(){
   // 顶部子分类胶囊条
   renderNoteChips();
   // 标题
   const subName=curNoteSub==='all'?'全部笔记':curNoteSub;
   document.getElementById('vtitle').textContent=subName;
-  const L=filteredNotes();
-  document.getElementById('vcnt').textContent=L.length+' 条笔记';
+  let L=filteredNotes();
+  const monthMode=curNoteSub==='收集'||curNoteSub==='日记';
+  // 数据变化后若当前月份已经没有记录，自动退回月份总览。
+  if(monthMode&&curNoteMonth&&!L.some(n=>noteMonthKey(n)===curNoteMonth)) curNoteMonth='';
+  if(monthMode&&curNoteMonth) L=L.filter(n=>noteMonthKey(n)===curNoteMonth);
+  document.getElementById('vcnt').textContent=(monthMode&&curNoteMonth?noteMonthLabel(curNoteMonth)+' · ':'')+L.length+' 条笔记';
   syncSearchNoResult(L.length);
   // 笔记不显示统计卡片
   const sb=document.getElementById('sbar'); sb.style.display='none'; sb.innerHTML='';
@@ -13348,7 +13425,14 @@ function renderNotes(){
   }
   list.style.display='';
   empty.style.display='none';
-  list.innerHTML=L.map(n=>{
+  if(monthMode&&!curNoteMonth){
+    list.innerHTML=renderNoteMonthOverview(L);
+    return;
+  }
+  const back=monthMode
+    ? '<button type="button" class="note-month-back" onclick="closeNoteMonth()" aria-label="返回全部月份"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>全部月份</span></button>'
+    : '';
+  list.innerHTML=back+L.map(n=>{
     // 备忘子分类用结构化卡片
     if(n.subCat==='备忘') return renderMemoCard(n);
     const title=n.title||'（无标题）';
