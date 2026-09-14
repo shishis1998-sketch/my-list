@@ -8146,7 +8146,7 @@ window.PV = (function(){
     if (!visibleCards.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
         `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有出现2次及以上的食记内容' : '这个月还没有标签记录'}</p>` +
-        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容3次及以上'}</small></div>`;
+        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容2次及以上'}</small></div>`;
       return;
     }
     box.innerHTML = '<div class="hm-cards">' + visibleCards.map(c => {
