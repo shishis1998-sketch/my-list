@@ -4722,6 +4722,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .mbody{display:flex;flex-direction:column;gap:var(--sp-12);}
 #syncModal .sync-card{box-sizing:border-box;flex-shrink:0;width:100%;padding:var(--sp-12) var(--sp-14);margin:0;background:var(--surface);border:0;border-radius:var(--rxl);box-shadow:none;}
 #syncModal .sync-option-card{min-height:80px;align-content:center;}
+#syncModal .sync-readonly-card{height:48px;min-height:48px;padding:0 var(--sp-14);}
 #syncModal .sync-card>label,#syncModal .sync-card>.btn,#syncModal .sync-readonly,#sync-status-box b{
   font-family:var(--zh);font-size:var(--fs-sub);font-weight:600;line-height:24px;letter-spacing:0;text-transform:none;
 }
@@ -5410,12 +5411,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 </div>
 
 <!-- ===== SYNC CONFIG MODAL ===== -->
-<div class="moverlay" id="syncModal">
+<div class="moverlay" id="syncModal" aria-label="云同步设置">
   <div class="mbox" onclick="event.stopPropagation()">
-    <div class="mhdr">
-      <div class="mtitle">云同步设置</div>
-      <button class="mclose" onclick="closeSyncCfg()">✕</button>
-    </div>
     <div class="mbody">
     <div id="sync-status-box" class="sync-card sync-option-card"></div>
 
@@ -5426,7 +5423,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <div id="sync-restore-time" class="sync-hint"></div>
     </div>
 
-    <div class="sync-card sync-option-card">
+    <div class="sync-card sync-readonly-card">
       <button type="button" class="sync-readonly" id="roToggle" role="switch" aria-checked="false" onclick="toggleReadOnly()">
         <span>只读模式</span>
         <span class="sync-switch-track" aria-hidden="true"></span>
@@ -9482,6 +9479,43 @@ function openSyncCfg(){
   const smBox=sm.querySelector('.mbox');if(smBox)smBox.scrollTop=0;
 }
 function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
+
+// 云同步页：横向滑动返回；纵向滚动、输入框和开关操作各自保持原有行为。
+(function initSyncSwipeBack(){
+  const modal=document.getElementById('syncModal');
+  let start=null;
+  modal.addEventListener('touchstart',e=>{
+    start=null;
+    if(!modal.classList.contains('open')||e.touches.length!==1||
+      e.target.closest('input,textarea,select,button,a,[contenteditable]'))return;
+    const t=e.touches[0];
+    start={x:t.clientX,y:t.clientY,axis:null};
+  },{passive:true});
+  modal.addEventListener('touchmove',e=>{
+    if(!start)return;
+    if(e.touches.length!==1){start=null;return;}
+    const dx=e.touches[0].clientX-start.x,dy=e.touches[0].clientY-start.y;
+    if(!start.axis&&Math.max(Math.abs(dx),Math.abs(dy))>10){
+      if(Math.abs(dx)>Math.abs(dy)*1.5)start.axis='x';
+      else{start=null;return;}
+    }
+    if(start.axis==='x'&&e.cancelable)e.preventDefault();
+  },{passive:false});
+  modal.addEventListener('touchend',e=>{
+    const gesture=start;start=null;
+    if(!gesture||!e.changedTouches.length||!modal.classList.contains('open'))return;
+    const dx=e.changedTouches[0].clientX-gesture.x,dy=e.changedTouches[0].clientY-gesture.y;
+    if(Math.abs(dx)>=64&&Math.abs(dx)>Math.abs(dy)*1.5){
+      if(e.cancelable)e.preventDefault();
+      closeSyncCfg();
+    }
+  },{passive:false});
+  modal.addEventListener('touchcancel',()=>{start=null;},{passive:true});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&modal.classList.contains('open'))closeSyncCfg();
+  });
+})();
+
 
 async function saveSyncCfg(){
   const t=document.getElementById('f-gh-token').value.trim();
