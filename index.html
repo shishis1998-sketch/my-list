@@ -8079,6 +8079,20 @@ window.PV = (function(){
     if (filter && !filter.contains(event.target)) closeHeatFilter();
   });
 
+  // 一行可列多种食物；逗号/句号后的说明及括号备注不参与名称匹配。
+  // 同一条记录内同名食物只计一次，不同记录分别计次。
+  function heatFoodNames(body){
+    const names = new Set();
+    String(body || '').split(/\r?\n/).forEach(line => {
+      const main = line.replace(/（[^）]*）|\([^)]*\)/g, '').split(/[，,。！？!?；;]/)[0];
+      main.split(/[+＋、]/).forEach(part => {
+        const name = part.replace(/\*\*/g, '').trim();
+        if (name) names.add(name);
+      });
+    });
+    return [...names];
+  }
+
   function renderHeat(){
     const box = document.getElementById('hmContent');
     if (!box) return;
@@ -8104,7 +8118,7 @@ window.PV = (function(){
     // sort 稳定，天数相同的仍保持库内原序（与记录面板一致）。
     cards.sort((a, b) => b.days.length - a.days.length);
 
-    // 按每条食记的完整正文归组，忽略首尾空白；月内至少三条才展示。
+    // 按食物名称归组，拆开组合并排除备注；月内至少三条记录才展示。
     // 次数按记录数统计，日期色条按天去重，同一天多次也计入次数。
     const foodGroups = new Map();
     notes.forEach(note => {
@@ -8113,12 +8127,12 @@ window.PV = (function(){
       if (!match) return;
       const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
       if (y !== heatYear || m !== heatMonth || d < 1 || d > dim) return;
-      const content = (note.body || '').trim();
-      if (!content) return;
-      if (!foodGroups.has(content)) foodGroups.set(content, { tag: content, type: '食记', count: 0, days: new Set() });
-      const group = foodGroups.get(content);
-      group.count++;
-      group.days.add(d);
+      heatFoodNames(note.body).forEach(name => {
+        if (!foodGroups.has(name)) foodGroups.set(name, { tag: name, type: '食记', count: 0, days: new Set() });
+        const group = foodGroups.get(name);
+        group.count++;
+        group.days.add(d);
+      });
     });
     const foodCards = [...foodGroups.values()].filter(group => group.count > 2)
       .sort((a, b) => b.count - a.count)
