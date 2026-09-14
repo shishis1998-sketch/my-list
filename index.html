@@ -4764,6 +4764,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .sync-cloud-card{padding:0 var(--sp-14) var(--sp-12);}
 #syncModal .sync-cloud-card .sync-hint{margin:0;}
 #syncModal #syncToggle:disabled{cursor:wait;opacity:.6;}
+#syncModal .sync-cloud-card{height:48px;min-height:48px;padding:0 var(--sp-14);}
+#syncModal .sync-cloud-label{display:flex;align-items:center;gap:var(--sp-8);min-width:0;white-space:nowrap;}
+#syncModal .sync-cloud-label>span:first-child{flex-shrink:0;}
+#syncModal .sync-cloud-label .sync-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#syncModal .sync-grip{touch-action:none;user-select:none;cursor:grab;}
+#syncModal .sync-grip:active{cursor:grabbing;}
+#syncModal .mbox.sync-dragging{animation:none!important;will-change:transform;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5434,14 +5441,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <!-- ===== SYNC CONFIG MODAL ===== -->
 <div class="moverlay" id="syncModal" role="dialog" aria-modal="true" aria-label="云同步设置" onclick="closeSyncCfg()">
   <div class="mbox" onclick="event.stopPropagation()">
-    <button type="button" class="sync-grip" aria-label="关闭云同步设置" onclick="closeSyncCfg()"><span></span></button>
+    <button type="button" class="sync-grip" aria-label="下拖或点击关闭云同步设置"><span></span></button>
     <div class="mbody">
     <div class="sync-card sync-cloud-card">
       <button type="button" class="sync-readonly" id="syncToggle" role="switch" aria-checked="false" aria-describedby="sync-status-box" onclick="toggleCloudSync()">
-        <span>云同步</span>
+        <span class="sync-cloud-label"><span>云同步</span><span id="sync-status-box" class="sync-hint"></span></span>
         <span class="sync-switch-track" aria-hidden="true"></span>
       </button>
-      <div id="sync-status-box" class="sync-hint"></div>
     </div>
 
 
@@ -9482,6 +9488,7 @@ function refreshCloudSyncToggle(){
   const status=document.getElementById('sync-status-box');
   status.textContent=!on?'尚未启用云同步':lastSyncErr?'最近一次同步失败：'+lastSyncErr:
     (getMasterPw()&&cryptoOk()?'云端数据已加密':'未加密，设置主密码后加密');
+  status.title=status.textContent;
   status.style.color=on&&lastSyncErr?'var(--danger)':'var(--text-secondary)';
 }
 async function toggleCloudSync(){
@@ -9515,11 +9522,62 @@ function openSyncCfg(){
   document.getElementById('roToggle').setAttribute('aria-checked',String(isReadOnly()));
   refreshUploadLocalRow();
   const sm=document.getElementById('syncModal');
+  sm.dispatchEvent(new Event('sync-reset'));
   sm.classList.add('open');
   // 每次打开将弹窗内容滚回顶部。
   const smBody=sm.querySelector('.mbody');if(smBody)smBody.scrollTop=0;
 }
-function closeSyncCfg(){document.getElementById('syncModal').classList.remove('open');}
+function closeSyncCfg(){
+  const modal=document.getElementById('syncModal');
+  modal.classList.remove('open');
+  modal.dispatchEvent(new Event('sync-reset'));
+}
+
+(function initSyncGripDrag(){
+  const modal=document.getElementById('syncModal');
+  const box=modal.querySelector('.mbox'),grip=modal.querySelector('.sync-grip');
+  let drag=null,timer=null,suppressClick=false;
+  function reset(){
+    if(timer!==null){clearTimeout(timer);timer=null;}
+    drag=null;
+    box.classList.remove('sync-dragging');
+    box.style.transform='';box.style.transition='';
+  }
+  modal.addEventListener('sync-reset',reset);
+  grip.addEventListener('pointerdown',e=>{
+    if(!e.isPrimary||e.button!==0||!modal.classList.contains('open'))return;
+    reset();suppressClick=false;
+    drag={id:e.pointerId,y:e.clientY,moved:false,dy:0};
+    box.classList.add('sync-dragging');
+    box.style.transition='none';
+    grip.setPointerCapture(e.pointerId);
+  });
+  grip.addEventListener('pointermove',e=>{
+    if(!drag||drag.id!==e.pointerId)return;
+    drag.dy=Math.max(0,e.clientY-drag.y);
+    if(Math.abs(e.clientY-drag.y)>5)drag.moved=true;
+    box.style.transform='translateY('+drag.dy+'px)';
+  });
+  function finish(e,cancelled){
+    if(!drag||drag.id!==e.pointerId)return;
+    const current=drag;drag=null;
+    suppressClick=current.moved||cancelled;
+    const dismiss=!cancelled&&current.moved&&current.dy>=Math.min(100,box.clientHeight*.2);
+    const duration=window.matchMedia('(prefers-reduced-motion:reduce)').matches?0:180;
+    box.style.transition='transform '+duration+'ms ease-out';
+    box.style.transform=dismiss?'translateY('+box.clientHeight+'px)':'translateY(0)';
+    timer=setTimeout(()=>{timer=null;if(dismiss)closeSyncCfg();else reset();},duration);
+  }
+  grip.addEventListener('pointerup',e=>finish(e,false));
+  grip.addEventListener('pointercancel',e=>finish(e,true));
+  grip.addEventListener('lostpointercapture',e=>{if(drag)finish(e,true);});
+  grip.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(suppressClick){suppressClick=false;e.preventDefault();return;}
+    closeSyncCfg();
+  });
+})();
+
 
 // 云同步页：横向滑动返回；纵向滚动、输入框和开关操作各自保持原有行为。
 (function initSyncSwipeBack(){
