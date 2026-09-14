@@ -8104,16 +8104,26 @@ window.PV = (function(){
     // sort 稳定，天数相同的仍保持库内原序（与记录面板一致）。
     cards.sort((a, b) => b.days.length - a.days.length);
 
-    // 食记以日期标题 YYYY/MM/DD 归入月份；同一天多条记录只计一天。
-    const foodDays = new Set();
+    // 按每条食记的完整正文归组，忽略首尾空白；月内至少三条才展示。
+    // 次数按记录数统计，日期色条按天去重，同一天多次也计入次数。
+    const foodGroups = new Map();
     notes.forEach(note => {
       if (note.calendarId !== 'food') return;
       const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(note.title || '');
       if (!match) return;
       const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
-      if (y === heatYear && m === heatMonth && d >= 1 && d <= dim) foodDays.add(d);
+      if (y !== heatYear || m !== heatMonth || d < 1 || d > dim) return;
+      const content = (note.body || '').trim();
+      if (!content) return;
+      if (!foodGroups.has(content)) foodGroups.set(content, { tag: content, type: '食记', count: 0, days: new Set() });
+      const group = foodGroups.get(content);
+      group.count++;
+      group.days.add(d);
     });
-    if (foodDays.size) cards.push({ tag: '食记', type: '食记', days: [...foodDays].sort((a, b) => a - b) });
+    const foodCards = [...foodGroups.values()].filter(group => group.count > 2)
+      .sort((a, b) => b.count - a.count)
+      .map(group => ({ ...group, days: [...group.days].sort((a, b) => a - b) }));
+    cards.push(...foodCards);
 
     const visibleCards = heatTypeFilter === '全部'
       ? cards
@@ -8121,8 +8131,8 @@ window.PV = (function(){
 
     if (!visibleCards.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
-        `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或食记记录' : `「${escapeHtml(heatTypeFilter)}」这个月还没有记录`}</p>` +
-        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '在「食记」里添加记录后，这里就会显示统计' : '在「经期」里添加标签，或在「食记」里添加记录'}</small></div>`;
+        `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有重复超过2次的食记内容' : '这个月还没有标签记录'}</p>` +
+        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录3次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容3次及以上'}</small></div>`;
       return;
     }
     box.innerHTML = '<div class="hm-cards">' + visibleCards.map(c => {
@@ -8149,7 +8159,7 @@ window.PV = (function(){
       return '<div class="hm-card">' +
         '<div class="hm-card-hd">' +
           `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
-          `<span class="hm-card-meta">本月 <b>${c.days.length}</b> 天</span>` +
+          `<span class="hm-card-meta">本月 ${c.type === '食记' ? `<b>${c.count}</b> 次 · ` : ''}<b>${c.days.length}</b> 天</span>` +
         '</div>' +
         `<div class="hm-periods">${rows}</div></div>`;
     }).join('') + '</div>';
