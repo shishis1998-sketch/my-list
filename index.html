@@ -2922,13 +2922,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-filter{position:relative;display:flex;}
 #calViewHeat .hm-filter-btn{line-height:1;}
 #calViewHeat .hm-filter-btn svg{display:block;width:16px;height:16px;flex-shrink:0;}
-#calViewHeat .hm-filter-label{display:none;align-items:center;justify-content:center;align-self:stretch;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;white-space:nowrap;}
+#calViewHeat .hm-filter-label{display:none;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;white-space:nowrap;}
 #calViewHeat .hm-filter-btn:active,
 #calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
 #calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
 #calViewHeat .hm-filter-btn.act{width:auto;flex:0 0 auto;gap:var(--sp-4);padding:0 var(--sp-10);border-radius:999px;background:var(--accent-light);color:var(--accent);}
-/* 中文字形的视觉中心略低于行框中心，仅对筛选文字上移 1px。 */
-#calViewHeat .hm-filter-btn.act .hm-filter-label{display:inline-flex;transform:translateY(-1px);}
+#calViewHeat .hm-filter-btn.act .hm-filter-label{display:block;}
 #calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
   width:max-content;min-width:108px;max-width:min(72vw,240px);max-height:60vh;overflow-y:auto;
   display:none;padding:6px;background:var(--surface);border:1px solid var(--border);
@@ -8043,6 +8042,33 @@ window.PV = (function(){
     renderHeat();
   }
 
+  // Flex 居中的是行框。用当前字体的实际字形边界与 DOM 基线计算视觉居中，
+  // 不写死像素偏移；换字体、字号或筛选文字时重新测量。
+  function alignHeatFilterText(){
+    const btn = document.getElementById('hmFilterBtn');
+    const label = document.getElementById('hmFilterLabel');
+    if (!btn || !label) return;
+    label.style.transform = '';
+    if (!btn.classList.contains('act') || !label.textContent || !label.getClientRects().length) return;
+    const style = getComputedStyle(label);
+    const ctx = document.createElement('canvas').getContext('2d');
+    if (!ctx) return;
+    ctx.font = style.fontWeight + ' ' + style.fontSize + ' ' + style.fontFamily;
+    const metrics = ctx.measureText(label.textContent);
+    if (!Number.isFinite(metrics.actualBoundingBoxAscent) || !Number.isFinite(metrics.actualBoundingBoxDescent)) return;
+    const marker = document.createElement('span');
+    marker.style.cssText = 'display:inline-block;width:0;height:0;padding:0;margin:0;border:0;vertical-align:baseline;';
+    label.appendChild(marker);
+    const baseline = marker.getBoundingClientRect().top;
+    marker.remove();
+    const bounds = btn.getBoundingClientRect();
+    const textCenter = baseline + (metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent) / 2;
+    const offset = (bounds.top + bounds.bottom) / 2 - textCenter;
+    label.style.transform = 'translateY(' + offset + 'px)';
+  }
+  window.addEventListener('resize', () => requestAnimationFrame(alignHeatFilterText));
+  if (document.fonts) document.fonts.ready.then(() => requestAnimationFrame(alignHeatFilterText));
+
   function renderHeatFilter(){
     const wrap = document.getElementById('hmFilter');
     const btn = document.getElementById('hmFilterBtn');
@@ -8065,7 +8091,8 @@ window.PV = (function(){
     const active = heatTypeFilter !== '全部';
     btn.classList.toggle('act', active);
     const label = document.getElementById('hmFilterLabel');
-    if (label) label.textContent = active ? heatTypeFilter : '';
+    if (label) { label.textContent = active ? heatTypeFilter : ''; label.style.transform = ''; }
+    requestAnimationFrame(alignHeatFilterText);
     btn.setAttribute('aria-pressed', String(active));
     btn.setAttribute('aria-label', active ? '当前筛选：' + heatTypeFilter : '筛选标签或食记');
   }
