@@ -10365,7 +10365,7 @@ function renderDetail(){
 
     ${dtTab==='tl'?renderDetailTL(item):''}
 
-    ${metaRows?`<div class="dt-card dt-meta">${metaRows}</div>`:''}`;
+    ${dtTab==='info'&&metaRows?`<div class="dt-card dt-meta">${metaRows}</div>`:''}`;
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
   // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
