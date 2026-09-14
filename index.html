@@ -5008,7 +5008,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
           </div>
           <div class="home-header-right">
             <div class="home-filter" id="homeFilter">
-              <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选症状">
+              <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选标签或食记">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
               </button>
               <div class="home-filter-menu" id="homeFilterMenu"></div>
@@ -8012,7 +8012,7 @@ window.PV = (function(){
   // 当月记过的每个症状标签一条长条月历带，记过的那天填深色。
   // 移植自经期 App 热力图的「月」视图（renderTagCards），只读 SYMPTOMS_*，不写数据。
   let heatYear = 0, heatMonth = 0, heatPos = false;
-  let heatSymFilter = '全部';
+  let heatTypeFilter = '全部';
 
   // 从「经期 / 年度」切进来 → 跟随那边当前停留的年月；
   // 从「日历」切进来 → 保留自己的位置，本次日历页会话里第一次进入才回到当前月
@@ -8043,26 +8043,21 @@ window.PV = (function(){
     const btn = document.getElementById('hmFilterBtn');
     const menu = document.getElementById('hmFilterMenu');
     if (!wrap || !btn || !menu) return;
-    if (!SYMPTOMS_LIB || !SYMPTOMS_LIB.length) {
-      wrap.style.display = 'none';
-      heatSymFilter = '全部';
-      return;
-    }
     wrap.style.display = '';
-    if (heatSymFilter !== '全部' && !SYMPTOMS_LIB.includes(heatSymFilter)) heatSymFilter = '全部';
-    const names = ['全部'].concat(SYMPTOMS_LIB);
+    const names = ['全部', '标签', '食记'];
+    if (!names.includes(heatTypeFilter)) heatTypeFilter = '全部';
     menu.innerHTML = names.map(name =>
-      `<div class="hm-filter-item${name === heatSymFilter ? ' on' : ''}" data-name="${escapeAttr(name)}">${escapeHtml(name)}</div>`
+      `<div class="hm-filter-item${name === heatTypeFilter ? ' on' : ''}" data-name="${escapeAttr(name)}">${escapeHtml(name)}</div>`
     ).join('');
     menu.querySelectorAll('.hm-filter-item').forEach(el => {
       el.onclick = ev => {
         ev.stopPropagation();
-        heatSymFilter = el.dataset.name;
+        heatTypeFilter = el.dataset.name;
         closeHeatFilter();
         renderHeat();
       };
     });
-    btn.classList.toggle('act', heatSymFilter !== '全部');
+    btn.classList.toggle('act', heatTypeFilter !== '全部');
   }
 
   function toggleHeatFilter(event){
@@ -8102,21 +8097,32 @@ window.PV = (function(){
         const list = SYMPTOMS_DATA[`${heatYear}-${heatMonth}-${d}`];
         if (list && list.includes(tag)) days.push(d);
       }
-      if (days.length) cards.push({ tag, days });
+      if (days.length) cards.push({ tag, days, type: '标签' });
     });
     // 再按本月天数从多到少排：这一屏是「这个月哪些标签冒头得最凶」，
     // 最多的那几条该在最上面，不用往下翻着找。
     // sort 稳定，天数相同的仍保持库内原序（与记录面板一致）。
     cards.sort((a, b) => b.days.length - a.days.length);
 
-    const visibleCards = heatSymFilter === '全部'
+    // 食记以日期标题 YYYY/MM/DD 归入月份；同一天多条记录只计一天。
+    const foodDays = new Set();
+    notes.forEach(note => {
+      if (note.calendarId !== 'food') return;
+      const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(note.title || '');
+      if (!match) return;
+      const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
+      if (y === heatYear && m === heatMonth && d >= 1 && d <= dim) foodDays.add(d);
+    });
+    if (foodDays.size) cards.push({ tag: '食记', type: '食记', days: [...foodDays].sort((a, b) => a - b) });
+
+    const visibleCards = heatTypeFilter === '全部'
       ? cards
-      : cards.filter(card => card.tag === heatSymFilter);
+      : cards.filter(card => card.type === heatTypeFilter);
 
     if (!visibleCards.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
-        `<p>${heatSymFilter === '全部' ? '这个月还没有标签记录' : `「${escapeHtml(heatSymFilter)}」这个月还没有记录`}</p>` +
-        '<small>在「经期」里点某天，记下「头痛 / 腰酸…」<br>用一阵子这里就会长出来</small></div>';
+        `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或食记记录' : `「${escapeHtml(heatTypeFilter)}」这个月还没有记录`}</p>` +
+        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '在「食记」里添加记录后，这里就会显示统计' : '在「经期」里添加标签，或在「食记」里添加记录'}</small></div>`;
       return;
     }
     box.innerHTML = '<div class="hm-cards">' + visibleCards.map(c => {
