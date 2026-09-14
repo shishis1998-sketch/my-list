@@ -4716,20 +4716,31 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal.food-editor #nf-body{height:100px;min-height:100px;max-height:160px;resize:vertical;}
 #noteModal.food-editor #nf-body-group{margin-bottom:0;}
 
-/* 云同步：沿用页面灰底与白色设置卡片。 */
+/* 云同步：统一卡片排版、间距和右侧开关。 */
 #syncModal .mbox,#syncModal .mhdr,#syncModal .mbody,#syncModal .mftr{background:var(--bg);}
 #syncModal .mhdr,#syncModal .mftr{border:0;}
-#syncModal .mbody{display:flex;flex-direction:column;gap:var(--sp-14);}
-#syncModal .sync-card{padding:var(--sp-14);margin:0;background:var(--surface);border:0;border-radius:var(--rxl);box-shadow:none;}
-#sync-status-box{font-size:var(--fs-caption);color:var(--text-secondary);line-height:var(--lh-loose);overflow-wrap:anywhere;}
-#syncModal .sync-card>.btn{min-height:48px;padding:var(--sp-12) 0;background:transparent;border:0;box-shadow:none;text-align:left;justify-content:flex-start;white-space:normal;}
+#syncModal .mbody{display:flex;flex-direction:column;gap:var(--sp-12);}
+#syncModal .sync-card{box-sizing:border-box;flex-shrink:0;width:100%;padding:var(--sp-12) var(--sp-14);margin:0;background:var(--surface);border:0;border-radius:var(--rxl);box-shadow:none;}
+#syncModal .sync-option-card{min-height:80px;align-content:center;}
+#syncModal .sync-card>label,#syncModal .sync-card>.btn,#syncModal .sync-readonly,#sync-status-box b{
+  font-family:var(--zh);font-size:var(--fs-sub);font-weight:600;line-height:24px;letter-spacing:0;text-transform:none;
+}
+#syncModal .sync-card>label{display:block;margin:0 0 var(--sp-8);color:var(--text-primary);}
+#syncModal .sync-card>input{box-sizing:border-box;width:100%;height:48px;margin:0;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-normal);}
+#syncModal .sync-hint,#sync-status-box{font-family:var(--zh);font-size:var(--fs-caption);font-weight:400;line-height:20px;letter-spacing:0;color:var(--text-secondary);text-align:left;overflow-wrap:anywhere;}
+#syncModal .sync-hint{margin:var(--sp-4) 0 0;}
+#syncModal .sync-card>.btn{display:block;width:100%;min-height:24px;height:auto;padding:0;margin:0;background:transparent;border:0;box-shadow:none;text-align:left;white-space:normal;}
 #syncModal .sync-card>.btn:active{background:var(--press);}
-#syncModal #roToggle{min-height:48px;align-items:center;padding:0;margin:0;background:transparent;border:0;}
-#syncModal .local-toggle-check,#syncModal .local-toggle-title{margin:0;}
-#syncModal .local-toggle-title{color:var(--text-primary);}
-#syncModal .mftr .btn{background:var(--surface);border:0;box-shadow:none;}
+#syncModal .sync-readonly{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-12);width:100%;min-height:48px;padding:0;margin:0;background:transparent;color:var(--text-primary);border:0;cursor:pointer;text-align:left;}
+#syncModal .sync-switch-track{position:relative;flex:0 0 42px;width:42px;height:24px;background:var(--border);border-radius:999px;transition:background .2s ease;}
+#syncModal .sync-switch-track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s ease;}
+#syncModal .sync-readonly.on .sync-switch-track{background:var(--accent);}
+#syncModal .sync-readonly.on .sync-switch-track::after{transform:translateX(18px);}
+#syncModal .sync-readonly:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:var(--r);}
+#syncModal .mftr .btn{font-size:var(--fs-sub);font-weight:600;background:var(--surface);border:0;box-shadow:none;}
 #syncModal .mftr .btn-p{color:var(--accent);}
 #syncModal .mftr .btn:active{background:var(--press);}
+@media(prefers-reduced-motion:reduce){#syncModal .sync-switch-track,#syncModal .sync-switch-track::after{transition:none;}}
 
 </style>
 <script>
@@ -5406,34 +5417,30 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <button class="mclose" onclick="closeSyncCfg()">✕</button>
     </div>
     <div class="mbody">
-    <div id="sync-status-box" class="sync-card"></div>
+    <div id="sync-status-box" class="sync-card sync-option-card"></div>
 
 
     <!-- 覆盖前的本机备份：任何一次云端覆盖前都会自动存一份,可一键还原 -->
-    <div id="sync-restore-row" class="sync-card" style="display:none">
+    <div id="sync-restore-row" class="sync-card sync-option-card" style="display:none">
       <button class="btn btn-d" style="width:100%" onclick="restoreBackup()">还原覆盖前备份</button>
-      <div id="sync-restore-time" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center"></div>
+      <div id="sync-restore-time" class="sync-hint"></div>
     </div>
 
-    <div class="fg sync-card">
-      <div class="local-toggle" id="roToggle" onclick="toggleReadOnly()">
-        <div class="local-toggle-check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div class="local-toggle-text">
-          <div class="local-toggle-title">只读模式</div>
-        </div>
-      </div>
+    <div class="sync-card sync-option-card">
+      <button type="button" class="sync-readonly" id="roToggle" role="switch" aria-checked="false" onclick="toggleReadOnly()">
+        <span>只读模式</span>
+        <span class="sync-switch-track" aria-hidden="true"></span>
+      </button>
     </div>
 
-    <div id="sync-uploadlocal-row" class="sync-card" style="display:none">
+    <div id="sync-uploadlocal-row" class="sync-card sync-option-card" style="display:none">
       <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn">备忘加密上云</button>
-      <div id="sync-uploadlocal-hint" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)"></div>
+      <div id="sync-uploadlocal-hint" class="sync-hint"></div>
     </div>
 
-    <div class="sync-card">
+    <div class="sync-card sync-option-card">
       <button class="btn btn-d" style="width:100%" onclick="wipeLocalDevice()">清除这台设备</button>
-      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
+      <div class="sync-hint">
         仅清除本机数据，云端不受影响。
       </div>
     </div>
@@ -5442,21 +5449,21 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="fg sync-card">
       <label>GitHub Token</label>
       <input type="password" id="f-gh-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
-      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
+      <div class="sync-hint">
         在 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);text-decoration:underline">github.com/settings/tokens</a> 生成,只需勾选 <code style="background:var(--bg);padding:var(--sp-2) var(--sp-6);border-radius:var(--rsm)">gist</code> 权限
       </div>
     </div>
     <div class="fg sync-card">
-      <label>Gist ID <span style="color:var(--text-muted);font-weight:400">(留空会自动创建一个新的)</span></label>
+      <label>Gist ID</label>
       <input type="text" id="f-gh-gist" placeholder="已有云端就必须填；留空=首次启用，会问你一次" autocomplete="off" spellcheck="false">
-      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
+      <div class="sync-hint">
         换设备时填上同一个 Gist ID 即可读取已有数据。可在 <a href="https://gist.github.com" target="_blank" style="color:var(--accent);text-decoration:underline">gist.github.com</a> 找到。
       </div>
     </div>
     <div class="fg sync-card">
       <label>主密码</label>
       <input type="password" id="f-gh-pw" placeholder="设置后备忘会加密上云" autocomplete="new-password" spellcheck="false">
-      <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
+      <div class="sync-hint">
         仅存本机；换设备需使用同一密码，忘记后无法解密。
       </div>
     </div>
@@ -8935,6 +8942,7 @@ function toggleReadOnly(){
   }
   localStorage.setItem(RO_KEY,on?'1':'0');
   document.getElementById('roToggle').classList.toggle('on',on);
+  document.getElementById('roToggle').setAttribute('aria-checked',String(on));
   updateSyncBadge();render();
   toast(on?'👀 已开启只读模式，这台设备不会再上传任何数据':'已关闭只读模式，改动会照常同步');
 }
@@ -9466,6 +9474,7 @@ function openSyncCfg(){
     rr.style.display='none';
   }
   document.getElementById('roToggle').classList.toggle('on',isReadOnly());
+  document.getElementById('roToggle').setAttribute('aria-checked',String(isReadOnly()));
   refreshUploadLocalRow();
   const sm=document.getElementById('syncModal');
   sm.classList.add('open');
