@@ -4761,6 +4761,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .sync-save-actions{display:flex;flex-wrap:wrap;gap:var(--sp-8);margin-left:auto;}
 #syncModal .mftr .btn{min-height:44px;padding:var(--sp-8) var(--sp-12);border-radius:999px;}
 
+#syncModal .sync-cloud-card{padding:0 var(--sp-14) var(--sp-12);}
+#syncModal .sync-cloud-card .sync-hint{margin:0;}
+#syncModal #syncToggle:disabled{cursor:wait;opacity:.6;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5433,7 +5436,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <div class="mbox" onclick="event.stopPropagation()">
     <button type="button" class="sync-grip" aria-label="关闭云同步设置" onclick="closeSyncCfg()"><span></span></button>
     <div class="mbody">
-    <div id="sync-status-box" class="sync-card sync-option-card"></div>
+    <div class="sync-card sync-cloud-card">
+      <button type="button" class="sync-readonly" id="syncToggle" role="switch" aria-checked="false" aria-describedby="sync-status-box" onclick="toggleCloudSync()">
+        <span>云同步</span>
+        <span class="sync-switch-track" aria-hidden="true"></span>
+      </button>
+      <div id="sync-status-box" class="sync-hint"></div>
+    </div>
 
 
     <!-- 覆盖前的本机备份：任何一次云端覆盖前都会自动存一份,可一键还原 -->
@@ -5486,7 +5495,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div><!-- /mbody -->
 
     <div class="mftr">
-      <button class="btn btn-d" onclick="clearSyncCfg()" id="sync-clear-btn">断开同步</button>
       <div class="sync-save-actions">
         <button class="btn btn-g" onclick="syncPullNow()">从云端拉取</button>
         <button class="btn btn-p" onclick="saveSyncCfg()">保存并同步</button>
@@ -9466,20 +9474,34 @@ async function syncPull(silent){
 }
 
 // ── 同步配置 UI ──
+function refreshCloudSyncToggle(){
+  const on=!!getToken();
+  const toggle=document.getElementById('syncToggle');
+  toggle.classList.toggle('on',on);
+  toggle.setAttribute('aria-checked',String(on));
+  const status=document.getElementById('sync-status-box');
+  status.textContent=!on?'尚未启用云同步':lastSyncErr?'最近一次同步失败：'+lastSyncErr:
+    (getMasterPw()&&cryptoOk()?'云端数据已加密':'未加密，设置主密码后加密');
+  status.style.color=on&&lastSyncErr?'var(--danger)':'var(--text-secondary)';
+}
+async function toggleCloudSync(){
+  const toggle=document.getElementById('syncToggle');
+  if(toggle.disabled)return;
+  toggle.disabled=true;
+  try{
+    if(getToken())clearSyncCfg();
+    else await saveSyncCfg();
+  }finally{
+    refreshCloudSyncToggle();
+    toggle.disabled=false;
+  }
+}
+
 function openSyncCfg(){
   document.getElementById('f-gh-token').value=getToken();
   document.getElementById('f-gh-gist').value=getGistId();
   document.getElementById('f-gh-pw').value=getMasterPw();
-  const sb=document.getElementById('sync-status-box');
-  if(!getToken()){
-    sb.innerHTML='<b style="color:var(--text-primary)">尚未启用云同步</b>';
-  }else if(lastSyncErr){
-    sb.innerHTML='<b style="color:var(--danger)">最近一次同步失败</b><br><span style="font-size:var(--fs-foot)">'+esc(lastSyncErr)+'</span>';
-  }else{
-    const encOn=!!(getMasterPw()&&cryptoOk());
-    sb.innerHTML='<b style="color:var(--accent)">同步已启用</b><br><span style="color:var(--text-secondary)">'
-      +(encOn?'云端数据已加密':'未加密，设置主密码后加密')+'</span>';
-  }
+  refreshCloudSyncToggle();
   // 有覆盖前备份时,显示「一键还原」入口
   const rr=document.getElementById('sync-restore-row');
   const bk=getBackupMeta();
