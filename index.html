@@ -5451,12 +5451,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
 
 
-    <!-- 覆盖前的本机备份：任何一次云端覆盖前都会自动存一份,可一键还原 -->
-    <div id="sync-restore-row" class="sync-card sync-option-card" style="display:none">
-      <button class="btn btn-d" style="width:100%" onclick="restoreBackup()">还原覆盖前备份</button>
-      <div id="sync-restore-time" class="sync-hint"></div>
-    </div>
-
     <div class="sync-card sync-readonly-card">
       <button type="button" class="sync-readonly" id="roToggle" role="switch" aria-checked="false" onclick="toggleReadOnly()">
         <span>只读模式</span>
@@ -8445,7 +8439,6 @@ function pickCalView(v){
 const SK='my_list_v4', CK='my_list_cats_v3';
 const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
 const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist', MPW_KEY='my_list_master_pw';
-const BK_KEY='my_list_overwrite_backup_v1';
 const RO_KEY='my_list_readonly_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
@@ -9223,42 +9216,6 @@ function clearPendingCloud(ids){
 // 尚未被云端确认过的笔记（等同于 localOnly，受拉取覆盖保护）
 function isProtectedNote(n){return !!(n.localOnly||n.pendingCloud);}
 
-// ── 覆盖前自动备份 + 一键还原（防止扫错方向 / 误覆盖导致丢数据）──
-function backupLocal(reason){
-  try{
-    // 备份槽只有一个：别让「已经变少的数据」把上一份更完整的备份顶掉。
-    // 典型场景是丢数据后又打开了几次 App，每次启动都拉取，好不容易存下的还原点被覆盖成空的。
-    const prev=getBackupMeta();
-    if(prev&&Date.now()-prev.ts<7*24*3600*1000){
-      const pn=(prev.notes||[]).length,pd=(prev.data||[]).length;
-      if(pn+pd>notes.length+data.length)return; // 旧备份更全 → 保留它
-    }
-    localStorage.setItem(BK_KEY,JSON.stringify({ts:Date.now(),reason:reason||'',data,categories:cats,notes,noteSubs}));
-  }catch(e){/* 备份失败不阻断主流程 */}
-}
-function getBackupMeta(){
-  try{const b=JSON.parse(localStorage.getItem(BK_KEY));return b&&b.ts?b:null;}catch(e){return null;}
-}
-function restoreBackup(){
-  const b=getBackupMeta();
-  if(!b){toast('没有可还原的备份');return;}
-  if(!confirm('将把数据还原到覆盖前的备份（'+new Date(b.ts).toLocaleString()+'）。\n当前本机数据会被这份备份替换，确定？'))return;
-  if(Array.isArray(b.data))data=b.data;
-  if(Array.isArray(b.categories)&&b.categories.length)cats=b.categories;
-  if(Array.isArray(b.notes))notes=b.notes;
-  if(Array.isArray(b.noteSubs)&&b.noteSubs.length)noteSubs=b.noteSubs;
-  localStorage.setItem(SK,JSON.stringify(data));
-  localStorage.setItem(CK,JSON.stringify(cats));
-  localStorage.setItem(NSK,JSON.stringify(notes));
-  localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
-  if(typeof renderTypeSelect==='function')renderTypeSelect();
-  if(typeof render==='function')render();
-  updateSyncBadge();
-  closeSyncCfg();
-  toast('✓ 已还原到覆盖前的备份，共 '+data.length+' 条记录、'+notes.length+' 条笔记');
-  scheduleSyncPush(); // 把还原后的数据推回云端，保持一致
-}
-
 // ── 批量把「仅本机」备忘加密上云 ───────────────────────────────────
 // 「仅本机」的备忘只活在这个浏览器的 localStorage 里，清一次缓存就没了。
 // 一条条点锁按钮会触发几十次推送，这里合并成一次。
@@ -9371,13 +9328,11 @@ async function syncPull(silent){
       return false;
     }
     if(!remote||!Array.isArray(remote.data)){throw new Error('云端数据格式异常');}
-    // 覆盖前的安全网：若云端数据明显比本机少（可能扫错方向 / 云端被顶掉），先自动备份本机，可一键还原
+    // 云端记录减少时保留提示。
     const rTotal=(Array.isArray(remote.data)?remote.data.length:0)+(Array.isArray(remote.notes)?remote.notes.length:0);
     const lTotal=(Array.isArray(data)?data.length:0)+(Array.isArray(notes)?notes.length:0);
     if(rTotal<lTotal){
-      backupLocal('pull-shrink');
-      // 启动时的静默拉取也要出声：数据变少必须让人当场知道，否则等发现时备份早被顶掉了
-      toast('⚠️ 云端比本机少 '+(lTotal-rTotal)+' 条，已自动备份，可在云同步设置里一键还原');
+      toast('⚠️ 云端比本机少 '+(lTotal-rTotal)+' 条，本机同步数据将以云端为准');
     }
     // 简单的「云端覆盖本地」策略:适用于单用户多设备场景
     // 注意:这里不做 updatedAt 比较,云端一律覆盖本机 —— 所以任何还没成功上云的改动
@@ -9509,15 +9464,6 @@ function openSyncCfg(){
   document.getElementById('f-gh-gist').value=getGistId();
   document.getElementById('f-gh-pw').value=getMasterPw();
   refreshCloudSyncToggle();
-  // 有覆盖前备份时,显示「一键还原」入口
-  const rr=document.getElementById('sync-restore-row');
-  const bk=getBackupMeta();
-  if(bk){
-    rr.style.display='block';
-    document.getElementById('sync-restore-time').textContent='备份于 '+new Date(bk.ts).toLocaleString()+'（共 '+((bk.data||[]).length)+' 条记录、'+((bk.notes||[]).length)+' 条笔记）';
-  }else{
-    rr.style.display='none';
-  }
   document.getElementById('roToggle').classList.toggle('on',isReadOnly());
   document.getElementById('roToggle').setAttribute('aria-checked',String(isReadOnly()));
   refreshUploadLocalRow();
