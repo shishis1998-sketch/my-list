@@ -4715,6 +4715,22 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal.food-editor .mbox{height:auto;min-height:0;max-height:min(76vh,100%);}
 #noteModal.food-editor #nf-body{height:100px;min-height:100px;max-height:160px;resize:vertical;}
 #noteModal.food-editor #nf-body-group{margin-bottom:0;}
+
+/* 云同步：沿用页面灰底与白色设置卡片。 */
+#syncModal .mbox,#syncModal .mhdr,#syncModal .mbody,#syncModal .mftr{background:var(--bg);}
+#syncModal .mhdr,#syncModal .mftr{border:0;}
+#syncModal .mbody{display:flex;flex-direction:column;gap:var(--sp-14);}
+#syncModal .sync-card{padding:var(--sp-14);margin:0;background:var(--surface);border:0;border-radius:var(--rxl);box-shadow:none;}
+#sync-status-box{font-size:var(--fs-caption);color:var(--text-secondary);line-height:var(--lh-loose);overflow-wrap:anywhere;}
+#syncModal .sync-card>.btn{min-height:48px;padding:var(--sp-12) 0;background:transparent;border:0;box-shadow:none;text-align:left;justify-content:flex-start;white-space:normal;}
+#syncModal .sync-card>.btn:active{background:var(--press);}
+#syncModal #roToggle{min-height:48px;align-items:center;padding:0;margin:0;background:transparent;border:0;}
+#syncModal .local-toggle-check,#syncModal .local-toggle-title{margin:0;}
+#syncModal .local-toggle-title{color:var(--text-primary);}
+#syncModal .mftr .btn{background:var(--surface);border:0;box-shadow:none;}
+#syncModal .mftr .btn-p{color:var(--accent);}
+#syncModal .mftr .btn:active{background:var(--press);}
+
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5386,62 +5402,62 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <div class="moverlay" id="syncModal">
   <div class="mbox" onclick="event.stopPropagation()">
     <div class="mhdr">
-      <div class="mtitle">☁ 云同步设置</div>
+      <div class="mtitle">云同步设置</div>
       <button class="mclose" onclick="closeSyncCfg()">✕</button>
     </div>
     <div class="mbody">
-    <div id="sync-status-box" style="padding:var(--sp-10) var(--sp-12);border-radius:var(--r);background:var(--bg);margin-bottom:var(--sp-14);font-size:var(--fs-caption);color:var(--text-secondary);"></div>
+    <div id="sync-status-box" class="sync-card"></div>
 
 
     <!-- 覆盖前的本机备份：任何一次云端覆盖前都会自动存一份,可一键还原 -->
-    <div id="sync-restore-row" style="display:none;margin-bottom:var(--sp-14)">
-      <button class="btn btn-d" style="width:100%" onclick="restoreBackup()">↩ 还原到覆盖前的备份</button>
+    <div id="sync-restore-row" class="sync-card" style="display:none">
+      <button class="btn btn-d" style="width:100%" onclick="restoreBackup()">还原覆盖前备份</button>
       <div id="sync-restore-time" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center"></div>
     </div>
 
-    <div class="fg">
+    <div class="fg sync-card">
       <div class="local-toggle" id="roToggle" onclick="toggleReadOnly()">
         <div class="local-toggle-check">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div class="local-toggle-text">
-          <div class="local-toggle-title">👀 只读模式（这台设备只看不传）</div>
+          <div class="local-toggle-title">只读模式</div>
         </div>
       </div>
     </div>
 
-    <div id="sync-uploadlocal-row" style="display:none;margin-bottom:var(--sp-14)">
-      <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn">🔓 把「仅本机」备忘加密上云</button>
+    <div id="sync-uploadlocal-row" class="sync-card" style="display:none">
+      <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn">备忘加密上云</button>
       <div id="sync-uploadlocal-hint" style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);text-align:center;line-height:var(--lh-normal)"></div>
     </div>
 
-    <div style="margin-bottom:var(--sp-14)">
-      <button class="btn btn-d" style="width:100%" onclick="wipeLocalDevice()">🧹 用完了，清除这台设备的本机数据</button>
+    <div class="sync-card">
+      <button class="btn btn-d" style="width:100%" onclick="wipeLocalDevice()">清除这台设备</button>
       <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
         仅清除本机数据，云端不受影响。
       </div>
     </div>
 
 
-    <div class="fg">
-      <label>GitHub Personal Access Token</label>
+    <div class="fg sync-card">
+      <label>GitHub Token</label>
       <input type="password" id="f-gh-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
       <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
         在 <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent);text-decoration:underline">github.com/settings/tokens</a> 生成,只需勾选 <code style="background:var(--bg);padding:var(--sp-2) var(--sp-6);border-radius:var(--rsm)">gist</code> 权限
       </div>
     </div>
-    <div class="fg">
+    <div class="fg sync-card">
       <label>Gist ID <span style="color:var(--text-muted);font-weight:400">(留空会自动创建一个新的)</span></label>
       <input type="text" id="f-gh-gist" placeholder="已有云端就必须填；留空=首次启用，会问你一次" autocomplete="off" spellcheck="false">
       <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
         换设备时填上同一个 Gist ID 即可读取已有数据。可在 <a href="https://gist.github.com" target="_blank" style="color:var(--accent);text-decoration:underline">gist.github.com</a> 找到。
       </div>
     </div>
-    <div class="fg">
-      <label>主密码 <span style="color:var(--text-muted);font-weight:400">(保护备忘中的账号密码)</span></label>
+    <div class="fg sync-card">
+      <label>主密码</label>
       <input type="password" id="f-gh-pw" placeholder="设置后备忘会加密上云" autocomplete="new-password" spellcheck="false">
       <div style="font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-6);line-height:var(--lh-normal)">
-        主密码只存本机，<b>不会上传</b>；换设备时填写同一密码即可解密。忘记后无法恢复云端备忘。
+        仅存本机；换设备需使用同一密码，忘记后无法解密。
       </div>
     </div>
     </div><!-- /mbody -->
@@ -5449,7 +5465,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="mftr" style="justify-content:space-between;flex-wrap:wrap;gap:var(--sp-8)">
       <button class="btn btn-d" onclick="clearSyncCfg()" id="sync-clear-btn">断开同步</button>
       <div style="display:flex;gap:var(--sp-8)">
-        <button class="btn btn-g" onclick="syncPullNow()">⬇ 从云端拉取</button>
+        <button class="btn btn-g" onclick="syncPullNow()">从云端拉取</button>
         <button class="btn btn-p" onclick="saveSyncCfg()">保存并同步</button>
       </div>
     </div>
@@ -9244,7 +9260,7 @@ function refreshUploadLocalRow(){
   const n=notes.filter(x=>x.subCat==='备忘'&&x.localOnly).length;
   if(!n||!getToken()){row.style.display='none';return;}
   row.style.display='block';
-  document.getElementById('sync-uploadlocal-btn').textContent='🔓 把 '+n+' 条「仅本机」备忘加密上云';
+  document.getElementById('sync-uploadlocal-btn').textContent='将 '+n+' 条本机备忘加密上云';
   document.getElementById('sync-uploadlocal-hint').textContent=
     '这 '+n+' 条只存在本机，清掉浏览器数据就没了。上云后云端只存密文。';
 }
@@ -9436,12 +9452,9 @@ function openSyncCfg(){
   }else if(lastSyncErr){
     sb.innerHTML='<b style="color:var(--danger)">最近一次同步失败</b><br><span style="font-size:var(--fs-foot)">'+esc(lastSyncErr)+'</span>';
   }else{
-    // 让人一眼看出云端到底是明文还是密文——这决定了 Gist 链接万一泄漏的后果
     const encOn=!!(getMasterPw()&&cryptoOk());
-    const encLine=encOn
-      ? '<br><span style="color:#14532D">🔒 云端整份加密</span><span style="font-size:var(--fs-foot);color:var(--text-muted)">：媒体、笔记、经期在 Gist 里都是密文</span>'
-      : '<br><span style="color:var(--danger)">⚠️ 云端明文存储</span><span style="font-size:var(--fs-foot);color:var(--text-muted)">：填一个主密码即可整份加密</span>';
-    sb.innerHTML='<b style="color:#14532D">✓ 同步已启用</b><br>Gist ID: <code style="font-size:var(--fs-foot)">'+esc(getGistId()||'(待创建)')+'</code>'+encLine;
+    sb.innerHTML='<b style="color:var(--accent)">同步已启用</b><br><span style="color:var(--text-secondary)">'
+      +(encOn?'云端数据已加密':'未加密，设置主密码后加密')+'</span>';
   }
   // 有覆盖前备份时,显示「一键还原」入口
   const rr=document.getElementById('sync-restore-row');
