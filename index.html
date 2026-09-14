@@ -1929,18 +1929,20 @@ body.cal-searching .cw-card{display:none;}
 .note-preview .pv-h{font-weight:700;color:var(--text-primary);}
 .note-preview .pv-li::before{content:"• ";color:var(--accent-mid);}
 .note-foot{display:flex;align-items:center;gap:var(--sp-6);flex-wrap:wrap;}
-.note-subcat{
-  font-size:var(--fs-foot);height:22px;padding:0 var(--sp-10);line-height:1;
-  background:var(--accent-light);color:var(--accent);
-  border-radius:var(--rchip);display:inline-flex;align-items:center;font-weight:700;
-  border:1px solid transparent;box-sizing:border-box;
-}
-/* 卡片底栏「自定义标签」：与子分类同尺寸，中性灰区分角色（方案 B 统一） */
+/* 笔记分类与自定义标签共用胶囊尺寸，宽度随文字自然伸展。 */
+.note-subcat,
 .note-foot .ctag{
   font-size:var(--fs-foot);height:22px;padding:0 var(--sp-10);line-height:1;
+  border:1px solid transparent;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;margin:0;white-space:nowrap;flex-shrink:0;
+}
+.note-subcat{
+  background:var(--accent-light);color:var(--accent);font-weight:700;
+}
+/* 自定义标签以中性灰区分，尺寸与分类胶囊一致。 */
+.note-foot .ctag{
   background:var(--surface-2);color:var(--text-secondary);font-weight:600;
-  border:1px solid transparent;border-radius:var(--rchip);
-  display:inline-flex;align-items:center;box-sizing:border-box;margin:0;
 }
 .note-act{
   background:none;border:none;cursor:pointer;padding:var(--sp-6) var(--sp-10);border-radius:var(--r);
