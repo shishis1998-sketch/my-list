@@ -2913,18 +2913,20 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 /* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
 #calViewHeat .hm-hdr{display:flex;align-items:center;justify-content:space-between;
   padding:var(--sp-6) var(--sp-12) var(--sp-12);}
-#calViewHeat .hm-hdr-actions{display:flex;align-items:center;gap:var(--sp-8);}
+#calViewHeat .hm-hdr-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;margin-left:var(--sp-8);}
 #calViewHeat .hm-hdr-actions>.cal-navbtn,
 #calViewHeat .hm-filter-btn{width:28px;height:28px;flex:0 0 28px;border:none;border-radius:50%;
   background:var(--surface);color:var(--text-primary);display:inline-flex;align-items:center;
   justify-content:center;cursor:pointer;padding:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
 #calViewHeat .hm-hdr-actions>.cal-navbtn{font-size:16px;line-height:1;}
 #calViewHeat .hm-filter{position:relative;display:flex;}
-#calViewHeat .hm-filter-btn svg{width:16px;height:16px;}
+#calViewHeat .hm-filter-btn svg{width:16px;height:16px;flex-shrink:0;}
+#calViewHeat .hm-filter-label{display:none;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;}
 #calViewHeat .hm-filter-btn:active,
 #calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
 #calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
-#calViewHeat .hm-filter-btn.act{color:var(--accent);}
+#calViewHeat .hm-filter-btn.act{width:auto;flex:0 0 auto;gap:var(--sp-4);padding:0 var(--sp-10);border-radius:999px;background:var(--accent-light);color:var(--accent);}
+#calViewHeat .hm-filter-btn.act .hm-filter-label{display:inline;}
 #calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
   width:max-content;min-width:108px;max-width:min(72vw,240px);max-height:60vh;overflow-y:auto;
   display:none;padding:6px;background:var(--surface);border:1px solid var(--border);
@@ -2935,7 +2937,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
 #calViewHeat .hm-filter-item.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
-  letter-spacing:.03em;padding:0;white-space:nowrap;}
+  letter-spacing:.03em;padding:0;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 /* 标签行：一个标签一条长条月历带。
    原本是「一标签一张整月网格卡」，每个标签一个月通常只记 1~3 天，
    用 31 格的七列网格去显示 2 个点，六个标签要滑三屏。改成单行色带后
@@ -5099,8 +5101,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
             <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月">‹</button>
             <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
             <div class="hm-filter" id="hmFilter">
-              <button class="hm-filter-btn" id="hmFilterBtn" onclick="PV.toggleHeatFilter(event)" aria-label="筛选症状">
+              <button class="hm-filter-btn" id="hmFilterBtn" onclick="PV.toggleHeatFilter(event)" aria-label="筛选标签或食记" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+                <span class="hm-filter-label" id="hmFilterLabel"></span>
               </button>
               <div class="hm-filter-menu" id="hmFilterMenu"></div>
             </div>
@@ -8057,7 +8060,12 @@ window.PV = (function(){
         renderHeat();
       };
     });
-    btn.classList.toggle('act', heatTypeFilter !== '全部');
+    const active = heatTypeFilter !== '全部';
+    btn.classList.toggle('act', active);
+    const label = document.getElementById('hmFilterLabel');
+    if (label) label.textContent = active ? heatTypeFilter : '';
+    btn.setAttribute('aria-pressed', String(active));
+    btn.setAttribute('aria-label', active ? '当前筛选：' + heatTypeFilter : '筛选标签或食记');
   }
 
   function toggleHeatFilter(event){
