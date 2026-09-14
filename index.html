@@ -2927,7 +2927,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 #calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
 #calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
 #calViewHeat .hm-filter-btn.act{width:auto;flex:0 0 auto;gap:var(--sp-4);padding:0 var(--sp-10);border-radius:999px;background:var(--accent-light);color:var(--accent);}
-#calViewHeat .hm-filter-btn.act .hm-filter-label{display:inline-flex;}
+/* 中文字形的视觉中心略低于行框中心，仅对筛选文字上移 1px。 */
+#calViewHeat .hm-filter-btn.act .hm-filter-label{display:inline-flex;transform:translateY(-1px);}
 #calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
   width:max-content;min-width:108px;max-width:min(72vw,240px);max-height:60vh;overflow-y:auto;
   display:none;padding:6px;background:var(--surface);border:1px solid var(--border);
