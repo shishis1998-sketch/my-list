@@ -2920,13 +2920,14 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   justify-content:center;cursor:pointer;padding:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
 #calViewHeat .hm-hdr-actions>.cal-navbtn{font-size:16px;line-height:1;}
 #calViewHeat .hm-filter{position:relative;display:flex;}
-#calViewHeat .hm-filter-btn svg{width:16px;height:16px;flex-shrink:0;}
-#calViewHeat .hm-filter-label{display:none;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;white-space:nowrap;}
+#calViewHeat .hm-filter-btn{line-height:1;}
+#calViewHeat .hm-filter-btn svg{display:block;width:16px;height:16px;flex-shrink:0;}
+#calViewHeat .hm-filter-label{display:none;align-items:center;justify-content:center;align-self:stretch;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;white-space:nowrap;}
 #calViewHeat .hm-filter-btn:active,
 #calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
 #calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
 #calViewHeat .hm-filter-btn.act{width:auto;flex:0 0 auto;gap:var(--sp-4);padding:0 var(--sp-10);border-radius:999px;background:var(--accent-light);color:var(--accent);}
-#calViewHeat .hm-filter-btn.act .hm-filter-label{display:inline;}
+#calViewHeat .hm-filter-btn.act .hm-filter-label{display:inline-flex;}
 #calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
   width:max-content;min-width:108px;max-width:min(72vw,240px);max-height:60vh;overflow-y:auto;
   display:none;padding:6px;background:var(--surface);border:1px solid var(--border);
