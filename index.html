@@ -605,9 +605,13 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .dt-tl-empty b{color:var(--text-secondary);font-weight:600;}
 .dt-tl-hint{font-size:var(--fs-caption);color:var(--text-muted);margin-top:var(--sp-10);line-height:var(--lh-normal);}
 .dt-tl-text{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
-/* 首次添加：卡外的一行小字，够得着但不占一张卡 */
-.dt-foot{padding:var(--sp-2) var(--sp-4);font-size:var(--fs-foot);color:var(--text-muted);
-  font-family:var(--en);font-variant-numeric:tabular-nums;}
+/* 记录时间：复用详情卡片，名称左对齐、日期右对齐。 */
+.dt-meta{display:flex;flex-direction:column;gap:var(--sp-12);cursor:default;
+  font-size:var(--fs-caption);font-weight:400;color:var(--text-muted);line-height:var(--lh-normal);}
+.dt-meta-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
+.dt-meta-label{flex-shrink:0;}
+.dt-meta-value{min-width:0;text-align:right;font-family:var(--en);font-variant-numeric:tabular-nums;}
+@media (hover:hover){.dt-card.dt-meta:hover{border-color:var(--border);}}
 
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:var(--sp-20);}
@@ -10292,8 +10296,9 @@ function renderDetail(){
   const upd=updatedAtOf(item);
   const editedTxt=upd?fmtCreated(new Date(upd)):'';
   const edited=(editedTxt&&editedTxt!==created)?editedTxt:'';
-  const footTxt=[created&&`首次添加 ${esc(created)}`,edited&&`末次编辑 ${esc(edited)}`]
-    .filter(Boolean).join(' · ');
+  const metaRows=[[ '首次添加',created ],[ '末次编辑',edited ]]
+    .filter(([,value])=>value)
+    .map(([label,value])=>`<div class="dt-meta-row"><span class="dt-meta-label">${label}</span><span class="dt-meta-value">${esc(value)}</span></div>`).join('');
   const T=DT_TABS.map((t,i)=>`<button class="cvt${dtTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
   const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===dtTab)]||'';
   box.innerHTML=`
@@ -10360,7 +10365,7 @@ function renderDetail(){
 
     ${dtTab==='tl'?renderDetailTL(item):''}
 
-    ${footTxt?`<div class="dt-foot">${footTxt}</div>`:''}`;
+    ${metaRows?`<div class="dt-card dt-meta">${metaRows}</div>`:''}`;
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
   // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
