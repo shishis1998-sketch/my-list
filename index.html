@@ -1126,7 +1126,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
 
   /* toast */
   /* 提示条抬到底栏之上，别压住导航标签。--toast-lift 由 toast() 每次弹之前
-     现量一次底栏（见那边的注释），量不到就退回 14px。电脑端没有底栏，仍旧是
+     测量底栏并在显示期间更新（见那边的注释）。电脑端没有底栏，仍旧是
      右下角那条规则，不吃这里。
      宽度按文字收：原来 left/right 各 14px 拉通整行，「已保存」三个字也顶着
      一条大横幅、压住两张卡。left/right:0 + margin:auto + fit-content 让它
@@ -11818,28 +11818,37 @@ function haptic(type){
 // 开关：setHaptic(false) 关闭全部震动并记住；setHaptic(true) 重新开启
 function setHaptic(on){hapticOn=!!on;localStorage.setItem('hapticOff',on?'0':'1');if(on)haptic('tap');}
 
-// 提示条要停在底栏上方。底栏的位置不是个常数：滚动时整条会被推出屏幕
-// (body.tabs-hidden)，键盘弹起时整条会被 transform 顶到键盘上方，日历/设置页
-// 还会改它的层级。所以不在启动时量一遍写死，而是每次弹之前现量——
-// 用「可视区底部 − 底栏顶边」算净高，底栏被 transform 移动过时也准；
-// 整条被推出屏幕时顶边已经在 vh 以下，下面那个 top<vh 不成立，提示条自动落回屏底。
-// 底栏自己的 padding-bottom 已经含 env(safe-area-inset-bottom)，这里不能再加一遍。
+// 提示显示期间持续跟踪底栏，覆盖键盘收起及底栏恢复的过渡。
+// fixed bottom 与 getBoundingClientRect 都使用布局视口坐标，不能减 visualViewport.height。
+// 即使底栏暂时滑出屏幕，也预留它的高度，避免提示落进导航区域。
+let toastFrame=0;
 function syncToastLift(el){
   let lift=14;
   const bb=document.querySelector('.bottombar');
   if(bb&&getComputedStyle(bb).display!=='none'){
-    const top=bb.getBoundingClientRect().top;
-    const vh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-    if(top<vh) lift=Math.round(vh-top)+14;
+    const rect=bb.getBoundingClientRect();
+    lift=Math.ceil(Math.max(bb.offsetHeight,window.innerHeight-rect.top,0))+14;
   }
-  el.style.setProperty('--toast-lift',lift+'px');
+  const value=lift+'px';
+  if(el.style.getPropertyValue('--toast-lift')!==value)el.style.setProperty('--toast-lift',value);
+}
+function trackToastLift(){
+  const el=document.getElementById('toast');
+  if(!el.classList.contains('show')){toastFrame=0;return;}
+  syncToastLift(el);
+  toastFrame=requestAnimationFrame(trackToastLift);
 }
 function toast(msg,hap='tap'){
   const el=document.getElementById('toast');
   document.getElementById('tmsg').textContent=msg;
   syncToastLift(el);
   el.classList.add('show'); clearTimeout(tt);
-  tt=setTimeout(()=>el.classList.remove('show'),2600);
+  cancelAnimationFrame(toastFrame);
+  toastFrame=requestAnimationFrame(trackToastLift);
+  tt=setTimeout(()=>{
+    el.classList.remove('show');
+    cancelAnimationFrame(toastFrame);toastFrame=0;
+  },2600);
   haptic(hap);
 }
 
