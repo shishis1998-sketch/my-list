@@ -2915,8 +2915,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   padding:calc(env(safe-area-inset-top) + var(--sp-8)) var(--sp-14) var(--sp-20);}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
+/* 保持整页滚动，月份栏吸顶；使用页面灰底遮住从下方滑过的卡片。 */
+body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-hdr{display:flex;align-items:center;justify-content:space-between;
-  padding:var(--sp-6) var(--sp-12) var(--sp-12);}
+  position:sticky;top:0;z-index:50;background:var(--bg);
+  margin-left:calc(-1 * var(--sp-14));margin-right:calc(-1 * var(--sp-14));
+  padding:calc(env(safe-area-inset-top) + var(--sp-6)) calc(var(--sp-14) + var(--sp-12)) var(--sp-12);}
 #calViewHeat .hm-hdr-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;margin-left:var(--sp-8);}
 #calViewHeat .hm-hdr-actions>.cal-navbtn,
 #calViewHeat .hm-filter-btn{width:28px;height:28px;flex:0 0 28px;border:none;border-radius:50%;
@@ -8196,7 +8200,9 @@ window.PV = (function(){
     let bottom = top + (viewport ? viewport.height : window.innerHeight);
     const nav = document.getElementById('bottombar');
     if (nav && nav.getClientRects().length) bottom = Math.min(bottom, nav.getBoundingClientRect().top);
-    return {top, bottom: bottom - 10};
+    const header = document.querySelector('#calViewHeat .hm-hdr');
+    const contentTop = header ? Math.max(top, header.getBoundingClientRect().bottom) : top;
+    return {top:contentTop, bottom: bottom - 10};
   }
   function settleHeatCards(){
     const box = document.getElementById('hmContent');
