@@ -2910,6 +2910,10 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle .cvt.on{color:var(--text-primary);}
 .dt-tabs .cal-vtoggle .cvt-thumb{background:var(--accent);border:1px solid #fff;box-sizing:border-box;box-shadow:none;}
 .dt-tabs .cal-vtoggle .cvt.on{color:var(--on-accent);}
+/* 详情页切换时，文字颜色跟着胶囊的覆盖位置变化：前半程保留旧项白字、
+   新项仍是灰字；胶囊前缘到达新文字时再交叉过渡，避免点击瞬间提前变白。 */
+.dt-tabs.is-switching .cal-vtoggle .cvt.on{color:var(--text-secondary);transition:none;}
+.dt-tabs.is-switching .cal-vtoggle .cvt.was-on{color:var(--on-accent);transition:none;}
 #calViewCalendar{flex:1 1 auto;display:flex;flex-direction:column;overflow:visible;}
 #calViewPeriod{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
@@ -10235,6 +10239,7 @@ let dtTab='info';
   root.addEventListener('touchcancel',()=>{tracking=false;clearDrag(true);},{passive:true});
 })();
 let dtTabTransitionDir=0;
+let dtTabColorTimer=0;
 function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（顺序落手时已存）
   const next=DT_TABS.some(t=>t.id===v)?v:'info';
   const oldI=DT_TABS.findIndex(t=>t.id===dtTab);
@@ -10247,6 +10252,18 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
   const thumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
   if(oldI!==newI&&thumb&&fromTransform&&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const tabs=thumb.closest('.dt-tabs');
+    const tabBtns=tabs&&tabs.querySelectorAll('.cvt');
+    if(tabs&&tabBtns&&tabBtns[oldI]){
+      clearTimeout(dtTabColorTimer);
+      tabs.classList.add('is-switching');
+      tabBtns[oldI].classList.add('was-on');
+      // 420ms 位移动画的中点：此时胶囊的前缘/后缘正好越过新旧文字中心。
+      dtTabColorTimer=setTimeout(()=>{
+        tabs.classList.remove('is-switching');
+        tabBtns[oldI]&&tabBtns[oldI].classList.remove('was-on');
+      },210);
+    }
     thumb.animate([
       {transform:fromTransform},
       {transform:getComputedStyle(thumb).transform}
