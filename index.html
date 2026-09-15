@@ -2239,6 +2239,14 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-action:first-child{justify-self:start;}
 .tlsheet-action:last-child{justify-self:end;color:var(--accent);}
 .tlsheet-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
+#noteSheet .intro-action{display:none;}
+#noteSheet.intro-editor .intro-action{display:inline-flex;}
+#noteSheet.intro-editor .tlsheet-head{background:var(--bg);padding:7px 16px 12px;}
+#noteSheet.intro-editor .tlsheet-grip{width:36px;margin:0 auto 8px;background:rgba(86,86,90,.34);}
+#noteSheet.intro-editor .note-sheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#noteSheet.intro-editor .tlsheet-title{text-align:center;color:var(--text-primary);}
+#noteSheet.intro-editor .tlsheet-body{background:var(--bg);}
+#noteSheet.intro-editor.dragging .tlsheet-grip{background:var(--accent);}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 章节这张单独收到 10：它左边比别的抽屉多站着一列圆点和竖线，同样是 16 的内边距，
@@ -5652,7 +5660,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <div class="tlsheet" id="noteSheet" role="dialog" aria-modal="true" aria-label="编辑备注">
   <div class="tlsheet-head" id="noteSheetHead">
     <div class="tlsheet-grip"></div>
-    <div class="tlsheet-title" id="noteSheetTitle">备注</div>
+    <div class="note-sheet-headrow">
+      <button type="button" class="tlsheet-action intro-action" onclick="closeNoteSheet()">取消</button>
+      <div class="tlsheet-title" id="noteSheetTitle">备注</div>
+      <button type="button" class="tlsheet-action intro-action" onclick="closeNoteSheet(true)">保存</button>
+    </div>
   </div>
   <div class="tlsheet-body">
     <div class="fmt-bar ns-fmt" id="noteSheetFmt" style="display:none">
@@ -10662,6 +10674,7 @@ function openNoteSheet(id,key,pidx){
   if(!it) return;
   const k=(key==='people'||key==='booknote'||key==='intro')?key:'note';
   noteSheetId=it.id; noteSheetKey=k;
+  document.getElementById('noteSheet').classList.toggle('intro-editor',k==='intro');
   const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople');
   ta.classList.toggle('tall',k==='booknote');          // 正文是整本书的笔记，框子给足
   // H/B/• 也只给正文：备注在详情页是照原样显示的（pre-wrap），加了标记也不会渲染成格式
@@ -10773,9 +10786,9 @@ function commitNoteSheet(){
   render();
   toast('已保存');
 }
-function closeNoteSheet(){
+function closeNoteSheet(save=false){
   if(noteSheetId==null) return;
-  commitNoteSheet();
+  if(noteSheetKey!=='intro'||save===true) commitNoteSheet();
   const act=document.activeElement;       // 先收键盘，再让抽屉滑下去（人物那边聚焦的是三栏里的某一栏）
   if(act&&act.blur&&document.getElementById('noteSheet').contains(act)) act.blur();
   peIdx=-1;
@@ -10790,7 +10803,9 @@ function initNoteSheetDrag(){
         sheet=document.getElementById('noteSheet'),
         mask=document.getElementById('noteSheetMask');
   let sy=null,dy=0,drag=false;
-  head.addEventListener('pointerdown',e=>{sy=e.clientY;dy=0;drag=true;
+  head.addEventListener('pointerdown',e=>{
+    if(e.target.closest('button')||(e.button!=null&&e.button!==0))return;
+    sy=e.clientY;dy=0;drag=true;
     sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
   head.addEventListener('pointermove',e=>{if(!drag)return;dy=Math.max(0,e.clientY-sy);
     sheet.style.transform='translateY('+dy+'px)';mask.style.opacity=String(Math.max(0,1-dy/300));});
@@ -10798,7 +10813,9 @@ function initNoteSheetDrag(){
     sheet.style.transform='';mask.style.opacity='';
     if(dy>100) closeNoteSheet();};
   head.addEventListener('pointerup',end);
-  head.addEventListener('pointercancel',end);
+  head.addEventListener('pointercancel',()=>{
+    drag=false;sheet.classList.remove('dragging');sheet.style.transform='';mask.style.opacity='';
+  });
 }
 
 function renderStats(){
