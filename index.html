@@ -10239,7 +10239,19 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
   const oldI=DT_TABS.findIndex(t=>t.id===dtTab);
   const newI=DT_TABS.findIndex(t=>t.id===next);
   dtTabTransitionDir=newI>oldI?1:(newI<oldI?-1:0);
-  dtTab=next; renderDetail(); }
+  // 重画会替换胶囊节点，先记录屏幕上的实际位置，连点时也从当前位置续滑。
+  const oldThumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
+  const fromTransform=oldThumb?getComputedStyle(oldThumb).transform:null;
+  dtTab=next; renderDetail();
+  const thumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
+  if(oldI!==newI&&thumb&&fromTransform&&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    thumb.animate([
+      {transform:fromTransform},
+      {transform:getComputedStyle(thumb).transform}
+    ],{duration:420,easing:'cubic-bezier(.4,0,.2,1)'});
+  }
+}
 
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
