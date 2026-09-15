@@ -10519,6 +10519,10 @@ function renderDetail(){
           <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
         </div>
       </div>
+      <div class="dt-card" role="button" tabindex="0" aria-label="编辑简介" onclick="tapNoteCard(event,'intro')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tapNoteCard(event,'intro')}">
+        <div class="dt-lbl">简介</div>
+        ${item.intro?`<div class="dt-note">${esc(item.intro)}</div>`:'<div class="dt-tl-empty">点击添加简介</div>'}
+      </div>
       <div class="dt-card">
         <div class="dt-lbl">标签</div>
         ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签</div>'}
@@ -10656,7 +10660,7 @@ let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=f
 function openNoteSheet(id,key,pidx){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
-  const k=(key==='people'||key==='booknote')?key:'note';
+  const k=(key==='people'||key==='booknote'||key==='intro')?key:'note';
   noteSheetId=it.id; noteSheetKey=k;
   const ta=document.getElementById('noteSheetTa'), box=document.getElementById('noteSheetPeople');
   ta.classList.toggle('tall',k==='booknote');          // 正文是整本书的笔记，框子给足
@@ -10675,9 +10679,9 @@ function openNoteSheet(id,key,pidx){
     renderPeopleEditor(260);
   }else{
     const bn=(k==='booknote');
-    document.getElementById('noteSheetTitle').textContent=bn?bookNoteLbl(it):'备注';
-    ta.placeholder=bn?'第一章 ...\n\n第二章 ...':'想说的话…';
-    noteSheetOrig=(bn?it.bookNote:it.note)||'';
+    document.getElementById('noteSheetTitle').textContent=bn?bookNoteLbl(it):(k==='intro'?'简介':'备注');
+    ta.placeholder=bn?'第一章 ...\n\n第二章 ...':(k==='intro'?'输入简介…':'想说的话…');
+    noteSheetOrig=(bn?it.bookNote:(k==='intro'?it.intro:it.note))||'';
     ta.value=noteSheetOrig;
     box.style.display='none'; ta.style.display='';
     // 点进来就是要写字，直接进输入态；等滑起动画走完再聚焦，免得键盘和动画抢位置
@@ -10758,7 +10762,9 @@ function commitNoteSheet(){
     const ta=document.getElementById('noteSheetTa');
     const v=(ta?ta.value:'').trim();
     if(v===noteSheetOrig) return;
-    if(noteSheetKey==='booknote') it.bookNote=v; else it.note=v;
+    if(noteSheetKey==='booknote') it.bookNote=v;
+    else if(noteSheetKey==='intro') it.intro=v;
+    else it.note=v;
     noteSheetOrig=v;
   }
   touchRec(it);
