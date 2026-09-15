@@ -2949,11 +2949,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    同样六个标签约 490px，一屏看完，而且「哪几天、挨不挨着」反而更直观。 */
 #calViewHeat .hm-cards{display:flex;flex-direction:column;gap:10px;}
 body.cal-open.cal-view-heat{overflow:hidden;}
-#calViewHeat #hmContent{overflow-y:auto;overscroll-behavior-y:contain;scroll-snap-type:y mandatory;scrollbar-width:none;}
+#calViewHeat #hmContent{overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;}
 #calViewHeat #hmContent::-webkit-scrollbar{display:none;}
-#calViewHeat .hm-page{height:var(--heat-page-height);flex:none;display:flex;flex-direction:column;gap:10px;scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;}
-#calViewHeat .hm-page>.hm-card{flex:none;}
-#calViewHeat .hm-cards.hm-paged{gap:0;}
 #calViewHeat .hm-card{background:var(--surface);border:var(--bd) solid var(--border);
   border-radius:var(--rlg);padding:var(--sp-10) var(--sp-12);}
 /* 名字和天数同行，省一行高度 */
@@ -8189,11 +8186,49 @@ window.PV = (function(){
 
   let heatLayoutFrame = 0;
   let heatLayoutObserver;
-  function scheduleHeatPages(){
-    cancelAnimationFrame(heatLayoutFrame);
-    heatLayoutFrame = requestAnimationFrame(layoutHeatPages);
+  let heatSettleTimer = 0;
+  let heatTouching = false;
+  function settleHeatCards(){
+    const box = document.getElementById('hmContent');
+    if (!box || !box.getClientRects().length || heatTouching) return;
+    box.style.clipPath = '';
+    const bounds = box.getBoundingClientRect();
+    const bottom = bounds.top + box.clientHeight;
+    // 自由滚动不改 scrollTop；停稳后仅遮住底部放不全的那张，原位置留白。
+    // 顶部允许自然滑出；超过整个视口高度的单卡仍可连续阅读。
+    for (const card of box.querySelectorAll('.hm-card')) {
+      const rect = card.getBoundingClientRect();
+      if (rect.bottom - rect.top <= box.clientHeight && rect.top >= bounds.top && rect.top < bottom && rect.bottom > bottom + 0.5) {
+        box.style.clipPath = 'inset(0 0 ' + Math.ceil(bottom - rect.top) + 'px 0)';
+        break;
+      }
+    }
   }
-  function layoutHeatPages(){
+  function queueHeatSettle(){
+    clearTimeout(heatSettleTimer);
+    heatSettleTimer = setTimeout(settleHeatCards, 160);
+  }
+  function bindHeatScroll(box){
+    if (box.dataset.freeScrollBound) return;
+    box.dataset.freeScrollBound = '1';
+    box.addEventListener('scroll', () => {
+      box.style.clipPath = '';
+      queueHeatSettle();
+    }, {passive:true});
+    box.addEventListener('touchstart', () => {
+      heatTouching = true;
+      clearTimeout(heatSettleTimer);
+      box.style.clipPath = '';
+    }, {passive:true});
+    const endTouch = () => { heatTouching = false; queueHeatSettle(); };
+    box.addEventListener('touchend', endTouch, {passive:true});
+    box.addEventListener('touchcancel', endTouch, {passive:true});
+  }
+  function scheduleHeatLayout(){
+    cancelAnimationFrame(heatLayoutFrame);
+    heatLayoutFrame = requestAnimationFrame(layoutHeatCards);
+  }
+  function layoutHeatCards(){
     const box = document.getElementById('hmContent');
     if (!box || !box.getClientRects().length) return;
     const viewport = window.visualViewport;
@@ -8202,50 +8237,30 @@ window.PV = (function(){
     if (nav && nav.getClientRects().length) bottom = Math.min(bottom, nav.getBoundingClientRect().top);
     const height = Math.floor(bottom - box.getBoundingClientRect().top - 10);
     if (height < 1) return;
-    const oldHeight = parseFloat(box.style.height) || height;
-    const pageIndex = Math.round(box.scrollTop / oldHeight);
     box.style.height = height + 'px';
-    box.style.setProperty('--heat-page-height', height + 'px');
-    const list = box.querySelector('.hm-cards');
-    if (!list) return;
-    const cards = [...list.querySelectorAll('.hm-card')];
-    // 按每张卡片的实际高度分组，兼容上下半月两行及字号变化。
-    list.replaceChildren(...cards);
-    const sizes = cards.map(card => card.getBoundingClientRect().height);
-    const pages = [];
-    let page, used = 0;
-    cards.forEach((card, i) => {
-      if (!page || (used > 0 && used + 10 + sizes[i] > height)) {
-        page = document.createElement('div');
-        page.className = 'hm-page';
-        pages.push(page);
-        used = 0;
-      }
-      used += (used ? 10 : 0) + sizes[i];
-      page.appendChild(card);
-    });
-    list.classList.add('hm-paged');
-    list.replaceChildren(...pages);
-    box.scrollTop = Math.min(pageIndex, Math.max(0, pages.length - 1)) * height;
+    bindHeatScroll(box);
+    settleHeatCards();
   }
   document.addEventListener('animationend', event => {
-    if (event.target.classList && event.target.classList.contains('cal-modal')) scheduleHeatPages();
+    if (event.target.classList && event.target.classList.contains('cal-modal')) scheduleHeatLayout();
   });
-  window.addEventListener('resize', scheduleHeatPages);
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleHeatPages);
-  if (document.fonts) document.fonts.ready.then(scheduleHeatPages);
+  window.addEventListener('resize', scheduleHeatLayout);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleHeatLayout);
+  if (document.fonts) document.fonts.ready.then(scheduleHeatLayout);
 
   function renderHeat(){
     const box = document.getElementById('hmContent');
     if (!box) return;
+    clearTimeout(heatSettleTimer);
+    box.style.clipPath = '';
     box.scrollTop = 0;
     if (!heatLayoutObserver && window.ResizeObserver) {
-      heatLayoutObserver = new ResizeObserver(scheduleHeatPages);
+      heatLayoutObserver = new ResizeObserver(scheduleHeatLayout);
       [document.querySelector('#calViewHeat .hm-hdr'), document.getElementById('bottombar')].forEach(el => {
         if (el) heatLayoutObserver.observe(el);
       });
     }
-    scheduleHeatPages();
+    scheduleHeatLayout();
     if (!heatPos) heatToToday();
     const title = document.getElementById('hmTitle');
     if (title) title.textContent = `${heatYear} 年 ${heatMonth} 月`;
