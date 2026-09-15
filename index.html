@@ -2951,9 +2951,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 body.cal-open.cal-view-heat{overflow:hidden;}
 #calViewHeat #hmContent{overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;}
 #calViewHeat #hmContent::-webkit-scrollbar{display:none;}
-#calViewHeat .hm-card{background:var(--surface);border:var(--bd) solid var(--border);
+#calViewHeat .hm-card{opacity:1;transition:opacity 180ms ease;background:var(--surface);border:var(--bd) solid var(--border);
   border-radius:var(--rlg);padding:var(--sp-10) var(--sp-12);}
 /* 名字和天数同行，省一行高度 */
+#calViewHeat .hm-card.hm-bottom-hidden{opacity:0;pointer-events:none;}
+@media (prefers-reduced-motion:reduce){#calViewHeat .hm-card{transition:none;}}
 #calViewHeat .hm-card-hd{display:flex;align-items:baseline;gap:var(--sp-8);margin-bottom:var(--sp-6);}
 #calViewHeat .hm-card-name{font-size:var(--fs-sub);font-weight:700;color:var(--text-primary);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -8188,20 +8190,21 @@ window.PV = (function(){
   let heatLayoutObserver;
   let heatSettleTimer = 0;
   let heatTouching = false;
+  function revealHeatCards(box){
+    box.querySelectorAll('.hm-bottom-hidden').forEach(card => card.classList.remove('hm-bottom-hidden'));
+  }
   function settleHeatCards(){
     const box = document.getElementById('hmContent');
     if (!box || !box.getClientRects().length || heatTouching) return;
-    box.style.clipPath = '';
     const bounds = box.getBoundingClientRect();
     const bottom = bounds.top + box.clientHeight;
-    // 自由滚动不改 scrollTop；停稳后仅遮住底部放不全的那张，原位置留白。
+    // 仅淡出底部放不全的卡片，不改变高度、间距或滚动位置。
     // 顶部允许自然滑出；超过整个视口高度的单卡仍可连续阅读。
     for (const card of box.querySelectorAll('.hm-card')) {
       const rect = card.getBoundingClientRect();
-      if (rect.bottom - rect.top <= box.clientHeight && rect.top >= bounds.top && rect.top < bottom && rect.bottom > bottom + 0.5) {
-        box.style.clipPath = 'inset(0 0 ' + Math.ceil(bottom - rect.top) + 'px 0)';
-        break;
-      }
+      const partial = rect.bottom - rect.top <= box.clientHeight && rect.top >= bounds.top &&
+        rect.top < bottom && rect.bottom > bottom + 0.5;
+      card.classList.toggle('hm-bottom-hidden', partial);
     }
   }
   function queueHeatSettle(){
@@ -8212,13 +8215,13 @@ window.PV = (function(){
     if (box.dataset.freeScrollBound) return;
     box.dataset.freeScrollBound = '1';
     box.addEventListener('scroll', () => {
-      box.style.clipPath = '';
+      revealHeatCards(box);
       queueHeatSettle();
     }, {passive:true});
     box.addEventListener('touchstart', () => {
       heatTouching = true;
       clearTimeout(heatSettleTimer);
-      box.style.clipPath = '';
+      revealHeatCards(box);
     }, {passive:true});
     const endTouch = () => { heatTouching = false; queueHeatSettle(); };
     box.addEventListener('touchend', endTouch, {passive:true});
@@ -8252,7 +8255,7 @@ window.PV = (function(){
     const box = document.getElementById('hmContent');
     if (!box) return;
     clearTimeout(heatSettleTimer);
-    box.style.clipPath = '';
+    revealHeatCards(box);
     box.scrollTop = 0;
     if (!heatLayoutObserver && window.ResizeObserver) {
       heatLayoutObserver = new ResizeObserver(scheduleHeatLayout);
