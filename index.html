@@ -2948,9 +2948,6 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
    用 31 格的七列网格去显示 2 个点，六个标签要滑三屏。改成单行色带后
    同样六个标签约 490px，一屏看完，而且「哪几天、挨不挨着」反而更直观。 */
 #calViewHeat .hm-cards{display:flex;flex-direction:column;gap:10px;}
-body.cal-open.cal-view-heat{overflow:hidden;}
-#calViewHeat #hmContent{overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;}
-#calViewHeat #hmContent::-webkit-scrollbar{display:none;}
 #calViewHeat .hm-card{opacity:1;transition:opacity 180ms ease;background:var(--surface);border:var(--bd) solid var(--border);
   border-radius:var(--rlg);padding:var(--sp-10) var(--sp-12);}
 /* 名字和天数同行，省一行高度 */
@@ -8193,16 +8190,24 @@ window.PV = (function(){
   function revealHeatCards(box){
     box.querySelectorAll('.hm-bottom-hidden').forEach(card => card.classList.remove('hm-bottom-hidden'));
   }
+  function heatVisibleBounds(){
+    const viewport = window.visualViewport;
+    const top = viewport ? viewport.offsetTop : 0;
+    let bottom = top + (viewport ? viewport.height : window.innerHeight);
+    const nav = document.getElementById('bottombar');
+    if (nav && nav.getClientRects().length) bottom = Math.min(bottom, nav.getBoundingClientRect().top);
+    return {top, bottom: bottom - 10};
+  }
   function settleHeatCards(){
     const box = document.getElementById('hmContent');
     if (!box || !box.getClientRects().length || heatTouching) return;
-    const bounds = box.getBoundingClientRect();
-    const bottom = bounds.top + box.clientHeight;
+    const bounds = heatVisibleBounds();
+    const bottom = bounds.bottom;
     // 仅淡出底部放不全的卡片，不改变高度、间距或滚动位置。
     // 顶部允许自然滑出；超过整个视口高度的单卡仍可连续阅读。
     for (const card of box.querySelectorAll('.hm-card')) {
       const rect = card.getBoundingClientRect();
-      const partial = rect.bottom - rect.top <= box.clientHeight && rect.top >= bounds.top &&
+      const partial = rect.bottom - rect.top <= bottom - bounds.top && rect.top >= bounds.top &&
         rect.top < bottom && rect.bottom > bottom + 0.5;
       card.classList.toggle('hm-bottom-hidden', partial);
     }
@@ -8214,7 +8219,8 @@ window.PV = (function(){
   function bindHeatScroll(box){
     if (box.dataset.freeScrollBound) return;
     box.dataset.freeScrollBound = '1';
-    box.addEventListener('scroll', () => {
+    window.addEventListener('scroll', () => {
+      if (!box.getClientRects().length) return;
       revealHeatCards(box);
       queueHeatSettle();
     }, {passive:true});
@@ -8234,15 +8240,8 @@ window.PV = (function(){
   function layoutHeatCards(){
     const box = document.getElementById('hmContent');
     if (!box || !box.getClientRects().length) return;
-    const viewport = window.visualViewport;
-    let bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
-    const nav = document.getElementById('bottombar');
-    if (nav && nav.getClientRects().length) bottom = Math.min(bottom, nav.getBoundingClientRect().top);
-    const height = Math.floor(bottom - box.getBoundingClientRect().top - 10);
-    if (height < 1) return;
-    box.style.height = height + 'px';
     bindHeatScroll(box);
-    settleHeatCards();
+    queueHeatSettle();
   }
   document.addEventListener('animationend', event => {
     if (event.target.classList && event.target.classList.contains('cal-modal')) scheduleHeatLayout();
@@ -8256,7 +8255,7 @@ window.PV = (function(){
     if (!box) return;
     clearTimeout(heatSettleTimer);
     revealHeatCards(box);
-    box.scrollTop = 0;
+    if (box.getClientRects().length) window.scrollTo(0, 0);
     if (!heatLayoutObserver && window.ResizeObserver) {
       heatLayoutObserver = new ResizeObserver(scheduleHeatLayout);
       [document.querySelector('#calViewHeat .hm-hdr'), document.getElementById('bottombar')].forEach(el => {
