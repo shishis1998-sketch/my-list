@@ -528,13 +528,13 @@ body.detail-open .content{display:none!important;}
 .dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
 .dt-hdrow2{margin-top:var(--sp-6);}
 .dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
-.dt-au{font-size:var(--fs-sub);color:var(--text-secondary);flex:1;min-width:0;}
+.dt-au{font-size:var(--fs-caption);color:var(--text-secondary);flex:1;min-width:0;}
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
 .dt-lbl{font-size:var(--fs-caption);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 /* 时间：开始 / 结束 / 用时 三列 */
 .dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
 .dt-k{font-size:var(--fs-caption);color:var(--text-muted);letter-spacing:.06em;}
-.dt-v{font-size:var(--fs-sub);font-weight:600;font-family:var(--en);font-variant-numeric:tabular-nums;margin-top:var(--sp-2);}
+.dt-v{font-size:var(--fs-body);font-weight:600;font-family:var(--en);font-variant-numeric:tabular-nums;margin-top:var(--sp-2);}
 .dt-v.end{color:var(--watch-c);}
 .dt-v.none{color:var(--text-muted);font-weight:500;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
@@ -546,6 +546,7 @@ body.detail-open .content{display:none!important;}
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
 /* 标题那一行右边挂一颗小字按钮：人物那边是「＋ 添加」，时间线那边是「编辑全文」。
    常做的事不该藏在别的页面里，放在标题行上就永远在这，列表滑到哪都不影响 */
+.dt-seclbl.dt-overview-label{font-size:var(--fs-caption);font-weight:400;}
 .dt-seclbl-row,.dt-lbl-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
 .dt-lnk{flex-shrink:0;font-family:var(--zh);font-size:14px;font-weight:600;color:var(--accent-mid);
   background:none;border:0;padding:var(--sp-2) var(--sp-4);line-height:var(--lh-tight);
@@ -607,7 +608,7 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .dt-tl-text{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 /* 记录时间：复用详情卡片，名称左对齐、日期右对齐。 */
 .dt-meta{display:flex;flex-direction:column;gap:var(--sp-12);cursor:default;
-  font-size:var(--fs-caption);font-weight:400;color:var(--text-muted);line-height:var(--lh-normal);}
+  font-size:var(--fs-body);font-weight:400;color:var(--text-muted);line-height:var(--lh-normal);}
 .dt-meta-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
 .dt-meta-label{flex-shrink:0;}
 .dt-meta-value{min-width:0;text-align:right;font-family:var(--en);font-variant-numeric:tabular-nums;}
@@ -10524,7 +10525,7 @@ function renderDetail(){
 
     ${dtTab==='info'?`
       <div class="dt-sec">
-        <div class="dt-seclbl">时间</div>
+        <div class="dt-seclbl dt-overview-label">时间</div>
         <div class="dt-card">
         <div class="dt-kv">
           <div data-edit="f-watch-start"><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
@@ -10534,13 +10535,13 @@ function renderDetail(){
       </div>
       </div>
       <div class="dt-sec">
-        <div class="dt-seclbl">简介</div>
+        <div class="dt-seclbl dt-overview-label">简介</div>
       <div class="dt-card" role="button" tabindex="0" aria-label="编辑简介" onclick="tapNoteCard(event,'intro')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tapNoteCard(event,'intro')}">
         ${item.intro?`<div class="dt-note">${esc(item.intro)}</div>`:'<div class="dt-tl-empty">点击添加简介</div>'}
       </div>
       </div>
       <div class="dt-sec">
-        <div class="dt-seclbl">标签</div>
+        <div class="dt-seclbl dt-overview-label">标签</div>
       <div class="dt-card">
         ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签</div>'}
       </div>
