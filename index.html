@@ -2908,7 +2908,8 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle.cvt3 .cvt,
 .cal-vtoggle.cvt4 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}   /* 等分满宽 + 高度压低到约 30px */
 .cal-vtoggle .cvt.on{color:var(--text-primary);}
-.dt-tabs .cal-vtoggle .cvt.on{color:var(--accent);}
+.dt-tabs .cal-vtoggle .cvt-thumb{background:var(--accent);box-shadow:none;}
+.dt-tabs .cal-vtoggle .cvt.on{color:var(--on-accent);}
 #calViewCalendar{flex:1 1 auto;display:flex;flex-direction:column;overflow:visible;}
 #calViewPeriod{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
@@ -10088,8 +10089,7 @@ let dtTab='info';
     peek=null;peekIndex=-1;
   }
 
-  // 用现有 renderDetail 临时生成相邻栏目的真实内容，再取一份静态副本作为拖动预览。
-  // 随后立刻重画回当前栏目，所以预览与真正切过去看到的内容保持一致。
+  // 用同一渲染函数在离线容器生成相邻栏目，不替换当前触摸目标。
   function ensurePeek(dx){
     const i=DT_TABS.findIndex(x=>x.id===dtTab);
     const ni=i+(dx<0?1:-1);
@@ -10097,20 +10097,12 @@ let dtTab='info';
     if(peek&&peekIndex===ni)return peek;
     removePeek();
 
-    const current=dtTab;
-    const savedDir=dtTabTransitionDir;
-    dtTabTransitionDir=0;
-    dtTab=DT_TABS[ni].id;
-    renderDetail();
-    const rendered=document.getElementById('dtBody');
-    const html=rendered?Array.from(rendered.children)
+    // 在离线容器生成预览，保留手指起点的 DOM，避免触摸事件链被重绘打断。
+    const rendered=document.createElement('div');
+    renderDetail(rendered,DT_TABS[ni].id);
+    const html=Array.from(rendered.children)
       .filter(el=>!el.classList.contains('dt-top')&&!el.classList.contains('dt-fab'))
-      .map(el=>el.outerHTML).join(''):'';
-
-    dtTab=current;
-    dtTabTransitionDir=0;
-    renderDetail();
-    dtTabTransitionDir=savedDir;
+      .map(el=>el.outerHTML).join('');
 
     const body=document.getElementById('dtBody');
     if(!body||!html)return null;
@@ -10483,9 +10475,9 @@ function daysBetween(a,b){
 }
 
 let dtRenderAt=0;      // 详情页最近一次重画的时刻，见 syncDetailFab
-function renderDetail(){
+function renderDetail(previewBox=null, viewTab=dtTab){
   const item=data.find(d=>d.id===detailId);
-  const box=document.getElementById('dtBody');
+  const box=previewBox||document.getElementById('dtBody');
   if(!item||!box){ closeDetail(); return; }
   const st=SMAP[item.status]||SMAP.completed;
   const days=daysBetween(item.startDate,item.watchDate);
@@ -10501,8 +10493,8 @@ function renderDetail(){
   const metaRows=[[ '首次添加',created ],[ '末次编辑',edited ]]
     .filter(([,value])=>value)
     .map(([label,value])=>`<div class="dt-meta-row"><span class="dt-meta-label">${label}</span><span class="dt-meta-value">${esc(value)}</span></div>`).join('');
-  const T=DT_TABS.map((t,i)=>`<button class="cvt${dtTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
-  const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===dtTab)]||'';
+  const T=DT_TABS.map((t,i)=>`<button class="cvt${viewTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
+  const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
   box.innerHTML=`
     <div class="dt-top">
       <div class="dt-card dt-hd">
@@ -10524,7 +10516,7 @@ function renderDetail(){
       </div>
     </div>
 
-    ${dtTab==='info'?`
+    ${viewTab==='info'?`
       <div class="dt-sec">
         <div class="dt-seclbl dt-overview-label">时间</div>
         <div class="dt-card">
@@ -10549,7 +10541,7 @@ function renderDetail(){
       </div>
       <button class="dt-fab dt-edit-fab" onclick="openEdit(detailId)" aria-label="编辑记录"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:''}
 
-    ${dtTab==='note'?`
+    ${viewTab==='note'?`
       <div class="dt-sec">
         <div class="dt-seclbl">备注</div>
         <div class="dt-card" onclick="tapNoteCard(event,'note')">
@@ -10575,9 +10567,11 @@ function renderDetail(){
             onclick="tapPerson(event,-1)">${ICON_ADD_PERSON}</button>`:''}`;})()}
       </div>`:''}
 
-    ${dtTab==='tl'?renderDetailTL(item):''}
+    ${viewTab==='tl'?renderDetailTL(item):''}
 
-    ${dtTab==='info'&&metaRows?`<div class="dt-card dt-meta">${metaRows}</div>`:''}`;
+    ${viewTab==='info'&&metaRows?`<div class="dt-card dt-meta">${metaRows}</div>`:''}`;
+
+  if(previewBox)return;
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
   // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
