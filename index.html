@@ -542,7 +542,7 @@ body.detail-open .content{display:none!important;}
 /* 备注 / 人物：标题挪到卡外面当小节名。卡里只剩正文，
    一张卡就是一段内容，标题不再占掉卡内顶上那一行 */
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
-.dt-seclbl{font-size:15px;font-weight:700;color:var(--text-secondary);
+.dt-seclbl{font-size:var(--fs-caption);font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
 /* 标题那一行右边挂一颗小字按钮：人物那边是「＋ 添加」，时间线那边是「编辑全文」。
    常做的事不该藏在别的页面里，放在标题行上就永远在这，列表滑到哪都不影响 */
@@ -4702,6 +4702,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #detailBookNoteCard > .dt-lbl-row{align-items:center;min-height:24px;margin-bottom:var(--sp-12);}
 #detailBookNoteCard > .dt-lbl-row > .dt-lbl{font-weight:700;margin-bottom:0;}
 #detailBookNoteCard > .dt-lbl-row + .tl{margin-top:0;}
+#detailBookNoteCard .tl-ch{font-size:var(--fs-sub);}
 #detailBookNoteCard .chapter-more summary{position:relative;display:flex;align-items:center;justify-content:center;height:24px;padding:0 12px;}
 #detailBookNoteCard .chapter-more summary::before{content:'';position:absolute;inset:-10px 0;}
 
@@ -15694,4 +15695,3 @@ boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger(); restoreLa
 </script>
 </body>
 </html>
-
