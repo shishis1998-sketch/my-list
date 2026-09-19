@@ -14513,7 +14513,7 @@ function parseParts(text,chs){
 
 // 仅用于时间线展示：把「第一章 1 / 第一章 2」之类的标题合成一张章节卡。
 // 不回写正文，也不增字段；每个小节仍保留 parseChapters 给出的原始索引 i。
-const TL_SECTION_TITLE_RE=/^(.+?第[一二三四五六七八九十百零0-9]+章)[\s·:：—–-]+([0-9]+)$/;
+const TL_SECTION_TITLE_RE=/^(.*?第[一二三四五六七八九十百零0-9]+章)[\s·:：—–-]+([0-9]+)$/;
 function timelineSectionTitle(title){
   const m=String(title||'').trim().match(TL_SECTION_TITLE_RE);
   return m?{chapter:m[1].trim(),section:m[2]}:null;
