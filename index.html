@@ -2394,7 +2394,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-stage.dragging{cursor:grabbing;}.rg-canvas{position:absolute;left:0;top:0;width:1200px;height:1200px;transform-origin:0 0;}
 .rg-lines{position:absolute;inset:0;width:1200px;height:1200px;overflow:visible;pointer-events:none;}
 .rg-edge{fill:none;stroke-width:2;}.rg-edge.conflict{stroke-dasharray:7 5;}
-.rg-edge-label{font:600 13px var(--zh);paint-order:stroke;stroke:var(--bg);stroke-width:5px;stroke-linejoin:round;}
+.rg-edge-label{font:600 13px var(--zh);paint-order:stroke;stroke:var(--bg);stroke-width:8px;stroke-linejoin:round;}
 .rg-node{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-width:120px;max-width:170px;min-height:60px;padding:10px 14px;box-sizing:border-box;
   border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);
@@ -11092,7 +11092,7 @@ function layoutGraph(people,relations,centerId){
 
   const looseCount=components.reduce((n,a)=>n+a.length,0);
   const looseRows=Math.ceil(looseCount/4);
-  rgState.canvasSize=Math.max(1400,980+maxLevel*230+looseRows*110);
+  rgState.canvasSize=Math.max(1400,980+maxLevel*230+looseRows*150);
   const cx=rgState.canvasSize/2,cy=rgState.canvasSize/2-(components.length?80:0);
   rgState.positions={};
   if(centerId&&byId.has(centerId))rgState.positions[centerId]={x:cx-70,y:cy-34};
@@ -11101,11 +11101,11 @@ function layoutGraph(people,relations,centerId){
   people.forEach(p=>{if(connected.has(p.id)&&p.id!==centerId){const l=level.get(p.id);(groups.get(l)||groups.set(l,[]).get(l)).push(p);}});
   groups.forEach((arr,l)=>{
     arr.sort((a,b)=>REL_TYPES.findIndex(t=>t.id===(parentType.get(a.id)||'other'))-REL_TYPES.findIndex(t=>t.id===(parentType.get(b.id)||'other'))||a.name.localeCompare(b.name,'zh'));
-    const radius=Math.max(l*185,arr.length*42);
+    const radiusX=Math.max(l*220,arr.length*48),radiusY=Math.max(l*190,arr.length*43);
     if(l===1){
       arr.forEach((p,i)=>{
         const angle=-Math.PI/2+i*Math.PI*2/arr.length;
-        rgState.positions[p.id]={x:cx+Math.cos(angle)*radius-70,y:cy+Math.sin(angle)*radius-34};
+        rgState.positions[p.id]={x:cx+Math.cos(angle)*radiusX-70,y:cy+Math.sin(angle)*radiusY-34};
       });
       return;
     }
@@ -11117,7 +11117,7 @@ function layoutGraph(people,relations,centerId){
       const step=Math.min(.34,1.05/Math.max(1,list.length-1));
       list.forEach((p,i)=>{
         const angle=base+(i-(list.length-1)/2)*step;
-        rgState.positions[p.id]={x:cx+Math.cos(angle)*radius-70,y:cy+Math.sin(angle)*radius-34};
+        rgState.positions[p.id]={x:cx+Math.cos(angle)*radiusX-70,y:cy+Math.sin(angle)*radiusY-34};
       });
     });
   });
@@ -11125,9 +11125,9 @@ function layoutGraph(people,relations,centerId){
   // 独立关系组放在主关系网下方，组内人物紧挨排列，组与组之间只留必要间距。
   const boxes=components.map(list=>{
     const cols=Math.min(3,list.length),rows=Math.ceil(list.length/3);
-    return {list,cols,rows,w:140+(cols-1)*175,h:70+(rows-1)*105};
+    return {list,cols,rows,w:140+(cols-1)*225,h:70+(rows-1)*145};
   });
-  const packWidth=Math.min(760,rgState.canvasSize-160),boxRows=[];let row=[],used=0;
+  const packWidth=Math.min(980,rgState.canvasSize-160),boxRows=[];let row=[],used=0;
   boxes.forEach(box=>{
     const need=(row.length?34:0)+box.w;
     if(row.length&&used+need>packWidth){boxRows.push(row);row=[];used=0;}
@@ -11141,7 +11141,7 @@ function layoutGraph(people,relations,centerId){
     items.forEach(box=>{
       box.list.forEach((p,i)=>{
         const col=i%3,r=Math.floor(i/3);
-        rgState.positions[p.id]={x:x+col*175,y:y+r*105};
+        rgState.positions[p.id]={x:x+col*225,y:y+r*145};
       });
       x+=box.w+34;rowH=Math.max(rowH,box.h);
     });
