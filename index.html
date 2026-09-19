@@ -2334,13 +2334,22 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   background:var(--surface-2);color:var(--text-muted);font-size:13px;line-height:1;cursor:pointer;}
 .pe-del:active{background:var(--press);color:var(--text-secondary);}
 
-/* 人物独立页：列表 / 关系图。关系编辑仍放在人物抽屉内，避免再开第三层弹窗。 */
-.people-viewbar{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-10);}
-.people-vtoggle{position:relative;display:grid;grid-template-columns:1fr 1fr;width:min(260px,72%);
-  padding:3px;background:var(--border);border-radius:999px;overflow:hidden;}
-.people-vtoggle button{position:relative;z-index:1;border:0;background:transparent;color:var(--text-secondary);
-  font:600 var(--fs-body)/1 var(--zh);padding:8px 14px;border-radius:999px;cursor:pointer;}
-.people-vtoggle button.on{background:var(--accent);color:var(--on-accent);}
+/* 人物页默认显示列表；关系图与排序收进标题右侧的更多菜单。 */
+.people-head-actions{display:flex;align-items:center;gap:var(--sp-6);margin-left:auto;}
+.people-more{position:relative;flex:0 0 auto;}
+.people-more summary{display:grid;place-items:center;width:36px;height:36px;padding:0;list-style:none;
+  border-radius:50%;color:var(--text-secondary);cursor:pointer;}
+.people-more summary::-webkit-details-marker{display:none;}
+.people-more summary svg{width:21px;height:21px;}
+.people-more[open] summary{background:var(--surface-2);color:var(--accent);}
+.people-more-menu{position:absolute;z-index:30;right:0;top:calc(100% + 6px);width:156px;padding:6px;
+  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
+.people-more-item{display:flex;align-items:center;gap:var(--sp-10);width:100%;min-height:42px;padding:8px 10px;
+  border:0;border-radius:calc(var(--r) - 4px);background:transparent;color:var(--text-primary);
+  font:var(--fs-body) var(--zh);text-align:left;cursor:pointer;}
+.people-more-item svg{flex:0 0 auto;width:18px;height:18px;color:var(--text-secondary);}
+.people-more-item:active{background:var(--surface-2);}
+.people-more-item:disabled{opacity:.38;cursor:default;}
 .people-toolbar{display:flex;gap:var(--sp-6);margin-left:auto;}
 .people-tool{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);
   border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;}
@@ -2380,7 +2389,6 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   color:var(--text-primary);font-size:32px;line-height:1;cursor:pointer;}
 .rg-title{min-width:0;flex:1;font-size:var(--fs-headline);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .rg-controls{position:relative;z-index:4;display:flex;align-items:center;gap:var(--sp-8);padding:10px var(--sp-14);background:var(--bg);}
-.rg-controls .people-vtoggle{width:220px;max-width:calc(100% - 96px);}
 .rg-searchbar{position:relative;z-index:4;display:none;padding:0 var(--sp-14) 10px;background:var(--bg);}
 .rg-searchbar.open{display:block;}.rg-searchbar input{width:100%;box-sizing:border-box;border:1px solid var(--border);
   border-radius:999px;background:var(--surface);color:var(--text-primary);padding:10px 14px;font:var(--fs-body) var(--zh);outline:none;}
@@ -5097,10 +5105,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <div class="rg-title" id="rgTitle">人物关系图</div>
     </div>
     <div class="rg-controls">
-      <div class="people-vtoggle" role="tablist" aria-label="人物视图">
-        <button type="button" onclick="closeRelationGraph()">列表</button>
-        <button type="button" class="on" aria-selected="true">关系图</button>
-      </div>
       <div class="people-toolbar">
         <button type="button" class="people-tool" onclick="toggleGraphSearch()" aria-label="搜索人物"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
         <button type="button" class="people-tool" onclick="toggleGraphFilter()" aria-label="筛选关系"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
@@ -10537,6 +10541,14 @@ function setSortPeople(on){
   }
   renderDetail();
 }
+function peopleMenuAction(action,button){
+  button?.closest('.people-more')?.removeAttribute('open');
+  if(action==='graph')openRelationGraph();
+  else if(action==='sort')setSortPeople(true);
+}
+document.addEventListener('pointerdown',e=>{
+  document.querySelectorAll('.people-more[open]').forEach(menu=>{if(!menu.contains(e.target))menu.removeAttribute('open');});
+});
 
 let peDrag=null;
 // 详情页在手机上是整页滚的，宽屏某些组合下是 #detailRoot 自己滚——拖到边缘要跟着滚，
@@ -10728,23 +10740,24 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       </div>`:''}
 
     ${viewTab==='people'?`
-      <div class="people-viewbar">
-        <div class="people-vtoggle" role="tablist" aria-label="人物视图">
-          <button type="button" class="on" aria-selected="true">列表</button>
-          <button type="button" onclick="openRelationGraph()">关系图</button>
-        </div>
-      </div>
       <div class="dt-sec">
         ${(()=>{const ppl=ensurePeopleIds(item,false);
           // 排序态：只剩一个人就没什么可排的，自动退出（比如在排序态里删掉了人）
           const sorting=dtSortPeople&&ppl.length>1;
           return `<div class="dt-seclbl-row">
             <div class="dt-seclbl">人物</div>
-            ${ppl.length>1?(sorting
+            ${sorting
               ? '<button type="button" class="dt-lnk" onclick="setSortPeople(false)">完成</button>'
-              : `<button type="button" class="dt-lnk dt-lnk-icon" aria-label="排序" title="排序"
-                  onclick="setSortPeople(true)">${ICON_SORT}</button>`):''}
-            ${ppl.length&&!sorting?'<button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>':''}
+              : `<div class="people-head-actions">
+                  <button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>
+                  <details class="people-more">
+                    <summary aria-label="更多人物操作" title="更多">${ICON_MORE}</summary>
+                    <div class="people-more-menu">
+                      <button type="button" class="people-more-item" onclick="peopleMenuAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
+                      <button type="button" class="people-more-item" onclick="peopleMenuAction('sort',this)" ${ppl.length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
+                    </div>
+                  </details>
+                </div>`}
           </div>
           <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
             ${ppl.length?renderPeople(ppl,sorting):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
@@ -10797,6 +10810,8 @@ function bookNoteLbl(item){ return /书/.test(getCat(item.type).name||'')?'读�
 // 人物小节名那一行的「排序」：一个拖柄，没有文字（配 aria-label / title）。
 // 排序态里每行右边那颗拖柄用三道杠——那是通行画法；这颗两道，小一号、不抢戏
 const ICON_SORT=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>`;
+const ICON_RELATION=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.4"/><circle cx="5" cy="18" r="2.4"/><circle cx="19" cy="18" r="2.4"/><path d="M10.8 7.1 6.2 15.8M13.2 7.1l4.6 8.7M7.4 18h9.2"/></svg>`;
+const ICON_MORE=`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`;
 const ICON_DRAG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
 // 人物那栏右下角那颗的图标：一个人 + 一个加号。笔画比别处细半档（1.7 对 2）——
 // 这颗只有一个人形加一个加号，同样粗细下比「一页纸+笔」显得实、显得挤
