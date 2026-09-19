@@ -5036,7 +5036,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <span class="flbl">状态</span>
     <span class="fchip on" onclick="setStatus('all',this)">全部</span>
     <span class="fchip" onclick="setStatus('completed',this)">已完成</span>
-    <span class="fchip" onclick="setStatus('in-progress',this)">再看</span>
+    <span class="fchip" onclick="setStatus('in-progress',this)">在看</span>
     <span class="fchip" onclick="setStatus('want',this)">待看/读</span>
     <span class="fchip" onclick="setStatus('dropped',this)">放弃</span>
     <div class="fsep"></div>
@@ -5407,7 +5407,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <label>状态</label>
         <select id="f-status">
           <option value="completed">已完成</option>
-          <option value="in-progress">再看</option>
+          <option value="in-progress">在看</option>
           <option value="want">想看/想读</option>
           <option value="dropped">放弃</option>
         </select>
@@ -8668,7 +8668,7 @@ const SMAP={
   // 「已完成」跟主题色走（与右上角完成日期 --watch-c 同色）：--accent 在深浅两模式下
   // 各有一档亮度，所以 c / cd 写同一个变量就够。其余三种状态是固定语义色，照旧。
   completed:{lbl:'已完成',c:'var(--accent)',cd:'var(--accent)',bg:'#DCFCE7'},
-  'in-progress':{lbl:'再看',c:'var(--accent)',cd:'var(--accent)',bg:'#DBEAFE'},
+  'in-progress':{lbl:'在看',c:'var(--accent)',cd:'var(--accent)',bg:'#DBEAFE'},
   want:{lbl:'待看/读',c:'#92400E',cd:'#D9A05B',bg:'#FEF3C7'},
   dropped:{lbl:'放弃',c:'#6B7280',cd:'#9AA0A6',bg:'#F3F4F6'},
 };
@@ -11615,7 +11615,7 @@ function pickSort(v){
 function setStatus(v,el){
   curStatus=v;
   document.querySelectorAll('.frow .fchip').forEach(c=>{
-    if(['全部','已完成','再看','待看/读','放弃'].includes(c.textContent.trim())) c.classList.remove('on');
+    if(['全部','已完成','在看','待看/读','放弃'].includes(c.textContent.trim())) c.classList.remove('on');
   });
   el.classList.add('on'); render();
 }
@@ -11684,7 +11684,7 @@ function buildFilterSheetHTML(){
   let html='';
   if(!notes){
     html+='<div class="bb-filter-glbl">状态</div>';
-    [['all','全部'],['completed','已完成'],['in-progress','再看'],['want','待看/读'],['dropped','放弃']]
+    [['all','全部'],['completed','已完成'],['in-progress','在看'],['want','待看/读'],['dropped','放弃']]
       .forEach(([v,lbl])=>{html+=opt(curStatus===v,lbl,`pickStatus('${v}')`);});
     html+='<div class="bb-filter-glbl">评分</div>';
     [['all','全部'],['5','5/5'],['4','≥4/5'],['3','≥3/5'],['12','≤2/5']]
