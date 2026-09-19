@@ -4125,16 +4125,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #calViewPeriod .calendar-container.year-view .month:nth-child(-n+2) {padding-top: 4px;}   /* 首行上方没有线，保持贴着标题栏 */
 #calViewPeriod .calendar-container.year-view .month:nth-child(n+3) {border-top: 1px solid var(--line);}
 #calViewPeriod .calendar-container.year-view .weekdays, #calViewPeriod .calendar-container.year-view .days {grid-template-columns: repeat(7, 1fr); column-gap: 2px; justify-content: stretch;}
-#calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 20px; min-height: 0; row-gap: 2px;}  /* 三列迷你月历使用更紧凑的固定行高，避免浏览器把首周撑高 */
+#calViewPeriod .calendar-container.year-view .days {grid-auto-rows: 18px; min-height: 0; row-gap: 1px;}  /* 日期中心距 19px；保留 14px 胶囊，同时收紧年度卡片高度 */
 #calViewPeriod .calendar-container.year-view .day {width: 14px; height: 14px; aspect-ratio: auto; border-radius: 50%; font-size: 9px; line-height: 1;}  /* 三列布局下保持日期数字清晰且不跨列 */
 #calViewPeriod .daywrap {display: flex; flex-direction: column; align-items: center;}
 #calViewPeriod .daywrap.empty {visibility: hidden;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
 #calViewPeriod .rec-dot {width: 6px; height: 6px; border-radius: 50%; background: var(--brand); display: none;}
 #calViewPeriod .daywrap.has-rec .rec-dot {display: block;}
-#calViewPeriod .calendar-container.year-view .dot-slot {height: 5px; margin-top: 1px;}
+#calViewPeriod .calendar-container.year-view .dot-slot {height: 4px; margin-top: 0;}
 #calViewPeriod .calendar-container.year-view .rec-dot {width: 3px; height: 3px;}
-/* 年度迷你月历也使用连续色带。色带只占原日期圆的 18px 高度，下面的记录点位置不变。 */
+/* 年度迷你月历也使用连续色带。色带保持 14px 高度，下面的记录点随紧凑行高排列。 */
 #calViewPeriod .calendar-container.year-view .days{column-gap:0;}
 #calViewPeriod .calendar-container.year-view .daywrap.band{box-sizing:border-box;min-width:0;}
 #calViewPeriod .calendar-container.year-view .daywrap.band-start{padding-left:1px;}
