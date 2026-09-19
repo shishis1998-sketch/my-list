@@ -2150,7 +2150,7 @@ body.cal-searching .cw-card{display:none;}
 /* 标题末尾带小节数字（如「第一章 1」）时，只在显示层合成章节大卡片。
    大卡跨满两列，内部小节按参考版式一行三格；原正文、章节索引和保存结构都不动。 */
 .tl-chapter-group{grid-column:1/-1;background:var(--surface);border:var(--bd) solid var(--ink);
-  border-radius:var(--rlg);padding:var(--sp-14);}
+  border-radius:var(--rlg);padding:var(--sp-12);}
 .tl-chapter-group-head{width:100%;display:flex;align-items:center;gap:var(--sp-10);
   border:0;background:none;padding:0;color:var(--text-primary);font-family:var(--zh);
   cursor:pointer;text-align:left;}
@@ -2162,9 +2162,9 @@ body.cal-searching .cw-card{display:none;}
   transition:transform .2s var(--nav-ease);}
 .tl-chapter-group.collapsed .tl-chapter-group-arrow{transform:rotate(-90deg);}
 .tl-section-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:var(--sp-10);margin-top:var(--sp-12);}
+  gap:var(--sp-10);margin-top:var(--sp-8);}
 .tl-chapter-group.collapsed .tl-section-grid{display:none;}
-.tl-section-btn{height:52px;min-width:0;border:var(--bd) solid var(--ink);
+.tl-section-btn{height:40px;min-width:0;border:var(--bd) solid var(--ink);
   border-radius:var(--r);background:var(--surface);color:var(--text-primary);
   font-family:var(--en);font-size:var(--fs-headline);font-weight:600;cursor:pointer;
   display:grid;place-items:center;transition:border-color .15s,background .15s,transform .1s;}
