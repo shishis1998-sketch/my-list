@@ -2334,6 +2334,92 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   background:var(--surface-2);color:var(--text-muted);font-size:13px;line-height:1;cursor:pointer;}
 .pe-del:active{background:var(--press);color:var(--text-secondary);}
 
+/* 人物独立页：列表 / 关系图。关系编辑仍放在人物抽屉内，避免再开第三层弹窗。 */
+.people-viewbar{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-10);}
+.people-vtoggle{position:relative;display:grid;grid-template-columns:1fr 1fr;width:min(260px,72%);
+  padding:3px;background:var(--border);border-radius:999px;overflow:hidden;}
+.people-vtoggle button{position:relative;z-index:1;border:0;background:transparent;color:var(--text-secondary);
+  font:600 var(--fs-body)/1 var(--zh);padding:8px 14px;border-radius:999px;cursor:pointer;}
+.people-vtoggle button.on{background:var(--accent);color:var(--on-accent);}
+.people-toolbar{display:flex;gap:var(--sp-6);margin-left:auto;}
+.people-tool{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);
+  border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;}
+.people-tool svg{width:19px;height:19px;}
+.pe-rel-section{display:flex;flex-direction:column;gap:var(--sp-10);padding-top:var(--sp-4);}
+.pe-rel-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-10);}
+.pe-rel-title{font-size:var(--fs-caption);color:var(--text-secondary);font-weight:600;}
+.pe-rel-add{border:0;background:var(--accent-light);color:var(--accent);border-radius:999px;
+  padding:7px 11px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
+.pe-rel-list{display:flex;flex-direction:column;gap:var(--sp-8);}
+.pe-rel-row{display:grid;grid-template-columns:minmax(0,1fr) 104px 32px;align-items:center;gap:var(--sp-8);
+  padding:var(--sp-8) var(--sp-10);background:var(--surface-2);border-radius:var(--r);}
+.pe-rel-name{font-size:var(--fs-body);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pe-rel-select,.pe-rel-search{width:100%;font:var(--fs-body) var(--zh);color:var(--text-primary);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;outline:none;}
+.pe-rel-select:focus,.pe-rel-search:focus{border-color:var(--accent);}
+.pe-rel-empty{font-size:var(--fs-caption);color:var(--text-muted);}
+.pe-rel-builder{display:flex;flex-direction:column;gap:var(--sp-8);padding:var(--sp-10);
+  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
+.pe-rel-choices{max-height:180px;overflow:auto;display:flex;flex-direction:column;}
+.pe-rel-choice{display:flex;align-items:center;gap:var(--sp-8);min-height:40px;padding:4px 2px;
+  font-size:var(--fs-body);border-bottom:1px solid var(--border-soft);cursor:pointer;}
+.pe-rel-choice:last-child{border-bottom:0;}.pe-rel-choice input{accent-color:var(--accent);width:17px;height:17px;}
+.pe-rel-save{align-self:flex-end;border:0;border-radius:999px;background:var(--accent);color:var(--on-accent);
+  padding:8px 15px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
+
+/* 全屏人物关系图：画布本身可拖移，人物节点可单独拖动。 */
+.rel-graph{display:none;position:fixed;inset:0;z-index:180;background:var(--bg);overflow:hidden;touch-action:none;}
+.rel-graph.open{display:flex;flex-direction:column;}
+.rg-head{position:relative;z-index:4;display:flex;align-items:center;gap:var(--sp-10);padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 10px;
+  background:var(--bg);border-bottom:1px solid var(--border-soft);}
+.rg-back{display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;background:transparent;
+  color:var(--text-primary);font-size:32px;line-height:1;cursor:pointer;}
+.rg-title{min-width:0;flex:1;font-size:var(--fs-headline);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rg-controls{position:relative;z-index:4;display:flex;align-items:center;gap:var(--sp-8);padding:10px var(--sp-14);background:var(--bg);}
+.rg-controls .people-vtoggle{width:220px;max-width:calc(100% - 96px);}
+.rg-searchbar{position:relative;z-index:4;display:none;padding:0 var(--sp-14) 10px;background:var(--bg);}
+.rg-searchbar.open{display:block;}.rg-searchbar input{width:100%;box-sizing:border-box;border:1px solid var(--border);
+  border-radius:999px;background:var(--surface);color:var(--text-primary);padding:10px 14px;font:var(--fs-body) var(--zh);outline:none;}
+.rg-filter{display:none;position:absolute;z-index:7;right:var(--sp-14);top:calc(112px + env(safe-area-inset-top));
+  width:190px;padding:var(--sp-10);border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);}
+.rg-filter.open{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
+.rg-filter button{border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-secondary);
+  padding:7px 10px;font:var(--fs-caption) var(--zh);cursor:pointer;}
+.rg-filter button.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.rg-stage{position:relative;flex:1;overflow:hidden;background:var(--bg);cursor:grab;}
+.rg-stage.dragging{cursor:grabbing;}.rg-canvas{position:absolute;left:0;top:0;width:1200px;height:1200px;transform-origin:0 0;}
+.rg-lines{position:absolute;inset:0;width:1200px;height:1200px;overflow:visible;pointer-events:none;}
+.rg-edge{fill:none;stroke-width:2;}.rg-edge.conflict{stroke-dasharray:7 5;}
+.rg-edge-label{font:600 13px var(--zh);paint-order:stroke;stroke:var(--bg);stroke-width:5px;stroke-linejoin:round;}
+.rg-node{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:120px;max-width:170px;min-height:60px;padding:10px 14px;box-sizing:border-box;
+  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);
+  text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;
+  transition:left .42s cubic-bezier(.22,1,.36,1),top .42s cubic-bezier(.22,1,.36,1),opacity .2s,border-color .2s,background .2s;}
+.rg-node.center{border:2px solid var(--accent);background:var(--accent);color:var(--on-accent);}
+.rg-node.center .rg-node-info{color:var(--on-accent-soft);}
+.rg-node.selected{border:2px solid var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.rg-node.direct{border-color:var(--accent-mid);}.rg-node.dim{opacity:.2}
+.rg-node-name{font-size:var(--fs-body);font-weight:700;line-height:var(--lh-tight);}
+.rg-node-info{margin-top:3px;font-size:var(--fs-caption);color:var(--text-muted);line-height:var(--lh-tight);}
+.rg-empty{position:absolute;inset:0;display:grid;place-items:center;padding:32px;text-align:center;color:var(--text-muted);font-size:var(--fs-body);}
+.rg-person-card{display:none;position:absolute;z-index:8;left:var(--sp-14);right:var(--sp-14);bottom:calc(14px + env(safe-area-inset-bottom));
+  max-height:42vh;overflow:auto;padding:var(--sp-14);border:1px solid var(--border);border-radius:var(--rlg);
+  background:var(--surface);color:var(--text-primary);}
+.rg-person-card.open{display:block;animation:rgCardIn .18s ease-out;}
+@keyframes rgCardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rg-pc-head{display:flex;align-items:flex-start;gap:var(--sp-10);}.rg-pc-main{flex:1;min-width:0;}
+.rg-pc-name{font-size:var(--fs-sub);font-weight:700;}.rg-pc-info{margin-top:3px;font-size:var(--fs-caption);color:var(--text-muted);}
+.rg-pc-note{margin-top:var(--sp-10);font-size:var(--fs-body);line-height:var(--lh-loose);white-space:pre-wrap;color:var(--text-secondary);}
+.rg-pc-rel{margin-top:var(--sp-10);font-size:var(--fs-caption);color:var(--text-muted);}
+.rg-pc-actions{display:flex;justify-content:flex-end;gap:var(--sp-8);margin-top:var(--sp-12);}
+.rg-pc-btn{border:0;border-radius:999px;padding:9px 14px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
+.rg-pc-close{background:var(--surface-2);color:var(--text-secondary);}.rg-pc-center{background:var(--accent);color:var(--on-accent);}
+body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none!important;}
+.cal-vtoggle.cvt-detail4{display:flex;width:100%;}
+.cal-vtoggle.cvt-detail4 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}
+.cal-vtoggle.cvt-detail4 .cvt-thumb{width:calc((100% - 6px)/4);}
+
 /* 时间线章节编辑弹窗 */
 #tlEditModal .mbox{display:flex;flex-direction:column;overflow:hidden;padding:0;}
 #tlEditModal .mhdr{flex:0 0 auto;margin:0;padding:var(--sp-20) var(--sp-24) var(--sp-14);background:var(--surface);}
@@ -4998,6 +5084,28 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <!-- ===== DETAIL VIEW：点列表某一行进来，同样与 .content 平级 ===== -->
   <div class="detail-view" id="detailRoot">
     <div class="dt-body" id="dtBody"></div>
+  </div>
+
+  <!-- 人物关系图是详情页上的独立全屏页面，返回后仍停在这本书的人物列表。 -->
+  <div class="rel-graph" id="relGraph" aria-hidden="true">
+    <div class="rg-head">
+      <button type="button" class="rg-back" onclick="closeRelationGraph()" aria-label="返回">‹</button>
+      <div class="rg-title" id="rgTitle">人物关系图</div>
+    </div>
+    <div class="rg-controls">
+      <div class="people-vtoggle" role="tablist" aria-label="人物视图">
+        <button type="button" onclick="closeRelationGraph()">列表</button>
+        <button type="button" class="on" aria-selected="true">关系图</button>
+      </div>
+      <div class="people-toolbar">
+        <button type="button" class="people-tool" onclick="toggleGraphSearch()" aria-label="搜索人物"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+        <button type="button" class="people-tool" onclick="toggleGraphFilter()" aria-label="筛选关系"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
+      </div>
+    </div>
+    <div class="rg-searchbar" id="rgSearchbar"><input id="rgSearch" type="search" placeholder="搜索人物姓名" oninput="searchGraphPerson(this.value)"></div>
+    <div class="rg-filter" id="rgFilter"></div>
+    <div class="rg-stage" id="rgStage"><div class="rg-canvas" id="rgCanvas"></div></div>
+    <div class="rg-person-card" id="rgPersonCard"></div>
   </div>
 
   <!-- ===== CALENDAR VIEW：与 .content 平级的同级视图，不是浮层 ===== -->
@@ -10002,6 +10110,7 @@ function render(){
 // 底部四个 tab 那几页（列表 / 日历 / 设置侧栏）不在表里：它们是页不是浮层，
 // 在首页按返回就该退出网页，跟原生 App 一样。
 const BACK_LAYERS=[
+  {id:'relGraph',           cls:'open', close:()=>closeRelationGraph()},
   {id:'detailRoot',         cls:'open', close:()=>closeDetail()},
   {id:'modal',              cls:'open', close:()=>closeModal()},
   {id:'noteSheet',          cls:'show', close:()=>closeNoteSheet()},
@@ -10061,8 +10170,8 @@ window.addEventListener('popstate',()=>{
 // 页面上没有返回按钮——退出交给系统返回手势（安卓边缘滑动 / iOS 左缘右滑 /
 // 浏览器后退键），历史那条由上面的浮层返回栈统一压（BACK_LAYERS 里的 detailRoot）。
 let detailId=null;
-// 详情页的三栏视图。概览＝时间 + 标签；备注＝这条记录的备注；时间线＝读书笔记的章节
-const DT_TABS=[{id:'info',lbl:'概览'},{id:'note',lbl:'备注'},{id:'tl',lbl:'时间线'}];
+// 人物从备注页独立出来，成为详情页第四栏；列表内可进入全屏关系图。
+const DT_TABS=[{id:'info',lbl:'概览'},{id:'note',lbl:'备注'},{id:'tl',lbl:'时间线'},{id:'people',lbl:'人物'}];
 let dtTab='info';
 
 // 详情页左右滑切换栏目 + 跟手预览：当前页随手指移出，同时让相邻页从边缘进入。
@@ -10275,6 +10384,7 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
 
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
+  ensurePeopleIds(item,true);
   detailId=id; dtTab='info';
   // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
   // 若不先关 transition，按钮就会从上一个页面遗留的隐藏态淡入/滑入。
@@ -10295,6 +10405,7 @@ function closeDetail(){
 }
 function hideDetail(){
   document.body.classList.remove('fab-hidden');
+  if(document.getElementById('relGraph')?.classList.contains('open')) closeRelationGraph();
   dtSortPeople=false;
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
   if(tlSheetIdx!=null) closeChapterSheet();  // 章节弹窗还开着就一并收掉（同样先落盘）
@@ -10336,18 +10447,49 @@ function tapPerson(ev,idx){
   openNoteSheet(detailId,'people',idx);
 }
 
-// 人物：一人一条 {name 名字, info 信息, note 备注}。
+// 人物：一人一条 {id 稳定标识, name 名字, info 信息, note 备注}。
 // 早先存的是一整段自由文本（一行一个人），这里统一收口：读到字符串就按老规矩
 // 「分隔符前当名字、后面当信息」拆一次，往后写回去的都是结构化数组。
 // 老数据不主动改写，没动过的记录留着原样也能正常显示。
 function normPeople(v){
   if(Array.isArray(v)) return v.map(p=>({
-    name:String(p&&p.name||'').trim(), info:String(p&&p.info||'').trim(), note:String(p&&p.note||'').trim()
+    id:String(p&&p.id||''), name:String(p&&p.name||'').trim(), info:String(p&&p.info||'').trim(), note:String(p&&p.note||'').trim()
   })).filter(p=>p.name||p.info||p.note);
   return String(v||'').split('\n').map(s=>s.trim()).filter(Boolean).map(l=>{
     const m=l.match(/^(.{1,14}?)\s*[：:—–-]\s*(.+)$/);
-    return m?{name:m[1],info:m[2],note:''}:{name:l,info:'',note:''};
+    return m?{id:'',name:m[1],info:m[2],note:''}:{id:'',name:l,info:'',note:''};
   });
+}
+function newPersonId(){
+  const id=(window.crypto&&typeof window.crypto.randomUUID==='function')?window.crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
+  return 'p_'+id;
+}
+function ensurePeopleIds(item,save){
+  if(!item)return [];
+  const list=normPeople(item.people);let changed=!Array.isArray(item.people);
+  const used=new Set();
+  list.forEach(p=>{if(!p.id||used.has(p.id)){p.id=newPersonId();changed=true;}used.add(p.id);});
+  if(changed){item.people=list;if(save){touchRec(item);persist();}}
+  return list;
+}
+const REL_TYPES=[
+  {id:'family',lbl:'亲属',color:'#3979d6'},
+  {id:'friend',lbl:'朋友',color:'#7b61c9'},
+  {id:'love',lbl:'情感',color:'#d95f82'},
+  {id:'social',lbl:'工作/社会',color:'#2f9a64'},
+  {id:'conflict',lbl:'冲突',color:'#e37b35'},
+  {id:'other',lbl:'其他',color:'#8a8e96'}
+];
+function relType(id){return REL_TYPES.find(x=>x.id===id)||REL_TYPES[REL_TYPES.length-1];}
+function relKey(a,b){return [String(a),String(b)].sort().join('|');}
+function normRelations(item,people){
+  const ids=new Set((people||ensurePeopleIds(item,false)).map(p=>p.id)),seen=new Set(),out=[];
+  (Array.isArray(item&&item.relationships)?item.relationships:[]).forEach(r=>{
+    const a=String(r&&r.a||''),b=String(r&&r.b||''),k=relKey(a,b);
+    if(!a||!b||a===b||!ids.has(a)||!ids.has(b)||seen.has(k))return;
+    seen.add(k);out.push({id:String(r.id||('r_'+a+'_'+b)),a,b,type:relType(r.type).id});
+  });
+  return out;
 }
 // 搜索 / CSV 用的纯文本形态
 function peopleText(v){
@@ -10526,7 +10668,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
     .filter(([,value])=>value)
     .map(([label,value])=>`<div class="dt-meta-row"><span class="dt-meta-label">${label}</span><span class="dt-meta-value">${esc(value)}</span></div>`).join('');
   const T=DT_TABS.map((t,i)=>`<button class="cvt${viewTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
-  const thumbCls=['','m','y'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
+  const thumbCls=['','m','y','h'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
   box.innerHTML=`
     <div class="dt-top">
       <div class="dt-card dt-hd">
@@ -10541,7 +10683,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       </div>
 
       <div class="dt-tabs">
-        <div class="cal-vtoggle cvt3" role="tablist" aria-label="视图切换">
+        <div class="cal-vtoggle cvt-detail4" role="tablist" aria-label="视图切换">
           <span class="cvt-thumb ${thumbCls}"></span>
           ${T}
         </div>
@@ -10579,9 +10721,17 @@ function renderDetail(previewBox=null, viewTab=dtTab){
         <div class="dt-card" onclick="tapNoteCard(event,'note')">
           ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
         </div>
+      </div>`:''}
+
+    ${viewTab==='people'?`
+      <div class="people-viewbar">
+        <div class="people-vtoggle" role="tablist" aria-label="人物视图">
+          <button type="button" class="on" aria-selected="true">列表</button>
+          <button type="button" onclick="openRelationGraph()">关系图</button>
+        </div>
       </div>
       <div class="dt-sec">
-        ${(()=>{const ppl=normPeople(item.people);
+        ${(()=>{const ppl=ensurePeopleIds(item,false);
           // 排序态：只剩一个人就没什么可排的，自动退出（比如在排序态里删掉了人）
           const sorting=dtSortPeople&&ppl.length>1;
           return `<div class="dt-seclbl-row">
@@ -10702,7 +10852,7 @@ function openDetailChapter(idx){
 // 抽屉里滑半天找他，加一个人还得滑到最底下。现在改成一次只编辑一个人——详情页点谁
 // 就弹谁，加人的按钮挪到详情页小节名旁边（见 tapPerson），抽屉里永远只有三栏。
 let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=false,
-    peRows=[], peIdx=-1;
+    peRows=[], peRelations=[], peIdx=-1, peRelAdding=false;
 function openNoteSheet(id,key,pidx){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
@@ -10714,11 +10864,13 @@ function openNoteSheet(id,key,pidx){
   // H/B/• 也只给正文：备注在详情页是照原样显示的（pre-wrap），加了标记也不会渲染成格式
   document.getElementById('noteSheetFmt').style.display=(k==='booknote')?'':'none';
   if(k==='people'){
-    peRows=normPeople(it.people);
-    noteSheetOrig=JSON.stringify(peRows);
+    peRows=ensurePeopleIds(it,false);
+    peRelations=normRelations(it,peRows);
+    noteSheetOrig=JSON.stringify({people:peRows,relationships:peRelations});
     const fresh=!(pidx>=0&&pidx<peRows.length);   // 没指到人（或指歪了）就是「加一个」
-    if(fresh){ peRows.push({name:'',info:'',note:''}); peIdx=peRows.length-1; }
+    if(fresh){ peRows.push({id:newPersonId(),name:'',info:'',note:''}); peIdx=peRows.length-1; }
     else peIdx=pidx;
+    peRelAdding=false;
     // 标题带：加人时写「添加人物」（光「添加」在标题上说不清添的是什么），改人时写他的名字
     document.getElementById('noteSheetTitle').textContent=fresh?'添加人物':(peRows[peIdx].name||'人物');
     ta.style.display='none'; box.style.display='';
@@ -10760,6 +10912,11 @@ function renderPeopleEditor(delay){
       </div>
       <input class="pe-in pe-info" placeholder="信息，比如身份、和主角的关系" value="${esc(p.info)}">
       <textarea class="pe-in pe-note" rows="1" placeholder="可留空">${esc(p.note)}</textarea>
+    </div>
+    <div class="pe-rel-section">
+      <div class="pe-rel-head"><div class="pe-rel-title">人物关系</div><button type="button" class="pe-rel-add" onclick="startRelationAdd()">＋ 添加关系</button></div>
+      <div class="pe-rel-list">${renderPersonRelations(p.id)}</div>
+      <div id="peRelBuilder"></div>
     </div>`;
   const ta=box.querySelector('.pe-note');
   if(ta){ autosizeTl(ta); ta.addEventListener('input',()=>autosizeTl(ta)); }
@@ -10772,6 +10929,45 @@ function renderPeopleEditor(delay){
     try{ nm.selectionStart=nm.selectionEnd=nm.value.length; }catch(_){}
   },delay||0);
 }
+function relOptions(selected){return REL_TYPES.map(t=>`<option value="${t.id}"${t.id===selected?' selected':''}>${t.lbl}</option>`).join('');}
+function renderPersonRelations(pid){
+  const byId=new Map(peRows.map(p=>[p.id,p]));
+  const rows=peRelations.filter(r=>r.a===pid||r.b===pid);
+  if(!rows.length)return '<div class="pe-rel-empty">还没有人物关系</div>';
+  return rows.map(r=>{const other=byId.get(r.a===pid?r.b:r.a);return other?`<div class="pe-rel-row">
+    <div class="pe-rel-name">${esc(other.name||'未命名人物')}</div>
+    <select class="pe-rel-select" onchange="changeRelationType('${r.id}',this.value)">${relOptions(r.type)}</select>
+    <button type="button" class="pe-del" onclick="deleteRelation('${r.id}')" aria-label="删除关系">✕</button>
+  </div>`:'';}).join('');
+}
+function refreshRelationEditor(){
+  const list=document.querySelector('#noteSheetPeople .pe-rel-list');
+  if(list&&peRows[peIdx])list.innerHTML=renderPersonRelations(peRows[peIdx].id);
+}
+function startRelationAdd(){
+  readPeopleEditor();peRelAdding=true;
+  const cur=peRows[peIdx],box=document.getElementById('peRelBuilder');if(!cur||!box)return;
+  const related=new Set(peRelations.filter(r=>r.a===cur.id||r.b===cur.id).map(r=>r.a===cur.id?r.b:r.a));
+  const choices=peRows.filter(p=>p.id!==cur.id&&!related.has(p.id));
+  box.innerHTML=`<div class="pe-rel-builder">
+    <select class="pe-rel-select" id="peRelType">${relOptions('family')}</select>
+    <input class="pe-rel-search" id="peRelSearch" placeholder="搜索人物姓名" oninput="filterRelationChoices(this.value)">
+    <div class="pe-rel-choices" id="peRelChoices">${choices.length?choices.map(p=>`<label class="pe-rel-choice" data-name="${esc((p.name||'').toLowerCase())}"><input type="checkbox" value="${p.id}"><span>${esc(p.name||'未命名人物')}</span></label>`).join(''):'<div class="pe-rel-empty">没有可关联的人物</div>'}</div>
+    ${choices.length?'<button type="button" class="pe-rel-save" onclick="saveRelationBatch()">完成</button>':''}
+  </div>`;
+  document.getElementById('peRelSearch')?.focus({preventScroll:true});
+}
+function filterRelationChoices(q){const s=String(q||'').trim().toLowerCase();document.querySelectorAll('#peRelChoices .pe-rel-choice').forEach(el=>el.style.display=!s||el.dataset.name.includes(s)?'':'none');}
+function saveRelationBatch(){
+  const cur=peRows[peIdx];if(!cur)return;
+  const type=document.getElementById('peRelType')?.value||'other';
+  const picked=[...document.querySelectorAll('#peRelChoices input:checked')].map(x=>x.value);
+  const have=new Set(peRelations.map(r=>relKey(r.a,r.b)));
+  picked.forEach(id=>{const k=relKey(cur.id,id);if(!have.has(k)){peRelations.push({id:'r_'+newPersonId(),a:cur.id,b:id,type});have.add(k);}});
+  peRelAdding=false;const box=document.getElementById('peRelBuilder');if(box)box.innerHTML='';refreshRelationEditor();
+}
+function changeRelationType(id,type){const r=peRelations.find(x=>x.id===id);if(r)r.type=relType(type).id;}
+function deleteRelation(id){peRelations=peRelations.filter(r=>r.id!==id);refreshRelationEditor();}
 // 删掉正在编辑的这个人：抽屉里只有他，删完就没什么可留的了，直接关掉落盘
 function delPerson(){
   if(noteSheetId==null||noteSheetKey!=='people'||!peRows[peIdx]) return;
@@ -10779,6 +10975,7 @@ function delPerson(){
   const p=peRows[peIdx];
   if((p.name||p.info||p.note)&&!confirm('删掉「'+(p.name||'这个人')+'」？')) return;
   peRows.splice(peIdx,1);
+  peRelations=peRelations.filter(r=>r.a!==p.id&&r.b!==p.id);
   peIdx=-1;                                    // 置空，别让 readPeopleEditor 再往回写
   closeNoteSheet();
 }
@@ -10789,6 +10986,7 @@ function readPeopleEditor(){
   const r=box.querySelector('.pe-row');
   if(!r) return;
   peRows[peIdx]={
+    id:peRows[peIdx].id||newPersonId(),
     name:(r.querySelector('.pe-name')||{}).value?.trim()||'',
     info:(r.querySelector('.pe-info')||{}).value?.trim()||'',
     note:(r.querySelector('.pe-note')||{}).value?.trim()||''
@@ -10802,9 +11000,11 @@ function commitNoteSheet(){
   if(noteSheetKey==='people'){
     readPeopleEditor();
     const list=peRows.filter(p=>p.name||p.info||p.note);   // 三栏全空的那组直接丢掉
-    const s=JSON.stringify(list);
+    const ids=new Set(list.map(p=>p.id));
+    peRelations=peRelations.filter(r=>ids.has(r.a)&&ids.has(r.b));
+    const s=JSON.stringify({people:list,relationships:peRelations});
     if(s===noteSheetOrig) return;
-    it.people=list; noteSheetOrig=s;
+    it.people=list;it.relationships=peRelations;noteSheetOrig=s;
   }else{
     const ta=document.getElementById('noteSheetTa');
     const v=(ta?ta.value:'').trim();
@@ -10829,6 +11029,118 @@ function closeNoteSheet(save=false){
   document.getElementById('noteSheetMask').classList.remove('show');
   document.getElementById('noteSheet').classList.remove('show');
   noteSheetId=null;
+}
+
+// ── 全屏人物关系图 ───────────────────────────────────────────────
+let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',pan:null,pinch:null,pointers:new Map(),canvasSize:1200};
+function openRelationGraph(){
+  const it=data.find(d=>d.id===detailId);if(!it)return;
+  const people=ensurePeopleIds(it,true);
+  const relations=normRelations(it,people),ids=new Set(people.map(p=>p.id));
+  rgState.filters=new Set(REL_TYPES.map(t=>t.id));
+  rgState.centerId=ids.has(it.peopleGraphCenter)?it.peopleGraphCenter:(people[0]?.id||'');
+  rgState.selectedId='';rgState.positions={};rgState.pointers.clear();rgState.pan=null;rgState.pinch=null;
+  const root=document.getElementById('relGraph');
+  document.getElementById('rgTitle').textContent=(it.name||'')+' · 人物关系';
+  document.getElementById('rgSearchbar').classList.remove('open');
+  document.getElementById('rgFilter').classList.remove('open');
+  document.getElementById('rgPersonCard').classList.remove('open');
+  const search=document.getElementById('rgSearch');if(search)search.value='';
+  root.classList.add('open');root.setAttribute('aria-hidden','false');document.body.classList.add('rel-graph-open');
+  renderRelationGraph(people,relations);
+  requestAnimationFrame(()=>{
+    rgState.scale=1;centerGraphOn(rgState.centerId,false);bindGraphPan();
+  });
+}
+function closeRelationGraph(){
+  const root=document.getElementById('relGraph');if(!root||!root.classList.contains('open'))return;
+  root.classList.remove('open');root.setAttribute('aria-hidden','true');document.body.classList.remove('rel-graph-open');
+}
+function layoutGraph(people,relations,centerId){
+  const adj=new Map(people.map(p=>[p.id,[]]));
+  relations.forEach(r=>{adj.get(r.a)?.push({id:r.b,type:r.type});adj.get(r.b)?.push({id:r.a,type:r.type});});
+  const level=new Map(),parentType=new Map(),queue=[];
+  if(centerId&&adj.has(centerId)){level.set(centerId,0);queue.push(centerId);}
+  while(queue.length){const id=queue.shift(),next=(adj.get(id)||[]).slice().sort((a,b)=>REL_TYPES.findIndex(t=>t.id===a.type)-REL_TYPES.findIndex(t=>t.id===b.type));next.forEach(n=>{if(!level.has(n.id)){level.set(n.id,level.get(id)+1);parentType.set(n.id,n.type);queue.push(n.id);}});}
+  let max=Math.max(0,...level.values());
+  people.forEach(p=>{if(!level.has(p.id)){level.set(p.id,max+1);parentType.set(p.id,'other');}});max=Math.max(0,...level.values());
+  rgState.canvasSize=Math.max(1200,800+max*360);const cx=rgState.canvasSize/2,cy=rgState.canvasSize/2;
+  const groups=new Map();people.forEach(p=>{const l=level.get(p.id)||0;(groups.get(l)||groups.set(l,[]).get(l)).push(p);});
+  rgState.positions={};
+  groups.forEach((arr,l)=>{
+    arr.sort((a,b)=>REL_TYPES.findIndex(t=>t.id===(parentType.get(a.id)||'other'))-REL_TYPES.findIndex(t=>t.id===(parentType.get(b.id)||'other'))||a.name.localeCompare(b.name,'zh'));
+    if(l===0){const p=arr[0];if(p)rgState.positions[p.id]={x:cx-70,y:cy-34};return;}
+    const radius=Math.max(l*205,arr.length*43);
+    arr.forEach((p,i)=>{const angle=-Math.PI/2+i*Math.PI*2/arr.length;rgState.positions[p.id]={x:cx+Math.cos(angle)*radius-70,y:cy+Math.sin(angle)*radius-34};});
+  });
+}
+function renderRelationGraph(people,relations){
+  const canvas=document.getElementById('rgCanvas');if(!canvas)return;
+  if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';return;}
+  layoutGraph(people,relations,rgState.centerId);
+  canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
+  canvas.innerHTML=`<svg class="rg-lines" id="rgLines" viewBox="0 0 ${rgState.canvasSize} ${rgState.canvasSize}" style="width:${rgState.canvasSize}px;height:${rgState.canvasSize}px"></svg>`+
+    people.map(p=>{const pos=rgState.positions[p.id];return `<div class="rg-node" data-person="${p.id}" style="left:${pos.x}px;top:${pos.y}px">
+      <div class="rg-node-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-node-info">${esc(p.info)}</div>`:''}</div>`;}).join('');
+  canvas.querySelectorAll('.rg-node').forEach(el=>{el.addEventListener('click',()=>selectGraphPerson(el.dataset.person,true));});
+  updateGraphHighlights();
+  drawGraphLines(relations);
+  const filter=document.getElementById('rgFilter');
+  filter.innerHTML=REL_TYPES.map(t=>`<button type="button" class="on" data-type="${t.id}" onclick="toggleGraphType('${t.id}',this)">${t.lbl}</button>`).join('');
+}
+function currentGraphData(){const it=data.find(d=>d.id===detailId),people=it?ensurePeopleIds(it,false):[];return {people,relations:it?normRelations(it,people):[]};}
+function drawGraphLines(relations){
+  const svg=document.getElementById('rgLines');if(!svg)return;
+  svg.innerHTML=relations.filter(r=>rgState.filters.has(r.type)).map(r=>{
+    const a=rgState.positions[r.a],b=rgState.positions[r.b];if(!a||!b)return '';
+    const x1=a.x+70,y1=a.y+34,x2=b.x+70,y2=b.y+34,t=relType(r.type),mx=(x1+x2)/2,my=(y1+y2)/2;
+    const hi=rgState.selectedId&&(r.a===rgState.selectedId||r.b===rgState.selectedId);
+    return `<line class="rg-edge ${r.type}${hi?' highlight':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/><text class="rg-edge-label" x="${mx}" y="${my-7}" text-anchor="middle" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${t.lbl}</text>`;
+  }).join('');
+}
+function directGraphIds(id){const out=new Set([id]);currentGraphData().relations.forEach(r=>{if(r.a===id)out.add(r.b);if(r.b===id)out.add(r.a);});return out;}
+function updateGraphHighlights(){
+  const near=rgState.selectedId?directGraphIds(rgState.selectedId):null;
+  document.querySelectorAll('#rgCanvas .rg-node').forEach(el=>{const id=el.dataset.person;el.classList.toggle('center',id===rgState.centerId);el.classList.toggle('selected',id===rgState.selectedId&&id!==rgState.centerId);el.classList.toggle('direct',!!near&&near.has(id)&&id!==rgState.selectedId);el.classList.toggle('dim',!!near&&!near.has(id));});
+}
+function selectGraphPerson(id,showCard){
+  const {people,relations}=currentGraphData(),p=people.find(x=>x.id===id);if(!p)return;
+  rgState.selectedId=id;updateGraphHighlights();drawGraphLines(relations);
+  if(showCard){const byId=new Map(people.map(x=>[x.id,x])),rows=relations.filter(r=>r.a===id||r.b===id).map(r=>`${relType(r.type).lbl} · ${byId.get(r.a===id?r.b:r.a)?.name||'未命名人物'}`);
+    const card=document.getElementById('rgPersonCard');card.innerHTML=`<div class="rg-pc-head"><div class="rg-pc-main"><div class="rg-pc-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-pc-info">${esc(p.info)}</div>`:''}</div></div>${p.note?`<div class="rg-pc-note">${esc(p.note)}</div>`:''}${rows.length?`<div class="rg-pc-rel">${rows.map(esc).join('<br>')}</div>`:''}<div class="rg-pc-actions"><button type="button" class="rg-pc-btn rg-pc-close" onclick="closeGraphPersonCard()">关闭</button>${id===rgState.centerId?'':`<button type="button" class="rg-pc-btn rg-pc-center" onclick="setGraphCenter('${id}')">设为中心</button>`}</div>`;card.classList.add('open');}
+}
+function closeGraphPersonCard(){document.getElementById('rgPersonCard').classList.remove('open');}
+function setGraphCenter(id){
+  const {people,relations}=currentGraphData();if(!people.some(p=>p.id===id))return;
+  rgState.centerId=id;rgState.selectedId=id;layoutGraph(people,relations,id);
+  document.querySelectorAll('#rgCanvas .rg-node').forEach(el=>{const p=rgState.positions[el.dataset.person];if(p){el.style.left=p.x+'px';el.style.top=p.y+'px';}});
+  const canvas=document.getElementById('rgCanvas');canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
+  const svg=document.getElementById('rgLines');svg?.setAttribute('viewBox',`0 0 ${rgState.canvasSize} ${rgState.canvasSize}`);if(svg){svg.style.width=svg.style.height=rgState.canvasSize+'px';}
+  updateGraphHighlights();drawGraphLines(relations);centerGraphOn(id,true);selectGraphPerson(id,true);
+  const it=data.find(d=>d.id===detailId);if(it){it.peopleGraphCenter=id;persist();}
+}
+function bindGraphPan(){
+  const stage=document.getElementById('rgStage');if(!stage||stage.dataset.bound)return;stage.dataset.bound='1';
+  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  stage.addEventListener('pointerdown',e=>{if(e.button!=null&&e.button!==0)return;rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});try{stage.setPointerCapture(e.pointerId);}catch(_){}
+    if(rgState.pointers.size===2){const [a,b]=[...rgState.pointers.values()],m=mid(a,b);rgState.pan=null;rgState.pinch={distance:dist(a,b),scale:rgState.scale,cx:(m.x-rgState.x)/rgState.scale,cy:(m.y-rgState.y)/rgState.scale};stage.classList.add('dragging');}
+    else if(!e.target.closest('.rg-node')){rgState.pan={pid:e.pointerId,sx:e.clientX,sy:e.clientY,x:rgState.x,y:rgState.y};stage.classList.add('dragging');}});
+  stage.addEventListener('pointermove',e=>{if(!rgState.pointers.has(e.pointerId))return;rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(rgState.pointers.size>=2&&rgState.pinch){const [a,b]=[...rgState.pointers.values()],m=mid(a,b),next=Math.max(.5,Math.min(1.8,rgState.pinch.scale*dist(a,b)/Math.max(1,rgState.pinch.distance)));rgState.scale=next;rgState.x=m.x-rgState.pinch.cx*next;rgState.y=m.y-rgState.pinch.cy*next;applyGraphTransform();return;}
+    const p=rgState.pan;if(p&&p.pid===e.pointerId){rgState.x=p.x+e.clientX-p.sx;rgState.y=p.y+e.clientY-p.sy;applyGraphTransform();}});
+  const end=e=>{rgState.pointers.delete(e.pointerId);if(rgState.pan?.pid===e.pointerId)rgState.pan=null;if(rgState.pointers.size<2)rgState.pinch=null;if(!rgState.pointers.size)stage.classList.remove('dragging');};
+  stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+  stage.addEventListener('wheel',e=>{e.preventDefault();const rect=stage.getBoundingClientRect(),old=rgState.scale,next=Math.max(.55,Math.min(1.7,old*(e.deltaY<0?1.1:.9))),px=e.clientX-rect.left,py=e.clientY-rect.top;rgState.x=px-(px-rgState.x)*next/old;rgState.y=py-(py-rgState.y)*next/old;rgState.scale=next;applyGraphTransform();},{passive:false});
+}
+function applyGraphTransform(){const c=document.getElementById('rgCanvas');if(c)c.style.transform=`translate3d(${rgState.x}px,${rgState.y}px,0) scale(${rgState.scale})`;}
+function centerGraphOn(id,animate){const stage=document.getElementById('rgStage'),canvas=document.getElementById('rgCanvas'),p=rgState.positions[id];if(!stage||!p)return;rgState.x=stage.clientWidth/2-(p.x+70)*rgState.scale;rgState.y=stage.clientHeight/2-(p.y+34)*rgState.scale;if(animate&&canvas){canvas.style.transition='transform .38s cubic-bezier(.22,1,.36,1)';setTimeout(()=>canvas.style.transition='',400);}applyGraphTransform();}
+function toggleGraphSearch(){const bar=document.getElementById('rgSearchbar');bar.classList.toggle('open');document.getElementById('rgFilter').classList.remove('open');if(bar.classList.contains('open'))setTimeout(()=>document.getElementById('rgSearch')?.focus(),30);}
+function toggleGraphFilter(){document.getElementById('rgFilter').classList.toggle('open');document.getElementById('rgSearchbar').classList.remove('open');}
+function toggleGraphType(type,btn){rgState.filters.has(type)?rgState.filters.delete(type):rgState.filters.add(type);btn.classList.toggle('on',rgState.filters.has(type));drawGraphLines(currentGraphData().relations);}
+function searchGraphPerson(q){
+  const s=String(q||'').trim().toLowerCase(),people=currentGraphData().people;
+  if(!s){rgState.selectedId='';closeGraphPersonCard();updateGraphHighlights();drawGraphLines(currentGraphData().relations);return;}
+  const hit=people.find(p=>String(p.name||'').toLowerCase().includes(s));if(hit){selectGraphPerson(hit.id,true);centerGraphOn(hit.id,true);}
 }
 // 下拉标题带关闭（同章节抽屉：松手超过阈值即关，含自动保存）
 function initNoteSheetDrag(){
