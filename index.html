@@ -2147,6 +2147,29 @@ body.cal-searching .cw-card{display:none;}
 /* ── 时间线「每章一张卡片」：一行两张，点整卡从底部滑起章节弹窗 ── */
 /* 章节列表：一行两张。minmax(0,1fr) 让列可收缩，长章名才能正常省略号截断 */
 .tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-10);margin-top:var(--sp-6);}
+/* 标题末尾带小节数字（如「第一章 1」）时，只在显示层合成章节大卡片。
+   大卡跨满两列，内部小节按参考版式一行三格；原正文、章节索引和保存结构都不动。 */
+.tl-chapter-group{grid-column:1/-1;background:var(--surface);border:var(--bd) solid var(--ink);
+  border-radius:var(--rlg);padding:var(--sp-14);}
+.tl-chapter-group-head{width:100%;display:flex;align-items:center;gap:var(--sp-10);
+  border:0;background:none;padding:0;color:var(--text-primary);font-family:var(--zh);
+  cursor:pointer;text-align:left;}
+.tl-chapter-group-title{font-size:var(--fs-headline);font-weight:700;line-height:var(--lh-normal);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tl-chapter-group-count{margin-left:auto;flex-shrink:0;font-size:var(--fs-caption);
+  font-weight:400;color:var(--text-muted);}
+.tl-chapter-group-arrow{flex:0 0 18px;width:18px;height:18px;color:var(--text-muted);
+  transition:transform .2s var(--nav-ease);}
+.tl-chapter-group.collapsed .tl-chapter-group-arrow{transform:rotate(-90deg);}
+.tl-section-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--sp-10);margin-top:var(--sp-12);}
+.tl-chapter-group.collapsed .tl-section-grid{display:none;}
+.tl-section-btn{height:52px;min-width:0;border:var(--bd) solid var(--ink);
+  border-radius:var(--r);background:var(--surface);color:var(--text-primary);
+  font-family:var(--en);font-size:var(--fs-headline);font-weight:600;cursor:pointer;
+  display:grid;place-items:center;transition:border-color .15s,background .15s,transform .1s;}
+.tl-section-btn:active{transform:scale(.98);background:var(--surface-2);}
+@media (hover:hover){.tl-section-btn:hover{border-color:var(--accent);}}
 /* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
    竖条和章节卡那道 .tl-bar 同族，只是更深更实——大条管小条，层级一眼看得出来 */
 /* 上下留白不对称是故意的：上面 24 是「和上一部的卡拉开」，下面 6（加 .tl 自己的
@@ -10823,16 +10846,15 @@ function renderDetailTL(item){
   }
   const groups=parseParts(item.bookNote,chs);
   const np=groups.filter(g=>g.part).length;
+  const displayCount=timelineDisplayCount(groups);
   // 章节内点正文编辑整章；右下角新增，全文编辑保留在更多菜单。
   return `<div class="dt-card" id="detailBookNoteCard" style="cursor:default">
     <div class="dt-lbl-row">
-      <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`}</div>
+      <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
       <details class="chapter-more"><summary aria-label="笔记更多操作">⋯</summary><button type="button" class="dt-lnk" onclick="this.closest('details').open=false;tapNoteCard(event,'booknote')">编辑全文</button></details>
     </div>
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
-      +`<div class="tl">${g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openDetailChapter(${x.i})">
-        <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
-      </div>`).join('')}</div>`).join('')}
+      +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
   </div>
   <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
     onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
@@ -14489,6 +14511,57 @@ function parseParts(text,chs){
   return (lead.chs.length?[lead]:[]).concat(merged);
 }
 
+// 仅用于时间线展示：把「第一章 1 / 第一章 2」之类的标题合成一张章节卡。
+// 不回写正文，也不增字段；每个小节仍保留 parseChapters 给出的原始索引 i。
+const TL_SECTION_TITLE_RE=/^(.+?第[一二三四五六七八九十百零0-9]+章)[\s·:：—–-]+([0-9]+)$/;
+function timelineSectionTitle(title){
+  const m=String(title||'').trim().match(TL_SECTION_TITLE_RE);
+  return m?{chapter:m[1].trim(),section:m[2]}:null;
+}
+function groupTimelineChapters(chs){
+  const out=[], grouped=new Map();
+  (chs||[]).forEach(x=>{
+    const p=timelineSectionTitle(x.c.title);
+    if(!p){out.push({type:'single',item:x});return;}
+    let g=grouped.get(p.chapter);
+    if(!g){
+      g={type:'chapter',title:p.chapter,items:[]};
+      grouped.set(p.chapter,g);out.push(g);
+    }
+    g.items.push({c:x.c,i:x.i,section:p.section});
+  });
+  return out;
+}
+function timelineDisplayCount(groups){
+  return (groups||[]).reduce((n,g)=>n+groupTimelineChapters(g.chs).length,0);
+}
+function toggleTimelineChapterGroup(btn){
+  const card=btn.closest('.tl-chapter-group');
+  if(!card)return;
+  const collapsed=card.classList.toggle('collapsed');
+  btn.setAttribute('aria-expanded',String(!collapsed));
+}
+function renderTimelineChapterCards(chs,openFn){
+  return groupTimelineChapters(chs).map(entry=>{
+    if(entry.type==='single'){
+      const x=entry.item;
+      return `<div class="tl-item has-paras" data-idx="${x.i}" onclick="${openFn}(${x.i})">
+        <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
+      </div>`;
+    }
+    return `<div class="tl-chapter-group">
+      <button type="button" class="tl-chapter-group-head" aria-expanded="true" onclick="toggleTimelineChapterGroup(this)">
+        <span class="tl-chapter-group-title">${esc(entry.title)}</span>
+        <span class="tl-chapter-group-count">${entry.items.length} 节</span>
+        <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="tl-section-grid">
+        ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)}第${esc(x.section)}节">${esc(x.section)}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // 段落正则：行首「数字+点」算编号段落（章内连续编号）
 // 小标题：非编号短行（≤TL_HEADING_MAX 字）；前言段：非编号长行
 // 注意：每行独立成块，编号段不吸收后续行，避免吞掉小标题
@@ -14548,8 +14621,9 @@ function renderTimelineBody(id){
   const chs=parseChapters(n.body);
   const groups=parseParts(n.body,chs);
   const np=groups.filter(g=>g.part).length;
+  const displayCount=timelineDisplayCount(groups);
   document.getElementById('tl-title').textContent=n.title||'（无标题）';
-  document.getElementById('tl-sub').textContent=chs.length?(np?`${np} 部 · ${chs.length} 章`:`共 ${chs.length} 章`):'未识别到章节';
+  document.getElementById('tl-sub').textContent=chs.length?(np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`):'未识别到章节';
   const body=document.getElementById('tl-body');
   const allbtn=document.getElementById('tl-allbtn');
   if(!chs.length){
@@ -14560,14 +14634,7 @@ function renderTimelineBody(id){
     // 一行两张、只显章名：预览行和右侧箭头都去掉，窄卡里它们既占高度又没信息量
     // 点整卡 → 从底部滑起可编辑弹窗（openChapterSheet）。分了部就按部分组，每组一个小标题
     body.innerHTML=groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
-      +'<div class="tl">'+g.chs.map(x=>`<div class="tl-item has-paras" data-idx="${x.i}" onclick="openChapterSheet(${x.i})">
-        <div class="tl-head">
-          <span class="tl-bar"></span>
-          <div class="tl-main">
-            <div class="tl-ch">${esc(x.c.title)}</div>
-          </div>
-        </div>
-      </div>`).join('')+'</div>').join('');
+      +`<div class="tl">${renderTimelineChapterCards(g.chs,'openChapterSheet')}</div>`).join('');
   }
 }
 
