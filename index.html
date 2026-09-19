@@ -11187,12 +11187,24 @@ function renderRelationGraph(people,relations){
 }
 function currentGraphData(){const it=data.find(d=>d.id===detailId),people=it?ensurePeopleIds(it,false):[];return {people,relations:it?normRelations(it,people):[]};}
 function drawGraphLines(relations){
-  const svg=document.getElementById('rgLines');if(!svg)return;
+  const svg=document.getElementById('rgLines'),canvas=document.getElementById('rgCanvas');if(!svg||!canvas)return;
+  const metrics=id=>{
+    const p=rgState.positions[id],el=canvas.querySelector(`.rg-node[data-person="${CSS.escape(id)}"]`);
+    if(!p)return null;
+    const w=el?.offsetWidth||140,h=el?.offsetHeight||68;
+    return {x:p.x,y:p.y,w,h,cx:p.x+w/2,cy:p.y+h/2};
+  };
+  const edgePoint=(node,toward)=>{
+    const dx=toward.cx-node.cx,dy=toward.cy-node.cy;
+    const scale=1/Math.max(Math.abs(dx)/(node.w/2),Math.abs(dy)/(node.h/2),.0001);
+    return {x:node.cx+dx*scale,y:node.cy+dy*scale};
+  };
   svg.innerHTML=relations.filter(r=>rgState.filters.has(r.type)).map(r=>{
-    const a=rgState.positions[r.a],b=rgState.positions[r.b];if(!a||!b)return '';
-    const x1=a.x+70,y1=a.y+34,x2=b.x+70,y2=b.y+34,t=relType(r.type),mx=(x1+x2)/2,my=(y1+y2)/2;
+    const a=metrics(r.a),b=metrics(r.b);if(!a||!b)return '';
+    const from=edgePoint(a,b),to=edgePoint(b,a),t=relType(r.type);
+    const mx=(from.x+to.x)/2,my=(from.y+to.y)/2;
     const hi=rgState.selectedId&&(r.a===rgState.selectedId||r.b===rgState.selectedId);
-    return `<line class="rg-edge ${r.type}${hi?' highlight':''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/><text class="rg-edge-label" x="${mx}" y="${my-7}" text-anchor="middle" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${t.lbl}</text>`;
+    return `<line class="rg-edge ${r.type}${hi?' highlight':''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/><text class="rg-edge-label" x="${mx}" y="${my}" dominant-baseline="middle" text-anchor="middle" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${t.lbl}</text>`;
   }).join('');
 }
 function directGraphIds(id){const out=new Set([id]);currentGraphData().relations.forEach(r=>{if(r.a===id)out.add(r.b);if(r.b===id)out.add(r.a);});return out;}
