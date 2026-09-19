@@ -11070,13 +11070,13 @@ function layoutGraph(people,relations,centerId){
   while(queue.length){const id=queue.shift(),next=(adj.get(id)||[]).slice().sort((a,b)=>REL_TYPES.findIndex(t=>t.id===a.type)-REL_TYPES.findIndex(t=>t.id===b.type));next.forEach(n=>{if(!level.has(n.id)){level.set(n.id,level.get(id)+1);parentType.set(n.id,n.type);queue.push(n.id);}});}
   let max=Math.max(0,...level.values());
   people.forEach(p=>{if(!level.has(p.id)){level.set(p.id,max+1);parentType.set(p.id,'other');}});max=Math.max(0,...level.values());
-  rgState.canvasSize=Math.max(1200,800+max*360);const cx=rgState.canvasSize/2,cy=rgState.canvasSize/2;
+  rgState.canvasSize=Math.max(1200,760+max*260);const cx=rgState.canvasSize/2,cy=rgState.canvasSize/2;
   const groups=new Map();people.forEach(p=>{const l=level.get(p.id)||0;(groups.get(l)||groups.set(l,[]).get(l)).push(p);});
   rgState.positions={};
   groups.forEach((arr,l)=>{
     arr.sort((a,b)=>REL_TYPES.findIndex(t=>t.id===(parentType.get(a.id)||'other'))-REL_TYPES.findIndex(t=>t.id===(parentType.get(b.id)||'other'))||a.name.localeCompare(b.name,'zh'));
     if(l===0){const p=arr[0];if(p)rgState.positions[p.id]={x:cx-70,y:cy-34};return;}
-    const radius=Math.max(l*205,arr.length*43);
+    const radius=Math.max(l*145,arr.length*38);
     arr.forEach((p,i)=>{const angle=-Math.PI/2+i*Math.PI*2/arr.length;rgState.positions[p.id]={x:cx+Math.cos(angle)*radius-70,y:cy+Math.sin(angle)*radius-34};});
   });
 }
