@@ -1400,6 +1400,7 @@ body.cal-open .content{display:none!important;}
    100% = 标题行内容宽 = 网格内容宽 310，(310-12)/14 = 半列宽，与屏宽一起变，换机型也对得上。 */
 .cal-nav{display:flex;gap:var(--sp-6);align-items:center;margin-right:calc((100% - 12px) / 14 - 16px);}
 .cal-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--accent);transition:background .15s;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+.nav-chevron{display:block;width:16px;height:16px;flex-shrink:0;}
 @media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 @media (hover:hover){.cal-closebtn:hover{color:var(--accent);}}
@@ -5125,9 +5126,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <div id="calViewCalendar" class="cal-view">
       <div class="cal-hdr">
         <div class="cal-titlenav">
-          <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月">‹</button>
+          <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
           <div class="cal-title" id="calTitle" onclick="triggerCalMonthPick()" style="cursor:pointer;user-select:none">2026 年 1 月</div>
-          <button class="cal-navbtn" onclick="calNext()" aria-label="下一月">›</button>
+          <button class="cal-navbtn" onclick="calNext()" aria-label="下一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         </div>
         <input type="month" id="calMonthPicker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
         <div class="cal-nav">
@@ -5196,9 +5197,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <!-- 标题条在卡片外（与普通日历 .cal-hdr 一致）；卡片只含星期行+网格（与 .cal-scroll 一致） -->
         <div class="home-header">
           <div class="pv-nav">
-            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页">‹</button>
+            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
             <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
-            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页">›</button>
+            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
           <div class="home-header-right">
             <div class="home-filter" id="homeFilter">
@@ -5290,8 +5291,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <div class="hm-hdr">
           <div class="hm-title" id="hmTitle">2026 年 1 月</div>
           <div class="hm-hdr-actions">
-            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
             <div class="hm-filter" id="hmFilter">
               <button class="hm-filter-btn" id="hmFilterBtn" onclick="PV.toggleHeatFilter(event)" aria-label="筛选标签或食记" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
@@ -13707,9 +13708,9 @@ function renderWeekCard(force){
   const wkTxt=wk.year===+sel.slice(0,4)?`第 ${wk.week} 周`:`${wk.year} 年第 ${wk.week} 周`;
   card.innerHTML=
     `<div class="cw-hd">`+
-    `<button type="button" class="cw-nav" onclick="calWeekStep(-1)" aria-label="上一周">‹</button>`+
+    `<button type="button" class="cw-nav" onclick="calWeekStep(-1)" aria-label="上一周"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>`+
     `<button type="button" class="cw-hd-t" onclick="toggleWeekCard()">${days.includes(today)?'本周':wkTxt}</button>`+
-    `<button type="button" class="cw-nav" onclick="calWeekStep(1)" aria-label="下一周">›</button>`+
+    `<button type="button" class="cw-nav" onclick="calWeekStep(1)" aria-label="下一周"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>`+
     `<button type="button" class="cw-hd-x" onclick="toggleWeekCard()" aria-label="收起或展开">${CW_CHEV}</button>`+
     `</div>`+
     `<div class="cw-body"><div class="cw-cols">${cols}</div><div class="cw-pills" id="calWeekPills"></div></div>`;
