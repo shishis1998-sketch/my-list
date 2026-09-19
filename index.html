@@ -3074,9 +3074,16 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #calViewHeat .hm-card-meta b{color:var(--accent);font-weight:700;}
 #calViewHeat .hm-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;}
-#calViewHeat .hm-day{aspect-ratio:1;min-width:0;border-radius:4px;background:var(--surface-2);color:var(--text-muted);
-  display:grid;place-items:center;font-family:var(--en);font-size:8px;line-height:1;font-variant-numeric:tabular-nums;}
-#calViewHeat .hm-day.on{background:var(--accent);color:var(--on-accent);font-weight:700;}
+#calViewHeat .hm-day{--day-color:var(--surface-2);aspect-ratio:1;min-width:0;position:relative;z-index:0;
+  border-radius:4px;background:var(--day-color);color:var(--text-muted);display:grid;place-items:center;
+  font-family:var(--en);font-size:8px;line-height:1;font-variant-numeric:tabular-nums;}
+#calViewHeat .hm-day.on{--day-color:var(--accent);color:var(--on-accent);font-weight:700;}
+#calViewHeat .hm-day.join-prev{border-top-left-radius:0;border-bottom-left-radius:0;}
+#calViewHeat .hm-day.join-next{border-top-right-radius:0;border-bottom-right-radius:0;}
+#calViewHeat .hm-day.join-prev::before,
+#calViewHeat .hm-day.join-next::after{content:'';position:absolute;z-index:-1;top:0;bottom:0;width:2px;background:var(--day-color);}
+#calViewHeat .hm-day.join-prev::before{right:100%;}
+#calViewHeat .hm-day.join-next::after{left:100%;}
 #calViewHeat .hm-day.blank{background:transparent;}
 /* 空状态：图标 34px 属图形尺寸，按 design.md 不进字号阶梯 */
 #calViewHeat .hm-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -8447,7 +8454,10 @@ window.PV = (function(){
       let cells = '<span class="hm-day blank" aria-hidden="true"></span>'.repeat(firstDayOffset);
       for (let d = 1; d <= dim; d++) {
         const on = c.days.includes(d);
-        cells += `<span class="hm-day${on ? ' on' : ''}"${on ? ` aria-label="${d}日，有记录"` : ''}>${d}</span>`;
+        const column = (firstDayOffset + d - 1) % 7;
+        const joinPrev = column > 0 && d > 1 && c.days.includes(d - 1) === on;
+        const joinNext = column < 6 && d < dim && c.days.includes(d + 1) === on;
+        cells += `<span class="hm-day${on ? ' on' : ''}${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}"${on ? ` aria-label="${d}日，有记录"` : ''}>${d}</span>`;
       }
       return '<div class="hm-card">' +
         '<div class="hm-card-hd">' +
