@@ -4132,9 +4132,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #calViewPeriod .dot-slot {height: 9px; display: flex; align-items: center; justify-content: center; margin-top: 3px;}
 #calViewPeriod .rec-dot {width: 6px; height: 6px; border-radius: 50%; background: var(--brand); display: none;}
 #calViewPeriod .daywrap.has-rec .rec-dot {display: block;}
-#calViewPeriod .calendar-container.year-view .dot-slot {height: 4px; margin-top: 0;}
+#calViewPeriod .calendar-container.year-view .dot-slot {display:none;}
 #calViewPeriod .calendar-container.year-view .rec-dot {width: 3px; height: 3px;}
-/* 年度迷你月历也使用连续色带。色带保持 14px 高度，下面的记录点随紧凑行高排列。 */
+/* 年度迷你月历保留 14px 连续色带；标签/症状记录点在年度视图中隐藏。 */
 #calViewPeriod .calendar-container.year-view .days{column-gap:0;}
 #calViewPeriod .calendar-container.year-view .daywrap.band{box-sizing:border-box;min-width:0;}
 #calViewPeriod .calendar-container.year-view .daywrap.band-start{padding-left:1px;}
