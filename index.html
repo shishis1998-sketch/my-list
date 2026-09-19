@@ -3039,7 +3039,8 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-filter-btn{width:28px;height:28px;flex:0 0 28px;border:none;border-radius:50%;
   background:var(--surface);color:var(--text-primary);display:inline-flex;align-items:center;
   justify-content:center;cursor:pointer;padding:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
-#calViewHeat .hm-hdr-actions>.cal-navbtn{font-size:16px;line-height:1;}
+#calViewHeat .hm-hdr-actions>.cal-navbtn{line-height:1;}
+#calViewHeat .hm-hdr-actions>.cal-navbtn svg{display:block;width:16px;height:16px;}
 #calViewHeat .hm-filter{position:relative;display:flex;}
 #calViewHeat .hm-filter-btn{line-height:1;}
 #calViewHeat .hm-filter-btn svg{display:block;width:16px;height:16px;flex-shrink:0;}
@@ -5289,8 +5290,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <div class="hm-hdr">
           <div class="hm-title" id="hmTitle">2026 年 1 月</div>
           <div class="hm-hdr-actions">
-            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月">‹</button>
-            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月">›</button>
+            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
             <div class="hm-filter" id="hmFilter">
               <button class="hm-filter-btn" id="hmFilterBtn" onclick="PV.toggleHeatFilter(event)" aria-label="筛选标签或食记" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
