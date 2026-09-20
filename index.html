@@ -4815,10 +4815,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #tlSheet.chapter-keyboard .chapter-whole-text{min-height:0;}
 
 
-/* 章节目录标题：菜单不再通过基线和内边距把标题向下撑开。 */
+/* 章节目录标题：去掉包住整组章节的外层描边；标题行仍保留原内边距。
+   每组章节卡横向铺到原外层卡片的宽度，章节卡自己的圆角 var(--rlg) 保持不变。 */
+#detailBookNoteCard{border:0;}
 #detailBookNoteCard > .dt-lbl-row{align-items:center;min-height:24px;margin-bottom:var(--sp-12);}
 #detailBookNoteCard > .dt-lbl-row > .dt-lbl{font-weight:700;margin-bottom:0;}
+#detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-16));margin-right:calc(-1 * var(--sp-16));}
 #detailBookNoteCard > .dt-lbl-row + .tl{margin-top:0;}
+@media(max-width:1024px){
+  #detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-14));margin-right:calc(-1 * var(--sp-14));}
+}
 /* 手机默认字号下：20.3px 行高 + 22px 上下留白 + 2px 边框 ≈ 44px。 */
 #detailBookNoteCard .tl-head{padding:11px var(--sp-12);}
 #detailBookNoteCard .tl-ch{font-size:var(--fs-sub);}
@@ -14552,7 +14558,6 @@ function renderTimelineChapterCards(chs,openFn){
     return `<div class="tl-chapter-group">
       <button type="button" class="tl-chapter-group-head" aria-expanded="true" onclick="toggleTimelineChapterGroup(this)">
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
-        <span class="tl-chapter-group-count">${entry.items.length} 节</span>
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <div class="tl-section-grid">
