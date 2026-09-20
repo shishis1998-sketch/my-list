@@ -14796,6 +14796,56 @@ function tlFmtBarHtml(){
 let tlRenderSeq=0;
 // 「＋ 添加」是按下即重绘的，手指抬起时那声 click 会落到新排版下别的段上——短暂捂住读态点按
 let tlTapMuteUntil=0;
+// 读取点按位置在当前渲染段落中的可见字符偏移。
+function chapterTapTextOffset(el,x,y){
+  let node=null,offset=0;
+  if(document.caretPositionFromPoint){
+    const p=document.caretPositionFromPoint(x,y);
+    if(p){node=p.offsetNode;offset=p.offset;}
+  }else if(document.caretRangeFromPoint){
+    const p=document.caretRangeFromPoint(x,y);
+    if(p){node=p.startContainer;offset=p.startOffset;}
+  }
+  if(!node||!(node===el||el.contains(node))) return null;
+  try{
+    const range=document.createRange();
+    range.selectNodeContents(el);
+    range.setEnd(node,offset);
+    return range.toString().replace(/\n/g,'').length;
+  }catch(_){return null;}
+}
+// 把阅读态的可见字符位置换回 textarea 原文位置；格式标记与换行不占可见字符。
+function chapterSourceOffsetFromVisible(source,visibleOffset){
+  const s=String(source||''),hidden=new Set(),hide=(start,len)=>{
+    for(let i=start;i<start+len;i++)hidden.add(i);
+  };
+  // 富文本渲染会隐藏每行的小标题/列表前缀。
+  let lineStart=0;
+  while(lineStart<=s.length){
+    const end=s.indexOf('\n',lineStart),lineEnd=end<0?s.length:end;
+    const line=s.slice(lineStart,lineEnd);
+    const prefix=line.match(/^\s*(?:\d+\.|#{1,3}|[-*])\s+/);
+    if(prefix)hide(lineStart,prefix[0].length);
+    if(end<0)break;
+    lineStart=end+1;
+  }
+  // inlineFmt 隐藏 **加粗**、__下划线__、*斜体* 两端的标记。
+  for(const re of [/\*\*(.+?)\*\*/g,/__(.+?)__/g,/\*([^\s*][^*\n]*?)\*/g]){
+    for(const m of s.matchAll(re)){
+      const edge=re.source.startsWith('\\*\\*')?2:re.source.startsWith('__')?2:1;
+      hide(m.index,edge);hide(m.index+m[0].length-edge,edge);
+    }
+  }
+  let seen=0,i=0;
+  const wanted=Math.max(0,visibleOffset||0);
+  while(i<s.length){
+    while(i<s.length&&(hidden.has(i)||s[i]==='\n'))i++;
+    if(seen>=wanted)return i;
+    if(i<s.length){seen++;i++;}
+  }
+  return s.length;
+}
+
 // 渲染分段卡片；tlSheetEdit 段渲染为输入框
 function renderChapterSheet(){
   const seq=++tlRenderSeq;
@@ -14832,13 +14882,15 @@ function renderChapterSheet(){
     el.addEventListener('click',e=>{
       if(Date.now()<tlTapMuteUntil || (window.getSelection()||'').toString()) return;
       if(down&&(Date.now()-down.t>500||Math.hypot(e.clientX-down.x,e.clientY-down.y)>10)) return;
-      enterWholeChapterEdit(el.dataset.tap==null?0:+el.dataset.tap);
+      const point=down||{x:e.clientX,y:e.clientY};
+      const charOffset=el.id==='tlSegAdd'?null:chapterTapTextOffset(el,point.x,point.y);
+      enterWholeChapterEdit(el.dataset.tap==null?0:+el.dataset.tap,charOffset);
     });
   });
 }
 
 let tlWholeEditing=false, tlChapterNew=false, tlChapterDraft='', tlChapterSource='', tlChapterReadScroll=0;
-function enterWholeChapterEdit(segIndex=0){
+function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
   tlChapterReadScroll=document.getElementById('tlSheetBody').scrollTop;
   tlWholeEditing=true;
   const raw=tlChapterDraft, nl=raw.indexOf('\n');
@@ -14858,9 +14910,11 @@ function enterWholeChapterEdit(segIndex=0){
   const target=tlSheetSegs[segIndex];
   let offset=0;
   if(target){
-    // 按空行定位被点到的段；正文保持原文，不做分段归一化。
+    // 先定位到被点段落；从正文点入编辑时，再精确换算到该段内的字符位置。
     const blocks=[...content.matchAll(/[^\n]+(?:\n(?!\n)[^\n]+)*/g)];
-    offset=blocks[segIndex]?.index||0;
+    const block=blocks[segIndex];
+    offset=block?.index||0;
+    if(block&&visibleOffset!=null)offset+=chapterSourceOffsetFromVisible(block[0],visibleOffset);
   }
   if(tlChapterNew){const input=document.getElementById('chapterTitleInput');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
   else {ta.focus();ta.setSelectionRange(offset,offset);ta.scrollTop=Math.max(0,content.slice(0,offset).split('\n').length*parseFloat(getComputedStyle(ta).lineHeight)-ta.clientHeight/3);}
