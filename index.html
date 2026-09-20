@@ -11276,8 +11276,20 @@ function bindGraphPan(){
 }
 function applyGraphTransform(){const c=document.getElementById('rgCanvas');if(c)c.style.transform=`translate3d(${rgState.x}px,${rgState.y}px,0) scale(${rgState.scale})`;}
 function centerGraphOn(id,animate){const stage=document.getElementById('rgStage'),canvas=document.getElementById('rgCanvas'),p=rgState.positions[id];if(!stage||!p)return;rgState.x=stage.clientWidth/2-(p.x+70)*rgState.scale;rgState.y=stage.clientHeight/2-(p.y+34)*rgState.scale;if(animate&&canvas){canvas.style.transition='transform .38s cubic-bezier(.22,1,.36,1)';setTimeout(()=>canvas.style.transition='',400);}applyGraphTransform();}
-function toggleGraphSearch(){const bar=document.getElementById('rgSearchbar');bar.classList.toggle('open');document.getElementById('rgFilter').classList.remove('open');if(bar.classList.contains('open'))setTimeout(()=>document.getElementById('rgSearch')?.focus(),30);}
-function toggleGraphFilter(){document.getElementById('rgFilter').classList.toggle('open');document.getElementById('rgSearchbar').classList.remove('open');}
+function resetGraphSearch(){
+  const search=document.getElementById('rgSearch');if(search)search.value='';
+  rgState.selectedId='';closeGraphPersonCard();updateGraphHighlights();drawGraphLines(currentGraphData().relations);
+}
+function toggleGraphSearch(){
+  const bar=document.getElementById('rgSearchbar'),opening=!bar.classList.contains('open');
+  bar.classList.toggle('open',opening);document.getElementById('rgFilter').classList.remove('open');
+  if(opening)setTimeout(()=>document.getElementById('rgSearch')?.focus(),30);else resetGraphSearch();
+}
+function toggleGraphFilter(){
+  const bar=document.getElementById('rgSearchbar'),wasSearching=bar.classList.contains('open');
+  document.getElementById('rgFilter').classList.toggle('open');bar.classList.remove('open');
+  if(wasSearching)resetGraphSearch();
+}
 function toggleGraphType(type,btn){rgState.filters.has(type)?rgState.filters.delete(type):rgState.filters.add(type);btn.classList.toggle('on',rgState.filters.has(type));drawGraphLines(currentGraphData().relations);}
 function searchGraphPerson(q){
   const s=String(q||'').trim().toLowerCase(),people=currentGraphData().people;
