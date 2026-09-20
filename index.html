@@ -2147,9 +2147,9 @@ body.cal-searching .cw-card{display:none;}
 /* ── 时间线「每章一张卡片」：一行两张，点整卡从底部滑起章节弹窗 ── */
 /* 章节列表：一行两张。minmax(0,1fr) 让列可收缩，长章名才能正常省略号截断 */
 .tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-10);margin-top:var(--sp-6);}
-/* 标题末尾带小节数字（如「第一章 1」）时，只在显示层合成章节大卡片。
-   大卡跨满两列，内部小节按参考版式一行三格；原正文、章节索引和保存结构都不动。 */
-.tl-chapter-group{grid-column:1/-1;background:var(--surface);border:var(--bd) solid var(--ink);
+/* 标题末尾带小节数字（如「第一章 1」）时，只在显示层合成章节卡片。
+   章节沿用外层的左右两列，内部小节单列向下排列；原正文、章节索引和保存结构都不动。 */
+.tl-chapter-group{min-width:0;background:var(--surface);border:var(--bd) solid var(--ink);
   border-radius:var(--rlg);padding:var(--sp-12);}
 .tl-chapter-group-head{width:100%;display:flex;align-items:center;gap:var(--sp-10);
   border:0;background:none;padding:0;color:var(--text-primary);font-family:var(--zh);
@@ -2161,8 +2161,8 @@ body.cal-searching .cw-card{display:none;}
 .tl-chapter-group-arrow{flex:0 0 18px;width:18px;height:18px;color:var(--text-muted);
   transition:transform .2s var(--nav-ease);}
 .tl-chapter-group.collapsed .tl-chapter-group-arrow{transform:rotate(-90deg);}
-.tl-section-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:var(--sp-10);margin-top:var(--sp-8);}
+.tl-section-grid{display:grid;grid-template-columns:minmax(0,1fr);
+  gap:var(--sp-8);margin-top:var(--sp-8);}
 .tl-chapter-group.collapsed .tl-section-grid{display:none;}
 .tl-section-btn{height:40px;min-width:0;border:var(--bd) solid var(--ink);
   border-radius:var(--r);background:var(--surface);color:var(--text-primary);
@@ -4776,7 +4776,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #tlModal .mbox{max-height:min(90vh,100%);}
   #tlModal .mhdr{padding:var(--sp-20) var(--sp-24) var(--sp-14);}
   #tlModal #tl-body{padding:var(--sp-8) var(--sp-24) var(--sp-24);}
-  .tl{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .tl{grid-template-columns:repeat(2,minmax(0,1fr));}
 
   /* 4) 云同步：手机上它是「一整页自然滚动」（内容太长）；平板高度够了，
         收回成一个居中对话框，框内自己滚，底下不再拖一大截空白 */
