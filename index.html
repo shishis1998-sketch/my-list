@@ -2305,7 +2305,7 @@ body.cal-searching .cw-card{display:none;}
 .tlseg-add:active{background:var(--press);border-color:var(--accent-mid);}
 @media (prefers-reduced-motion:reduce){.tlsheet,.tlsheet-mask{transition:none;}}
 
-/* 章节抽屉与读书笔记卡片顶部重合；独立时间线入口保留原高度。 */
+/* 详情页章节抽屉与顶部视图导航的上沿重合并遮住导航；独立时间线入口保留原高度。 */
 #tlSheet{height:70vh;max-height:70vh;min-height:0;border-radius:var(--rxl) var(--rxl) 0 0;}
 #tlSheet.card-aligned{top:var(--tl-card-top);height:auto;max-height:none;}
 
@@ -14700,22 +14700,17 @@ function tlSegType(line){
 }
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
-// 用卡片未滚动时的位置定位，地址栏或窗口尺寸变化时重新对齐。
+// 让章节抽屉的上沿贴齐详情页视图导航的上沿，打开时完整遮住导航。
 function alignChapterSheetToCard(){
   const sheet=document.getElementById('tlSheet');
-  const card=tlHostMedia&&document.querySelector('#detailRoot.open #detailBookNoteCard');
-  if(!card||!card.getClientRects().length){
+  const tabs=tlHostMedia&&document.querySelector('#detailRoot.open .dt-tabs');
+  if(!tabs||!tabs.getClientRects().length){
     sheet.classList.remove('card-aligned');
     sheet.style.removeProperty('--tl-card-top');
     return;
   }
-  // 卡片滚出视口后 rect.top 会变成负数；补回各层滚动量，
-  // 始终使用页面未滚动时的卡片顶部，避免后面章节的抽屉撑满全屏。
-  let top=card.getBoundingClientRect().top+(window.scrollY||0);
-  for(let parent=card.parentElement;parent&&parent!==document.body&&parent!==document.documentElement;parent=parent.parentElement){
-    top+=parent.scrollTop||0;
-  }
-  top=Math.max(0,top);
+  // .dt-top 会吸顶，因此直接使用导航当前的视口位置；地址栏或窗口变化时会重新计算。
+  const top=Math.max(0,tabs.getBoundingClientRect().top);
   sheet.style.setProperty('--tl-card-top',top+'px');
   sheet.classList.add('card-aligned');
 }
