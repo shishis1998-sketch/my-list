@@ -935,10 +935,11 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
      那个高度会把方块顶成竖长条（三段还各高各的）。压到字号本身，方块就一直是方的。 */
   .sidebar .nfs-seg{width:auto;height:auto;aspect-ratio:1;min-width:0;padding:0;line-height:1;
     border-radius:var(--r);display:flex;align-items:center;justify-content:center;}
-  /* 十个主题色排成一行（原来 32px 定死，一行只放得下 8 个，剩两个折到第二行）。
-     选中态那圈从 4px 收到 3px，否则会顶到隔壁色块。 */
-  .sidebar .theme-sws{display:grid;grid-template-columns:repeat(10,1fr);gap:var(--sp-8);}
-  .sidebar .theme-sw{width:auto;height:auto;aspect-ratio:1;min-width:0;}
+  /* 宽窗口中十列会超过 32px：方块限制为 32px，避免撑出固定 48px 的两行。
+     两行的方块都居中放在同一列，窄屏仍随列宽缩小。 */
+  .sidebar .nfs-seg{width:min(100%,32px);justify-self:center;}
+  .sidebar .theme-sws{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:var(--sp-8);}
+  .sidebar .theme-sw{width:min(100%,32px);height:auto;aspect-ratio:1;min-width:0;justify-self:center;}
   .sidebar .theme-sw.on{box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--sw);}
   /* 分类管理行右侧的编辑图标 */
   .sidebar .cat-edit-ic{margin-left:auto;color:var(--text-muted);display:flex;flex-shrink:0;}
