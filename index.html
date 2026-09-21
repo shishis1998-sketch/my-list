@@ -5781,13 +5781,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="mhdr">
       <div style="flex:1;min-width:0">
         <div class="mtitle" id="tle-title">编辑章节</div>
-        <div class="tl-sub">直接改这一章，含「第X章」标题和编号</div>
+        <div class="tl-sub">直接改这一章，含标题和编号</div>
       </div>
       <button class="mclose" onclick="closeTlEdit()">✕</button>
     </div>
     <div class="tle-body">
       <textarea class="tle-ta" id="tle-ta" placeholder="章节内容…"></textarea>
-      <div class="tle-hint">提示：保留「第X章」这一行，时间线才识别为章节；1. 2. 开头自动变编号段落。</div>
+      <div class="tle-hint">提示：标题可以是「第一章」或「中国史1 1」；1. 2. 开头自动变编号段落。</div>
     </div>
     <div class="tle-ftr">
       <button class="tle-btn tle-cancel" onclick="closeTlEdit()">取消</button>
@@ -10847,7 +10847,7 @@ function renderDetailTL(item){
     return `<div class="dt-card" onclick="tapNoteCard(event,'booknote')">
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-empty">还没有正文，点这里开始写。</div>
-      <div class="dt-tl-hint">正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，这里就会自动排成章节时间线。<br>书要是分部，把 <b>第一部 事实</b> 单独写一行、放在它管的那些章前面，时间线就会按部分组。</div>
+      <div class="dt-tl-hint">每节标题单独占一行，例如 <b>第一章 1</b>、<b>中国史1 1</b>、<b>中国史1 2</b>，同名编号会合成一张卡。<br>书要是分部，把 <b>第一部 事实</b> 单独写一行、放在它管的那些章前面，时间线就会按部分组。</div>
     </div>`;
   }
   const chs=parseChapters(item.bookNote);
@@ -10855,7 +10855,7 @@ function renderDetailTL(item){
     return `<div class="dt-card" onclick="tapNoteCard(event,'booknote')">
       <div class="dt-lbl">${lbl}</div>
       <div class="dt-tl-text">${esc(item.bookNote)}</div>
-      <div class="dt-tl-hint">没识别到章节。用 <b>第一章</b> 这样的格式分段就会排成时间线。</div>
+      <div class="dt-tl-hint">没识别到章节。标题单独占一行，试试 <b>第一章</b> 或 <b>中国史1 1</b>。</div>
     </div>`;
   }
   const groups=parseParts(item.bookNote,chs);
@@ -14503,9 +14503,10 @@ function toggleCollectCard(id, ev){
 }
 
 // ── 读书笔记时间线 ────────────────────────────────────────────
-// 章节正则：可选 markdown #/##/###，第X章（中文数字/阿拉伯数字均可）。
+// 章节正则：保留「第X章」，也允许「中国史1」「中国史1 2」一类短标题。
+// 自定义标题要求「文字 + 阿拉伯数字」，小节号与主编号之间要有分隔符，避免把正文误当标题。
 // 章号前面可以带一个部名（「第一部第一章 …」这种一行写完的写法也认），显示时会摘掉。
-const TL_CH_RE=/^#{0,3}\s*(?:第[一二三四五六七八九十百零0-9]+[部卷篇][\s·:：—–-]*)?第[一二三四五六七八九十百零0-9]+章[^\n]*/gm;
+const TL_CH_RE=/^#{0,3}[ \t]*(?:(?:第[一二三四五六七八九十百零0-9]+[部卷篇][\s·:：—–-]*)?第[一二三四五六七八九十百零0-9]+章[^\n]*|[\p{L}]{1,20}[0-9]+(?:[ \t·:：—–-]+[0-9]+)?)[ \t]*$/gmu;
 // 部/卷/篇：书分「第一部 事实 / 第二部 证词」时，章号往往每部重来一遍，光靠章号分不清谁是谁。
 // 这一行单独占一行、写在它管的那些章前面就算数。
 const TL_PART_RE=/^#{0,3}\s*(?:第[一二三四五六七八九十百零0-9]+[部卷篇]|卷[一二三四五六七八九十百零0-9]+)[^\n]*/gm;
@@ -14571,7 +14572,7 @@ function parseParts(text,chs){
 
 // 仅用于时间线展示：把「第一章 1 / 第一章 2」之类的标题合成一张章节卡。
 // 不回写正文，也不增字段；每个小节仍保留 parseChapters 给出的原始索引 i。
-const TL_SECTION_TITLE_RE=/^(.*?第[一二三四五六七八九十百零0-9]+章)[\s·:：—–-]+([0-9]+)$/;
+const TL_SECTION_TITLE_RE=/^(.*?第[一二三四五六七八九十百零0-9]+章|[\p{L}]{1,20}[0-9]+)[ \t·:：—–-]+([0-9]+)$/u;
 function timelineSectionTitle(title){
   const m=String(title||'').trim().match(TL_SECTION_TITLE_RE);
   return m?{chapter:m[1].trim(),section:m[2]}:null;
@@ -14684,7 +14685,7 @@ function renderTimelineBody(id){
   const body=document.getElementById('tl-body');
   const allbtn=document.getElementById('tl-allbtn');
   if(!chs.length){
-    body.innerHTML=`<div class="tl-nochap">这篇笔记里没有识别到章节标记。<br><br>在正文里用 <b>第一章</b> / <b>第1章</b> / <b># 第一章</b> 这样的格式分段，时间线就会自动出现。<br><br>书分部的话，<b>第一部 事实</b> 单独占一行、写在它管的那些章前面，时间线会按部分组。</div>`;
+    body.innerHTML=`<div class="tl-nochap">这篇笔记里没有识别到章节标记。<br><br>标题单独占一行，可以用 <b>第一章</b> 或 <b>中国史1 1</b>。后续写 <b>中国史1 2</b>、<b>中国史2 1</b>，时间线会自动分组。<br><br>书分部的话，<b>第一部 事实</b> 单独占一行、写在它管的那些章前面，时间线会按部分组。</div>`;
     if(allbtn) allbtn.style.display='none';
   }else{
     if(allbtn){allbtn.style.display='';allbtn.textContent='⇅ 展开全部';}
@@ -14950,7 +14951,7 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
   const body=document.getElementById('tlSheetBody');
   body.classList.add('chapter-editing');
   syncChapterKeyboardLayout();
-  body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="第十章 团结">
+  body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="第一章 1 / 中国史1 1">
     <div class="fmt-bar chapter-format">${[['h','H'],['b','<b>B</b>'],['i','<i>I</i>'],['u','<u>U</u>'],['li','•']].map(([kind,label])=>`<button type="button" class="fmt-btn" data-fmt="${kind}">${label}</button>`).join('')}</div>
     <textarea id="chapterWholeText" class="chapter-whole-text" aria-label="本章正文" placeholder="写下这一章的笔记…">${esc(content)}</textarea>`;
   document.getElementById('tlSheetTitle').textContent=tlChapterNew?'新增章节':'编辑本章';
@@ -14973,6 +14974,8 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
 }
 function nextChapterHeading(body){
   const last=parseChapters(body).at(-1)?.title||'';
+  const custom=last.match(/^([\p{L}]{1,20})([0-9]+)(?:[ \t·:：—–-]+([0-9]+))?$/u);
+  if(custom) return custom[1]+(Number(custom[2])+1)+(custom[3]?' 1':'');
   const m=last.match(/^第([一二三四五六七八九十百零0-9]+)章/);
   const digits='零一二三四五六七八九';
   let n=0, digit=0;
@@ -15001,8 +15004,8 @@ function commitChapterSheet(){
   if(!tlWholeEditing) return true;
   const title=document.getElementById('chapterTitleInput').value.trim();
   const content=document.getElementById('chapterWholeText').value;
-  if(!/^#{0,3}\s*(?:第[一二三四五六七八九十百零0-9]+[部卷篇][\s·:：—–-]*)?第[一二三四五六七八九十百零0-9]+章[^\n]*$/.test(title)){
-    toast('请保留「第几章」作为章节标题开头');return false;
+  if(!parseChapters(title).some(c=>c.chStart===0&&c.raw.trim()===title)){
+    toast('标题请用「第一章」或「中国史1 1」这样的格式');return false;
   }
   const raw=title+'\n'+content;
   if(parseChapters(raw).length!==1 || partMarks(content).length){toast('这里只编辑一章，新增章节请使用右下角＋');return false;}
