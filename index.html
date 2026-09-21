@@ -2437,8 +2437,14 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-filter button.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
 .rg-stage{position:relative;flex:1;overflow:hidden;background:var(--bg);cursor:grab;}
 .rg-stage.dragging{cursor:grabbing;}.rg-canvas{position:absolute;left:0;top:0;width:1200px;height:1200px;transform-origin:0 0;}
+.rg-label-toggle{position:absolute;z-index:6;left:var(--sp-12);top:var(--sp-12);padding:8px 12px;
+  border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-secondary);
+  font:var(--fs-caption) var(--zh);cursor:pointer;}
+.rg-label-toggle.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
 .rg-lines{position:absolute;inset:0;width:1200px;height:1200px;overflow:visible;pointer-events:none;}
 .rg-edge{fill:none;stroke-width:2;}.rg-edge.conflict{stroke-dasharray:7 5;}
+.rg-edge-label{font:600 12px var(--zh);text-anchor:middle;dominant-baseline:central;
+  paint-order:stroke;stroke:var(--bg);stroke-width:6px;stroke-linejoin:round;pointer-events:none;}
 .rg-legend{position:absolute;z-index:5;right:var(--sp-12);bottom:calc(12px + env(safe-area-inset-bottom));
   display:grid;grid-template-columns:72px minmax(0,1fr);gap:9px 12px;width:212px;padding:11px 12px;
   box-sizing:border-box;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);
@@ -5151,7 +5157,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="rg-searchbar" id="rgSearchbar"><input id="rgSearch" type="search" placeholder="搜索人物姓名" oninput="searchGraphPerson(this.value)"></div>
     <div class="rg-filter" id="rgFilter"></div>
-    <div class="rg-stage" id="rgStage"><div class="rg-canvas" id="rgCanvas"></div></div>
+    <div class="rg-stage" id="rgStage"><div class="rg-canvas" id="rgCanvas"></div><button type="button" class="rg-label-toggle" id="rgLabelToggle" onclick="toggleGraphLabels()" aria-pressed="false">显示关系文字</button></div>
     <div class="rg-legend" id="rgLegend" aria-label="关系颜色图例"></div>
     <div class="rg-person-card" id="rgPersonCard"></div>
   </div>
@@ -11118,7 +11124,7 @@ function closeNoteSheet(save=false){
 }
 
 // ── 全屏人物关系图 ───────────────────────────────────────────────
-let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',pan:null,pinch:null,pointers:new Map(),canvasSize:1200};
+let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',showLabels:false,pan:null,pinch:null,pointers:new Map(),canvasSize:1200};
 function openRelationGraph(){
   const it=data.find(d=>d.id===detailId);if(!it)return;
   const people=ensurePeopleIds(it,true);
@@ -11131,6 +11137,7 @@ function openRelationGraph(){
   document.getElementById('rgSearchbar').classList.remove('open');
   document.getElementById('rgFilter').classList.remove('open');
   document.getElementById('rgPersonCard').classList.remove('open');
+  updateGraphLabelButton();
   const search=document.getElementById('rgSearch');if(search)search.value='';
   root.classList.add('open');root.setAttribute('aria-hidden','false');document.body.classList.add('rel-graph-open');
   renderRelationGraph(people,relations);
@@ -11300,6 +11307,15 @@ function renderRelationGraph(people,relations){
   legend.innerHTML=types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
 }
 function currentGraphData(){const it=data.find(d=>d.id===detailId),people=it?ensurePeopleIds(it,false):[];return {people,relations:it?normRelations(it,people):[]};}
+function updateGraphLabelButton(){
+  const button=document.getElementById('rgLabelToggle');if(!button)return;
+  button.textContent=rgState.showLabels?'隐藏关系文字':'显示关系文字';
+  button.classList.toggle('on',rgState.showLabels);
+  button.setAttribute('aria-pressed',String(rgState.showLabels));
+}
+function toggleGraphLabels(){
+  rgState.showLabels=!rgState.showLabels;updateGraphLabelButton();drawGraphLines(currentGraphData().relations);
+}
 function drawGraphLines(relations){
   const svg=document.getElementById('rgLines'),canvas=document.getElementById('rgCanvas');if(!svg||!canvas)return;
   const metrics=id=>{
@@ -11317,7 +11333,9 @@ function drawGraphLines(relations){
     const a=metrics(r.a),b=metrics(r.b);if(!a||!b)return '';
     const from=edgePoint(a,b),to=edgePoint(b,a),t=relType(r.type,data.find(d=>d.id===detailId));
     const hi=rgState.selectedId&&(r.a===rgState.selectedId||r.b===rgState.selectedId);
-    return `<line class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
+    const line=`<line class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
+    const label=rgState.showLabels?`<text class="rg-edge-label" x="${(from.x+to.x)/2}" y="${(from.y+to.y)/2}" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${esc(t.lbl)}</text>`:'';
+    return line+label;
   }).join('');
 }
 function directGraphIds(id){const out=new Set([id]);currentGraphData().relations.forEach(r=>{if(r.a===id)out.add(r.b);if(r.b===id)out.add(r.a);});return out;}
@@ -11345,9 +11363,12 @@ function setGraphCenter(id){
 function bindGraphPan(){
   const stage=document.getElementById('rgStage');if(!stage||stage.dataset.bound)return;stage.dataset.bound='1';
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
-  stage.addEventListener('pointerdown',e=>{if(e.button!=null&&e.button!==0)return;rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});try{stage.setPointerCapture(e.pointerId);}catch(_){}
-    if(rgState.pointers.size===2){const [a,b]=[...rgState.pointers.values()],m=mid(a,b);rgState.pan=null;rgState.pinch={distance:dist(a,b),scale:rgState.scale,cx:(m.x-rgState.x)/rgState.scale,cy:(m.y-rgState.y)/rgState.scale};stage.classList.add('dragging');}
-    else if(!e.target.closest('.rg-node')){rgState.pan={pid:e.pointerId,sx:e.clientX,sy:e.clientY,x:rgState.x,y:rgState.y};stage.classList.add('dragging');}});
+  stage.addEventListener('pointerdown',e=>{if((e.button!=null&&e.button!==0)||e.target.closest('.rg-label-toggle'))return;
+    rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(rgState.pointers.size===2){try{stage.setPointerCapture(e.pointerId);}catch(_){}
+      const [a,b]=[...rgState.pointers.values()],m=mid(a,b);rgState.pan=null;rgState.pinch={distance:dist(a,b),scale:rgState.scale,cx:(m.x-rgState.x)/rgState.scale,cy:(m.y-rgState.y)/rgState.scale};stage.classList.add('dragging');}
+    else if(!e.target.closest('.rg-node')){try{stage.setPointerCapture(e.pointerId);}catch(_){}
+      rgState.pan={pid:e.pointerId,sx:e.clientX,sy:e.clientY,x:rgState.x,y:rgState.y};stage.classList.add('dragging');}});
   stage.addEventListener('pointermove',e=>{if(!rgState.pointers.has(e.pointerId))return;rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(rgState.pointers.size>=2&&rgState.pinch){const [a,b]=[...rgState.pointers.values()],m=mid(a,b),next=Math.max(.5,Math.min(1.8,rgState.pinch.scale*dist(a,b)/Math.max(1,rgState.pinch.distance)));rgState.scale=next;rgState.x=m.x-rgState.pinch.cx*next;rgState.y=m.y-rgState.pinch.cy*next;applyGraphTransform();return;}
     const p=rgState.pan;if(p&&p.pid===e.pointerId){rgState.x=p.x+e.clientX-p.sx;rgState.y=p.y+e.clientY-p.sy;applyGraphTransform();}});
