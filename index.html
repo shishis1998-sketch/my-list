@@ -2437,7 +2437,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-filter button.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
 .rg-stage{position:relative;flex:1;overflow:hidden;background:var(--bg);cursor:grab;}
 .rg-stage.dragging{cursor:grabbing;}.rg-canvas{position:absolute;left:0;top:0;width:1200px;height:1200px;transform-origin:0 0;}
-.rg-label-toggle{position:absolute;z-index:6;left:var(--sp-12);top:var(--sp-12);padding:8px 12px;
+.rg-label-toggle{grid-column:1/-1;justify-self:start;margin-top:2px;padding:7px 11px;pointer-events:auto;
   border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-secondary);
   font:var(--fs-caption) var(--zh);cursor:pointer;}
 .rg-label-toggle.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
@@ -5172,7 +5172,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="rg-searchbar" id="rgSearchbar"><input id="rgSearch" type="search" placeholder="搜索人物姓名" oninput="searchGraphPerson(this.value)"></div>
     <div class="rg-filter" id="rgFilter"></div>
-    <div class="rg-stage" id="rgStage"><div class="rg-canvas" id="rgCanvas"></div><button type="button" class="rg-label-toggle" id="rgLabelToggle" onclick="toggleGraphLabels()" aria-pressed="false">显示关系文字</button></div>
+    <div class="rg-stage" id="rgStage"><div class="rg-canvas" id="rgCanvas"></div></div>
     <div class="rg-legend" id="rgLegend" aria-label="关系颜色图例"></div>
     <div class="rg-person-card" id="rgPersonCard"></div>
   </div>
@@ -11342,7 +11342,8 @@ function renderGraphLegend(relations){
   const legend=document.getElementById('rgLegend'),used=new Set(relations.filter(r=>rgState.filters.has(r.type)).map(r=>r.type));
   const types=relationTypes(data.find(d=>d.id===detailId)).filter(t=>used.has(t.id));
   legend.classList.toggle('single',types.length===1);
-  legend.innerHTML=types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
+  legend.innerHTML=types.length?types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('')+`<button type="button" class="rg-label-toggle" id="rgLabelToggle" onclick="toggleGraphLabels()" aria-pressed="false">显示关系文字</button>`:'';
+  updateGraphLabelButton();
 }
 function currentGraphData(){const it=data.find(d=>d.id===detailId),people=it?ensurePeopleIds(it,false):[];return {people,relations:it?normRelations(it,people):[]};}
 function restoreGraphPositions(){
