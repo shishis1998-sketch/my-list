@@ -11165,7 +11165,7 @@ function layoutGraph(people,relations,centerId){
   const groups=new Map();
   people.forEach(p=>{if(connected.has(p.id)&&p.id!==centerId){const l=level.get(p.id);(groups.get(l)||groups.set(l,[]).get(l)).push(p);}});
   // 第一圈收近中心，二级人物与第一圈拉开；人数增加时仍给卡片留出空间。
-  const firstCount=groups.get(1)?.length||0,firstX=Math.max(165,firstCount*36),firstY=Math.max(145,firstCount*31);
+  const firstCount=groups.get(1)?.length||0,firstX=Math.max(155,firstCount*34),firstY=Math.max(135,firstCount*29);
   const graphRadius=(l,count)=>l===1
     ?{x:firstX,y:firstY}
     :{x:Math.max(firstX+205+(l-2)*215,450+(l-2)*215,count*44),
