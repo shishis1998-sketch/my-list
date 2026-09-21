@@ -11204,6 +11204,30 @@ function layoutGraph(people,relations,centerId){
     y+=rowH+42;
   });
 }
+// 按卡片的实际尺寸消除碰撞，中心人物固定；只移动真正相互遮挡的节点。
+function separateGraphCards(){
+  const canvas=document.getElementById('rgCanvas');if(!canvas)return;
+  const nodes=[...canvas.querySelectorAll('.rg-node')].map(el=>{
+    const p=rgState.positions[el.dataset.person];
+    return p?{el,p,w:el.offsetWidth,h:el.offsetHeight,fixed:el.dataset.person===rgState.centerId}:null;
+  }).filter(Boolean);
+  const gap=14;
+  for(let pass=0;pass<16;pass++){
+    let moved=false;
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i],b=nodes[j],dx=(b.p.x+b.w/2)-(a.p.x+a.w/2),dy=(b.p.y+b.h/2)-(a.p.y+a.h/2);
+      const overlapX=(a.w+b.w)/2+gap-Math.abs(dx),overlapY=(a.h+b.h)/2+gap-Math.abs(dy);
+      if(overlapX<=0||overlapY<=0||a.fixed&&b.fixed)continue;
+      const horizontal=overlapX<overlapY,amount=horizontal?overlapX:overlapY;
+      const direction=(horizontal?dx:dy)>=0?1:-1,share=a.fixed?1:b.fixed?0:.5;
+      if(horizontal){a.p.x-=direction*amount*(1-share);b.p.x+=direction*amount*share;}
+      else{a.p.y-=direction*amount*(1-share);b.p.y+=direction*amount*share;}
+      moved=true;
+    }
+    if(!moved)break;
+  }
+  nodes.forEach(({el,p})=>{el.style.left=p.x+'px';el.style.top=p.y+'px';});
+}
 function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
   if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';return;}
@@ -11213,6 +11237,7 @@ function renderRelationGraph(people,relations){
     people.map(p=>{const pos=rgState.positions[p.id];return `<div class="rg-node" data-person="${p.id}" style="left:${pos.x}px;top:${pos.y}px">
       <div class="rg-node-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-node-info">${esc(p.info)}</div>`:''}</div>`;}).join('');
   canvas.querySelectorAll('.rg-node').forEach(el=>{el.addEventListener('click',()=>selectGraphPerson(el.dataset.person,true));});
+  separateGraphCards();
   updateGraphHighlights();
   drawGraphLines(relations);
   const filter=document.getElementById('rgFilter');
@@ -11259,6 +11284,7 @@ function setGraphCenter(id){
   document.querySelectorAll('#rgCanvas .rg-node').forEach(el=>{const p=rgState.positions[el.dataset.person];if(p){el.style.left=p.x+'px';el.style.top=p.y+'px';}});
   const canvas=document.getElementById('rgCanvas');canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
   const svg=document.getElementById('rgLines');svg?.setAttribute('viewBox',`0 0 ${rgState.canvasSize} ${rgState.canvasSize}`);if(svg){svg.style.width=svg.style.height=rgState.canvasSize+'px';}
+  separateGraphCards();
   updateGraphHighlights();drawGraphLines(relations);centerGraphOn(id,true);selectGraphPerson(id,true);
   const it=data.find(d=>d.id===detailId);if(it){it.peopleGraphCenter=id;persist();}
 }
