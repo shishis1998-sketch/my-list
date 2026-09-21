@@ -11152,7 +11152,7 @@ function closeNoteSheet(save=false){
 }
 
 // ── 全屏人物关系图 ───────────────────────────────────────────────
-let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',showLabels:false,pan:null,pinch:null,nodeDrag:null,suppressNodeClickUntil:0,pointers:new Map(),canvasSize:1200};
+let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',showLabels:false,pan:null,pinch:null,nodeDrag:null,suppressNodeClickUntil:0,suppressBlankClickUntil:0,pointers:new Map(),canvasSize:1200};
 function openRelationGraph(){
   const it=data.find(d=>d.id===detailId);if(!it)return;
   const people=ensurePeopleIds(it,true);
@@ -11423,12 +11423,12 @@ function bindGraphPan(){
     rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(rgState.pointers.size===2){if(rgState.nodeDrag?.moved)saveGraphPositions();
       rgState.nodeDrag?.el.classList.remove('dragging');rgState.nodeDrag=null;
-      rgState.suppressNodeClickUntil=Date.now()+300;try{stage.setPointerCapture(e.pointerId);}catch(_){}
+      rgState.suppressNodeClickUntil=rgState.suppressBlankClickUntil=Date.now()+300;try{stage.setPointerCapture(e.pointerId);}catch(_){}
       const [a,b]=[...rgState.pointers.values()],m=mid(a,b);rgState.pan=null;rgState.pinch={distance:dist(a,b),scale:rgState.scale,cx:(m.x-rgState.x)/rgState.scale,cy:(m.y-rgState.y)/rgState.scale};stage.classList.add('dragging');}
     else if(e.target.closest('.rg-node')){const el=e.target.closest('.rg-node'),p=rgState.positions[el.dataset.person];
       if(p)rgState.nodeDrag={pid:e.pointerId,el,sx:e.clientX,sy:e.clientY,x:p.x,y:p.y,moved:false};}
     else{try{stage.setPointerCapture(e.pointerId);}catch(_){}
-      rgState.pan={pid:e.pointerId,sx:e.clientX,sy:e.clientY,x:rgState.x,y:rgState.y};stage.classList.add('dragging');}});
+      rgState.pan={pid:e.pointerId,sx:e.clientX,sy:e.clientY,x:rgState.x,y:rgState.y,moved:false};stage.classList.add('dragging');}});
   stage.addEventListener('pointermove',e=>{if(!rgState.pointers.has(e.pointerId))return;rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(rgState.pointers.size>=2&&rgState.pinch){const [a,b]=[...rgState.pointers.values()],m=mid(a,b),next=Math.max(.5,Math.min(1.8,rgState.pinch.scale*dist(a,b)/Math.max(1,rgState.pinch.distance)));rgState.scale=next;rgState.x=m.x-rgState.pinch.cx*next;rgState.y=m.y-rgState.pinch.cy*next;applyGraphTransform();return;}
     const d=rgState.nodeDrag;
@@ -11439,15 +11439,23 @@ function bindGraphPan(){
         d.el.style.left=p.x+'px';d.el.style.top=p.y+'px';drawGraphLines(currentGraphData().relations);}
       return;
     }
-    const p=rgState.pan;if(p&&p.pid===e.pointerId){rgState.x=p.x+e.clientX-p.sx;rgState.y=p.y+e.clientY-p.sy;applyGraphTransform();}});
+    const p=rgState.pan;if(p&&p.pid===e.pointerId){const dx=e.clientX-p.sx,dy=e.clientY-p.sy;
+      if(Math.hypot(dx,dy)>6)p.moved=true;
+      rgState.x=p.x+dx;rgState.y=p.y+dy;applyGraphTransform();}});
   const end=e=>{const d=rgState.nodeDrag;if(d?.pid===e.pointerId){d.el.classList.remove('dragging');
       if(d.moved){rgState.suppressNodeClickUntil=Date.now()+300;saveGraphPositions();}
       rgState.nodeDrag=null;
     }
-    rgState.pointers.delete(e.pointerId);if(rgState.pan?.pid===e.pointerId)rgState.pan=null;
-    if(rgState.pinch)rgState.suppressNodeClickUntil=Date.now()+300;
+    rgState.pointers.delete(e.pointerId);if(rgState.pan?.pid===e.pointerId){
+      if(rgState.pan.moved||e.type==='pointercancel')rgState.suppressBlankClickUntil=Date.now()+300;
+      rgState.pan=null;}
+    if(rgState.pinch)rgState.suppressNodeClickUntil=rgState.suppressBlankClickUntil=Date.now()+300;
     if(rgState.pointers.size<2)rgState.pinch=null;if(!rgState.pointers.size)stage.classList.remove('dragging');};
   stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
+  stage.addEventListener('click',e=>{
+    if(e.target.closest('.rg-node,.rg-label-toggle')||Date.now()<rgState.suppressBlankClickUntil)return;
+    resetGraphSearch();
+  });
   stage.addEventListener('wheel',e=>{e.preventDefault();const rect=stage.getBoundingClientRect(),old=rgState.scale,next=Math.max(.55,Math.min(1.7,old*(e.deltaY<0?1.1:.9))),px=e.clientX-rect.left,py=e.clientY-rect.top;rgState.x=px-(px-rgState.x)*next/old;rgState.y=py-(py-rgState.y)*next/old;rgState.scale=next;applyGraphTransform();},{passive:false});
 }
 function applyGraphTransform(){const c=document.getElementById('rgCanvas');if(c)c.style.transform=`translate3d(${rgState.x}px,${rgState.y}px,0) scale(${rgState.scale})`;}
