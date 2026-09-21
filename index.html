@@ -2405,6 +2405,15 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .pe-rel-choice:last-child{border-bottom:0;}.pe-rel-choice input{accent-color:var(--accent);width:17px;height:17px;}
 .pe-rel-save{align-self:flex-end;border:0;border-radius:999px;background:var(--accent);color:var(--on-accent);
   padding:8px 15px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
+.pe-rel-custom{display:flex;align-items:center;gap:var(--sp-8);}
+.pe-rel-custom .pe-rel-search{min-width:0;flex:1;}
+.pe-rel-custom .pe-rel-save{flex-shrink:0;}
+.pe-rel-color{width:36px;height:36px;flex:0 0 36px;border:1px solid var(--border);
+  border-radius:50%;padding:3px;background:var(--surface);cursor:pointer;}
+.pe-rel-custom-list{display:flex;flex-wrap:wrap;gap:var(--sp-8);}
+.pe-rel-custom-item{display:inline-flex;align-items:center;gap:var(--sp-6);padding:4px 8px;
+  border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:var(--fs-caption);}
+.pe-rel-custom-item .pe-rel-color{width:28px;height:28px;flex-basis:28px;padding:2px;}
 
 /* 全屏人物关系图：画布本身可拖移，人物节点可单独拖动。 */
 .rel-graph{display:none;position:fixed;inset:0;z-index:180;background:var(--bg);overflow:hidden;touch-action:none;}
@@ -10511,14 +10520,23 @@ const REL_TYPES=[
   {id:'conflict',lbl:'冲突',color:'#e37b35'},
   {id:'other',lbl:'其他',color:'#8a8e96'}
 ];
-function relType(id){return REL_TYPES.find(x=>x.id===id)||REL_TYPES[REL_TYPES.length-1];}
+const CUSTOM_REL_COLORS=['#b35b9b','#008e9b','#a56b35','#668b38','#c44e65','#516eb4','#9662a8','#4f8980'];
+function customRelTypes(item){
+  const seen=new Set(REL_TYPES.map(t=>t.lbl.toLowerCase()));
+  return (Array.isArray(item?.relationshipTypes)?item.relationshipTypes:[]).filter(t=>{
+    if(!t||!/^custom_[a-z0-9_-]+$/i.test(t.id)||!String(t.lbl||'').trim()||seen.has(String(t.lbl).trim().toLowerCase()))return false;
+    seen.add(String(t.lbl).trim().toLowerCase());return true;
+  }).map((t,i)=>({id:t.id,lbl:String(t.lbl).trim(),color:/^#[0-9a-f]{6}$/i.test(t.color)?t.color:CUSTOM_REL_COLORS[i%CUSTOM_REL_COLORS.length]}));
+}
+function relationTypes(item){return [...REL_TYPES,...customRelTypes(item)];}
+function relType(id,item){return relationTypes(item).find(x=>x.id===id)||REL_TYPES[REL_TYPES.length-1];}
 function relKey(a,b){return [String(a),String(b)].sort().join('|');}
 function normRelations(item,people){
   const ids=new Set((people||ensurePeopleIds(item,false)).map(p=>p.id)),seen=new Set(),out=[];
   (Array.isArray(item&&item.relationships)?item.relationships:[]).forEach(r=>{
     const a=String(r&&r.a||''),b=String(r&&r.b||''),k=relKey(a,b);
     if(!a||!b||a===b||!ids.has(a)||!ids.has(b)||seen.has(k))return;
-    seen.add(k);out.push({id:String(r.id||('r_'+a+'_'+b)),a,b,type:relType(r.type).id});
+    seen.add(k);out.push({id:String(r.id||('r_'+a+'_'+b)),a,b,type:relType(r.type,item).id});
   });
   return out;
 }
@@ -10893,7 +10911,7 @@ function openDetailChapter(idx){
 // 抽屉里滑半天找他，加一个人还得滑到最底下。现在改成一次只编辑一个人——详情页点谁
 // 就弹谁，加人的按钮挪到详情页小节名旁边（见 tapPerson），抽屉里永远只有三栏。
 let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=false,
-    peRows=[], peRelations=[], peIdx=-1, peRelAdding=false;
+    peRows=[], peRelations=[], peTypes=[], peIdx=-1, peRelAdding=false;
 function openNoteSheet(id,key,pidx){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
@@ -10909,7 +10927,8 @@ function openNoteSheet(id,key,pidx){
   if(k==='people'){
     peRows=ensurePeopleIds(it,false);
     peRelations=normRelations(it,peRows);
-    noteSheetOrig=JSON.stringify({people:peRows,relationships:peRelations});
+    peTypes=customRelTypes(it);
+    noteSheetOrig=JSON.stringify({people:peRows,relationships:peRelations,relationshipTypes:peTypes});
     const fresh=!(pidx>=0&&pidx<peRows.length);   // 没指到人（或指歪了）就是「加一个」
     if(fresh){ peRows.push({id:newPersonId(),name:'',info:'',note:''}); peIdx=peRows.length-1; }
     else peIdx=pidx;
@@ -10958,6 +10977,8 @@ function renderPeopleEditor(delay){
     </div>
     <div class="pe-rel-section">
       <div class="pe-rel-head"><div class="pe-rel-title">人物关系</div><button type="button" class="pe-rel-add" onclick="startRelationAdd()">＋ 添加关系</button></div>
+      <div class="pe-rel-custom"><input class="pe-rel-search" id="peCustomType" maxlength="24" placeholder="自定义关系名称" aria-label="自定义关系名称" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomRelationType()}"><input type="color" class="pe-rel-color" id="peCustomColor" value="${CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]}" aria-label="选择关系颜色"><button type="button" class="pe-rel-save" onclick="addCustomRelationType()">添加类别</button></div>
+      <div class="pe-rel-custom-list" id="peCustomTypes">${renderCustomRelationTypes()}</div>
       <div class="pe-rel-list">${renderPersonRelations(p.id)}</div>
       <div id="peRelBuilder"></div>
     </div>`;
@@ -10972,7 +10993,29 @@ function renderPeopleEditor(delay){
     try{ nm.selectionStart=nm.selectionEnd=nm.value.length; }catch(_){}
   },delay||0);
 }
-function relOptions(selected){return REL_TYPES.map(t=>`<option value="${t.id}"${t.id===selected?' selected':''}>${t.lbl}</option>`).join('');}
+function relOptions(selected){return [...REL_TYPES,...peTypes].map(t=>`<option value="${t.id}"${t.id===selected?' selected':''}>${esc(t.lbl)}</option>`).join('');}
+function renderCustomRelationTypes(){
+  return peTypes.map(t=>`<label class="pe-rel-custom-item"><input type="color" class="pe-rel-color" value="${t.color}" aria-label="${esc(t.lbl)}的颜色" onchange="changeCustomRelationColor('${t.id}',this.value)"><span>${esc(t.lbl)}</span></label>`).join('');
+}
+function changeCustomRelationColor(id,color){
+  const type=peTypes.find(t=>t.id===id);if(type&&/^#[0-9a-f]{6}$/i.test(color))type.color=color;
+}
+function addCustomRelationType(){
+  const input=document.getElementById('peCustomType'),lbl=input?.value.trim();if(!lbl)return;
+  const existing=[...REL_TYPES,...peTypes].find(t=>t.lbl.toLowerCase()===lbl.toLowerCase());
+  if(existing){input.value='';toast('这个类别已经存在');return;}
+  const chosen=document.getElementById('peCustomColor')?.value;
+  const type={id:'custom_'+newPersonId().slice(2).replace(/[^a-z0-9_-]/gi,''),lbl,color:/^#[0-9a-f]{6}$/i.test(chosen)?chosen:CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]};
+  peTypes.push(type);input.value='';
+  document.getElementById('peCustomTypes').innerHTML=renderCustomRelationTypes();
+  document.getElementById('peCustomColor').value=CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length];
+  // 保留当前下拉框的选择和正在勾选的人物。
+  document.querySelectorAll('#noteSheetPeople .pe-rel-select').forEach(select=>{
+    const option=document.createElement('option');option.value=type.id;option.textContent=type.lbl;select.append(option);
+  });
+  const builder=document.getElementById('peRelType');if(builder)builder.value=type.id;
+  toast('关系类别已添加');
+}
 function renderPersonRelations(pid){
   const byId=new Map(peRows.map(p=>[p.id,p]));
   const rows=peRelations.filter(r=>r.a===pid||r.b===pid);
@@ -11009,7 +11052,7 @@ function saveRelationBatch(){
   picked.forEach(id=>{const k=relKey(cur.id,id);if(!have.has(k)){peRelations.push({id:'r_'+newPersonId(),a:cur.id,b:id,type});have.add(k);}});
   peRelAdding=false;const box=document.getElementById('peRelBuilder');if(box)box.innerHTML='';refreshRelationEditor();
 }
-function changeRelationType(id,type){const r=peRelations.find(x=>x.id===id);if(r)r.type=relType(type).id;}
+function changeRelationType(id,type){const r=peRelations.find(x=>x.id===id);if(r)r.type=[...REL_TYPES,...peTypes].find(t=>t.id===type)?.id||'other';}
 function deleteRelation(id){peRelations=peRelations.filter(r=>r.id!==id);refreshRelationEditor();}
 // 删掉正在编辑的这个人：抽屉里只有他，删完就没什么可留的了，直接关掉落盘
 function delPerson(){
@@ -11045,9 +11088,9 @@ function commitNoteSheet(){
     const list=peRows.filter(p=>p.name||p.info||p.note);   // 三栏全空的那组直接丢掉
     const ids=new Set(list.map(p=>p.id));
     peRelations=peRelations.filter(r=>ids.has(r.a)&&ids.has(r.b));
-    const s=JSON.stringify({people:list,relationships:peRelations});
+    const s=JSON.stringify({people:list,relationships:peRelations,relationshipTypes:peTypes});
     if(s===noteSheetOrig) return;
-    it.people=list;it.relationships=peRelations;noteSheetOrig=s;
+    it.people=list;it.relationships=peRelations;it.relationshipTypes=peTypes;noteSheetOrig=s;
   }else{
     const ta=document.getElementById('noteSheetTa');
     const v=(ta?ta.value:'').trim();
@@ -11080,7 +11123,7 @@ function openRelationGraph(){
   const it=data.find(d=>d.id===detailId);if(!it)return;
   const people=ensurePeopleIds(it,true);
   const relations=normRelations(it,people),ids=new Set(people.map(p=>p.id));
-  rgState.filters=new Set(REL_TYPES.map(t=>t.id));
+  rgState.filters=new Set(relationTypes(it).map(t=>t.id));
   rgState.centerId=ids.has(it.peopleGraphCenter)?it.peopleGraphCenter:(people[0]?.id||'');
   rgState.selectedId='';rgState.positions={};rgState.pointers.clear();rgState.pan=null;rgState.pinch=null;
   const root=document.getElementById('relGraph');
@@ -11100,6 +11143,7 @@ function closeRelationGraph(){
   root.classList.remove('open');root.setAttribute('aria-hidden','true');document.body.classList.remove('rel-graph-open');
 }
 function layoutGraph(people,relations,centerId){
+  const types=relationTypes(data.find(d=>d.id===detailId));
   const byId=new Map(people.map(p=>[p.id,p]));
   const adj=new Map(people.map(p=>[p.id,[]]));
   relations.forEach(r=>{adj.get(r.a)?.push({id:r.b,type:r.type});adj.get(r.b)?.push({id:r.a,type:r.type});});
@@ -11109,7 +11153,7 @@ function layoutGraph(people,relations,centerId){
   if(centerId&&adj.has(centerId)){level.set(centerId,0);queue.push(centerId);}
   while(queue.length){
     const id=queue.shift();
-    const next=(adj.get(id)||[]).slice().sort((a,b)=>REL_TYPES.findIndex(t=>t.id===a.type)-REL_TYPES.findIndex(t=>t.id===b.type));
+    const next=(adj.get(id)||[]).slice().sort((a,b)=>types.findIndex(t=>t.id===a.type)-types.findIndex(t=>t.id===b.type));
     next.forEach(n=>{if(!level.has(n.id)){level.set(n.id,level.get(id)+1);parent.set(n.id,id);parentType.set(n.id,n.type);queue.push(n.id);}});
   }
   const maxLevel=Math.max(0,...level.values()),connected=new Set(level.keys());
@@ -11180,7 +11224,7 @@ function layoutGraph(people,relations,centerId){
   if(centerId&&byId.has(centerId))rgState.positions[centerId]={x:cx-70,y:cy-34};
 
   for(const [l,arr] of [...groups].sort((a,b)=>a[0]-b[0])){
-    arr.sort((a,b)=>REL_TYPES.findIndex(t=>t.id===(parentType.get(a.id)||'other'))-REL_TYPES.findIndex(t=>t.id===(parentType.get(b.id)||'other'))||a.name.localeCompare(b.name,'zh'));
+    arr.sort((a,b)=>types.findIndex(t=>t.id===(parentType.get(a.id)||'other'))-types.findIndex(t=>t.id===(parentType.get(b.id)||'other'))||a.name.localeCompare(b.name,'zh'));
     if(l===1){
       arr.forEach((p,i)=>{
         const angle=-Math.PI/2+i*Math.PI*2/arr.length;
@@ -11239,6 +11283,7 @@ function separateGraphCards(){
 }
 function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
+  const types=relationTypes(data.find(d=>d.id===detailId));
   if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';return;}
   layoutGraph(people,relations,rgState.centerId);
   canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
@@ -11250,9 +11295,9 @@ function renderRelationGraph(people,relations){
   updateGraphHighlights();
   drawGraphLines(relations);
   const filter=document.getElementById('rgFilter');
-  filter.innerHTML=REL_TYPES.map(t=>`<button type="button" class="on" data-type="${t.id}" onclick="toggleGraphType('${t.id}',this)">${t.lbl}</button>`).join('');
+  filter.innerHTML=types.map(t=>`<button type="button" class="on" data-type="${t.id}" onclick="toggleGraphType('${t.id}',this)">${esc(t.lbl)}</button>`).join('');
   const legend=document.getElementById('rgLegend');
-  legend.innerHTML=REL_TYPES.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id}" style="--rg-rel-color:${t.color}"></span><span>${t.lbl}</span></div>`).join('');
+  legend.innerHTML=types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
 }
 function currentGraphData(){const it=data.find(d=>d.id===detailId),people=it?ensurePeopleIds(it,false):[];return {people,relations:it?normRelations(it,people):[]};}
 function drawGraphLines(relations){
@@ -11270,9 +11315,9 @@ function drawGraphLines(relations){
   };
   svg.innerHTML=relations.filter(r=>rgState.filters.has(r.type)).map(r=>{
     const a=metrics(r.a),b=metrics(r.b);if(!a||!b)return '';
-    const from=edgePoint(a,b),to=edgePoint(b,a),t=relType(r.type);
+    const from=edgePoint(a,b),to=edgePoint(b,a),t=relType(r.type,data.find(d=>d.id===detailId));
     const hi=rgState.selectedId&&(r.a===rgState.selectedId||r.b===rgState.selectedId);
-    return `<line class="rg-edge ${r.type}${hi?' highlight':''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
+    return `<line class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
   }).join('');
 }
 function directGraphIds(id){const out=new Set([id]);currentGraphData().relations.forEach(r=>{if(r.a===id)out.add(r.b);if(r.b===id)out.add(r.a);});return out;}
@@ -11283,7 +11328,7 @@ function updateGraphHighlights(){
 function selectGraphPerson(id,showCard){
   const {people,relations}=currentGraphData(),p=people.find(x=>x.id===id);if(!p)return;
   rgState.selectedId=id;updateGraphHighlights();drawGraphLines(relations);
-  if(showCard){const byId=new Map(people.map(x=>[x.id,x])),rows=relations.filter(r=>r.a===id||r.b===id).map(r=>`${relType(r.type).lbl} · ${byId.get(r.a===id?r.b:r.a)?.name||'未命名人物'}`);
+  if(showCard){const byId=new Map(people.map(x=>[x.id,x])),rows=relations.filter(r=>r.a===id||r.b===id).map(r=>`${relType(r.type,data.find(d=>d.id===detailId)).lbl} · ${byId.get(r.a===id?r.b:r.a)?.name||'未命名人物'}`);
     const card=document.getElementById('rgPersonCard');card.innerHTML=`<div class="rg-pc-head"><div class="rg-pc-main"><div class="rg-pc-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-pc-info">${esc(p.info)}</div>`:''}</div></div>${p.note?`<div class="rg-pc-note">${esc(p.note)}</div>`:''}${rows.length?`<div class="rg-pc-rel">${rows.map(esc).join('<br>')}</div>`:''}<div class="rg-pc-actions"><button type="button" class="rg-pc-btn rg-pc-close" onclick="closeGraphPersonCard()">关闭</button>${id===rgState.centerId?'':`<button type="button" class="rg-pc-btn rg-pc-center" onclick="setGraphCenter('${id}')">设为中心</button>`}</div>`;card.classList.add('open');}
 }
 function closeGraphPersonCard(){document.getElementById('rgPersonCard').classList.remove('open');}
