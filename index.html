@@ -2446,10 +2446,14 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-edge-label{font:600 12px var(--zh);text-anchor:middle;dominant-baseline:central;
   paint-order:stroke;stroke:var(--bg);stroke-width:6px;stroke-linejoin:round;pointer-events:none;}
 .rg-legend{position:absolute;z-index:5;right:var(--sp-12);bottom:calc(12px + env(safe-area-inset-bottom));
-  display:grid;grid-template-columns:72px minmax(0,1fr);gap:9px 12px;width:212px;padding:11px 12px;
+  display:grid;grid-template-columns:repeat(2,minmax(0,auto));gap:9px 12px;width:max-content;
+  max-width:calc(100vw - 24px);padding:11px 12px;
   box-sizing:border-box;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);
   pointer-events:none;}
-.rg-legend-item{display:flex;align-items:center;gap:7px;min-width:0;color:var(--text-secondary);font-size:var(--fs-caption);white-space:nowrap;}
+.rg-legend:empty{display:none;}
+.rg-legend.single{grid-template-columns:minmax(0,auto);}
+.rg-legend-item{display:flex;align-items:center;gap:7px;min-width:0;color:var(--text-secondary);font-size:var(--fs-caption);}
+.rg-legend-item span:last-child{overflow-wrap:anywhere;}
 .rg-legend-line{flex:0 0 20px;height:0;border-top:2px solid var(--rg-rel-color);}
 .rg-legend-line.conflict{border-top-style:dashed;}
 .rg-node{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -11292,7 +11296,8 @@ function separateGraphCards(){
 function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
   const types=relationTypes(data.find(d=>d.id===detailId));
-  if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';return;}
+  if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';
+    document.getElementById('rgFilter').innerHTML='';document.getElementById('rgLegend').innerHTML='';return;}
   layoutGraph(people,relations,rgState.centerId);
   canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
   canvas.innerHTML=`<svg class="rg-lines" id="rgLines" viewBox="0 0 ${rgState.canvasSize} ${rgState.canvasSize}" style="width:${rgState.canvasSize}px;height:${rgState.canvasSize}px"></svg>`+
@@ -11308,7 +11313,12 @@ function renderRelationGraph(people,relations){
   drawGraphLines(relations);
   const filter=document.getElementById('rgFilter');
   filter.innerHTML=types.map(t=>`<button type="button" class="on" data-type="${t.id}" onclick="toggleGraphType('${t.id}',this)">${esc(t.lbl)}</button>`).join('');
-  const legend=document.getElementById('rgLegend');
+  renderGraphLegend(relations);
+}
+function renderGraphLegend(relations){
+  const legend=document.getElementById('rgLegend'),used=new Set(relations.filter(r=>rgState.filters.has(r.type)).map(r=>r.type));
+  const types=relationTypes(data.find(d=>d.id===detailId)).filter(t=>used.has(t.id));
+  legend.classList.toggle('single',types.length===1);
   legend.innerHTML=types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
 }
 function currentGraphData(){const it=data.find(d=>d.id===detailId),people=it?ensurePeopleIds(it,false):[];return {people,relations:it?normRelations(it,people):[]};}
@@ -11433,7 +11443,8 @@ function toggleGraphFilter(){
   document.getElementById('rgFilter').classList.toggle('open');bar.classList.remove('open');
   if(wasSearching)resetGraphSearch();
 }
-function toggleGraphType(type,btn){rgState.filters.has(type)?rgState.filters.delete(type):rgState.filters.add(type);btn.classList.toggle('on',rgState.filters.has(type));drawGraphLines(currentGraphData().relations);}
+function toggleGraphType(type,btn){rgState.filters.has(type)?rgState.filters.delete(type):rgState.filters.add(type);btn.classList.toggle('on',rgState.filters.has(type));
+  const {relations}=currentGraphData();drawGraphLines(relations);renderGraphLegend(relations);}
 function searchGraphPerson(q){
   const s=String(q||'').trim().toLowerCase(),people=currentGraphData().people;
   if(!s){rgState.selectedId='';closeGraphPersonCard();updateGraphHighlights();drawGraphLines(currentGraphData().relations);return;}
