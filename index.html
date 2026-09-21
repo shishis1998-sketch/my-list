@@ -2408,6 +2408,12 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .pe-rel-custom{display:flex;align-items:center;gap:var(--sp-8);}
 .pe-rel-custom .pe-rel-search{min-width:0;flex:1;}
 .pe-rel-custom .pe-rel-save{flex-shrink:0;}
+.pe-rel-color{width:36px;height:36px;flex:0 0 36px;border:1px solid var(--border);
+  border-radius:50%;padding:3px;background:var(--surface);cursor:pointer;}
+.pe-rel-custom-list{display:flex;flex-wrap:wrap;gap:var(--sp-8);}
+.pe-rel-custom-item{display:inline-flex;align-items:center;gap:var(--sp-6);padding:4px 8px;
+  border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:var(--fs-caption);}
+.pe-rel-custom-item .pe-rel-color{width:28px;height:28px;flex-basis:28px;padding:2px;}
 
 /* 全屏人物关系图：画布本身可拖移，人物节点可单独拖动。 */
 .rel-graph{display:none;position:fixed;inset:0;z-index:180;background:var(--bg);overflow:hidden;touch-action:none;}
@@ -10971,7 +10977,8 @@ function renderPeopleEditor(delay){
     </div>
     <div class="pe-rel-section">
       <div class="pe-rel-head"><div class="pe-rel-title">人物关系</div><button type="button" class="pe-rel-add" onclick="startRelationAdd()">＋ 添加关系</button></div>
-      <div class="pe-rel-custom"><input class="pe-rel-search" id="peCustomType" maxlength="24" placeholder="自定义关系名称" aria-label="自定义关系名称" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomRelationType()}"><button type="button" class="pe-rel-save" onclick="addCustomRelationType()">添加类别</button></div>
+      <div class="pe-rel-custom"><input class="pe-rel-search" id="peCustomType" maxlength="24" placeholder="自定义关系名称" aria-label="自定义关系名称" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomRelationType()}"><input type="color" class="pe-rel-color" id="peCustomColor" value="${CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]}" aria-label="选择关系颜色"><button type="button" class="pe-rel-save" onclick="addCustomRelationType()">添加类别</button></div>
+      <div class="pe-rel-custom-list" id="peCustomTypes">${renderCustomRelationTypes()}</div>
       <div class="pe-rel-list">${renderPersonRelations(p.id)}</div>
       <div id="peRelBuilder"></div>
     </div>`;
@@ -10987,12 +10994,21 @@ function renderPeopleEditor(delay){
   },delay||0);
 }
 function relOptions(selected){return [...REL_TYPES,...peTypes].map(t=>`<option value="${t.id}"${t.id===selected?' selected':''}>${esc(t.lbl)}</option>`).join('');}
+function renderCustomRelationTypes(){
+  return peTypes.map(t=>`<label class="pe-rel-custom-item"><input type="color" class="pe-rel-color" value="${t.color}" aria-label="${esc(t.lbl)}的颜色" onchange="changeCustomRelationColor('${t.id}',this.value)"><span>${esc(t.lbl)}</span></label>`).join('');
+}
+function changeCustomRelationColor(id,color){
+  const type=peTypes.find(t=>t.id===id);if(type&&/^#[0-9a-f]{6}$/i.test(color))type.color=color;
+}
 function addCustomRelationType(){
   const input=document.getElementById('peCustomType'),lbl=input?.value.trim();if(!lbl)return;
   const existing=[...REL_TYPES,...peTypes].find(t=>t.lbl.toLowerCase()===lbl.toLowerCase());
   if(existing){input.value='';toast('这个类别已经存在');return;}
-  const type={id:'custom_'+newPersonId().slice(2).replace(/[^a-z0-9_-]/gi,''),lbl,color:CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]};
+  const chosen=document.getElementById('peCustomColor')?.value;
+  const type={id:'custom_'+newPersonId().slice(2).replace(/[^a-z0-9_-]/gi,''),lbl,color:/^#[0-9a-f]{6}$/i.test(chosen)?chosen:CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]};
   peTypes.push(type);input.value='';
+  document.getElementById('peCustomTypes').innerHTML=renderCustomRelationTypes();
+  document.getElementById('peCustomColor').value=CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length];
   // 保留当前下拉框的选择和正在勾选的人物。
   document.querySelectorAll('#noteSheetPeople .pe-rel-select').forEach(select=>{
     const option=document.createElement('option');option.value=type.id;option.textContent=type.lbl;select.append(option);
