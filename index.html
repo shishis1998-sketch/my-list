@@ -10606,7 +10606,7 @@ function relKey(a,b){return [String(a),String(b)].sort().join('|');}
 function normRelations(item,people){
   const ids=new Set((people||ensurePeopleIds(item,false)).map(p=>p.id)),seen=new Set(),out=[];
   (Array.isArray(item&&item.relationships)?item.relationships:[]).forEach(r=>{
-    const a=String(r&&r.a||''),b=String(r&&r.b||''),k=relKey(a,b);
+    const a=String(r&&r.a||''),b=String(r&&r.b||''),k=relKey(a,b)+'|'+relType(r.type,item).id;
     if(!a||!b||a===b||!ids.has(a)||!ids.has(b)||seen.has(k))return;
     seen.add(k);out.push({id:String(r.id||('r_'+a+'_'+b)),a,b,type:relType(r.type,item).id});
   });
@@ -11334,11 +11334,14 @@ function addGraphRelation(){
   const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g)return;
   const a=document.getElementById('rgRelA').value,b=document.getElementById('rgRelB').value;
   if(a===b){toast('请选择两位不同人物');return;}
-  if(g.relationships.some(r=>relKey(r.a,r.b)===relKey(a,b))){toast('两人已有关系');return;}
-  g.relationships.push({id:'r_'+newPersonId(),a,b,type:document.getElementById('rgRelType').value});
+  const type=document.getElementById('rgRelType').value;
+  if(g.relationships.some(r=>relKey(r.a,r.b)===relKey(a,b)&&r.type===type)){toast('两人已有该类别关系');return;}
+  g.relationships.push({id:'r_'+newPersonId(),a,b,type});
   touchRec(it);persist();openGraphManager(g.id);
 }
-function changeGraphRelation(id,type){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it),r=g?.relationships?.find(r=>r.id===id);if(!r)return;r.type=type;touchRec(it);persist();}
+function changeGraphRelation(id,type){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it),r=g?.relationships?.find(r=>r.id===id);if(!r)return;
+  if(g.relationships.some(x=>x.id!==id&&relKey(x.a,x.b)===relKey(r.a,r.b)&&x.type===type)){toast('两人已有该类别关系');openGraphManager(g.id);return;}
+  r.type=type;touchRec(it);persist();}
 function removeGraphRelation(id){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g)return;g.relationships=g.relationships.filter(r=>r.id!==id);touchRec(it);persist();openGraphManager(g.id);}
 function deleteCurrentGraph(){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g||g.id==='legacy'||!confirm('删除「'+g.title+'」及图中的关系？'))return;it.relationGraphs=it.relationGraphs.filter(x=>x.id!==g.id);touchRec(it);persist();rgGraphId='';renderGraphLibrary();}
 let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',showLabels:false,pan:null,pinch:null,nodeDrag:null,suppressNodeClickUntil:0,suppressBlankClickUntil:0,pointers:new Map(),canvasSize:1200};
@@ -11595,12 +11598,20 @@ function drawGraphLines(relations){
     const scale=1/Math.max(Math.abs(dx)/(node.w/2),Math.abs(dy)/(node.h/2),.0001);
     return {x:node.cx+dx*scale,y:node.cy+dy*scale};
   };
-  svg.innerHTML=relations.filter(r=>rgState.filters.has(r.type)).map(r=>{
+  const visible=relations.filter(r=>rgState.filters.has(r.type)),groups=new Map();
+  visible.forEach(r=>{const key=relKey(r.a,r.b);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r);});
+  svg.innerHTML=visible.map(r=>{
     const a=metrics(r.a),b=metrics(r.b);if(!a||!b)return '';
     const from=edgePoint(a,b),to=edgePoint(b,a),t=relType(r.type,data.find(d=>d.id===detailId));
+    const group=groups.get(relKey(r.a,r.b)),index=group.indexOf(r);
+    const offset=(index-(group.length-1)/2)*32;
+    const dx=to.x-from.x,dy=to.y-from.y,length=Math.hypot(dx,dy)||1;
+    const direction=r.a<r.b?1:-1;
+    const mx=(from.x+to.x)/2-offset*dy/length*direction,my=(from.y+to.y)/2+offset*dx/length*direction;
+    const cx=2*mx-(from.x+to.x)/2,cy=2*my-(from.y+to.y)/2;
     const hi=rgState.selectedId&&(r.a===rgState.selectedId||r.b===rgState.selectedId);
-    const line=`<line class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
-    const label=rgState.showLabels?`<text class="rg-edge-label" x="${(from.x+to.x)/2}" y="${(from.y+to.y)/2}" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${esc(t.lbl)}</text>`:'';
+    const line=`<path class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" d="M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
+    const label=rgState.showLabels?`<text class="rg-edge-label" x="${mx}" y="${my}" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${esc(t.lbl)}</text>`:'';
     return line+label;
   }).join('');
 }
@@ -11618,9 +11629,8 @@ function renderGraphCustomCategories(item){
 function renderGraphPersonRelationEditor(id,people,relations,item){
   const linked=relations.filter(r=>r.a===id||r.b===id);
   const byId=new Map(people.map(p=>[p.id,p]));
-  const related=new Set(linked.map(r=>r.a===id?r.b:r.a));
   const inGraph=new Set(people.map(p=>p.id));
-  const available=ensurePeopleIds(item,false).filter(p=>p.id!==id&&!related.has(p.id));
+  const available=ensurePeopleIds(item,false).filter(p=>p.id!==id);
   return `<div class="rg-pc-editor"><div class="rg-pc-scope">${graphForItem(item)?.id==='legacy'?'编辑全书关系':'只编辑当前关系图的关系'}</div>
     <div class="rg-pc-categories"><div class="rg-pc-scope">自定义关系类别 · 本书所有关系图共用</div>
       <div class="rg-pc-category-form"><input type="text" id="rgCustomType" maxlength="24" placeholder="类别名称" aria-label="自定义关系类别名称" onkeydown="if(event.key==='Enter'){event.preventDefault();addGraphCustomRelationType()}"><input type="color" id="rgCustomColor" value="${CUSTOM_REL_COLORS[customRelTypes(item).length%CUSTOM_REL_COLORS.length]}" aria-label="选择关系颜色"><button type="button" class="rg-pc-btn rg-pc-category-btn" onclick="addGraphCustomRelationType()">添加类别</button></div>
@@ -11629,7 +11639,7 @@ function renderGraphPersonRelationEditor(id,people,relations,item){
       <select aria-label="关系类别" onchange="changeGraphPersonRelation('${r.id}',this.value)">${graphPersonRelationOptions(item,r.type)}</select>
       <button type="button" class="rg-pc-remove" aria-label="删除关系" onclick="removeGraphPersonRelation('${r.id}')">×</button></div>`).join(''):'<div class="rg-pc-scope">还没有关系</div>'}
     <div class="rg-pc-add"><div class="rg-pc-scope">添加关系</div><div class="rg-pc-add-fields"><select id="rgPersonRelOther" aria-label="关联人物" onchange="toggleGraphNewPerson(this.value)">${available.map(p=>`<option value="${p.id}">${esc(p.name||'未命名人物')}${inGraph.has(p.id)?'':'（加入此图）'}</option>`).join('')}<option value="__new__"${available.length?'':' selected'}>＋ 新建人物</option></select>
-      <select id="rgPersonRelType" aria-label="新关系类别">${graphPersonRelationOptions(item,'family')}</select></div>
+      <select id="rgPersonRelType" aria-label="新关系类别">${graphPersonRelationOptions(item,relationTypes(item).find(t=>!linked.some(r=>relKey(r.a,r.b)===relKey(id,available[0]?.id)&&r.type===t.id))?.id||'family')}</select></div>
       <input id="rgPersonRelName" type="text" placeholder="新人物姓名" aria-label="新人物姓名" maxlength="80" style="${available.length?'display:none':''}">
       <button type="button" class="rg-pc-btn rg-pc-add-btn" onclick="addGraphPersonRelation()">＋ 添加关系</button></div></div>`;
 }
@@ -11658,6 +11668,8 @@ function changeGraphCustomRelationColor(id,color){
 function toggleGraphNewPerson(value){
   const input=document.getElementById('rgPersonRelName');if(!input)return;
   input.style.display=value==='__new__'?'':'none';
+  const item=data.find(d=>d.id===detailId),store=graphPersonRelationStore(),type=document.getElementById('rgPersonRelType');
+  if(item&&store&&type&&value!=='__new__')type.value=relationTypes(item).find(t=>!store.relations.some(r=>relKey(r.a,r.b)===relKey(rgState.selectedId,value)&&r.type===t.id))?.id||type.value;
   if(value==='__new__')input.focus();
 }
 function graphPersonRelationStore(){
@@ -11691,7 +11703,7 @@ function addGraphPersonRelation(){
     other=newPersonId();store.item.people=[...ensurePeopleIds(store.item,false),{id:other,name,info:'',note:''}];
   }else{
     if(!ensurePeopleIds(store.item,false).some(p=>p.id===other))return;
-    if(store.relations.some(r=>relKey(r.a,r.b)===relKey(id,other))){toast('两人已有关系');return;}
+    if(store.relations.some(r=>relKey(r.a,r.b)===relKey(id,other)&&r.type===type)){toast('两人已有该类别关系');return;}
   }
   if(!inGraph){
     if(graph.id==='legacy')graph.excludedPersonIds=(graph.excludedPersonIds||[]).filter(pid=>pid!==other);
@@ -11707,6 +11719,9 @@ function addGraphPersonRelation(){
 function changeGraphPersonRelation(relationId,type){
   const store=graphPersonRelationStore(),r=store?.relations.find(r=>r.id===relationId);
   if(!r||!relationTypes(store.item).some(t=>t.id===type))return;
+  if(store.relations.some(x=>x.id!==relationId&&relKey(x.a,x.b)===relKey(r.a,r.b)&&x.type===type)){
+    toast('两人已有该类别关系');selectGraphPerson(rgState.selectedId,true);return;
+  }
   r.type=type;refreshGraphPersonRelations(store.item);
 }
 function removeGraphPersonRelation(relationId){
