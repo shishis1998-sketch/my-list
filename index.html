@@ -11169,9 +11169,17 @@ function graphAnchors(item){
 function openGraphForChapter(idx){
   const it=data.find(d=>d.id===detailId),chs=it&&parseChapters(it.bookNote||'');if(!chs?.[idx])return;
   const title=chs[idx].title,n=chs.slice(0,idx+1).filter(c=>c.title===title).length;
-  openGraphLibrary(graphChapterKey(title,n));
+  openGraphForAnchor(graphChapterKey(title,n));
 }
-function openGraphForGroup(title){openGraphLibrary('group:'+title);}
+function openGraphForGroup(title){openGraphForAnchor('group:'+title);}
+function openGraphForAnchor(anchor){
+  const it=data.find(d=>d.id===detailId);if(!it)return;
+  ensurePeopleIds(it,true);
+  const graphs=ensureGraphCollection(it).filter(g=>g.anchor===anchor);
+  if(graphs.length!==1){openGraphLibrary(anchor);return;}
+  rgAnchorFilter=anchor;
+  openRelationGraph(graphs[0].id);
+}
 let chapterActionTarget=null,chapterPress=null,chapterClickBlock=null;
 function openChapterActionMenu(el,point){
   if(!el||!detailId)return;
