@@ -565,6 +565,7 @@ body.detail-open .content{display:none!important;}
 /* 一个人就是一个点击目标：点谁就只弹谁那一组，不用在整张名单里滑着找 */
 .dt-pitem{display:flex;align-items:center;gap:var(--sp-10);
   padding:var(--sp-12) 0;cursor:pointer;transition:opacity .15s;}
+.dt-pitem[hidden],.people-search-empty[hidden]{display:none;}
 .dt-pcol{flex:1;min-width:0;}
 .dt-pitem:active{opacity:.55;}
 /* ── 排序态：整行不再可点，只有右边那颗拖柄能拖（见 peopleDragStart）── */
@@ -2362,6 +2363,15 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 
 /* 人物页默认显示列表；关系图与排序收进标题右侧的更多菜单。 */
 .people-head-actions{display:flex;align-items:center;gap:var(--sp-6);margin-left:auto;}
+.people-search-toggle{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;
+  border-radius:50%;background:transparent;color:var(--text-secondary);cursor:pointer;}
+.people-search-toggle svg{width:20px;height:20px;}
+.people-search-toggle.active{background:var(--surface-2);color:var(--accent);}
+.people-search-field{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);
+  border-radius:var(--r);background:var(--surface);color:var(--text-primary);
+  font:var(--fs-body) var(--zh);outline:none;}
+.people-search-field:focus{border-color:var(--accent);}
+.people-search-empty{padding:var(--sp-12) 0;color:var(--text-muted);font-size:var(--fs-body);}
 .people-more{position:relative;flex:0 0 auto;}
 .people-more summary{display:grid;place-items:center;width:36px;height:36px;padding:0;list-style:none;
   border-radius:50%;color:var(--text-secondary);cursor:pointer;}
@@ -10504,7 +10514,7 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
   ensurePeopleIds(item,true);
-  detailId=id; dtTab='info';
+  detailId=id; dtTab='info'; peopleSearchOpen=false; peopleSearchQuery='';
   // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
   // 若不先关 transition，按钮就会从上一个页面遗留的隐藏态淡入/滑入。
   // 下一帧立即恢复，因此用户真正上下滚动时的隐藏/出现动效完全不受影响。
@@ -10647,9 +10657,34 @@ function nameHtml(s){
 // 长按和轻点共用一个目标，判定稍有偏差就会「想改名字结果把人挪走了」。
 // 分成两态之后，能拖的地方看得见（拖柄），不能拖的时候一点也拖不动。
 let dtSortPeople=false, dtSortOrig='';
+let peopleSearchOpen=false, peopleSearchQuery='';
+function togglePeopleSearch(){
+  peopleSearchOpen=!peopleSearchOpen;
+  if(!peopleSearchOpen)peopleSearchQuery='';
+  document.querySelector('.people-more[open]')?.removeAttribute('open');
+  renderDetail();
+  if(peopleSearchOpen)document.getElementById('peopleSearchInput')?.focus();
+}
+function filterPeopleList(value){
+  peopleSearchQuery=value;
+  const item=data.find(d=>d.id===detailId);
+  if(!item)return;
+  const query=value.trim().toLocaleLowerCase();
+  const people=ensurePeopleIds(item,false);
+  let matches=0;
+  document.querySelectorAll('#dtBody .dt-people .dt-pitem').forEach(row=>{
+    const p=people[Number(row.dataset.i)];
+    const found=!query||[p?.name,p?.info,p?.note].some(s=>String(s||'').toLocaleLowerCase().includes(query));
+    row.hidden=!found;
+    if(found)matches++;
+  });
+  const empty=document.getElementById('peopleSearchEmpty');
+  if(empty)empty.hidden=!query||matches>0;
+}
 function setSortPeople(on){
   const it=data.find(d=>d.id===detailId);
   if(on){
+    peopleSearchOpen=false; peopleSearchQuery='';
     dtSortPeople=true;
     dtSortOrig=it?JSON.stringify(normPeople(it.people)):'';
   }else{
@@ -10870,6 +10905,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
               ? '<button type="button" class="dt-lnk" onclick="setSortPeople(false)">完成</button>'
               : `<div class="people-head-actions">
                   <button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>
+                  <button type="button" class="people-search-toggle${peopleSearchOpen?' active':''}" onclick="togglePeopleSearch()" aria-label="${peopleSearchOpen?'关闭人物搜索':'搜索人物'}" title="搜索人物" aria-expanded="${peopleSearchOpen}">${ICON_PERSON_SEARCH}</button>
                   <details class="people-more">
                     <summary aria-label="更多人物操作" title="更多">${ICON_MORE}</summary>
                     <div class="people-more-menu">
@@ -10879,8 +10915,10 @@ function renderDetail(previewBox=null, viewTab=dtTab){
                   </details>
                 </div>`}
           </div>
+          ${peopleSearchOpen&&!sorting?`<input id="peopleSearchInput" class="people-search-field" type="search" placeholder="搜索人物姓名、信息或备注" aria-label="搜索人物" value="${esc(peopleSearchQuery)}" oninput="filterPeopleList(this.value)" autocomplete="off">`:''}
           <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
             ${ppl.length?renderPeople(ppl,sorting):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
+            ${ppl.length&&peopleSearchOpen&&!sorting?'<div id="peopleSearchEmpty" class="people-search-empty" hidden>没有找到匹配的人物</div>':''}
           </div>
           ${ppl.length&&!sorting?`<button type="button" class="dt-fab" aria-label="添加人物" title="添加人物"
             onclick="tapPerson(event,-1)">${ICON_ADD_PERSON}</button>`:''}`;})()}
@@ -10891,6 +10929,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
     ${viewTab==='info'&&metaRows?`<div class="dt-card dt-meta">${metaRows}</div>`:''}`;
 
   if(previewBox)return;
+  if(viewTab==='people'&&peopleSearchOpen)filterPeopleList(peopleSearchQuery);
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
   // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
@@ -10932,6 +10971,7 @@ function bookNoteLbl(item){ return /书/.test(getCat(item.type).name||'')?'读�
 const ICON_SORT=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg>`;
 const ICON_RELATION=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.4"/><circle cx="5" cy="18" r="2.4"/><circle cx="19" cy="18" r="2.4"/><path d="M10.8 7.1 6.2 15.8M13.2 7.1l4.6 8.7M7.4 18h9.2"/></svg>`;
 const ICON_MORE=`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`;
+const ICON_PERSON_SEARCH=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>`;
 const ICON_DRAG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
 // 人物那栏右下角那颗的图标：一个人 + 一个加号。笔画比别处细半档（1.7 对 2）——
 // 这颗只有一个人形加一个加号，同样粗细下比「一页纸+笔」显得实、显得挤
