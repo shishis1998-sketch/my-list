@@ -2390,41 +2390,6 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .people-tool{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);
   border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;}
 .people-tool svg{width:19px;height:19px;}
-.pe-rel-section{display:flex;flex-direction:column;gap:var(--sp-10);padding-top:var(--sp-4);}
-.pe-rel-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-10);}
-.pe-rel-title{font-size:var(--fs-caption);color:var(--text-secondary);font-weight:600;}
-.pe-rel-add{border:0;background:var(--accent-light);color:var(--accent);border-radius:999px;
-  padding:7px 11px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
-.pe-rel-list{display:flex;flex-direction:column;gap:var(--sp-8);}
-.pe-rel-row{display:grid;grid-template-columns:minmax(0,1fr) 104px 32px;align-items:center;gap:var(--sp-8);
-  padding:var(--sp-4) var(--sp-10);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);}
-.pe-rel-name{font-size:var(--fs-body);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pe-rel-select,.pe-rel-search{width:100%;font:var(--fs-body) var(--zh);color:var(--text-primary);
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;outline:none;}
-.pe-rel-row .pe-rel-select{background:var(--surface);color:var(--text-primary);border-color:var(--border);
-  border-radius:var(--r);padding:5px 8px;font-weight:400;}
-.pe-rel-select:focus,.pe-rel-search:focus{border-color:var(--accent);}
-.pe-rel-row .pe-del{background:transparent;color:var(--text-muted);}
-.pe-rel-row .pe-del:active{background:var(--surface-2);color:var(--text-secondary);}
-.pe-rel-empty{font-size:var(--fs-caption);color:var(--text-muted);}
-.pe-rel-builder{display:flex;flex-direction:column;gap:var(--sp-8);padding:var(--sp-10);
-  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
-.pe-rel-choices{max-height:180px;overflow:auto;display:flex;flex-direction:column;}
-.pe-rel-choice{display:flex;align-items:center;gap:var(--sp-8);min-height:40px;padding:4px 2px;
-  font-size:var(--fs-body);border-bottom:1px solid var(--border-soft);cursor:pointer;}
-.pe-rel-choice:last-child{border-bottom:0;}.pe-rel-choice input{accent-color:var(--accent);width:17px;height:17px;}
-.pe-rel-save{align-self:flex-end;border:0;border-radius:999px;background:var(--accent);color:var(--on-accent);
-  padding:8px 15px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
-.pe-rel-custom{display:flex;align-items:center;gap:var(--sp-8);}
-.pe-rel-custom .pe-rel-search{min-width:0;flex:1;}
-.pe-rel-custom .pe-rel-save{flex-shrink:0;}
-.pe-rel-color{width:36px;height:36px;flex:0 0 36px;border:1px solid var(--border);
-  border-radius:50%;padding:3px;background:var(--surface);cursor:pointer;}
-.pe-rel-custom-list{display:flex;flex-wrap:wrap;gap:var(--sp-8);}
-.pe-rel-custom-item{display:inline-flex;align-items:center;gap:var(--sp-6);padding:4px 8px;
-  border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:var(--fs-caption);}
-.pe-rel-custom-item .pe-rel-color{width:28px;height:28px;flex-basis:28px;padding:2px;}
-
 /* 全屏人物关系图：画布本身可拖移，人物节点可单独拖动。 */
 .rel-graph{display:none;position:fixed;inset:0;z-index:180;background:var(--bg);overflow:hidden;touch-action:none;}
 .rel-graph.open{display:flex;flex-direction:column;}
@@ -2511,7 +2476,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-empty{position:absolute;inset:0;display:grid;place-items:center;padding:32px;text-align:center;color:var(--text-muted);font-size:var(--fs-body);}
 .rg-person-card{display:none;position:absolute;z-index:8;left:var(--sp-14);right:var(--sp-14);bottom:calc(14px + env(safe-area-inset-bottom));
   max-height:42vh;overflow:auto;padding:var(--sp-14);border:1px solid var(--border);border-radius:var(--rlg);
-  background:var(--surface);color:var(--text-primary);}
+  background:var(--surface);color:var(--text-primary);touch-action:pan-y;}
 .rg-person-card.open{display:block;animation:rgCardIn .18s ease-out;}
 .rg-person-card.editing{max-height:min(65vh,550px);}
 @keyframes rgCardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -2532,6 +2497,13 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-pc-add-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(95px,130px);gap:var(--sp-6);}
 .rg-pc-add-btn{align-self:flex-end;background:var(--accent);color:var(--on-accent);}
 .rg-pc-scope{font-size:var(--fs-caption);color:var(--text-muted);}
+.rg-pc-categories{display:flex;flex-direction:column;gap:var(--sp-8);padding-bottom:var(--sp-10);border-bottom:1px solid var(--border);}
+.rg-pc-category-form{display:flex;align-items:center;gap:var(--sp-6);}
+.rg-pc-category-form input[type="text"]{min-width:0;flex:1;box-sizing:border-box;height:36px;padding:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font:var(--fs-caption) var(--zh);}
+.rg-pc-category-form input[type="color"],.rg-pc-type input[type="color"]{flex:0 0 32px;width:32px;height:32px;box-sizing:border-box;padding:2px;border:1px solid var(--border);border-radius:50%;background:var(--surface);cursor:pointer;}
+.rg-pc-category-btn{flex-shrink:0;background:var(--accent);color:var(--on-accent);}
+.rg-pc-types{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
+.rg-pc-type{display:inline-flex;align-items:center;gap:var(--sp-6);padding:2px 8px 2px 2px;border:1px solid var(--border);border-radius:999px;font-size:var(--fs-caption);}
 body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none!important;}
 .cal-vtoggle.cvt-detail4{display:flex;width:100%;}
 .cal-vtoggle.cvt-detail4 .cvt{flex:1;padding:4px 0;min-width:0;text-align:center;}
@@ -11041,7 +11013,7 @@ function openDetailChapter(idx){
 // 抽屉里滑半天找他，加一个人还得滑到最底下。现在改成一次只编辑一个人——详情页点谁
 // 就弹谁，加人的按钮挪到详情页小节名旁边（见 tapPerson），抽屉里永远只有三栏。
 let noteSheetId=null, noteSheetKey='note', noteSheetOrig='', noteSheetDragInit=false,
-    peRows=[], peRelations=[], peTypes=[], peIdx=-1, peRelAdding=false;
+    peRows=[], peIdx=-1;
 function openNoteSheet(id,key,pidx){
   const it=data.find(d=>d.id===(id!=null?id:detailId));
   if(!it) return;
@@ -11056,13 +11028,10 @@ function openNoteSheet(id,key,pidx){
   document.getElementById('noteSheetFmt').style.display=(k==='booknote')?'':'none';
   if(k==='people'){
     peRows=ensurePeopleIds(it,false);
-    peRelations=normRelations(it,peRows);
-    peTypes=customRelTypes(it);
-    noteSheetOrig=JSON.stringify({people:peRows,relationships:peRelations,relationshipTypes:peTypes});
+    noteSheetOrig=JSON.stringify(peRows);
     const fresh=!(pidx>=0&&pidx<peRows.length);   // 没指到人（或指歪了）就是「加一个」
     if(fresh){ peRows.push({id:newPersonId(),name:'',info:'',note:''}); peIdx=peRows.length-1; }
     else peIdx=pidx;
-    peRelAdding=false;
     // 标题带：加人时写「添加人物」（光「添加」在标题上说不清添的是什么），改人时写他的名字
     document.getElementById('noteSheetTitle').textContent=fresh?'添加人物':(peRows[peIdx].name||'人物');
     ta.style.display='none'; box.style.display='';
@@ -11104,13 +11073,6 @@ function renderPeopleEditor(delay){
       </div>
       <input class="pe-in pe-info" placeholder="信息，比如身份、和主角的关系" value="${esc(p.info)}">
       <textarea class="pe-in pe-note" rows="1" placeholder="可留空">${esc(p.note)}</textarea>
-    </div>
-    <div class="pe-rel-section">
-      <div class="pe-rel-head"><div class="pe-rel-title">人物关系</div><button type="button" class="pe-rel-add" onclick="startRelationAdd()">＋ 添加关系</button></div>
-      <div class="pe-rel-custom"><input class="pe-rel-search" id="peCustomType" maxlength="24" placeholder="自定义关系名称" aria-label="自定义关系名称" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomRelationType()}"><input type="color" class="pe-rel-color" id="peCustomColor" value="${CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]}" aria-label="选择关系颜色"><button type="button" class="pe-rel-save" onclick="addCustomRelationType()">添加类别</button></div>
-      <div class="pe-rel-custom-list" id="peCustomTypes">${renderCustomRelationTypes()}</div>
-      <div class="pe-rel-list">${renderPersonRelations(p.id)}</div>
-      <div id="peRelBuilder"></div>
     </div>`;
   const ta=box.querySelector('.pe-note');
   if(ta){ autosizeTl(ta); ta.addEventListener('input',()=>autosizeTl(ta)); }
@@ -11123,67 +11085,6 @@ function renderPeopleEditor(delay){
     try{ nm.selectionStart=nm.selectionEnd=nm.value.length; }catch(_){}
   },delay||0);
 }
-function relOptions(selected){return [...REL_TYPES,...peTypes].map(t=>`<option value="${t.id}"${t.id===selected?' selected':''}>${esc(t.lbl)}</option>`).join('');}
-function renderCustomRelationTypes(){
-  return peTypes.map(t=>`<label class="pe-rel-custom-item"><input type="color" class="pe-rel-color" value="${t.color}" aria-label="${esc(t.lbl)}的颜色" onchange="changeCustomRelationColor('${t.id}',this.value)"><span>${esc(t.lbl)}</span></label>`).join('');
-}
-function changeCustomRelationColor(id,color){
-  const type=peTypes.find(t=>t.id===id);if(type&&/^#[0-9a-f]{6}$/i.test(color))type.color=color;
-}
-function addCustomRelationType(){
-  const input=document.getElementById('peCustomType'),lbl=input?.value.trim();if(!lbl)return;
-  const existing=[...REL_TYPES,...peTypes].find(t=>t.lbl.toLowerCase()===lbl.toLowerCase());
-  if(existing){input.value='';toast('这个类别已经存在');return;}
-  const chosen=document.getElementById('peCustomColor')?.value;
-  const type={id:'custom_'+newPersonId().slice(2).replace(/[^a-z0-9_-]/gi,''),lbl,color:/^#[0-9a-f]{6}$/i.test(chosen)?chosen:CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length]};
-  peTypes.push(type);input.value='';
-  document.getElementById('peCustomTypes').innerHTML=renderCustomRelationTypes();
-  document.getElementById('peCustomColor').value=CUSTOM_REL_COLORS[peTypes.length%CUSTOM_REL_COLORS.length];
-  // 保留当前下拉框的选择和正在勾选的人物。
-  document.querySelectorAll('#noteSheetPeople .pe-rel-select').forEach(select=>{
-    const option=document.createElement('option');option.value=type.id;option.textContent=type.lbl;select.append(option);
-  });
-  const builder=document.getElementById('peRelType');if(builder)builder.value=type.id;
-  toast('关系类别已添加');
-}
-function renderPersonRelations(pid){
-  const byId=new Map(peRows.map(p=>[p.id,p]));
-  const rows=peRelations.filter(r=>r.a===pid||r.b===pid);
-  if(!rows.length)return '<div class="pe-rel-empty">还没有人物关系</div>';
-  return rows.map(r=>{const other=byId.get(r.a===pid?r.b:r.a);return other?`<div class="pe-rel-row">
-    <div class="pe-rel-name">${esc(other.name||'未命名人物')}</div>
-    <select class="pe-rel-select" onchange="changeRelationType('${r.id}',this.value)">${relOptions(r.type)}</select>
-    <button type="button" class="pe-del" onclick="deleteRelation('${r.id}')" aria-label="删除关系">✕</button>
-  </div>`:'';}).join('');
-}
-function refreshRelationEditor(){
-  const list=document.querySelector('#noteSheetPeople .pe-rel-list');
-  if(list&&peRows[peIdx])list.innerHTML=renderPersonRelations(peRows[peIdx].id);
-}
-function startRelationAdd(){
-  readPeopleEditor();peRelAdding=true;
-  const cur=peRows[peIdx],box=document.getElementById('peRelBuilder');if(!cur||!box)return;
-  const related=new Set(peRelations.filter(r=>r.a===cur.id||r.b===cur.id).map(r=>r.a===cur.id?r.b:r.a));
-  const choices=peRows.filter(p=>p.id!==cur.id&&!related.has(p.id));
-  box.innerHTML=`<div class="pe-rel-builder">
-    <select class="pe-rel-select" id="peRelType">${relOptions('family')}</select>
-    <input class="pe-rel-search" id="peRelSearch" placeholder="搜索人物姓名" oninput="filterRelationChoices(this.value)">
-    <div class="pe-rel-choices" id="peRelChoices">${choices.length?choices.map(p=>`<label class="pe-rel-choice" data-name="${esc((p.name||'').toLowerCase())}"><input type="checkbox" value="${p.id}"><span>${esc(p.name||'未命名人物')}</span></label>`).join(''):'<div class="pe-rel-empty">没有可关联的人物</div>'}</div>
-    ${choices.length?'<button type="button" class="pe-rel-save" onclick="saveRelationBatch()">完成</button>':''}
-  </div>`;
-  document.getElementById('peRelSearch')?.focus({preventScroll:true});
-}
-function filterRelationChoices(q){const s=String(q||'').trim().toLowerCase();document.querySelectorAll('#peRelChoices .pe-rel-choice').forEach(el=>el.style.display=!s||el.dataset.name.includes(s)?'':'none');}
-function saveRelationBatch(){
-  const cur=peRows[peIdx];if(!cur)return;
-  const type=document.getElementById('peRelType')?.value||'other';
-  const picked=[...document.querySelectorAll('#peRelChoices input:checked')].map(x=>x.value);
-  const have=new Set(peRelations.map(r=>relKey(r.a,r.b)));
-  picked.forEach(id=>{const k=relKey(cur.id,id);if(!have.has(k)){peRelations.push({id:'r_'+newPersonId(),a:cur.id,b:id,type});have.add(k);}});
-  peRelAdding=false;const box=document.getElementById('peRelBuilder');if(box)box.innerHTML='';refreshRelationEditor();
-}
-function changeRelationType(id,type){const r=peRelations.find(x=>x.id===id);if(r)r.type=[...REL_TYPES,...peTypes].find(t=>t.id===type)?.id||'other';}
-function deleteRelation(id){peRelations=peRelations.filter(r=>r.id!==id);refreshRelationEditor();}
 // 删掉正在编辑的这个人：抽屉里只有他，删完就没什么可留的了，直接关掉落盘
 function delPerson(){
   if(noteSheetId==null||noteSheetKey!=='people'||!peRows[peIdx]) return;
@@ -11191,7 +11092,6 @@ function delPerson(){
   const p=peRows[peIdx];
   if((p.name||p.info||p.note)&&!confirm('删掉「'+(p.name||'这个人')+'」？')) return;
   peRows.splice(peIdx,1);
-  peRelations=peRelations.filter(r=>r.a!==p.id&&r.b!==p.id);
   peIdx=-1;                                    // 置空，别让 readPeopleEditor 再往回写
   closeNoteSheet(true);
 }
@@ -11216,11 +11116,17 @@ function commitNoteSheet(){
   if(noteSheetKey==='people'){
     readPeopleEditor();
     const list=peRows.filter(p=>p.name||p.info||p.note);   // 三栏全空的那组直接丢掉
-    const ids=new Set(list.map(p=>p.id));
-    peRelations=peRelations.filter(r=>ids.has(r.a)&&ids.has(r.b));
-    const s=JSON.stringify({people:list,relationships:peRelations,relationshipTypes:peTypes});
+    const s=JSON.stringify(list);
     if(s===noteSheetOrig) return;
-    it.people=list;it.relationships=peRelations;it.relationshipTypes=peTypes;noteSheetOrig=s;
+    const ids=new Set(list.map(p=>p.id));
+    it.people=list;
+    if(Array.isArray(it.relationships))it.relationships=it.relationships.filter(r=>ids.has(r.a)&&ids.has(r.b));
+    if(Array.isArray(it.relationGraphs))it.relationGraphs.forEach(g=>{
+      if(g.id==='legacy')return;
+      g.personIds=(g.personIds||[]).filter(id=>ids.has(id));
+      g.relationships=(g.relationships||[]).filter(r=>ids.has(r.a)&&ids.has(r.b));
+    });
+    noteSheetOrig=s;
   }else{
     const ta=document.getElementById('noteSheetTa');
     const v=(ta?ta.value:'').trim();
@@ -11383,7 +11289,7 @@ function openGraphManager(id=rgGraphId){
     ${!fresh&&rgGraphId!=='legacy'?'<div class="rg-form-actions"><button type="button" onclick="deleteCurrentGraph()">删除这张关系图</button></div>':''}
   </div>${fresh?'':`<div class="rg-form-card"><h3>图中人物</h3>
     ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'||g?.personIds?.includes(p.id)?'checked':''} ${rgGraphId==='legacy'?'disabled':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
-    ${rgGraphId==='legacy'?'<p>全书关系图自动显示全部人物；关系请在人物资料中编辑。</p>':'<div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div>'}</div>
+    ${rgGraphId==='legacy'?'<p>全书关系图自动显示全部人物；关系和类别请在图中点击人物编辑。</p>':'<div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div>'}</div>
     ${rgGraphId==='legacy'?'':renderGraphRelationEditor(it,g)}`}`;
 }
 function renderGraphRelationEditor(item,g){
@@ -11693,6 +11599,9 @@ function updateGraphHighlights(){
 function graphPersonRelationOptions(item,selected){
   return relationTypes(item).map(t=>`<option value="${t.id}"${t.id===selected?' selected':''}>${esc(t.lbl)}</option>`).join('');
 }
+function renderGraphCustomCategories(item){
+  return customRelTypes(item).map(t=>`<label class="rg-pc-type"><input type="color" value="${t.color}" aria-label="${esc(t.lbl)}的颜色" onchange="changeGraphCustomRelationColor('${t.id}',this.value)"><span>${esc(t.lbl)}</span></label>`).join('');
+}
 function renderGraphPersonRelationEditor(id,people,relations,item){
   const linked=relations.filter(r=>r.a===id||r.b===id);
   const byId=new Map(people.map(p=>[p.id,p]));
@@ -11700,6 +11609,9 @@ function renderGraphPersonRelationEditor(id,people,relations,item){
   const inGraph=new Set(people.map(p=>p.id));
   const available=ensurePeopleIds(item,false).filter(p=>p.id!==id&&!related.has(p.id));
   return `<div class="rg-pc-editor"><div class="rg-pc-scope">${graphForItem(item)?.id==='legacy'?'编辑全书关系':'只编辑当前关系图的关系'}</div>
+    <div class="rg-pc-categories"><div class="rg-pc-scope">自定义关系类别 · 本书所有关系图共用</div>
+      <div class="rg-pc-category-form"><input type="text" id="rgCustomType" maxlength="24" placeholder="类别名称" aria-label="自定义关系类别名称" onkeydown="if(event.key==='Enter'){event.preventDefault();addGraphCustomRelationType()}"><input type="color" id="rgCustomColor" value="${CUSTOM_REL_COLORS[customRelTypes(item).length%CUSTOM_REL_COLORS.length]}" aria-label="选择关系颜色"><button type="button" class="rg-pc-btn rg-pc-category-btn" onclick="addGraphCustomRelationType()">添加类别</button></div>
+      <div class="rg-pc-types">${renderGraphCustomCategories(item)}</div></div>
     ${linked.length?linked.map(r=>`<div class="rg-pc-edit-row"><span>${esc(byId.get(r.a===id?r.b:r.a)?.name||'未命名人物')}</span>
       <select aria-label="关系类别" onchange="changeGraphPersonRelation('${r.id}',this.value)">${graphPersonRelationOptions(item,r.type)}</select>
       <button type="button" class="rg-pc-remove" aria-label="删除关系" onclick="removeGraphPersonRelation('${r.id}')">×</button></div>`).join(''):'<div class="rg-pc-scope">还没有关系</div>'}
@@ -11707,6 +11619,28 @@ function renderGraphPersonRelationEditor(id,people,relations,item){
       <select id="rgPersonRelType" aria-label="新关系类别">${graphPersonRelationOptions(item,'family')}</select></div>
       <input id="rgPersonRelName" type="text" placeholder="新人物姓名" aria-label="新人物姓名" maxlength="80" style="${available.length?'display:none':''}">
       <button type="button" class="rg-pc-btn rg-pc-add-btn" onclick="addGraphPersonRelation()">＋ 添加关系</button></div></div>`;
+}
+function addGraphCustomRelationType(){
+  const item=data.find(d=>d.id===detailId),input=document.getElementById('rgCustomType');
+  const lbl=input?.value.trim();if(!item||!lbl)return;
+  if(relationTypes(item).some(t=>t.lbl.toLocaleLowerCase()===lbl.toLocaleLowerCase())){toast('这个类别已经存在');return;}
+  const types=customRelTypes(item),chosen=document.getElementById('rgCustomColor')?.value;
+  const type={id:'custom_'+newPersonId().slice(2).replace(/[^a-z0-9_-]/gi,''),lbl,
+    color:/^#[0-9a-f]{6}$/i.test(chosen)?chosen:CUSTOM_REL_COLORS[types.length%CUSTOM_REL_COLORS.length]};
+  item.relationshipTypes=[...types,type];
+  rgState.filters.add(type.id);
+  touchRec(item);persist();
+  document.getElementById('rgFilter')?.insertAdjacentHTML('beforeend',`<button type="button" class="on" data-type="${type.id}" onclick="toggleGraphType('${type.id}',this)">${esc(type.lbl)}</button>`);
+  selectGraphPerson(rgState.selectedId,true);
+  const picker=document.getElementById('rgPersonRelType');if(picker)picker.value=type.id;
+  toast('关系类别已添加');
+}
+function changeGraphCustomRelationColor(id,color){
+  if(!/^#[0-9a-f]{6}$/i.test(color))return;
+  const item=data.find(d=>d.id===detailId),type=item?.relationshipTypes?.find(t=>t.id===id);
+  if(!type)return;
+  type.color=color;touchRec(item);persist();
+  const {relations}=currentGraphData();drawGraphLines(relations);renderGraphLegend(relations);
 }
 function toggleGraphNewPerson(value){
   const input=document.getElementById('rgPersonRelName');if(!input)return;
