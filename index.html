@@ -4900,7 +4900,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #detailBookNoteCard > .dt-lbl-row{align-items:center;min-height:24px;margin-bottom:var(--sp-12);}
 #detailBookNoteCard > .dt-lbl-row > .dt-lbl{font-weight:700;margin-bottom:0;}
 #detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-16));margin-right:calc(-1 * var(--sp-16));}
-#detailBookNoteCard > .dt-lbl-row + .tl{margin-top:0;}
+#detailBookNoteCard > .tl:first-child{margin-top:0;}
+#detailBookNoteCard > .tl-part:first-child{margin-top:0;}
 @media(max-width:1024px){
   #detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-14));margin-right:calc(-1 * var(--sp-14));}
 }
@@ -10694,10 +10695,11 @@ function setSortPeople(on){
   }
   renderDetail();
 }
-function peopleMenuAction(action,button){
+function peopleMenuAction(action,button,event){
   button?.closest('.people-more')?.removeAttribute('open');
   if(action==='graph')openGraphLibrary();
   else if(action==='sort')setSortPeople(true);
+  else if(action==='booknote')tapNoteCard(event,'booknote');
 }
 function togglePeopleMenu(event,summary){
   event.preventDefault();
@@ -11018,16 +11020,26 @@ function renderDetailTL(item){
   const np=groups.filter(g=>g.part).length;
   const displayCount=timelineDisplayCount(groups);
   // 章节内点正文编辑整章；右下角新增，全文编辑保留在更多菜单。
-  return `<div class="dt-card" id="detailBookNoteCard" style="cursor:default">
-    <div class="dt-lbl-row">
-      <div class="dt-lbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
-      <details class="chapter-more"><summary aria-label="笔记更多操作">⋯</summary><button type="button" class="dt-lnk" onclick="this.closest('details').open=false;tapNoteCard(event,'booknote')">编辑全文</button></details>
+  // 标题行与人物页共用同一套字号、对齐、36px 三点按钮和右上角展开动画。
+  return `<div class="dt-sec">
+    <div class="dt-seclbl-row">
+      <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
+      <div class="people-head-actions">
+        <details class="people-more">
+          <summary aria-label="笔记更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
+          <div class="people-more-menu">
+            <button type="button" class="people-more-item" onclick="peopleMenuAction('booknote',this,event)"><span>编辑全文</span></button>
+          </div>
+        </details>
+      </div>
     </div>
-    ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
-      +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
-  </div>
-  <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
-    onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
+    <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
+      ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
+        +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
+    </div>
+    <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
+      onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>`;
 }
 
 // 点章节 → 复用笔记那套章节抽屉，只是宿主换成这条媒体记录（见 tlHostMedia）
