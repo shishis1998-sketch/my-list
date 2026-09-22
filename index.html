@@ -2374,7 +2374,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .people-search-empty{padding:var(--sp-12) 0;color:var(--text-muted);font-size:var(--fs-body);}
 .people-more{position:relative;flex:0 0 auto;}
 /* 菜单以三点按钮为右上角，并盖住按钮。 */
-.dt-sec:has(.people-more[open]){position:relative;z-index:6;}
+.dt-sec:has(.people-more[open]),.timeline-head:has(.people-more[open]){position:relative;z-index:6;}
 .people-more summary{display:grid;place-items:center;width:36px;height:36px;padding:0;list-style:none;
   border-radius:50%;color:var(--text-secondary);cursor:pointer;}
 .people-more summary::-webkit-details-marker{display:none;}
@@ -11020,26 +11020,24 @@ function renderDetailTL(item){
   const np=groups.filter(g=>g.part).length;
   const displayCount=timelineDisplayCount(groups);
   // 章节内点正文编辑整章；右下角新增，全文编辑保留在更多菜单。
-  // 标题行与人物页共用同一套字号、对齐、36px 三点按钮和右上角展开动画。
-  return `<div class="dt-sec">
-    <div class="dt-seclbl-row">
-      <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
-      <div class="people-head-actions">
-        <details class="people-more">
-          <summary aria-label="笔记更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
-          <div class="people-more-menu">
-            <button type="button" class="people-more-item" onclick="peopleMenuAction('booknote',this,event)"><span>编辑全文</span></button>
-          </div>
-        </details>
-      </div>
+  // 只复用人物页的标题行和菜单；时间线仍保持详情页原来的顶层结构。
+  return `<div class="dt-seclbl-row timeline-head">
+    <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
+    <div class="people-head-actions">
+      <details class="people-more">
+        <summary aria-label="笔记更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
+        <div class="people-more-menu">
+          <button type="button" class="people-more-item" onclick="peopleMenuAction('booknote',this,event)"><span>编辑全文</span></button>
+        </div>
+      </details>
     </div>
-    <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
-      ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
-        +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
-    </div>
-    <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
-      onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-  </div>`;
+  </div>
+  <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
+    ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
+      +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
+  </div>
+  <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
+    onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 
 // 点章节 → 复用笔记那套章节抽屉，只是宿主换成这条媒体记录（见 tlHostMedia）
