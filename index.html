@@ -2373,24 +2373,24 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .people-search-field:focus{border-color:var(--accent);}
 .people-search-empty{padding:var(--sp-12) 0;color:var(--text-muted);font-size:var(--fs-body);}
 .people-more{position:relative;flex:0 0 auto;}
-/* 向上展开时，菜单可盖在详情页吸顶栏之上。 */
+/* 菜单从三点按钮处展开，盖在详情页内容之上。 */
 .dt-sec:has(.people-more[open]){position:relative;z-index:6;}
 .people-more summary{display:grid;place-items:center;width:36px;height:36px;padding:0;list-style:none;
   border-radius:50%;color:var(--text-secondary);cursor:pointer;}
 .people-more summary::-webkit-details-marker{display:none;}
 .people-more summary svg{width:21px;height:21px;}
-.people-more[open] summary{background:var(--surface-2);color:var(--accent);}
-.people-more-menu{position:absolute;z-index:30;right:0;bottom:calc(100% + 6px);width:156px;padding:6px;
+.people-more[open] summary{position:relative;z-index:31;background:var(--surface-2);color:var(--accent);}
+.people-more-menu{position:absolute;z-index:30;right:0;top:0;width:156px;padding:6px;
   border:1px solid var(--border);border-radius:var(--r);background:var(--surface);
-  transform-origin:bottom right;animation:people-menu-in .22s cubic-bezier(.2,.8,.2,1) both;}
+  transform-origin:top right;animation:people-menu-in .22s cubic-bezier(.2,.8,.2,1) both;}
 .people-more.closing .people-more-menu{pointer-events:none;animation:people-menu-out .16s ease-in both;}
 @keyframes people-menu-in{
-  from{opacity:0;transform:translateY(7px) scale(.88,.72);}
+  from{opacity:0;transform:translate(6px,-6px) scale(.88,.72);}
   to{opacity:1;transform:translateY(0) scale(1);}
 }
 @keyframes people-menu-out{
   from{opacity:1;transform:translateY(0) scale(1);}
-  to{opacity:0;transform:translateY(5px) scale(.92,.8);}
+  to{opacity:0;transform:translate(5px,-5px) scale(.92,.8);}
 }
 @media (prefers-reduced-motion:reduce){
   .people-more-menu,.people-more.closing .people-more-menu{animation:none;}
