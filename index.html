@@ -504,10 +504,12 @@ body.detail-open .frow,
 body.detail-open .catfrow,
 body.detail-open .nfrow,
 body.detail-open .content{display:none!important;}
+/* 栏目切换时正文会从左右偏移 22px 滑入；只裁掉横向溢出，避免向左切换时
+   右移的新内容临时撑宽页面、带动固定底栏横晃。clip 不会建立新的滚动容器。 */
 /* 详情正文：一节一张卡，浮在页面底色上（卡的描边圆角与列表页 .twrap 同一套）。
    分节靠卡与卡之间的空隙，不再需要发丝线；没填备注/标签的条目直接少一张卡，
    不会像原来那样留下一段空白的节。 */
-.dt-body{display:flex;flex-direction:column;gap:var(--sp-10);
+.dt-body{display:flex;flex-direction:column;gap:var(--sp-10);overflow-x:clip;
   --dt-padx:var(--sp-16);--dt-padt:var(--sp-12);
   padding:var(--dt-padt) var(--dt-padx) var(--sp-24);}
 /* 书名卡 + 三栏切换钉在顶上，底下的内容从它下面滑过去。三个栏目都一样。
