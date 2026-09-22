@@ -11283,7 +11283,7 @@ function graphScreen(screen){
   rgScreen=screen;
   document.getElementById('rgLibrary').classList.toggle('open',screen==='list');
   document.getElementById('rgManager').classList.toggle('open',screen==='manage');
-  document.getElementById('rgStage').style.display=screen==='graph'?'':'';
+  document.getElementById('rgStage').style.display=screen==='graph'?'':'none';
   document.getElementById('rgLegend').style.display=screen==='graph'?'':'none';
   document.querySelector('#relGraph .people-toolbar').style.display=screen==='graph'?'':'none';
   document.getElementById('rgManageButton').style.display=screen==='graph'?'':'none';
