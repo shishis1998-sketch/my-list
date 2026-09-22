@@ -4896,7 +4896,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 章节目录标题：去掉包住整组章节的外层描边；标题行仍保留原内边距。
    每组章节卡横向铺到原外层卡片的宽度，章节卡自己的圆角 var(--rlg) 保持不变。 */
-#detailBookNoteCard{border:0;background:transparent;}
+#detailBookNoteCard{border:0;background:transparent;padding-top:0;}
 #detailBookNoteCard > .dt-lbl-row{align-items:center;min-height:24px;margin-bottom:var(--sp-12);}
 #detailBookNoteCard > .dt-lbl-row > .dt-lbl{font-weight:700;margin-bottom:0;}
 #detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-16));margin-right:calc(-1 * var(--sp-16));}
@@ -11020,8 +11020,9 @@ function renderDetailTL(item){
   const np=groups.filter(g=>g.part).length;
   const displayCount=timelineDisplayCount(groups);
   // 章节内点正文编辑整章；右下角新增，全文编辑保留在更多菜单。
-  // 只复用人物页的标题行和菜单；时间线仍保持详情页原来的顶层结构。
-  return `<div class="dt-seclbl-row timeline-head">
+  // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
+  return `<div class="dt-sec">
+  <div class="dt-seclbl-row timeline-head">
     <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
     <div class="people-head-actions">
       <details class="people-more">
@@ -11035,7 +11036,7 @@ function renderDetailTL(item){
   <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
-  </div>
+  </div></div>
   <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
     onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
