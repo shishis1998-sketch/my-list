@@ -2447,10 +2447,15 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-rel-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:var(--fs-caption);}
 .rg-rel-row span{flex:1;min-width:0;overflow-wrap:anywhere;}
 .rg-rel-row select{width:auto;flex:0 0 96px;min-width:0;}
-.tl-graph-link{border:0;background:transparent;color:var(--accent);font:600 var(--fs-caption) var(--zh);padding:6px 8px;cursor:pointer;white-space:nowrap;}
-.tl-section-wrap{display:flex;min-width:0;align-items:center;}
-.tl-section-wrap .tl-section-btn{flex:1;min-width:0;}
-.tl-chapter-group.collapsed>.tl-graph-link{display:none;}
+.chapter-action-menu{display:none;position:fixed;inset:0;z-index:179;background:rgba(0,0,0,.28);align-items:flex-end;justify-content:center;}
+.chapter-action-menu.open{display:flex;}
+.chapter-action-panel{width:100%;max-width:520px;box-sizing:border-box;padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius:20px 20px 0 0;background:var(--surface);}
+.chapter-action-title{padding:2px 4px 14px;color:var(--text-muted);font-size:var(--fs-caption);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chapter-action-item{display:block;width:100%;height:48px;border:0;border-top:1px solid var(--border-soft);background:transparent;
+  color:var(--text-primary);text-align:left;font:var(--fs-body) var(--zh);cursor:pointer;}
+.chapter-action-cancel{color:var(--text-muted);text-align:center;}
+[data-graph-longpress]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 .rg-filter{display:none;position:absolute;z-index:7;right:var(--sp-12);top:calc(62px + env(safe-area-inset-top));
   width:190px;padding:var(--sp-10);border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);}
 .rg-filter.open{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
@@ -5180,6 +5185,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <!-- ===== DETAIL VIEW：点列表某一行进来，同样与 .content 平级 ===== -->
   <div class="detail-view" id="detailRoot">
     <div class="dt-body" id="dtBody"></div>
+  </div>
+
+  <div class="chapter-action-menu" id="chapterActionMenu" onclick="if(event.target===this)closeChapterActionMenu()" aria-hidden="true">
+    <div class="chapter-action-panel" role="dialog" aria-label="章节操作">
+      <div class="chapter-action-title" id="chapterActionTitle"></div>
+      <button type="button" class="chapter-action-item" onclick="openChapterActionGraph()">关系图</button>
+      <button type="button" class="chapter-action-item chapter-action-cancel" onclick="closeChapterActionMenu()">取消</button>
+    </div>
   </div>
 
   <!-- 人物关系图是详情页上的独立全屏页面，返回后仍停在这本书的人物列表。 -->
@@ -10209,6 +10222,7 @@ function render(){
 // 底部四个 tab 那几页（列表 / 日历 / 设置侧栏）不在表里：它们是页不是浮层，
 // 在首页按返回就该退出网页，跟原生 App 一样。
 const BACK_LAYERS=[
+  {id:'chapterActionMenu',  cls:'open', close:()=>closeChapterActionMenu()},
   {id:'relGraph',           cls:'open', close:()=>closeRelationGraph()},
   {id:'detailRoot',         cls:'open', close:()=>closeDetail()},
   {id:'modal',              cls:'open', close:()=>closeModal()},
@@ -11195,6 +11209,52 @@ function openGraphForChapter(idx){
   openGraphLibrary(graphChapterKey(title,n));
 }
 function openGraphForGroup(title){openGraphLibrary('group:'+title);}
+let chapterActionTarget=null,chapterPress=null,chapterClickBlock=null;
+function openChapterActionMenu(el){
+  if(!el||!detailId)return;
+  chapterActionTarget={chapter:el.dataset.graphChapter,group:el.dataset.graphGroup};
+  document.getElementById('chapterActionTitle').textContent=el.dataset.graphTitle||'章节';
+  const menu=document.getElementById('chapterActionMenu');menu.classList.add('open');menu.setAttribute('aria-hidden','false');
+  if(navigator.vibrate)navigator.vibrate(12);
+}
+function closeChapterActionMenu(){
+  const menu=document.getElementById('chapterActionMenu');menu.classList.remove('open');menu.setAttribute('aria-hidden','true');
+  chapterActionTarget=null;chapterClickBlock=null;
+}
+function openChapterActionGraph(){
+  const target=chapterActionTarget;closeChapterActionMenu();if(!target)return;
+  if(target.chapter!=null)openGraphForChapter(Number(target.chapter));
+  else if(target.group!=null)openGraphForGroup(target.group);
+}
+document.addEventListener('pointerdown',e=>{
+  const el=e.target.closest?.('#detailBookNoteCard [data-graph-longpress]');
+  if(!el||e.button!==0)return;
+  if(chapterPress)clearTimeout(chapterPress.timer);
+  chapterPress={el,id:e.pointerId,x:e.clientX,y:e.clientY,timer:setTimeout(()=>{
+    chapterClickBlock=el;openChapterActionMenu(el);chapterPress=null;
+  },500)};
+});
+document.addEventListener('pointermove',e=>{
+  if(chapterPress?.id===e.pointerId&&Math.hypot(e.clientX-chapterPress.x,e.clientY-chapterPress.y)>10){
+    clearTimeout(chapterPress.timer);chapterPress=null;
+  }
+});
+document.addEventListener('scroll',()=>{if(chapterPress){clearTimeout(chapterPress.timer);chapterPress=null;}},true);
+for(const type of ['pointerup','pointercancel'])document.addEventListener(type,e=>{
+  if(chapterPress?.id===e.pointerId){clearTimeout(chapterPress.timer);chapterPress=null;}
+});
+document.addEventListener('click',e=>{
+  if(chapterClickBlock&&(e.target===chapterClickBlock||chapterClickBlock.contains(e.target))){
+    e.preventDefault();e.stopImmediatePropagation();chapterClickBlock=null;
+  }
+},true);
+document.addEventListener('contextmenu',e=>{
+  const el=e.target.closest?.('#detailBookNoteCard [data-graph-longpress]');
+  if(!el)return;e.preventDefault();
+  if(chapterPress){clearTimeout(chapterPress.timer);chapterPress=null;}
+  chapterClickBlock=el;
+  if(!document.getElementById('chapterActionMenu').classList.contains('open'))openChapterActionMenu(el);
+});
 function ensureGraphCollection(item){
   if(!Array.isArray(item.relationGraphs)){
     item.relationGraphs=(normPeople(item.people).length||Array.isArray(item.relationships)||item.peopleGraphPositions)
@@ -14911,19 +14971,17 @@ function renderTimelineChapterCards(chs,openFn){
   return groupTimelineChapters(chs).map(entry=>{
     if(entry.type==='single'){
       const x=entry.item;
-      return `<div class="tl-item has-paras" data-idx="${x.i}" onclick="${openFn}(${x.i})">
+      return `<div class="tl-item has-paras" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
         <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
-        ${openFn==='openDetailChapter'?`<button type="button" class="tl-graph-link" onclick="event.stopPropagation();openGraphForChapter(${x.i})">关系图</button>`:''}
       </div>`;
     }
-    return `<div class="tl-chapter-group">
-      <button type="button" class="tl-chapter-group-head" aria-expanded="true" onclick="toggleTimelineChapterGroup(this)">
+    return `<div class="tl-chapter-group" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
+      <button type="button" class="tl-chapter-group-head" aria-expanded="true" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      ${openFn==='openDetailChapter'?`<button type="button" class="tl-graph-link" onclick="openGraphForGroup(${JSON.stringify(entry.title).replace(/"/g,'&quot;')})">${esc(entry.title)}关系图</button>`:''}
       <div class="tl-section-grid">
-        ${entry.items.map(x=>`<div class="tl-section-wrap"><button type="button" class="tl-section-btn" data-idx="${x.i}" onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}">${esc(x.section)}</button>${openFn==='openDetailChapter'?`<button type="button" class="tl-graph-link" onclick="openGraphForChapter(${x.i})" aria-label="${esc(x.section)}关系图">关系图</button>`:''}</div>`).join('')}
+        ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}">${esc(x.section)}</button>`).join('')}
       </div>
     </div>`;
   }).join('');
