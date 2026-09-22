@@ -2465,10 +2465,12 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-filter button.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
 .rg-stage{position:relative;flex:1;overflow:hidden;background:var(--bg);cursor:grab;}
 .rg-stage.dragging{cursor:grabbing;}.rg-canvas{position:absolute;left:0;top:0;width:1200px;height:1200px;transform-origin:0 0;}
-.rg-label-toggle{grid-column:1/-1;justify-self:start;margin-top:2px;padding:7px 11px;pointer-events:auto;
-  border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-secondary);
-  font:var(--fs-caption) var(--zh);cursor:pointer;}
-.rg-label-toggle.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.rg-legend-tools{grid-column:1/-1;display:flex;justify-content:flex-end;gap:6px;padding-bottom:5px;
+  border-bottom:1px solid var(--border-soft);pointer-events:auto;}
+.rg-legend-tool{display:grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--border);
+  border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;}
+.rg-legend-tool svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+.rg-legend-tool.on{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
 .rg-lines{position:absolute;inset:0;width:1200px;height:1200px;overflow:visible;pointer-events:none;}
 .rg-edge{fill:none;stroke-width:2;}.rg-edge.conflict{stroke-dasharray:7 5;}
 .rg-edge-label{font:600 12px var(--zh);text-anchor:middle;dominant-baseline:central;
@@ -5199,7 +5201,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="rg-head">
       <button type="button" class="rg-back" onclick="closeRelationGraph()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="rg-title" id="rgTitle">人物关系图</div>
-      <button type="button" class="rg-small-btn" id="rgManageButton" onclick="openGraphManager()" style="display:none">编辑</button>
       <div class="people-toolbar">
         <button type="button" class="people-tool" onclick="toggleGraphSearch()" aria-label="搜索人物"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
         <button type="button" class="people-tool" onclick="toggleGraphFilter()" aria-label="筛选关系"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
@@ -11286,7 +11287,6 @@ function graphScreen(screen){
   document.getElementById('rgStage').style.display=screen==='graph'?'':'none';
   document.getElementById('rgLegend').style.display=screen==='graph'?'':'none';
   document.querySelector('#relGraph .people-toolbar').style.display=screen==='graph'?'':'none';
-  document.getElementById('rgManageButton').style.display=screen==='graph'?'':'none';
   if(screen!=='graph'){
     document.getElementById('rgSearchbar').classList.remove('open');
     document.getElementById('rgFilter').classList.remove('open');
@@ -11540,7 +11540,7 @@ function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
   const types=relationTypes(data.find(d=>d.id===detailId));
   if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';
-    document.getElementById('rgFilter').innerHTML='';document.getElementById('rgLegend').innerHTML='';return;}
+    document.getElementById('rgFilter').innerHTML='';renderGraphLegend(relations);return;}
   layoutGraph(people,relations,rgState.centerId);
   canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
   canvas.innerHTML=`<svg class="rg-lines" id="rgLines" viewBox="0 0 ${rgState.canvasSize} ${rgState.canvasSize}" style="width:${rgState.canvasSize}px;height:${rgState.canvasSize}px"></svg>`+
@@ -11562,7 +11562,10 @@ function renderGraphLegend(relations){
   const legend=document.getElementById('rgLegend'),used=new Set(relations.filter(r=>rgState.filters.has(r.type)).map(r=>r.type));
   const types=relationTypes(data.find(d=>d.id===detailId)).filter(t=>used.has(t.id));
   legend.classList.toggle('single',types.length===1);
-  legend.innerHTML=types.length?types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('')+`<button type="button" class="rg-label-toggle" id="rgLabelToggle" onclick="toggleGraphLabels()" aria-pressed="false">显示关系文字</button>`:'';
+  legend.innerHTML=`<div class="rg-legend-tools">
+    <button type="button" class="rg-legend-tool" onclick="openGraphManager()" aria-label="编辑关系图" title="编辑关系图"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg></button>
+    <button type="button" class="rg-legend-tool" id="rgLabelToggle" onclick="toggleGraphLabels()" aria-pressed="false"></button>
+  </div>`+types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
   updateGraphLabelButton();
 }
 function currentGraphData(){
@@ -11594,7 +11597,11 @@ function saveGraphPositions(){
 }
 function updateGraphLabelButton(){
   const button=document.getElementById('rgLabelToggle');if(!button)return;
-  button.textContent=rgState.showLabels?'隐藏关系文字':'显示关系文字';
+  const label=rgState.showLabels?'隐藏关系文字':'显示关系文字';
+  button.setAttribute('aria-label',label);button.title=label;
+  button.innerHTML=rgState.showLabels
+    ?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>'
+    :'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3 21 21"/><path d="M10.6 5.1A11 11 0 0 1 12 5c6.5 0 10 7 10 7a14 14 0 0 1-3 3.8M6.4 6.4C3.6 8.3 2 12 2 12s3.5 7 10 7a9.8 9.8 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
   button.classList.toggle('on',rgState.showLabels);
   button.setAttribute('aria-pressed',String(rgState.showLabels));
 }
@@ -11648,7 +11655,7 @@ function setGraphCenter(id){
 function bindGraphPan(){
   const stage=document.getElementById('rgStage');if(!stage||stage.dataset.bound)return;stage.dataset.bound='1';
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
-  stage.addEventListener('pointerdown',e=>{if((e.button!=null&&e.button!==0)||e.target.closest('.rg-label-toggle'))return;
+  stage.addEventListener('pointerdown',e=>{if(e.button!=null&&e.button!==0)return;
     rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(rgState.pointers.size===2){if(rgState.nodeDrag?.moved)saveGraphPositions();
       rgState.nodeDrag?.el.classList.remove('dragging');rgState.nodeDrag=null;
@@ -11682,7 +11689,7 @@ function bindGraphPan(){
     if(rgState.pointers.size<2)rgState.pinch=null;if(!rgState.pointers.size)stage.classList.remove('dragging');};
   stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
   stage.addEventListener('click',e=>{
-    if(e.target.closest('.rg-node,.rg-label-toggle')||Date.now()<rgState.suppressBlankClickUntil)return;
+    if(e.target.closest('.rg-node')||Date.now()<rgState.suppressBlankClickUntil)return;
     resetGraphSearch();
   });
   stage.addEventListener('wheel',e=>{e.preventDefault();const rect=stage.getBoundingClientRect(),old=rgState.scale,next=Math.max(.55,Math.min(1.7,old*(e.deltaY<0?1.1:.9))),px=e.clientX-rect.left,py=e.clientY-rect.top;rgState.x=px-(px-rgState.x)*next/old;rgState.y=py-(py-rgState.y)*next/old;rgState.scale=next;applyGraphTransform();},{passive:false});
