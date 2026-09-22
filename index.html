@@ -2379,7 +2379,20 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .people-more summary svg{width:21px;height:21px;}
 .people-more[open] summary{background:var(--surface-2);color:var(--accent);}
 .people-more-menu{position:absolute;z-index:30;right:0;top:calc(100% + 6px);width:156px;padding:6px;
-  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
+  border:1px solid var(--border);border-radius:var(--r);background:var(--surface);
+  transform-origin:top right;animation:people-menu-in .22s cubic-bezier(.2,.8,.2,1) both;}
+.people-more.closing .people-more-menu{pointer-events:none;animation:people-menu-out .16s ease-in both;}
+@keyframes people-menu-in{
+  from{opacity:0;transform:translateY(-7px) scale(.88,.72);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes people-menu-out{
+  from{opacity:1;transform:translateY(0) scale(1);}
+  to{opacity:0;transform:translateY(-5px) scale(.92,.8);}
+}
+@media (prefers-reduced-motion:reduce){
+  .people-more-menu,.people-more.closing .people-more-menu{animation:none;}
+}
 .people-more-item{display:flex;align-items:center;gap:var(--sp-10);width:100%;min-height:42px;padding:8px 10px;
   border:0;border-radius:calc(var(--r) - 4px);background:transparent;color:var(--text-primary);
   font:var(--fs-body) var(--zh);text-align:left;cursor:pointer;}
@@ -10684,8 +10697,26 @@ function peopleMenuAction(action,button){
   if(action==='graph')openGraphLibrary();
   else if(action==='sort')setSortPeople(true);
 }
+function togglePeopleMenu(event,summary){
+  event.preventDefault();
+  const menu=summary.closest('.people-more');
+  if(menu.classList.contains('closing')){
+    clearTimeout(menu.closeTimer);
+    menu.classList.remove('closing');
+  }else if(menu.open){
+    closePeopleMenu(menu);
+  }else{
+    menu.open=true;
+  }
+}
+function closePeopleMenu(menu){
+  if(!menu.open||menu.classList.contains('closing'))return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){menu.open=false;return;}
+  menu.classList.add('closing');
+  menu.closeTimer=setTimeout(()=>{menu.open=false;menu.classList.remove('closing');},160);
+}
 document.addEventListener('pointerdown',e=>{
-  document.querySelectorAll('.people-more[open]').forEach(menu=>{if(!menu.contains(e.target))menu.removeAttribute('open');});
+  document.querySelectorAll('.people-more[open]').forEach(menu=>{if(!menu.contains(e.target))closePeopleMenu(menu);});
 });
 
 let peDrag=null;
@@ -10890,7 +10921,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
                   <button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>
                   <button type="button" class="people-search-toggle${peopleSearchOpen?' active':''}" onclick="togglePeopleSearch()" aria-label="${peopleSearchOpen?'关闭人物搜索':'搜索人物'}" title="搜索人物" aria-expanded="${peopleSearchOpen}">${ICON_PERSON_SEARCH}</button>
                   <details class="people-more">
-                    <summary aria-label="更多人物操作" title="更多">${ICON_MORE}</summary>
+                    <summary aria-label="更多人物操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
                     <div class="people-more-menu">
                       <button type="button" class="people-more-item" onclick="peopleMenuAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
                       <button type="button" class="people-more-item" onclick="peopleMenuAction('sort',this)" ${ppl.length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
