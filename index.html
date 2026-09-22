@@ -2486,7 +2486,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-pc-rel{margin-top:var(--sp-10);font-size:var(--fs-caption);color:var(--text-muted);}
 .rg-pc-actions{display:flex;justify-content:flex-end;gap:var(--sp-8);margin-top:var(--sp-12);}
 .rg-pc-btn{border:0;border-radius:999px;padding:9px 14px;font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;}
-.rg-pc-close{background:var(--surface-2);color:var(--text-secondary);}.rg-pc-center{background:var(--accent);color:var(--on-accent);}
+.rg-pc-close,.rg-pc-delete{background:var(--surface-2);color:var(--text-secondary);}.rg-pc-center{background:var(--accent);color:var(--on-accent);}
 .rg-pc-edit{background:var(--accent-light);color:var(--accent);}
 .rg-pc-editor{display:flex;flex-direction:column;gap:var(--sp-10);margin-top:var(--sp-12);}
 .rg-pc-edit-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(95px,130px) 30px;align-items:center;gap:var(--sp-6);}
@@ -11271,7 +11271,7 @@ function renderGraphLibrary(){
   graphScreen('list');
   document.getElementById('rgLibrary').innerHTML=graphs.map(g=>`<div class="rg-list-card">
     <button type="button" class="rg-list-open" onclick="openRelationGraph('${g.id}')"><strong>${esc(g.title)}</strong>
-    <small>${g.anchor?esc(graphAnchorName(it,g.anchor)):'全书'} · ${g.id==='legacy'?ensurePeopleIds(it,false).length:g.personIds?.length||0} 人</small></button>
+    <small>${g.anchor?esc(graphAnchorName(it,g.anchor)):'全书'} · ${g.id==='legacy'?ensurePeopleIds(it,false).filter(p=>!(g.excludedPersonIds||[]).includes(p.id)).length:g.personIds?.length||0} 人</small></button>
     <button type="button" class="rg-small-btn" onclick="openGraphManager('${g.id}')" aria-label="编辑${esc(g.title)}">编辑</button></div>`).join('')+
     `<div class="rg-form-actions"><button type="button" class="primary" onclick="openGraphManager('new')">＋ 新建关系图</button></div>`;
 }
@@ -11296,8 +11296,8 @@ function openGraphManager(id=rgGraphId){
     <div class="rg-form-actions"><button type="button" onclick="cancelGraphManager()">取消</button><button type="button" class="primary" onclick="saveGraphManager()">${fresh?'创建':'保存'}</button></div>
     ${!fresh&&rgGraphId!=='legacy'?'<div class="rg-form-actions"><button type="button" onclick="deleteCurrentGraph()">删除这张关系图</button></div>':''}
   </div>${fresh?'':`<div class="rg-form-card"><h3>图中人物</h3>
-    ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'||g?.personIds?.includes(p.id)?'checked':''} ${rgGraphId==='legacy'?'disabled':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
-    ${rgGraphId==='legacy'?'<p>全书关系图自动显示全部人物；关系和类别请在图中点击人物编辑。</p>':'<div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div>'}</div>
+    ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'?!(g?.excludedPersonIds||[]).includes(p.id)?'checked':'':g?.personIds?.includes(p.id)?'checked':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
+    <div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div></div>
     ${rgGraphId==='legacy'?'':renderGraphRelationEditor(it,g)}`}`;
 }
 function renderGraphRelationEditor(item,g){
@@ -11322,10 +11322,12 @@ function saveGraphManager(){
 }
 function cancelGraphManager(){if(rgGraphId==='new'||!rgGraphId)renderGraphLibrary();else openRelationGraph(rgGraphId);}
 function saveGraphMembers(){
-  const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g||g.id==='legacy')return;
-  g.personIds=[...document.querySelectorAll('#rgManager [data-graph-person]:checked')].map(x=>x.dataset.graphPerson);
-  const ids=new Set(g.personIds);g.relationships=(g.relationships||[]).filter(r=>ids.has(r.a)&&ids.has(r.b));
-  if(!ids.has(g.centerId))g.centerId=g.personIds[0]||'';
+  const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g)return;
+  const ids=new Set([...document.querySelectorAll('#rgManager [data-graph-person]:checked')].map(x=>x.dataset.graphPerson));
+  if(g.id==='legacy')g.excludedPersonIds=ensurePeopleIds(it,false).filter(p=>!ids.has(p.id)).map(p=>p.id);
+  else g.personIds=[...ids];
+  if(g.id==='legacy'&&!ids.has(it.peopleGraphCenter))it.peopleGraphCenter=[...ids][0]||'';
+  if(g.id!=='legacy'&&!ids.has(g.centerId))g.centerId=g.personIds[0]||'';
   touchRec(it);persist();openGraphManager(g.id);toast('已保存');
 }
 function addGraphRelation(){
@@ -11511,7 +11513,7 @@ function separateGraphCards(){
 function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
   const types=relationTypes(data.find(d=>d.id===detailId));
-  if(!people.length){canvas.innerHTML='<div class="rg-empty">还没有人物。请先返回列表添加人物。</div>';
+  if(!people.length){canvas.innerHTML='<div class="rg-empty">这张关系图还没有人物。可点右下角编辑图标添加。</div>';
     document.getElementById('rgFilter').innerHTML='';renderGraphLegend(relations);return;}
   layoutGraph(people,relations,rgState.centerId);
   canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
@@ -11541,7 +11543,10 @@ function currentGraphData(){
   const it=data.find(d=>d.id===detailId);if(!it)return {people:[],relations:[]};
   const all=ensurePeopleIds(it,false),g=graphForItem(it);
   if(!g)return {people:[],relations:[]};
-  if(g.id==='legacy')return {people:all,relations:normRelations(it,all)};
+  if(g.id==='legacy'){
+    const excluded=new Set(g.excludedPersonIds||[]),people=all.filter(p=>!excluded.has(p.id));
+    return {people,relations:normRelations(it,people)};
+  }
   const ids=new Set(g.personIds||[]),people=all.filter(p=>ids.has(p.id));
   return {people,relations:normRelations({...it,relationships:g.relationships||[]},people)};
 }
@@ -11688,7 +11693,10 @@ function addGraphPersonRelation(){
     if(!ensurePeopleIds(store.item,false).some(p=>p.id===other))return;
     if(store.relations.some(r=>relKey(r.a,r.b)===relKey(id,other))){toast('两人已有关系');return;}
   }
-  if(graph.id!=='legacy'&&!inGraph)graph.personIds=[...new Set([...(graph.personIds||[]),other])];
+  if(!inGraph){
+    if(graph.id==='legacy')graph.excludedPersonIds=(graph.excludedPersonIds||[]).filter(pid=>pid!==other);
+    else graph.personIds=[...new Set([...(graph.personIds||[]),other])];
+  }
   store.relations.push({id:'r_'+newPersonId(),a:id,b:other,type});
   if(!inGraph){
     saveGraphPositions();touchRec(store.item);persist();
@@ -11712,9 +11720,22 @@ function selectGraphPerson(id,showCard){
   rgState.selectedId=id;updateGraphHighlights();drawGraphLines(relations);
   if(showCard){const byId=new Map(people.map(x=>[x.id,x])),rows=relations.filter(r=>r.a===id||r.b===id).map(r=>`${relType(r.type,data.find(d=>d.id===detailId)).lbl} · ${byId.get(r.a===id?r.b:r.a)?.name||'未命名人物'}`);
     const editing=rgEditingPerson===id,item=data.find(d=>d.id===detailId);
-    const card=document.getElementById('rgPersonCard');card.innerHTML=`<div class="rg-pc-head"><div class="rg-pc-main"><div class="rg-pc-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-pc-info">${esc(p.info)}</div>`:''}</div></div>${p.note?`<div class="rg-pc-note">${esc(p.note)}</div>`:''}${editing?renderGraphPersonRelationEditor(id,people,relations,item):rows.length?`<div class="rg-pc-rel">${rows.map(esc).join('<br>')}</div>`:''}<div class="rg-pc-actions"><button type="button" class="rg-pc-btn rg-pc-close" onclick="${editing?`toggleGraphPersonRelations('${id}')`:'closeGraphPersonCard()'}">${editing?'完成':'关闭'}</button>${editing?'':`<button type="button" class="rg-pc-btn rg-pc-edit" onclick="toggleGraphPersonRelations('${id}')">编辑关系</button>`}${id===rgState.centerId?'':`<button type="button" class="rg-pc-btn rg-pc-center" onclick="setGraphCenter('${id}')">设为中心</button>`}</div>`;card.classList.toggle('editing',editing);card.classList.add('open');}
+    const card=document.getElementById('rgPersonCard');card.innerHTML=`<div class="rg-pc-head"><div class="rg-pc-main"><div class="rg-pc-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-pc-info">${esc(p.info)}</div>`:''}</div></div>${p.note?`<div class="rg-pc-note">${esc(p.note)}</div>`:''}${editing?renderGraphPersonRelationEditor(id,people,relations,item):rows.length?`<div class="rg-pc-rel">${rows.map(esc).join('<br>')}</div>`:''}<div class="rg-pc-actions">${editing?`<button type="button" class="rg-pc-btn rg-pc-close" onclick="toggleGraphPersonRelations('${id}')">完成</button>`:`<button type="button" class="rg-pc-btn rg-pc-delete" onclick="removeGraphPersonCard('${id}')" title="只从这张关系图移除，不删除人物资料">删除卡片</button><button type="button" class="rg-pc-btn rg-pc-edit" onclick="toggleGraphPersonRelations('${id}')">编辑关系</button>`}${id===rgState.centerId?'':`<button type="button" class="rg-pc-btn rg-pc-center" onclick="setGraphCenter('${id}')">设为中心</button>`}</div>`;card.classList.toggle('editing',editing);card.classList.add('open');}
 }
 function closeGraphPersonCard(){rgEditingPerson='';const card=document.getElementById('rgPersonCard');card.classList.remove('open','editing');}
+function removeGraphPersonCard(id){
+  const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);
+  if(!g||!currentGraphData().people.some(p=>p.id===id))return;
+  if(g.id==='legacy')g.excludedPersonIds=[...new Set([...(g.excludedPersonIds||[]),id])];
+  else g.personIds=(g.personIds||[]).filter(pid=>pid!==id);
+  const next=currentGraphData(),centerRemoved=rgState.centerId===id;
+  if(centerRemoved)rgState.centerId=next.people[0]?.id||'';
+  rgState.selectedId='';closeGraphPersonCard();
+  delete rgState.positions[id];
+  renderRelationGraph(next.people,next.relations);
+  if(centerRemoved&&next.people.length)centerGraphOn(rgState.centerId,false);
+  saveGraphPositions();toast('已从这张关系图移除');
+}
 function setGraphCenter(id){
   const {people,relations}=currentGraphData();if(!people.some(p=>p.id===id))return;
   rgState.centerId=id;rgState.selectedId=id;layoutGraph(people,relations,id);
