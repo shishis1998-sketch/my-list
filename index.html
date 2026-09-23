@@ -11816,6 +11816,25 @@ function setGraphCenter(id){
   updateGraphHighlights();drawGraphLines(relations);centerGraphOn(id,true);selectGraphPerson(id,true);
   saveGraphPositions();
 }
+function snapGraphNodePosition(d,rawX,rawY){
+  const movingW=d.el.offsetWidth,movingH=d.el.offsetHeight;
+  const centerX=rawX+movingW/2,centerY=rawY+movingH/2;
+  // 以屏幕上的 12px 作为吸附范围；画布缩放后仍保持相同手感。
+  const threshold=12/Math.max(.01,rgState.scale);
+  let bestX=null,bestY=null,bestXGap=threshold+1,bestYGap=threshold+1;
+  document.querySelectorAll('#rgCanvas .rg-node').forEach(el=>{
+    if(el===d.el)return;
+    const pos=rgState.positions[el.dataset.person];if(!pos)return;
+    const otherX=pos.x+el.offsetWidth/2,otherY=pos.y+el.offsetHeight/2;
+    const xGap=Math.abs(centerX-otherX),yGap=Math.abs(centerY-otherY);
+    if(xGap<bestXGap){bestXGap=xGap;bestX={id:el.dataset.person,value:otherX-movingW/2};}
+    if(yGap<bestYGap){bestYGap=yGap;bestY={id:el.dataset.person,value:otherY-movingH/2};}
+  });
+  const nextSnapX=bestX?.id||'',nextSnapY=bestY?.id||'';
+  if((nextSnapX&&nextSnapX!==d.snapX)||(nextSnapY&&nextSnapY!==d.snapY))haptic('tap');
+  d.snapX=nextSnapX;d.snapY=nextSnapY;
+  return {x:bestX?bestX.value:rawX,y:bestY?bestY.value:rawY};
+}
 function bindGraphPan(){
   const stage=document.getElementById('rgStage');if(!stage||stage.dataset.bound)return;stage.dataset.bound='1';
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
@@ -11826,7 +11845,7 @@ function bindGraphPan(){
       rgState.suppressNodeClickUntil=rgState.suppressBlankClickUntil=Date.now()+300;try{stage.setPointerCapture(e.pointerId);}catch(_){}
       const [a,b]=[...rgState.pointers.values()],m=mid(a,b);rgState.pan=null;rgState.pinch={distance:dist(a,b),scale:rgState.scale,cx:(m.x-rgState.x)/rgState.scale,cy:(m.y-rgState.y)/rgState.scale};stage.classList.add('dragging');}
     else if(e.target.closest('.rg-node')){const el=e.target.closest('.rg-node'),p=rgState.positions[el.dataset.person];
-      if(p)rgState.nodeDrag={pid:e.pointerId,el,sx:e.clientX,sy:e.clientY,x:p.x,y:p.y,moved:false};}
+      if(p)rgState.nodeDrag={pid:e.pointerId,el,sx:e.clientX,sy:e.clientY,x:p.x,y:p.y,moved:false,snapX:'',snapY:''};}
     else{try{stage.setPointerCapture(e.pointerId);}catch(_){}
       rgState.pan={pid:e.pointerId,sx:e.clientX,sy:e.clientY,x:rgState.x,y:rgState.y,moved:false};stage.classList.add('dragging');}});
   stage.addEventListener('pointermove',e=>{if(!rgState.pointers.has(e.pointerId))return;rgState.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -11835,7 +11854,9 @@ function bindGraphPan(){
     if(d&&d.pid===e.pointerId){
       const dx=e.clientX-d.sx,dy=e.clientY-d.sy;
       if(!d.moved&&Math.hypot(dx,dy)>6){d.moved=true;d.el.classList.add('dragging');try{d.el.setPointerCapture(e.pointerId);}catch(_){}}
-      if(d.moved){const p=rgState.positions[d.el.dataset.person];p.x=d.x+dx/rgState.scale;p.y=d.y+dy/rgState.scale;
+      if(d.moved){const p=rgState.positions[d.el.dataset.person];
+        const snapped=snapGraphNodePosition(d,d.x+dx/rgState.scale,d.y+dy/rgState.scale);
+        p.x=snapped.x;p.y=snapped.y;
         d.el.style.left=p.x+'px';d.el.style.top=p.y+'px';drawGraphLines(currentGraphData().relations);}
       return;
     }
