@@ -8600,6 +8600,8 @@ window.PV = (function(){
     }
     const firstDayOffset = (new Date(heatYear, heatMonth - 1, 1).getDay() + 6) % 7;
     box.innerHTML = summary + '<div class="hm-cards">' + visibleCards.map(c => {
+      // CSS Grid 也按频率强制排位，避免卡片沿用数据生成时的插入顺序。
+      const frequency = Number(c.type === '食记' ? c.count : c.days.length) || 0;
       let cells = '<span class="hm-day blank" aria-hidden="true"></span>'.repeat(firstDayOffset);
       for (let d = 1; d <= dim; d++) {
         const on = c.days.includes(d);
@@ -8608,7 +8610,7 @@ window.PV = (function(){
         const joinNext = column < 6 && d < dim && c.days.includes(d + 1) === on;
         cells += `<span class="hm-day${on ? ' on' : ''}${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}"${on ? ` aria-label="${d}日，有记录"` : ''}>${d}</span>`;
       }
-      return '<div class="hm-card">' +
+      return `<div class="hm-card" style="order:${-frequency}" data-frequency="${frequency}">` +
         '<div class="hm-card-hd">' +
           `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
           `<span class="hm-card-meta">本月 ${c.type === '食记' ? `<b>${c.count}</b> 次 · ` : ''}<b>${c.days.length}</b> 天</span>` +
