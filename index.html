@@ -15198,6 +15198,30 @@ function timelineSectionTitle(title){
   const m=String(title||'').trim().match(TL_SECTION_TITLE_RE);
   return m?{chapter:m[1].trim(),section:m[2].trim()}:null;
 }
+// 时间线只在显示层按章节编号自然排序；原正文顺序和章节索引 i 保持不变。
+function timelineChapterNumber(title){
+  const main=timelineSectionTitle(title)?.chapter||String(title||'').trim();
+  const m=main.match(/第([一二三四五六七八九十百零0-9]+)章/u);
+  if(m){
+    if(/^\d+$/.test(m[1]))return Number(m[1]);
+    const digit={零:0,一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9};
+    const unit={十:10,百:100};
+    let total=0,current=0;
+    for(const ch of m[1]){
+      if(ch in digit)current=digit[ch];
+      else if(ch in unit){total+=(current||1)*unit[ch];current=0;}
+    }
+    return total+current;
+  }
+  const custom=main.match(/(\d+)(?!.*\d)/);
+  return custom?Number(custom[1]):Number.POSITIVE_INFINITY;
+}
+function sortTimelineChapters(chs){
+  return (chs||[]).slice().sort((a,b)=>{
+    const diff=timelineChapterNumber(a.c.title)-timelineChapterNumber(b.c.title);
+    return Number.isFinite(diff)&&diff!==0?diff:a.i-b.i;
+  });
+}
 function groupTimelineChapters(chs){
   const out=[], grouped=new Map();
   (chs||[]).forEach(x=>{
@@ -15222,7 +15246,7 @@ function toggleTimelineChapterGroup(btn){
   btn.setAttribute('aria-expanded',String(!collapsed));
 }
 function renderTimelineChapterCards(chs,openFn){
-  return groupTimelineChapters(chs).map(entry=>{
+  return groupTimelineChapters(sortTimelineChapters(chs)).map(entry=>{
     if(entry.type==='single'){
       const x=entry.item;
       return `<div class="tl-item has-paras" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
