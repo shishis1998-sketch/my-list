@@ -8564,7 +8564,9 @@ window.PV = (function(){
       });
     });
     const foodCards = [...foodGroups.values()].filter(group => group.count >= 2)
-      .sort((a, b) => b.count - a.count)
+      // 先按记录次数降序；次数相同，再按实际出现天数降序。
+      // 两项都相同则保持首次出现顺序（稳定排序）。
+      .sort((a, b) => (b.count - a.count) || (b.days.size - a.days.size))
       .map(group => ({ ...group, days: [...group.days].sort((a, b) => a - b) }));
     cards.push(...foodCards);
 
@@ -8572,11 +8574,12 @@ window.PV = (function(){
       ? [...cards]
       : cards.filter(card => card.type === heatTypeFilter)
     ).sort((a, b) => {
-      // 按卡片上实际显示的频率统一降序：食记看记录次数，标签看出现天数。
-      // 必须在筛选后的最终列表再排一次，避免不同来源的卡片沿用各自的插入顺序。
+      // 第一排序：卡片上显示的主频率降序（食记看次数，标签看天数）。
+      // 第二排序：主频率相同时，实际出现天数更多的排在前面。
+      // 两项都相同则由稳定排序保留原始记录顺序。
       const aFrequency = a.type === '食记' ? a.count : a.days.length;
       const bFrequency = b.type === '食记' ? b.count : b.days.length;
-      return bFrequency - aFrequency;
+      return (bFrequency - aFrequency) || (b.days.length - a.days.length);
     });
 
     // 总结与下方卡片共用同一批统计结果和筛选条件。
