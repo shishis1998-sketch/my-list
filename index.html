@@ -2448,6 +2448,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .chapter-action-item{display:block;width:100%;min-height:40px;border:0;border-radius:8px;background:transparent;
   color:var(--text-primary);text-align:left;padding:8px 12px;font:var(--fs-body) var(--zh);cursor:pointer;touch-action:manipulation;}
 .chapter-action-item:active{background:var(--surface-2);}
+.chapter-action-item.danger{margin-top:4px;border-top:1px solid var(--border-soft);color:var(--danger);}
 [data-graph-longpress]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 .rg-filter{display:none;position:absolute;z-index:7;right:var(--sp-12);top:calc(62px + env(safe-area-inset-top));
   width:190px;padding:var(--sp-10);border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);}
@@ -5204,6 +5205,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <div class="chapter-action-menu" id="chapterActionMenu" onclick="if(event.target===this)closeChapterActionMenu()" aria-hidden="true">
     <div class="chapter-action-panel" role="menu" aria-label="章节操作">
       <button type="button" class="chapter-action-item" role="menuitem" onclick="openChapterActionGraph()">关系图</button>
+      <button type="button" class="chapter-action-item danger" role="menuitem" onclick="deleteChapterAction()">删除章节</button>
     </div>
   </div>
 
@@ -11241,7 +11243,7 @@ function openGraphForAnchor(anchor){
 let chapterActionTarget=null,chapterPress=null,chapterClickBlock=null;
 function openChapterActionMenu(el,point){
   if(!el||!detailId)return;
-  chapterActionTarget={chapter:el.dataset.graphChapter,group:el.dataset.graphGroup};
+  chapterActionTarget={chapter:el.dataset.graphChapter,group:el.dataset.graphGroup,title:el.dataset.graphTitle||''};
   const menu=document.getElementById('chapterActionMenu');menu.classList.add('open');menu.setAttribute('aria-hidden','false');
   window.getSelection()?.removeAllRanges();
   const panel=menu.querySelector('.chapter-action-panel'),rect=el.getBoundingClientRect();
@@ -11259,6 +11261,44 @@ function openChapterActionGraph(){
   const target=chapterActionTarget;closeChapterActionMenu();if(!target)return;
   if(target.chapter!=null)openGraphForChapter(Number(target.chapter));
   else if(target.group!=null)openGraphForGroup(target.group);
+}
+function deleteChapterAction(){
+  const target=chapterActionTarget;
+  const it=target&&data.find(d=>d.id===detailId);
+  if(!target||!it)return;
+  const body=it.bookNote||'',chs=parseChapters(body);
+  let indexes=[];
+  if(target.chapter!=null){
+    const idx=Number(target.chapter);
+    if(Number.isInteger(idx)&&chs[idx])indexes=[idx];
+  }else if(target.group!=null){
+    indexes=chs.map((c,i)=>timelineSectionTitle(c.title)?.chapter===target.group?i:-1).filter(i=>i>=0);
+  }
+  const title=target.title||(target.group!=null?target.group:(chs[indexes[0]]?.title||'这一章'));
+  closeChapterActionMenu();
+  if(!indexes.length)return;
+  const prompt=indexes.length>1
+    ?`确定删除「${title}」及其中 ${indexes.length} 个小节吗？删除后无法撤销。`
+    :`确定删除章节「${title}」吗？删除后无法撤销。`;
+  if(!confirm(prompt))return;
+
+  // 关系图本身保留，只解除被删章节的关联，避免人物和关系数据一起丢失。
+  const anchors=graphAnchors(it),removedAnchors=new Set();
+  indexes.forEach(i=>{if(anchors[i]?.key)removedAnchors.add(anchors[i].key);});
+  if(target.group!=null)removedAnchors.add('group:'+target.group);
+
+  let next=body;
+  indexes.slice().sort((a,b)=>b-a).forEach(i=>{
+    const c=chs[i];
+    next=next.slice(0,c.chStart)+next.slice(c.chEnd);
+  });
+  it.bookNote=next.trim();
+  if(Array.isArray(it.relationGraphs))it.relationGraphs.forEach(g=>{
+    if(removedAnchors.has(g.anchor))g.anchor='';
+  });
+  touchRec(it);persist();
+  renderDetail();render();
+  toast(indexes.length>1?'章节组已删除':'章节已删除');
 }
 document.addEventListener('pointerdown',e=>{
   const el=e.target.closest?.('#detailBookNoteCard [data-graph-longpress]');
