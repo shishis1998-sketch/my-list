@@ -2158,6 +2158,9 @@ body.cal-searching .cw-card{display:none;}
 .tl-chapter-group-head{width:100%;display:flex;align-items:center;gap:var(--sp-10);
   border:0;background:none;padding:0;color:var(--text-primary);font-family:var(--zh);
   cursor:pointer;text-align:left;}
+/* 带小节的总章名也保留普通章节左侧的主题色竖条。 */
+.tl-chapter-group-head::before{content:'';flex:0 0 3px;align-self:stretch;min-height:20px;
+  border-radius:2px;background:var(--accent-light);}
 .tl-chapter-group-title{font-size:var(--fs-headline);font-weight:700;line-height:var(--lh-normal);
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-chapter-group-count{margin-left:auto;flex-shrink:0;font-size:var(--fs-caption);
