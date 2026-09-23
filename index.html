@@ -8568,9 +8568,16 @@ window.PV = (function(){
       .map(group => ({ ...group, days: [...group.days].sort((a, b) => a - b) }));
     cards.push(...foodCards);
 
-    const visibleCards = heatTypeFilter === '全部'
-      ? cards
-      : cards.filter(card => card.type === heatTypeFilter);
+    const visibleCards = (heatTypeFilter === '全部'
+      ? [...cards]
+      : cards.filter(card => card.type === heatTypeFilter)
+    ).sort((a, b) => {
+      // 按卡片上实际显示的频率统一降序：食记看记录次数，标签看出现天数。
+      // 必须在筛选后的最终列表再排一次，避免不同来源的卡片沿用各自的插入顺序。
+      const aFrequency = a.type === '食记' ? a.count : a.days.length;
+      const bFrequency = b.type === '食记' ? b.count : b.days.length;
+      return bFrequency - aFrequency;
+    });
 
     // 总结与下方卡片共用同一批统计结果和筛选条件。
     const topFood = visibleCards.filter(card => card.type === '食记')
