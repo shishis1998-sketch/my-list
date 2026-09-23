@@ -2269,8 +2269,7 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-action:first-child{justify-self:start;}
 .tlsheet-action:last-child{justify-self:end;color:var(--accent);}
 .tlsheet-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
-#noteSheet .intro-action{display:none;}
-#noteSheet.intro-editor .intro-action,#noteSheet.people-editor .intro-action{display:inline-flex;}
+#noteSheet .intro-action{display:inline-flex;}
 #noteSheet.intro-editor .tlsheet-head,#noteSheet.people-editor .tlsheet-head{background:var(--bg);padding:7px 16px 12px;}
 #noteSheet.intro-editor .tlsheet-grip,#noteSheet.people-editor .tlsheet-grip{width:36px;margin:0 auto 8px;background:rgba(86,86,90,.34);}
 #noteSheet.intro-editor .note-sheet-headrow,#noteSheet.people-editor .note-sheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
@@ -2316,7 +2315,7 @@ body.cal-searching .cw-card{display:none;}
 
 /* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
 /* 复用 .tlsheet 的滑起/下拉/遮罩，只多一块铺满的输入框。
-   没有保存/取消按钮：关掉就是存好了，同章节抽屉 */
+   顶部统一使用取消 / 完成：取消放弃本次修改，完成后才保存。 */
 .notesheet-ta{width:100%;min-height:34vh;font-family:var(--zh);font-size:var(--fs-input);
   line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);
   border:1.5px solid var(--border);border-radius:var(--r);padding:var(--sp-10) var(--sp-12);
@@ -5897,7 +5896,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <div class="tlsheet-body" id="tlSheetBody"></div>
 </div>
 
-<!-- ===== 备注底部弹窗（详情页点备注卡打开，直接可编辑，关闭即保存） ===== -->
+<!-- ===== 备注底部弹窗（详情页点备注卡打开，顶部取消 / 完成） ===== -->
 <div class="tlsheet-mask" id="noteSheetMask" onclick="closeNoteSheet()"></div>
 <div class="tlsheet" id="noteSheet" role="dialog" aria-modal="true" aria-label="编辑备注">
   <div class="tlsheet-head" id="noteSheetHead">
@@ -11061,7 +11060,7 @@ function openDetailChapter(idx){
   openChapterSheet(idx);
 }
 
-// ── 备注 / 人物底部弹窗：详情页点卡片打开，直接可编辑，关闭即保存 ────
+// ── 备注 / 人物底部弹窗：详情页点卡片打开，顶部取消 / 完成 ─────
 // 备注是最常回头改的一栏。走 editFromDetail 会把名称/时间/评分/标签整张表单端出来，
 // 改一行字得先在一屏控件里找到备注框；这里只端这一栏本身，交互沿用章节抽屉那套滑起。
 // 两栏共用一张抽屉，只换标题和抽屉里那块内容：备注是一整块输入框，
@@ -11202,7 +11201,7 @@ function commitNoteSheet(){
 }
 function closeNoteSheet(save=false){
   if(noteSheetId==null) return;
-  if((noteSheetKey!=='intro'&&noteSheetKey!=='people')||save===true) commitNoteSheet();
+  if(save===true) commitNoteSheet();
   const act=document.activeElement;       // 先收键盘，再让抽屉滑下去（人物那边聚焦的是三栏里的某一栏）
   if(act&&act.blur&&document.getElementById('noteSheet').contains(act)) act.blur();
   peIdx=-1;
