@@ -2270,12 +2270,13 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-action:last-child{justify-self:end;color:var(--accent);}
 .tlsheet-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
 #noteSheet .intro-action{display:inline-flex;}
-#noteSheet.intro-editor .tlsheet-head,#noteSheet.people-editor .tlsheet-head{background:var(--bg);padding:7px 16px 12px;}
-#noteSheet.intro-editor .tlsheet-grip,#noteSheet.people-editor .tlsheet-grip{width:36px;margin:0 auto 8px;background:rgba(86,86,90,.34);}
-#noteSheet.intro-editor .note-sheet-headrow,#noteSheet.people-editor .note-sheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#noteSheet.intro-editor .tlsheet-title,#noteSheet.people-editor .tlsheet-title{text-align:center;color:var(--text-primary);}
-#noteSheet.intro-editor .tlsheet-body,#noteSheet.people-editor .tlsheet-body{background:var(--bg);}
-#noteSheet.intro-editor.dragging .tlsheet-grip,#noteSheet.people-editor.dragging .tlsheet-grip{background:var(--accent);}
+/* 备注、简介、正文与人物共用同一套浅色顶部操作栏。 */
+#noteSheet .tlsheet-head{background:var(--bg);padding:7px 16px 12px;}
+#noteSheet .tlsheet-grip{width:36px;margin:0 auto 8px;background:rgba(86,86,90,.34);}
+#noteSheet .note-sheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#noteSheet .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
+#noteSheet .tlsheet-body{background:var(--bg);}
+#noteSheet.dragging .tlsheet-grip{background:var(--accent);}
 .tlsheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 24px;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
 .tlsheet-body::-webkit-scrollbar{display:none;}
 /* 章节这张单独收到 10：它左边比别的抽屉多站着一列圆点和竖线，同样是 16 的内边距，
