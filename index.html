@@ -4325,8 +4325,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
    位置也更靠后，只写月视图那条压不住它。 */
 @media (max-width:1024px), (pointer: coarse){
   #calViewPeriod .home-header{margin-top:calc(var(--sp-14) + env(safe-area-inset-top));}
-  /* 年度页在应用状态栏下方布局，顶部安全区已由外层占位。 */
-  #calViewPeriod.pv-year .home-header{margin-top:var(--sp-14);}
+  /* 年度标题上下各留 14px；系统状态栏的空间由外层布局提供。 */
+  #calViewPeriod.pv-year .home-header{margin-top:var(--sp-14);margin-bottom:var(--sp-14);}
 }
 /* 12 张月卡横竖都留 12——卡片自己按 1fr 缩到 176.5。左右内边距 12（上下仍是 10）
    之后，内容宽 152.5、日期列 20.07，18 的圆每侧余 1.04。 */
