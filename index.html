@@ -567,7 +567,8 @@ body.detail-open .content{display:none!important;}
 /* 一个人就是一个点击目标：点谁就只弹谁那一组，不用在整张名单里滑着找 */
 .dt-pitem{display:flex;align-items:center;gap:var(--sp-10);
   padding:var(--sp-12) 0;cursor:pointer;transition:opacity .15s;}
-.dt-pitem[hidden],.people-search-empty[hidden]{display:none;}
+.dt-pitem[hidden],.tl-item[hidden],.tl-chapter-group[hidden],.tl-section-btn[hidden],
+.tl[hidden],.tl-part[hidden],.people-search-empty[hidden]{display:none;}
 .dt-pcol{flex:1;min-width:0;}
 .dt-pitem:active{opacity:.55;}
 /* ── 排序态：整行不再可点，只有右边那颗拖柄能拖（见 peopleDragStart）── */
@@ -10533,6 +10534,7 @@ function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item) return;
   ensurePeopleIds(item,true);
   detailId=id; dtTab='info'; peopleSearchOpen=false; peopleSearchQuery='';
+  timelineSearchOpen=false; timelineSearchQuery='';
   // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
   // 若不先关 transition，按钮就会从上一个页面遗留的隐藏态淡入/滑入。
   // 下一帧立即恢复，因此用户真正上下滚动时的隐藏/出现动效完全不受影响。
@@ -10676,6 +10678,7 @@ function nameHtml(s){
 // 分成两态之后，能拖的地方看得见（拖柄），不能拖的时候一点也拖不动。
 let dtSortPeople=false, dtSortOrig='';
 let peopleSearchOpen=false, peopleSearchQuery='';
+let timelineSearchOpen=false, timelineSearchQuery='';
 function togglePeopleSearch(){
   peopleSearchOpen=!peopleSearchOpen;
   if(!peopleSearchOpen)peopleSearchQuery='';
@@ -10697,6 +10700,51 @@ function filterPeopleList(value){
     if(found)matches++;
   });
   const empty=document.getElementById('peopleSearchEmpty');
+  if(empty)empty.hidden=!query||matches>0;
+}
+function toggleTimelineSearch(){
+  timelineSearchOpen=!timelineSearchOpen;
+  if(!timelineSearchOpen)timelineSearchQuery='';
+  document.querySelector('.timeline-head .people-more[open]')?.removeAttribute('open');
+  renderDetail();
+  if(timelineSearchOpen)document.getElementById('timelineSearchInput')?.focus();
+}
+function filterTimelineList(value){
+  timelineSearchQuery=value;
+  const item=data.find(d=>d.id===detailId);
+  const card=document.getElementById('detailBookNoteCard');
+  if(!item||!card)return;
+  const query=value.trim().toLocaleLowerCase();
+  const chs=parseChapters(item.bookNote||'');
+  const chapterMatches=idx=>{
+    const ch=chs[Number(idx)];
+    return !query||[ch?.title,ch?.body].some(s=>String(s||'').toLocaleLowerCase().includes(query));
+  };
+  let matches=0;
+  card.querySelectorAll('.tl-item').forEach(row=>{
+    const found=chapterMatches(row.dataset.idx);
+    row.hidden=!found;
+    if(found)matches++;
+  });
+  card.querySelectorAll('.tl-chapter-group').forEach(group=>{
+    const groupTitle=group.querySelector('.tl-chapter-group-title')?.textContent||'';
+    const groupMatch=!query||groupTitle.toLocaleLowerCase().includes(query);
+    let groupMatches=0;
+    group.querySelectorAll('.tl-section-btn').forEach(button=>{
+      const found=groupMatch||chapterMatches(button.dataset.idx);
+      button.hidden=!found;
+      if(found)groupMatches++;
+    });
+    group.hidden=groupMatches===0;
+    matches+=groupMatches;
+  });
+  card.querySelectorAll(':scope > .tl').forEach(grid=>{
+    const visible=Array.from(grid.children).some(el=>!el.hidden);
+    grid.hidden=!visible;
+    const part=grid.previousElementSibling;
+    if(part?.classList.contains('tl-part'))part.hidden=!visible;
+  });
+  const empty=document.getElementById('timelineSearchEmpty');
   if(empty)empty.hidden=!query||matches>0;
 }
 function setSortPeople(on){
@@ -10967,6 +11015,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
 
   if(previewBox)return;
   if(viewTab==='people'&&peopleSearchOpen)filterPeopleList(peopleSearchQuery);
+  if(viewTab==='tl'&&timelineSearchOpen)filterTimelineList(timelineSearchQuery);
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
   // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
@@ -11044,6 +11093,7 @@ function renderDetailTL(item){
   <div class="dt-seclbl-row timeline-head">
     <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
     <div class="people-head-actions">
+      <button type="button" class="people-search-toggle${timelineSearchOpen?' active':''}" onclick="toggleTimelineSearch()" aria-label="${timelineSearchOpen?'关闭时间线搜索':'搜索时间线'}" title="搜索时间线" aria-expanded="${timelineSearchOpen}">${ICON_PERSON_SEARCH}</button>
       <details class="people-more">
         <summary aria-label="笔记更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
         <div class="people-more-menu">
@@ -11052,9 +11102,11 @@ function renderDetailTL(item){
       </details>
     </div>
   </div>
+  ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
   <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
+    ${timelineSearchOpen?'<div id="timelineSearchEmpty" class="people-search-empty" hidden>没有找到匹配的章节</div>':''}
   </div></div>
   <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
     onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
