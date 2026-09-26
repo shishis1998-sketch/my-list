@@ -4354,7 +4354,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
    左沿落在 27，与月卡里「1 月」的左沿对齐（月卡内边距 10 之后「1 月」在 27）。 */
 /* 年视图右上角按钮：统一纯白底、无描边、无阴影。
    直径 28、彼此间距 8；只保留白色圆形底来承载图标，符合全站轻量卡片规范。 */
-#calViewPeriod.pv-year .home-header{gap:8px;padding-top:9.6px;padding-bottom:9.6px;}
+/* 按钮本身已有 28px 高度；标题栏不再额外撑高，竖向留白统一交给上下 12px 外边距。 */
+#calViewPeriod.pv-year .home-header{gap:8px;padding-top:0;padding-bottom:0;}
 #calViewPeriod.pv-year .pv-navbtn,
 #calViewPeriod.pv-year .home-filter-btn{width:28px;height:28px;border-radius:50%;
   background:#FFFFFF !important;border:none !important;box-shadow:none !important;}
