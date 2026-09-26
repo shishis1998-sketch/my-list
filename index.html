@@ -2200,7 +2200,8 @@ body.cal-searching .cw-card{display:none;}
 .timeline-search-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .timeline-search-text mark{background:var(--accent-light);color:var(--accent-dark);
   border-radius:3px;padding:0 1px;}
-.tl-para.timeline-jump-target{background:var(--accent-light);border-radius:var(--r);
+.tlseg-tap.timeline-jump-target{background:var(--accent-light);border-radius:var(--r);
+  padding:var(--sp-8) var(--sp-10);margin:calc(-1 * var(--sp-8)) calc(-1 * var(--sp-10));
   transition:background .25s;}
 .timeline-jump-mark{background:var(--accent);color:var(--on-accent);border-radius:3px;
   padding:0 1px;}
@@ -10800,7 +10801,7 @@ function openTimelineSearchHit(event,chapterIdx,query,ordinal){
     }
     if(!target)return;
     const para=target.closest('.tl-para');
-    para?.classList.add('timeline-jump-target');
+    target.classList.add('timeline-jump-target');
     markChapterSearchOccurrence(target,query,localOrdinal);
     const body=document.getElementById('tlSheetBody');
     body.scrollTo({top:Math.max(0,(para?.offsetTop||target.offsetTop)-body.clientHeight/3),behavior:'smooth'});
