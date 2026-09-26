@@ -2192,12 +2192,18 @@ body.cal-searching .cw-card{display:none;}
 .tl-item>.timeline-search-hit{padding:0 var(--sp-12) var(--sp-12);}
 .timeline-search-count{display:block;color:var(--accent);font-size:var(--fs-foot);
   font-weight:600;margin-bottom:2px;}
-.timeline-search-row{display:flex;align-items:baseline;gap:6px;min-width:0;}
+.timeline-search-row{display:flex;align-items:baseline;gap:6px;min-width:0;
+  cursor:pointer;border-radius:4px;transition:background .12s;}
+.timeline-search-row:active{background:var(--accent-light);}
 .timeline-search-index{flex:0 0 auto;color:var(--accent);font-family:var(--en);
   font-size:var(--fs-foot);font-weight:700;}
 .timeline-search-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .timeline-search-text mark{background:var(--accent-light);color:var(--accent-dark);
   border-radius:3px;padding:0 1px;}
+.tl-para.timeline-jump-target{background:var(--accent-light);border-radius:var(--r);
+  transition:background .25s;}
+.timeline-jump-mark{background:var(--accent);color:var(--on-accent);border-radius:3px;
+  padding:0 1px;}
 /* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
    竖条和章节卡那道 .tl-bar 同族，只是更深更实——大条管小条，层级一眼看得出来 */
 /* 上下留白不对称是故意的：上面 24 是「和上一部的卡拉开」，下面 6（加 .tl 自己的
@@ -10728,8 +10734,8 @@ function toggleTimelineSearch(){
   renderDetail();
   if(timelineSearchOpen)document.getElementById('timelineSearchInput')?.focus();
 }
-function makeTimelineSearchHit(ch,query){
-  const body=String(ch?.body||'').replace(/\s+/g,' ').trim();
+function makeTimelineSearchHit(ch,query,chapterIdx){
+  const body=String(ch?.body||'');
   const lower=body.toLocaleLowerCase();
   const positions=[];
   let pos=0;
@@ -10743,7 +10749,6 @@ function makeTimelineSearchHit(ch,query){
   hit.append(meta);
   positions.forEach((at,i)=>{
     const start=Math.max(0,at-18),end=Math.min(body.length,at+query.length+32);
-    const shown=body.slice(start,end),local=at-start;
     const row=document.createElement('span');
     row.className='timeline-search-row';
     const index=document.createElement('span');
@@ -10751,13 +10756,55 @@ function makeTimelineSearchHit(ch,query){
     index.textContent=`${i+1}.`;
     const text=document.createElement('span');
     text.className='timeline-search-text';
-    text.append(document.createTextNode((start?'…':'')+shown.slice(0,local)));
+    text.append(document.createTextNode((start?'…':'')+body.slice(start,at).replace(/\s+/g,' ')));
     const mark=document.createElement('mark');
-    mark.textContent=shown.slice(local,local+query.length);
-    text.append(mark,document.createTextNode(shown.slice(local+query.length)+(end<body.length?'…':'')));
+    mark.textContent=body.slice(at,at+query.length);
+    text.append(mark,document.createTextNode(body.slice(at+query.length,end).replace(/\s+/g,' ')+(end<body.length?'…':'')));
     row.append(index,text);hit.append(row);
+    row.addEventListener('pointerdown',e=>e.stopPropagation());
+    row.addEventListener('click',e=>openTimelineSearchHit(e,chapterIdx,query,i));
   });
   return hit;
+}
+function markChapterSearchOccurrence(root,query,ordinal){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];let full='',node;
+  while((node=walker.nextNode())){nodes.push({node,start:full.length});full+=node.nodeValue||'';}
+  const lower=full.toLocaleLowerCase();let at=-1,pos=0;
+  for(let i=0;i<=ordinal;i++){
+    at=lower.indexOf(query,pos);
+    if(at<0)return false;
+    pos=at+Math.max(query.length,1);
+  }
+  const entry=nodes.find(x=>at>=x.start&&at+query.length<=x.start+(x.node.nodeValue||'').length);
+  if(!entry)return false;
+  const local=at-entry.start,tail=entry.node.splitText(local);tail.splitText(query.length);
+  const mark=document.createElement('mark');
+  mark.className='timeline-jump-mark';mark.textContent=tail.nodeValue;
+  tail.parentNode.replaceChild(mark,tail);
+  return true;
+}
+function openTimelineSearchHit(event,chapterIdx,query,ordinal){
+  event.preventDefault();event.stopPropagation();
+  tlHostMedia=detailId;tlCurId=null;
+  openChapterSheet(chapterIdx);
+  if(tlSheetIdx!==chapterIdx)return;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    let remaining=ordinal,target=null,localOrdinal=0;
+    for(let i=0;i<tlSheetSegs.length;i++){
+      const text=String(tlSheetSegs[i].text||'').toLocaleLowerCase();
+      let count=0,pos=0;
+      while((pos=text.indexOf(query,pos))>=0){count++;pos+=Math.max(query.length,1);}
+      if(remaining<count){target=document.querySelector(`#tlSheetBody .tlseg-tap[data-tap="${i}"]`);localOrdinal=remaining;break;}
+      remaining-=count;
+    }
+    if(!target)return;
+    const para=target.closest('.tl-para');
+    para?.classList.add('timeline-jump-target');
+    markChapterSearchOccurrence(target,query,localOrdinal);
+    const body=document.getElementById('tlSheetBody');
+    body.scrollTo({top:Math.max(0,(para?.offsetTop||target.offsetTop)-body.clientHeight/3),behavior:'smooth'});
+  }));
 }
 function filterTimelineList(value){
   timelineSearchQuery=value;
@@ -10775,7 +10822,7 @@ function filterTimelineList(value){
   };
   const addSnippet=(target,idx)=>{
     if(!query)return;
-    const hit=makeTimelineSearchHit(chs[Number(idx)],query);
+    const hit=makeTimelineSearchHit(chs[Number(idx)],query,Number(idx));
     if(hit){target.classList.add('has-search-hit');target.append(hit);}
   };
   let matches=0;
