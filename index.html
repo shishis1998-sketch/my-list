@@ -2177,8 +2177,23 @@ body.cal-searching .cw-card{display:none;}
   font-family:var(--zh);font-size:var(--fs-headline);font-weight:600;cursor:pointer;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px;
   display:grid;place-items:center;transition:border-color .15s,background .15s,transform .1s;}
+.tl-section-name{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-section-btn:active{transform:scale(.98);background:var(--surface-2);}
 @media (hover:hover){.tl-section-btn:hover{border-color:var(--accent);}}
+/* 搜正文时卡片临时改成单列，并在章名下面露出命中上下文；退出搜索后恢复原布局。 */
+#detailBookNoteCard.timeline-searching .tl{grid-template-columns:minmax(0,1fr);}
+.tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px;
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:5px;
+  text-align:left;white-space:normal;}
+.tl-section-btn.has-search-hit .tl-section-name{align-self:center;}
+.timeline-search-hit{min-width:0;font-size:var(--fs-caption);font-weight:400;
+  color:var(--text-secondary);line-height:var(--lh-normal);}
+.tl-item>.timeline-search-hit{padding:0 var(--sp-12) var(--sp-12);}
+.timeline-search-count{display:block;color:var(--accent);font-size:var(--fs-foot);
+  font-weight:600;margin-bottom:2px;}
+.timeline-search-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.timeline-search-text mark{background:var(--accent-light);color:var(--accent-dark);
+  border-radius:3px;padding:0 1px;}
 /* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
    竖条和章节卡那道 .tl-bar 同族，只是更深更实——大条管小条，层级一眼看得出来 */
 /* 上下留白不对称是故意的：上面 24 是「和上一部的卡拉开」，下面 6（加 .tl 自己的
@@ -10709,6 +10724,30 @@ function toggleTimelineSearch(){
   renderDetail();
   if(timelineSearchOpen)document.getElementById('timelineSearchInput')?.focus();
 }
+function makeTimelineSearchHit(ch,query){
+  const body=String(ch?.body||'').replace(/\s+/g,' ').trim();
+  const lower=body.toLocaleLowerCase();
+  const first=lower.indexOf(query);
+  if(first<0)return null;
+  let count=0,pos=0;
+  while((pos=lower.indexOf(query,pos))>=0){count++;pos+=Math.max(query.length,1);}
+  const start=Math.max(0,first-18),end=Math.min(body.length,first+query.length+32);
+  const shown=body.slice(start,end);
+  const local=first-start;
+  const hit=document.createElement('div');
+  hit.className='timeline-search-hit';
+  const meta=document.createElement('span');
+  meta.className='timeline-search-count';
+  meta.textContent=`正文 ${count} 处`;
+  const text=document.createElement('span');
+  text.className='timeline-search-text';
+  text.append(document.createTextNode((start?'…':'')+shown.slice(0,local)));
+  const mark=document.createElement('mark');
+  mark.textContent=shown.slice(local,local+query.length);
+  text.append(mark,document.createTextNode(shown.slice(local+query.length)+(end<body.length?'…':'')));
+  hit.append(meta,text);
+  return hit;
+}
 function filterTimelineList(value){
   timelineSearchQuery=value;
   const item=data.find(d=>d.id===detailId);
@@ -10716,15 +10755,23 @@ function filterTimelineList(value){
   if(!item||!card)return;
   const query=value.trim().toLocaleLowerCase();
   const chs=parseChapters(item.bookNote||'');
+  card.classList.toggle('timeline-searching',!!query);
+  card.querySelectorAll('.timeline-search-hit').forEach(el=>el.remove());
+  card.querySelectorAll('.has-search-hit').forEach(el=>el.classList.remove('has-search-hit'));
   const chapterMatches=idx=>{
     const ch=chs[Number(idx)];
     return !query||[ch?.title,ch?.body].some(s=>String(s||'').toLocaleLowerCase().includes(query));
+  };
+  const addSnippet=(target,idx)=>{
+    if(!query)return;
+    const hit=makeTimelineSearchHit(chs[Number(idx)],query);
+    if(hit){target.classList.add('has-search-hit');target.append(hit);}
   };
   let matches=0;
   card.querySelectorAll('.tl-item').forEach(row=>{
     const found=chapterMatches(row.dataset.idx);
     row.hidden=!found;
-    if(found)matches++;
+    if(found){matches++;addSnippet(row,row.dataset.idx);}
   });
   card.querySelectorAll('.tl-chapter-group').forEach(group=>{
     const groupTitle=group.querySelector('.tl-chapter-group-title')?.textContent||'';
@@ -10733,7 +10780,7 @@ function filterTimelineList(value){
     group.querySelectorAll('.tl-section-btn').forEach(button=>{
       const found=groupMatch||chapterMatches(button.dataset.idx);
       button.hidden=!found;
-      if(found)groupMatches++;
+      if(found){groupMatches++;addSnippet(button,button.dataset.idx);}
     });
     group.hidden=groupMatches===0;
     matches+=groupMatches;
@@ -15311,7 +15358,7 @@ function renderTimelineChapterCards(chs,openFn){
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <div class="tl-section-grid">
-        ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}">${esc(x.section)}</button>`).join('')}
+        ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}"><span class="tl-section-name">${esc(x.section)}</span></button>`).join('')}
       </div>
     </div>`;
   }).join('');
