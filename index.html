@@ -2187,10 +2187,14 @@ body.cal-searching .cw-card{display:none;}
   text-align:left;white-space:normal;}
 .tl-section-btn.has-search-hit .tl-section-name{align-self:center;}
 .timeline-search-hit{min-width:0;font-size:var(--fs-caption);font-weight:400;
-  color:var(--text-secondary);line-height:var(--lh-normal);}
+  color:var(--text-secondary);line-height:var(--lh-normal);display:flex;
+  flex-direction:column;gap:4px;}
 .tl-item>.timeline-search-hit{padding:0 var(--sp-12) var(--sp-12);}
 .timeline-search-count{display:block;color:var(--accent);font-size:var(--fs-foot);
   font-weight:600;margin-bottom:2px;}
+.timeline-search-row{display:flex;align-items:baseline;gap:6px;min-width:0;}
+.timeline-search-index{flex:0 0 auto;color:var(--accent);font-family:var(--en);
+  font-size:var(--fs-foot);font-weight:700;}
 .timeline-search-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .timeline-search-text mark{background:var(--accent-light);color:var(--accent-dark);
   border-radius:3px;padding:0 1px;}
@@ -10727,25 +10731,32 @@ function toggleTimelineSearch(){
 function makeTimelineSearchHit(ch,query){
   const body=String(ch?.body||'').replace(/\s+/g,' ').trim();
   const lower=body.toLocaleLowerCase();
-  const first=lower.indexOf(query);
-  if(first<0)return null;
-  let count=0,pos=0;
-  while((pos=lower.indexOf(query,pos))>=0){count++;pos+=Math.max(query.length,1);}
-  const start=Math.max(0,first-18),end=Math.min(body.length,first+query.length+32);
-  const shown=body.slice(start,end);
-  const local=first-start;
+  const positions=[];
+  let pos=0;
+  while((pos=lower.indexOf(query,pos))>=0){positions.push(pos);pos+=Math.max(query.length,1);}
+  if(!positions.length)return null;
   const hit=document.createElement('div');
   hit.className='timeline-search-hit';
   const meta=document.createElement('span');
   meta.className='timeline-search-count';
-  meta.textContent=`正文 ${count} 处`;
-  const text=document.createElement('span');
-  text.className='timeline-search-text';
-  text.append(document.createTextNode((start?'…':'')+shown.slice(0,local)));
-  const mark=document.createElement('mark');
-  mark.textContent=shown.slice(local,local+query.length);
-  text.append(mark,document.createTextNode(shown.slice(local+query.length)+(end<body.length?'…':'')));
-  hit.append(meta,text);
+  meta.textContent=`正文 ${positions.length} 处`;
+  hit.append(meta);
+  positions.forEach((at,i)=>{
+    const start=Math.max(0,at-18),end=Math.min(body.length,at+query.length+32);
+    const shown=body.slice(start,end),local=at-start;
+    const row=document.createElement('span');
+    row.className='timeline-search-row';
+    const index=document.createElement('span');
+    index.className='timeline-search-index';
+    index.textContent=`${i+1}.`;
+    const text=document.createElement('span');
+    text.className='timeline-search-text';
+    text.append(document.createTextNode((start?'…':'')+shown.slice(0,local)));
+    const mark=document.createElement('mark');
+    mark.textContent=shown.slice(local,local+query.length);
+    text.append(mark,document.createTextNode(shown.slice(local+query.length)+(end<body.length?'…':'')));
+    row.append(index,text);hit.append(row);
+  });
   return hit;
 }
 function filterTimelineList(value){
