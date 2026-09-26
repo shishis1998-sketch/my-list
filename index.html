@@ -2200,9 +2200,11 @@ body.cal-searching .cw-card{display:none;}
 .timeline-search-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .timeline-search-text mark{background:var(--accent-light);color:var(--accent-dark);
   border-radius:3px;padding:0 1px;}
-.tlseg-tap.timeline-jump-target{background:var(--accent-light);border-radius:var(--r);
-  padding:var(--sp-8) var(--sp-10);margin:calc(-1 * var(--sp-8)) calc(-1 * var(--sp-10));
-  transition:background .25s;}
+.tl-para.timeline-jump-target::before{content:'';position:absolute;
+  left:7.25px;right:7px;top:calc(-1 * var(--sp-8));bottom:calc(-1 * var(--sp-8));
+  border-radius:var(--r);pointer-events:none;
+  background:linear-gradient(var(--border),var(--border)) left center/1.5px 100% no-repeat,
+    var(--accent-light);}
 .timeline-jump-mark{background:var(--accent);color:var(--on-accent);border-radius:3px;
   padding:0 1px;}
 /* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
@@ -10801,7 +10803,7 @@ function openTimelineSearchHit(event,chapterIdx,query,ordinal){
     }
     if(!target)return;
     const para=target.closest('.tl-para');
-    target.classList.add('timeline-jump-target');
+    para?.classList.add('timeline-jump-target');
     markChapterSearchOccurrence(target,query,localOrdinal);
     const body=document.getElementById('tlSheetBody');
     body.scrollTo({top:Math.max(0,(para?.offsetTop||target.offsetTop)-body.clientHeight/3),behavior:'smooth'});
