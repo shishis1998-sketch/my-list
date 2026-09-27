@@ -2481,6 +2481,18 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   color:var(--text-primary);text-align:left;padding:8px 12px;font:var(--fs-body) var(--zh);cursor:pointer;touch-action:manipulation;}
 .chapter-action-item:active{background:var(--surface-2);}
 .chapter-action-item.danger{margin-top:4px;border-top:1px solid var(--border-soft);color:var(--danger);}
+/* 日记长按菜单：图标＋文字，删除整行使用危险色。 */
+#diaryActionMenu{background:rgba(10,8,6,.16);}
+#diaryActionMenu .chapter-action-panel{width:184px;padding:6px;border-radius:var(--rlg);}
+#diaryActionMenu .chapter-action-item{
+  display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 12px;
+  font-size:var(--fs-body);font-weight:500;
+}
+#diaryActionMenu .chapter-action-item+.chapter-action-item{margin-top:2px;}
+#diaryActionMenu .chapter-action-item.danger{margin-top:5px;color:var(--danger);}
+.diary-action-icon{width:21px;height:21px;flex:0 0 21px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.diary-action-label{min-width:0;}
 [data-graph-longpress],[data-diary-longpress]{
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
@@ -5248,8 +5260,18 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
   <div class="chapter-action-menu" id="diaryActionMenu" onclick="if(event.target===this)closeDiaryActionMenu()" aria-hidden="true">
     <div class="chapter-action-panel" role="menu" aria-label="日记操作">
-      <button type="button" class="chapter-action-item" role="menuitem" onclick="editDiaryAction()">编辑</button>
-      <button type="button" class="chapter-action-item danger" role="menuitem" onclick="deleteDiaryAction()">删除</button>
+      <button type="button" class="chapter-action-item" role="menuitem" data-diary-pin onclick="toggleDiaryPin()">
+        <svg class="diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6"/><path d="M9 4v5l-3 5h12l-3-5V4"/><path d="M12 14v8"/></svg>
+        <span class="diary-action-label" data-diary-pin-label>置顶</span>
+      </button>
+      <button type="button" class="chapter-action-item" role="menuitem" onclick="editDiaryAction()">
+        <svg class="diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span class="diary-action-label">编辑</span>
+      </button>
+      <button type="button" class="chapter-action-item danger" role="menuitem" onclick="deleteDiaryAction()">
+        <svg class="diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+        <span class="diary-action-label">删除</span>
+      </button>
     </div>
   </div>
 
@@ -14950,10 +14972,18 @@ function filteredNotes(){
       return false;
     });
   }
-  if(curSort==='n-updated') L.sort((a,b)=>b.updatedAt-a.updatedAt);
-  else if(curSort==='n-created') L.sort((a,b)=>b.createdAt-a.createdAt);
-  else if(curSort==='n-title-asc') L.sort((a,b)=>(a.title||'').localeCompare(b.title||'','zh'));
-  else if(curSort==='n-title-desc') L.sort((a,b)=>(b.title||'').localeCompare(a.title||'','zh'));
+  // 日记置顶永远优先于当前排序；多个置顶项按最近置顶的在前。
+  const pinCmp=(a,b)=>{
+    if(curNoteSub!=='日记')return 0;
+    const ap=Number(a.diaryPinnedAt)||0,bp=Number(b.diaryPinnedAt)||0;
+    if(Boolean(ap)!==Boolean(bp))return bp?1:-1;
+    return ap&&bp?bp-ap:0;
+  };
+  const sortNotes=cmp=>L.sort((a,b)=>pinCmp(a,b)||cmp(a,b));
+  if(curSort==='n-updated') sortNotes((a,b)=>b.updatedAt-a.updatedAt);
+  else if(curSort==='n-created') sortNotes((a,b)=>b.createdAt-a.createdAt);
+  else if(curSort==='n-title-asc') sortNotes((a,b)=>(a.title||'').localeCompare(b.title||'','zh'));
+  else if(curSort==='n-title-desc') sortNotes((a,b)=>(b.title||'').localeCompare(a.title||'','zh'));
   return L;
 }
 
@@ -15229,6 +15259,12 @@ function openDiaryActionMenu(card,id,point){
   const menu=document.getElementById('diaryActionMenu');
   if(!menu||!card)return;
   diaryActionId=id;
+  const note=notes.find(n=>n.id===id);
+  const pinned=!!(note&&Number(note.diaryPinnedAt));
+  const pinLabel=menu.querySelector('[data-diary-pin-label]');
+  if(pinLabel)pinLabel.textContent=pinned?'取消置顶':'置顶';
+  const pinButton=menu.querySelector('[data-diary-pin]');
+  if(pinButton)pinButton.setAttribute('aria-label',pinned?'取消置顶':'置顶');
   menu.classList.add('open');
   menu.setAttribute('aria-hidden','false');
   window.getSelection?.().removeAllRanges();
@@ -15244,6 +15280,18 @@ function closeDiaryActionMenu(){
   const menu=document.getElementById('diaryActionMenu');
   if(menu){menu.classList.remove('open');menu.setAttribute('aria-hidden','true');}
   diaryActionId=null;
+}
+function toggleDiaryPin(){
+  const id=diaryActionId;
+  const note=id&&notes.find(n=>n.id===id);
+  if(!note){closeDiaryActionMenu();return;}
+  const wasPinned=!!Number(note.diaryPinnedAt);
+  if(wasPinned)delete note.diaryPinnedAt;
+  else note.diaryPinnedAt=Date.now();
+  closeDiaryActionMenu();
+  persistNotes();
+  render();
+  toast(wasPinned?'已取消置顶':'已置顶');
 }
 function editDiaryAction(){
   const id=diaryActionId;
