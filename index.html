@@ -15093,8 +15093,7 @@ function openNoteMonth(key,button){
   withNoteMonthFeedback(button,()=>{
     curNoteMonth=key;
     renderNotes();
-    const content=document.querySelector('.content');
-    if(content)content.scrollTop=0;
+    scrollResultsTop();
     animateNoteMonthNavigation(false);
   });
 }
@@ -15103,8 +15102,7 @@ function closeNoteMonth(button){
   withNoteMonthFeedback(button,()=>{
     curNoteMonth='';
     renderNotes();
-    const content=document.querySelector('.content');
-    if(content)content.scrollTop=0;
+    scrollResultsTop();
     animateNoteMonthNavigation(true);
   });
 }
