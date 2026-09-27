@@ -2481,7 +2481,9 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   color:var(--text-primary);text-align:left;padding:8px 12px;font:var(--fs-body) var(--zh);cursor:pointer;touch-action:manipulation;}
 .chapter-action-item:active{background:var(--surface-2);}
 .chapter-action-item.danger{margin-top:4px;border-top:1px solid var(--border-soft);color:var(--danger);}
-[data-graph-longpress]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+[data-graph-longpress],[data-diary-longpress]{
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
 .rg-filter{display:none;position:absolute;z-index:7;right:var(--sp-12);top:calc(62px + env(safe-area-inset-top));
   width:190px;padding:var(--sp-10);border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);}
 .rg-filter.open{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
@@ -5242,6 +5244,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <!-- ===== DETAIL VIEW：点列表某一行进来，同样与 .content 平级 ===== -->
   <div class="detail-view" id="detailRoot">
     <div class="dt-body" id="dtBody"></div>
+  </div>
+
+  <div class="chapter-action-menu" id="diaryActionMenu" onclick="if(event.target===this)closeDiaryActionMenu()" aria-hidden="true">
+    <div class="chapter-action-panel" role="menu" aria-label="日记操作">
+      <button type="button" class="chapter-action-item" role="menuitem" onclick="editDiaryAction()">编辑</button>
+      <button type="button" class="chapter-action-item danger" role="menuitem" onclick="deleteDiaryAction()">删除</button>
+    </div>
   </div>
 
   <div class="chapter-action-menu" id="chapterActionMenu" onclick="if(event.target===this)closeChapterActionMenu()" aria-hidden="true">
@@ -15112,7 +15121,8 @@ function renderNotes(){
     // ── 「收集」「日记」子分类：卡片可展开/收起显示全文（默认展开），共用 collect 样式 ──
     if(n.subCat==='收集'||n.subCat==='日记'){
       const fullBody=renderRich(n.body||'');
-      return `<div class="note-card collect expanded" data-nid="${n.id}" onclick="toggleCollectCard('${n.id}', event)">
+      const diaryLongpress=n.subCat==='日记'?' data-diary-longpress="1"':'';
+      return `<div class="note-card collect expanded" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
         <div class="note-head">
           <div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
           <div class="note-date">${fmtNoteDate(n.updatedAt)}</div>
@@ -15182,6 +15192,11 @@ function enhanceNoteSwipe(list){
   list.querySelectorAll('.note-card').forEach(card=>{
     const nid=card.getAttribute('data-nid');
     if(!nid) return;
+    // 日记改用长按菜单，不再创建左右滑动面板；收集和其它笔记维持原交互。
+    if(card.hasAttribute('data-diary-longpress')){
+      attachDiaryLongPress(card,nid);
+      return;
+    }
     // 包一层滑动容器：面板在下层（删除在右、编辑在左），卡片在上层可左右平移
     const wrap=document.createElement('div');
     wrap.className='swipe-wrap';
@@ -15204,6 +15219,76 @@ function enhanceNoteSwipe(list){
     }
     wrap.appendChild(card);
     attachSwipe(card, hasEdit);
+  });
+}
+
+
+// ── 日记卡片：长按任意位置弹出编辑 / 删除菜单 ──────────────────
+let diaryActionId=null;
+function openDiaryActionMenu(card,id,point){
+  const menu=document.getElementById('diaryActionMenu');
+  if(!menu||!card)return;
+  diaryActionId=id;
+  menu.classList.add('open');
+  menu.setAttribute('aria-hidden','false');
+  window.getSelection?.().removeAllRanges();
+  const panel=menu.querySelector('.chapter-action-panel');
+  const rect=card.getBoundingClientRect();
+  const x=point?.x??rect.left,y=point?.y??rect.bottom;
+  const w=panel.offsetWidth,h=panel.offsetHeight;
+  panel.style.left=Math.max(12,Math.min(x+8,window.innerWidth-w-12))+'px';
+  panel.style.top=Math.max(12,Math.min(y+8+h<=window.innerHeight-12?y+8:y-h-8,window.innerHeight-h-12))+'px';
+  haptic('tap');
+}
+function closeDiaryActionMenu(){
+  const menu=document.getElementById('diaryActionMenu');
+  if(menu){menu.classList.remove('open');menu.setAttribute('aria-hidden','true');}
+  diaryActionId=null;
+}
+function editDiaryAction(){
+  const id=diaryActionId;
+  closeDiaryActionMenu();
+  if(id)openNoteEdit(id);
+}
+function deleteDiaryAction(){
+  const id=diaryActionId;
+  closeDiaryActionMenu();
+  if(id)askDelNoteById(id);
+}
+function attachDiaryLongPress(card,id){
+  let press=null,suppressClickUntil=0;
+  const clear=()=>{
+    if(press?.timer)clearTimeout(press.timer);
+    press=null;
+  };
+  card.addEventListener('pointerdown',e=>{
+    if(!e.isPrimary||(e.button!=null&&e.button!==0)||e.target.closest('button,a,input,textarea,select'))return;
+    clear();
+    press={pointerId:e.pointerId,x:e.clientX,y:e.clientY,timer:setTimeout(()=>{
+      suppressClickUntil=Date.now()+800;
+      openDiaryActionMenu(card,id,{x:e.clientX,y:e.clientY});
+      press=null;
+    },500)};
+  });
+  card.addEventListener('pointermove',e=>{
+    if(press?.pointerId===e.pointerId&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)clear();
+  });
+  for(const type of ['pointerup','pointercancel','lostpointercapture']){
+    card.addEventListener(type,e=>{if(press?.pointerId===e.pointerId)clear();});
+  }
+  card.addEventListener('click',e=>{
+    if(Date.now()>suppressClickUntil)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    suppressClickUntil=0;
+  },true);
+  card.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    clear();
+    suppressClickUntil=Date.now()+800;
+    if(!document.getElementById('diaryActionMenu').classList.contains('open')){
+      openDiaryActionMenu(card,id,{x:e.clientX,y:e.clientY});
+    }
   });
 }
 
