@@ -4950,8 +4950,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 键盘打开时整章编辑占满可见区域；阅读和收起键盘后沿用原卡片对齐。 */
 #tlSheet.chapter-keyboard{
-  top:var(--chapter-keyboard-top,0px);bottom:auto;
+  /* iOS Safari 会平移布局视口来照顾光标。用 top=visualViewport.offsetTop 会被这次
+     平移再算一遍，抽屉整体被推到屏幕上方；沿用底栏已验证的 top:0 + transform
+     定位方式，让抽屉始终完整贴住当前可视区。 */
+  top:0;bottom:auto;
   height:var(--chapter-keyboard-height,100dvh);max-height:var(--chapter-keyboard-height,100dvh);
+  transform:translateY(var(--chapter-keyboard-top,0px));
 }
 #tlSheet.chapter-keyboard #tlSheetBody{gap:8px;padding:10px 16px 8px;overflow:hidden;}
 #tlSheet.chapter-keyboard .chapter-title-input{min-height:40px;padding:6px 10px;}
@@ -15984,7 +15988,15 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
     if(block&&visibleOffset!=null)offset+=chapterSourceOffsetFromVisible(block[0],visibleOffset);
   }
   if(tlChapterNew){const input=document.getElementById('chapterTitleInput');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
-  else {ta.focus();ta.setSelectionRange(offset,offset);ta.scrollTop=Math.max(0,content.slice(0,offset).split('\n').length*parseFloat(getComputedStyle(ta).lineHeight)-ta.clientHeight/3);}
+  else {
+    // iOS Safari 默认会为 textarea 光标滚动整个布局视口；章节抽屉随后又按
+    // visualViewport 定位，就会发生双重位移并在键盘上方留下大块遮罩空白。
+    // 外层不滚，只在 textarea 内恢复到用户点入的正文位置。
+    try{ta.focus({preventScroll:true});}catch(_){ta.focus();}
+    ta.setSelectionRange(offset,offset);
+    const restoreCaret=()=>{ta.scrollTop=Math.max(0,content.slice(0,offset).split('\n').length*parseFloat(getComputedStyle(ta).lineHeight)-ta.clientHeight/3);};
+    requestAnimationFrame(()=>requestAnimationFrame(restoreCaret));
+  }
 }
 function nextChapterHeading(body){
   const last=parseChapters(body).at(-1)?.title||'';
