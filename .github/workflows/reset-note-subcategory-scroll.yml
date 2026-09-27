@@ -1,0 +1,30 @@
+name: Reset note subcategory scroll
+
+on:
+  push:
+    branches: [fix/reset-note-subcategory-scroll]
+    paths:
+      - '.github/workflows/reset-note-subcategory-scroll.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        shell: bash
+        run: |
+          echo 'ZGlmZiAtLWdpdCBhL2luZGV4Lmh0bWwgYi9pbmRleC5odG1sCmluZGV4IGQzMDlhNzMuLjc0OTRjMWEgMTAwNjQ0Ci0tLSBhL2luZGV4Lmh0bWwKKysrIGIvaW5kZXguaHRtbApAQCAtMTIyNDEsNiArMTIyNDEsOCBAQCBmdW5jdGlvbiBzY2hlZHVsZUNhdFJlbmRlcigpewogfQogZnVuY3Rpb24gZmlsdGVyQ2F0KGNhdCl7CiAgIGNhbmNlbE5vdGVNb250aFRhcCgpOworICBjb25zdCBwcmV2aW91c0NhdD1jdXJDYXQ7CisgIGNvbnN0IG5vdGVTdWJDaGFuZ2VkPXByZXZpb3VzQ2F0IT09Y2F0JiZwcmV2aW91c0NhdC5zdGFydHNXaXRoKCdub3RlczonKSYmY2F0LnN0YXJ0c1dpdGgoJ25vdGVzOicpOwogICBjb25zdCBvbkxpc3QgPSAhZG9jdW1lbnQuYm9keS5jbGFzc0xpc3QuY29udGFpbnMoJ2NhbC1vcGVuJykKICAgICAgICAgICAgICAgJiYgIWRvY3VtZW50LmJvZHkuY2xhc3NMaXN0LmNvbnRhaW5zKCdzYi1vcGVuJykKICAgICAgICAgICAgICAgJiYgIWRldGFpbElkOwpAQCAtMTIyNjgsNiArMTIyNzAsOCBAQCBmdW5jdGlvbiBmaWx0ZXJDYXQoY2F0KXsKICAgaWYoaXNNb2JpbGVMYXlvdXQoKSkgdG9nZ2xlU2lkZWJhcihmYWxzZSk7CiAgIHN5bmNCb3R0b21UYWJzKCk7ICAgICAvLyDpq5jkuq7lhYjliIfov4fljrvvvJrmjInkuIvlsLHmnInlj43lupTvvIzkuI3nlKjnrYnliJfooajnlLvlrowKICAgc2NoZWR1bGVDYXRSZW5kZXIoKTsKKyAgLy8g56yU6K6w5a2Q5YiG57G75YWx55So5ZCM5LiA5Liq6aG16Z2i5rua5Yqo5a655Zmo77yb5YiH5o2i5ZCO5bqU5LuO5paw5YiX6KGo6aG26YOo5byA5aeL77yM6ICM5LiN5piv5rK/55So5LiK5LiA6aG155qE5L2N572u44CCCisgIGlmKG5vdGVTdWJDaGFuZ2VkKSBzY3JvbGxSZXN1bHRzVG9wKCk7CiAgIHNhdmVMYXN0VmlldygpOwogfQogCg==' | base64 -d | git apply
+          git diff --check -- index.html
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/reset-note-subcategory-scroll.yml
+          git add index.html
+          git commit -m "切换笔记子分类时回到顶部"
+          git push
