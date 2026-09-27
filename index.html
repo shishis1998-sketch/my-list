@@ -2481,9 +2481,14 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   color:var(--text-primary);text-align:left;padding:8px 12px;font:var(--fs-body) var(--zh);cursor:pointer;touch-action:manipulation;}
 .chapter-action-item:active{background:var(--surface-2);}
 .chapter-action-item.danger{margin-top:4px;border-top:1px solid var(--border-soft);color:var(--danger);}
-/* 日记长按菜单：图标＋文字，删除整行使用危险色。 */
-#diaryActionMenu{background:rgba(10,8,6,.16);}
-#diaryActionMenu .chapter-action-panel{width:184px;padding:6px;border-radius:var(--rlg);}
+/* 日记长按菜单：只标记当前卡片；菜单沿用应用的描边、无投影风格。 */
+#diaryActionMenu{background:transparent;}
+#diaryActionMenu .chapter-action-panel{
+  width:184px;padding:6px;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;
+}
+#nlist .note-card.diary-action-selected{
+  border-color:var(--accent);background:rgba(var(--accent-rgb),.08);
+}
 #diaryActionMenu .chapter-action-item{
   display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 12px;
   font-size:var(--fs-body);font-weight:500;
@@ -15254,11 +15259,14 @@ function enhanceNoteSwipe(list){
 
 
 // ── 日记卡片：长按任意位置弹出编辑 / 删除菜单 ──────────────────
-let diaryActionId=null;
+let diaryActionId=null,diaryActionCard=null;
 function openDiaryActionMenu(card,id,point){
   const menu=document.getElementById('diaryActionMenu');
   if(!menu||!card)return;
+  if(diaryActionCard&&diaryActionCard!==card)diaryActionCard.classList.remove('diary-action-selected');
   diaryActionId=id;
+  diaryActionCard=card;
+  card.classList.add('diary-action-selected');
   const note=notes.find(n=>n.id===id);
   const pinned=!!(note&&Number(note.diaryPinnedAt));
   const pinLabel=menu.querySelector('[data-diary-pin-label]');
@@ -15279,6 +15287,8 @@ function openDiaryActionMenu(card,id,point){
 function closeDiaryActionMenu(){
   const menu=document.getElementById('diaryActionMenu');
   if(menu){menu.classList.remove('open');menu.setAttribute('aria-hidden','true');}
+  if(diaryActionCard)diaryActionCard.classList.remove('diary-action-selected');
+  diaryActionCard=null;
   diaryActionId=null;
 }
 function toggleDiaryPin(){
