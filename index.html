@@ -1914,12 +1914,14 @@ body.cal-searching .cw-card{display:none;}
 .note-month-name{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:600;line-height:1.2;}
 .note-month-count{font-family:var(--en);font-size:var(--fs-body);color:var(--text-muted);font-variant-numeric:tabular-nums;}
 .note-month-back{
-  align-self:flex-start;display:inline-flex;align-items:center;gap:var(--sp-4);height:36px;padding:0 var(--sp-12) 0 var(--sp-8);
-  border:1px solid var(--border);border-radius:var(--rchip);background:var(--surface);color:var(--accent);
-  cursor:pointer;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;
+  display:none;align-items:center;justify-content:center;align-self:center;margin-left:auto;flex:0 0 30px;
+  width:30px;height:30px;box-sizing:border-box;padding:0;border:1px solid rgba(0,0,0,.07);
+  border-radius:50%;background:var(--surface);color:var(--text-muted);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
+.note-month-back.show{display:inline-flex;}
 .note-month-back svg{width:16px;height:16px;display:block;}
-@media (hover:hover){.note-month-back:hover{background:var(--accent-light);border-color:var(--accent-mid);}}
+@media (hover:hover){.note-month-back:hover{background:var(--surface-2);}}
 /* 淡主题色点击反馈保留至导航开始，文字沿用原来的可读颜色。 */
 .note-month-row:active,.note-month-back:active,
 .note-month-row.month-tap,.note-month-back.month-tap{
@@ -5240,6 +5242,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="vhdr">
       <div class="vtitle" id="vtitle">全部</div>
       <div class="vcnt" id="vcnt"></div>
+      <button type="button" class="note-month-back" id="noteMonthBack" onclick="closeNoteMonth(this)" aria-label="返回全部月份">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
     </div>
     <div class="twrap" id="twrap">
       <div id="mlist"></div>
@@ -15127,6 +15132,7 @@ function renderNotes(){
   if(monthMode&&curNoteMonth&&!L.some(n=>noteMonthKey(n)===curNoteMonth)) curNoteMonth='';
   if(monthMode&&curNoteMonth) L=L.filter(n=>noteMonthKey(n)===curNoteMonth);
   document.getElementById('vcnt').textContent=(monthMode&&curNoteMonth?noteMonthLabel(curNoteMonth)+' · ':'')+L.length+' 条笔记';
+  document.getElementById('noteMonthBack')?.classList.toggle('show',!!(monthMode&&curNoteMonth));
   syncSearchNoResult(L.length);
   // 笔记不显示统计卡片
   const sb=document.getElementById('sbar'); sb.style.display='none'; sb.innerHTML='';
@@ -15145,10 +15151,7 @@ function renderNotes(){
     list.innerHTML=renderNoteMonthOverview(L);
     return;
   }
-  const back=monthMode
-    ? '<button type="button" class="note-month-back" onclick="closeNoteMonth(this)" aria-label="返回全部月份"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>全部月份</span></button>'
-    : '';
-  list.innerHTML=back+L.map(n=>{
+  list.innerHTML=L.map(n=>{
     // 备忘子分类用结构化卡片
     if(n.subCat==='备忘') return renderMemoCard(n);
     const title=n.title||'（无标题）';
