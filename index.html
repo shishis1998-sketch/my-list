@@ -4360,6 +4360,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 12 张月卡横竖都留 12——卡片自己按 1fr 缩到 176.5。左右内边距 12（上下仍是 10）
    之后，内容宽 152.5、日期列 20.07，18 的圆每侧余 1.04。 */
 #calViewPeriod.pv-year .calendar-container.year-view{margin:0;gap:8px;}
+/* 年度统计之后、月份卡片开始之前的分区标题。使用全站标题字号。 */
+#calViewPeriod.pv-year .pv-history-title{
+  grid-column:1/-1;margin:0 2px;color:var(--text-primary);
+  font-size:var(--fs-title);font-weight:700;line-height:var(--lh-tight);
+}
 #calViewPeriod.pv-year .calendar-container.year-view .month{
   background:var(--surface);border:1px solid var(--border);border-radius:12px;
   padding:8px 6px;border-top:1px solid var(--border);}
@@ -6820,6 +6825,14 @@ window.PV = (function(){
         cal.classList.add('year-view');
         cal.classList.remove('month-view', 'one-col');
         applyYearLayout(cal);   // 按本机保存的顺序重排 + 摘掉隐藏的 + 把趋势卡插进队列
+        // 标题固定放在第一张可见月份卡前，不参与月份/趋势卡的拖动排序。
+        const firstMonth = cal.querySelector('.month');
+        if (firstMonth) {
+          const historyTitle = document.createElement('div');
+          historyTitle.className = 'pv-history-title';
+          historyTitle.textContent = '经期历史';
+          cal.insertBefore(historyTitle, firstMonth);
+        }
       } else {
         cal.innerHTML = generateMonth(viewMonth, true);
         cal.classList.add('month-view');
