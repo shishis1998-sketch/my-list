@@ -12318,15 +12318,17 @@ function applyModeUI(){
   // 排序下拉切换
   const ssort=document.querySelector('.ssort');
   if(notes){
-    // 切换成笔记的三种排序
+    // 切换成笔记的四种排序。日记标题是记录日期，默认按标题倒序，
+    // 这样编辑旧日记不会把它顶到最新日期前面；其它笔记仍默认按最近修改。
     if(!ssort.dataset.noteMode){
       ssort.dataset.mediaHTML=ssort.innerHTML;
       ssort.dataset.mediaVal=ssort.value;
       ssort.innerHTML='<option value="n-updated">最近修改</option><option value="n-created">最新创建</option><option value="n-title-asc">标题 A→Z</option><option value="n-title-desc">标题 Z→A</option>';
-      ssort.value='n-updated';
       ssort.dataset.noteMode='1';
-      curSort='n-updated';
     }
+    const defaultNoteSort=curNoteSub==='日记'?'n-title-desc':'n-updated';
+    ssort.value=defaultNoteSort;
+    curSort=defaultNoteSort;
   }else{
     if(ssort.dataset.noteMode){
       ssort.innerHTML=ssort.dataset.mediaHTML;
