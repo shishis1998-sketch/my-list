@@ -1,0 +1,30 @@
+name: Reset note month scroll
+
+on:
+  push:
+    branches: [fix/reset-note-month-scroll]
+    paths:
+      - '.github/workflows/reset-note-month-scroll.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        shell: bash
+        run: |
+          echo 'ZGlmZiAtLWdpdCBhL2luZGV4Lmh0bWwgYi9pbmRleC5odG1sCmluZGV4IDc0OTRjMWEuLmEzMzdlNTggMTAwNjQ0Ci0tLSBhL2luZGV4Lmh0bWwKKysrIGIvaW5kZXguaHRtbApAQCAtMTUwOTMsOCArMTUwOTMsNyBAQCBmdW5jdGlvbiBvcGVuTm90ZU1vbnRoKGtleSxidXR0b24pewogICB3aXRoTm90ZU1vbnRoRmVlZGJhY2soYnV0dG9uLCgpPT57CiAgICAgY3VyTm90ZU1vbnRoPWtleTsKICAgICByZW5kZXJOb3RlcygpOwotICAgIGNvbnN0IGNvbnRlbnQ9ZG9jdW1lbnQucXVlcnlTZWxlY3RvcignLmNvbnRlbnQnKTsKLSAgICBpZihjb250ZW50KWNvbnRlbnQuc2Nyb2xsVG9wPTA7CisgICAgc2Nyb2xsUmVzdWx0c1RvcCgpOwogICAgIGFuaW1hdGVOb3RlTW9udGhOYXZpZ2F0aW9uKGZhbHNlKTsKICAgfSk7CiB9CkBAIC0xNTEwMyw4ICsxNTEwMiw3IEBAIGZ1bmN0aW9uIGNsb3NlTm90ZU1vbnRoKGJ1dHRvbil7CiAgIHdpdGhOb3RlTW9udGhGZWVkYmFjayhidXR0b24sKCk9PnsKICAgICBjdXJOb3RlTW9udGg9Jyc7CiAgICAgcmVuZGVyTm90ZXMoKTsKLSAgICBjb25zdCBjb250ZW50PWRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJy5jb250ZW50Jyk7Ci0gICAgaWYoY29udGVudCljb250ZW50LnNjcm9sbFRvcD0wOworICAgIHNjcm9sbFJlc3VsdHNUb3AoKTsKICAgICBhbmltYXRlTm90ZU1vbnRoTmF2aWdhdGlvbih0cnVlKTsKICAgfSk7CiB9Cg==' | base64 -d | git apply
+          git diff --check -- index.html
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/reset-note-month-scroll.yml
+          git add index.html
+          git commit -m "切换笔记月份时回到顶部"
+          git push
