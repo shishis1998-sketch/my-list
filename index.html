@@ -1913,18 +1913,8 @@ body.cal-searching .cw-card{display:none;}
 .note-month-ico svg{width:17px;height:17px;display:block;}
 .note-month-name{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:600;line-height:1.2;}
 .note-month-count{font-family:var(--en);font-size:var(--fs-body);color:var(--text-muted);font-variant-numeric:tabular-nums;}
-.note-month-back{
-  display:none;align-items:center;justify-content:center;align-self:center;margin-left:auto;flex:0 0 30px;
-  width:30px;height:30px;box-sizing:border-box;padding:0;border:1px solid rgba(0,0,0,.07);
-  border-radius:50%;background:var(--surface);color:var(--text-muted);cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-.note-month-back.show{display:inline-flex;}
-.note-month-back svg{width:16px;height:16px;display:block;}
-@media (hover:hover){.note-month-back:hover{background:var(--surface-2);}}
 /* 淡主题色点击反馈保留至导航开始，文字沿用原来的可读颜色。 */
-.note-month-row:active,.note-month-back:active,
-.note-month-row.month-tap,.note-month-back.month-tap{
+.note-month-row:active,.note-month-row.month-tap{
   background:rgba(var(--accent-rgb),.08);
 }
 .note-card{
@@ -5276,9 +5266,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="vhdr">
       <div class="vtitle" id="vtitle">全部</div>
       <div class="vcnt" id="vcnt"></div>
-      <button type="button" class="note-month-back" id="noteMonthBack" onclick="closeNoteMonth(this)" aria-label="返回全部月份">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
+      <span id="noteMonthState" hidden></span>
     </div>
     <div class="twrap" id="twrap">
       <div id="mlist"></div>
@@ -10394,6 +10382,7 @@ const BACK_LAYERS=[
   {id:'chapterActionMenu',  cls:'open', close:()=>closeChapterActionMenu()},
   {id:'relGraph',           cls:'open', close:()=>closeRelationGraph()},
   {id:'detailRoot',         cls:'open', close:()=>closeDetail()},
+  {id:'noteMonthState',     cls:'open', close:()=>closeNoteMonth()},
   {id:'modal',              cls:'open', close:()=>closeModal()},
   {id:'noteSheet',          cls:'show', close:()=>closeNoteSheet()},
   {id:'tlSheet',            cls:'show', close:()=>closeChapterSheet()},
@@ -15200,7 +15189,8 @@ function renderNotes(){
   if(monthMode&&curNoteMonth&&!L.some(n=>noteMonthKey(n)===curNoteMonth)) curNoteMonth='';
   if(monthMode&&curNoteMonth) L=L.filter(n=>noteMonthKey(n)===curNoteMonth);
   document.getElementById('vcnt').textContent=(monthMode&&curNoteMonth?noteMonthLabel(curNoteMonth)+' · ':'')+L.length+' 条笔记';
-  document.getElementById('noteMonthBack')?.classList.toggle('show',!!(monthMode&&curNoteMonth));
+  // 月份明细没有可见返回键；用隐藏状态节点接入系统返回手势/后退键。
+  document.getElementById('noteMonthState')?.classList.toggle('open',!!(monthMode&&curNoteMonth));
   syncSearchNoResult(L.length);
   // 笔记不显示统计卡片
   const sb=document.getElementById('sbar'); sb.style.display='none'; sb.innerHTML='';
