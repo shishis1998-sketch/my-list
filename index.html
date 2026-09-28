@@ -4370,10 +4370,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   padding:8px 6px;border-top:1px solid var(--border);}
 /* 首行原本要贴着标题栏、所以上内边距被收成 4px；现在每月自成一卡，四张卡内边距要一致 */
 #calViewPeriod.pv-year .calendar-container.year-view .month:nth-child(-n+3){padding-top:8px;}
-/* 月份名靠左（只改年视图；月视图那个 .month-title 是另一处，不动）。
-   左边多给 2px，让「1 月」的左沿与第一列日期圆点的左沿对齐，
-   而不是贴死在卡片内容框边上 */
-#calViewPeriod.pv-year .calendar-container.year-view .month-title{text-align:left;padding-left:2px;font-size:13px;margin-bottom:6px;}
+/* 年视图的 1–12 月标题统一右移，与「经期历史」标题的左边线对齐。 */
+#calViewPeriod.pv-year .calendar-container.year-view .month-title{text-align:left;padding-left:10px;font-size:13px;margin-bottom:6px;}
 /* 翻页导航整体：与普通日历 .cal-titlenav 一致——左移半列减半个箭头按钮，
    ‹ 的图标中心落在第一列（周一）日期的中心线上。
    margin-left 必须显式写，上面 1998 行那条同优先级的规则给了 -6px。 */
