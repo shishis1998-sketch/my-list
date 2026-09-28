@@ -2733,6 +2733,9 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   /* 和 .tl-pbody 同一个数，小标题与正文起始位置一致 */
   padding-left:var(--sp-2);
 }
+/* 大标题 18px（--fs-title）；普通标题沿用 --fs-headline，手机/电脑默认 16px、平板 17px。 */
+.tl-phead.large{font-size:var(--fs-title);line-height:var(--lh-tight);}
+.tl-para.tl-hd-large .tl-pdot{height:calc(var(--fs-title) * var(--lh-tight));}
 
 /* ── 富文本渲染样式（rt-* / pv-h1/h2/h3）─────────────────── */
 /* 富文本块（用在收集卡片、时间线、读书笔记预览） */
@@ -4949,6 +4952,21 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;}
 .chapter-title-input{flex-shrink:0;width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;font:inherit;font-size:var(--fs-input);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-format{flex-shrink:0;margin:0;}
+/* 章节标题级别：H 打开 H1 / H2 / T 菜单；菜单向上展开，不挤压正文。 */
+.chapter-heading-picker{position:relative;display:inline-flex;}
+.chapter-heading-menu{
+  position:absolute;left:0;bottom:calc(100% + 6px);z-index:6;display:none;align-items:center;
+  padding:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  box-shadow:none;white-space:nowrap;
+}
+.chapter-heading-picker.open .chapter-heading-menu{display:flex;}
+.chapter-heading-option{
+  min-width:44px;height:36px;padding:0 var(--sp-10);border:0;border-radius:calc(var(--r) - 2px);
+  background:transparent;color:var(--text-primary);font-family:var(--zh);
+  font-size:var(--fs-headline);cursor:pointer;
+}
+.chapter-heading-option:active{background:var(--press);}
+.chapter-heading-option sub{font-size:.65em;vertical-align:-.25em;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-whole-text:focus,.chapter-title-input:focus{outline:1px solid var(--accent);}
 
@@ -15639,7 +15657,7 @@ function parseParagraphs(content){
       numCounter++;
       blocks.push({type:'num',num:numCounter,text:line.replace(TL_PARA_RE,'')});
     }else{
-      const type=TL_HEAD_MARK.test(line)?'heading':'pre';
+      const type=TL_HEAD_LARGE_MARK.test(line)?'heading-large':TL_HEAD_MARK.test(line)?'heading':'pre';
       blocks.push({type,text:line});
     }
   }
@@ -15747,8 +15765,8 @@ function buildChapterRaw(segs){
   const body=segs.filter(s=>s.text!=='').map(s=>s.gap+s.text).join('');
   return (tlSheetLead+tlSheetHeading+'\n'+body).replace(/\s+$/,'');
 }
-// 标题记号：行首两个 #。不按字数猜标题，章节标题写多长都能识别。
-// 「###」不在这儿截，留给富文本的三级标题。
+// 标题记号：# 是大标题，## 是普通标题；T 会移除行首标题记号、还原正文。
+const TL_HEAD_LARGE_MARK=/^#(?!#)\s*/;
 const TL_HEAD_MARK=/^##(?!#)\s*/;
 // 单行类型：显式标题 / 编号 / 正文
 function tlSegType(line){
@@ -15757,7 +15775,7 @@ function tlSegType(line){
   // 多行的段整段走正文：编号槽和标题都是「一行」的样式，
   // 只认首行会把后面几行的编号/长短判断带偏
   if(t.indexOf('\n')>=0) return 'pre';
-  // 「## 标题」：唯一的章节内主题色标题标记
+  if(TL_HEAD_LARGE_MARK.test(t)) return 'heading-large';
   if(TL_HEAD_MARK.test(t)) return 'heading';
   if(TL_PARA_RE.test(t)) return 'num';
   return 'pre';
@@ -15774,7 +15792,7 @@ function markLegacyChapterHeadings(text){
     const updated=rest.split(/(\n[ \t]*\n+)/).map((piece,index)=>{
       if(index%2)return piece; // 空行分隔符原样保留
       const line=piece.trim();
-      if(!line||line.includes('\n')||line.length>12||TL_HEAD_MARK.test(line)||
+      if(!line||line.includes('\n')||line.length>12||TL_HEAD_MARK.test(line)||TL_HEAD_LARGE_MARK.test(line)||
          TL_PARA_RE.test(line)||/^([-*]|#{1,3})\s+/.test(line))return piece;
       const at=piece.indexOf(line);
       return piece.slice(0,at)+'## '+piece.slice(at);
@@ -15959,9 +15977,10 @@ function renderChapterSheet(){
     const line=seg.text;
     const type=tlSegType(line);
     if(type==='num') num++;
-    if(type==='heading'){
-      return `<div class="tl-para tl-hd"><div class="tl-pdot"></div>`+
-        `<div class="tl-phead tlseg-tap" data-tap="${i}">${inlineFmt(esc(line.replace(TL_HEAD_MARK,'')))}</div></div>`;
+    if(type==='heading-large'||type==='heading'){
+      const large=type==='heading-large', mark=large?TL_HEAD_LARGE_MARK:TL_HEAD_MARK;
+      return `<div class="tl-para tl-hd${large?' tl-hd-large':''}"><div class="tl-pdot"></div>`+
+        `<div class="tl-phead${large?' large':''} tlseg-tap" data-tap="${i}">${inlineFmt(esc(line.replace(mark,'')))}</div></div>`;
     }
     if(type==='num'){
       return `<div class="tl-para tl-nm"><div class="tl-pdot"></div>`+
@@ -16003,13 +16022,34 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
   body.classList.add('chapter-editing');
   syncChapterKeyboardLayout();
   body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="中国史1 春秋 / 中国史1 1">
-    <div class="fmt-bar chapter-format">${[['h','H'],['b','<b>B</b>'],['i','<i>I</i>'],['u','<u>U</u>'],['li','•']].map(([kind,label])=>`<button type="button" class="fmt-btn" data-fmt="${kind}">${label}</button>`).join('')}</div>
+    <div class="fmt-bar chapter-format">
+      <div class="chapter-heading-picker">
+        <button type="button" class="fmt-btn" data-heading-menu aria-label="标题样式" aria-expanded="false">H</button>
+        <div class="chapter-heading-menu" role="menu">
+          <button type="button" class="chapter-heading-option" data-fmt="h1" title="大标题" aria-label="大标题">H<sub>1</sub></button>
+          <button type="button" class="chapter-heading-option" data-fmt="h2" title="普通标题" aria-label="普通标题">H<sub>2</sub></button>
+          <button type="button" class="chapter-heading-option" data-fmt="t" title="还原正文" aria-label="还原正文">T</button>
+        </div>
+      </div>
+      <button type="button" class="fmt-btn" data-fmt="b"><b>B</b></button><button type="button" class="fmt-btn" data-fmt="i"><i>I</i></button><button type="button" class="fmt-btn" data-fmt="u"><u>U</u></button><button type="button" class="fmt-btn" data-fmt="li">•</button>
+    </div>
     <textarea id="chapterWholeText" class="chapter-whole-text" aria-label="本章正文" placeholder="写下这一章的笔记…">${esc(content)}</textarea>`;
   document.getElementById('tlSheetTitle').textContent=tlChapterNew?'新增章节':'编辑本章';
   document.getElementById('tlSheetCancel').textContent='取消';
   document.getElementById('tlSheetDone').textContent='完成';
   const ta=document.getElementById('chapterWholeText');
-  body.querySelectorAll('[data-fmt]').forEach(btn=>btn.addEventListener('pointerdown',e=>{e.preventDefault();noteFmt(btn.dataset.fmt,ta);}));
+  const headingPicker=body.querySelector('.chapter-heading-picker');
+  const headingTrigger=body.querySelector('[data-heading-menu]');
+  if(headingTrigger)headingTrigger.addEventListener('pointerdown',e=>{
+    e.preventDefault();e.stopPropagation();
+    const open=headingPicker.classList.toggle('open');
+    headingTrigger.setAttribute('aria-expanded',String(open));
+  });
+  body.querySelectorAll('[data-fmt]').forEach(btn=>btn.addEventListener('pointerdown',e=>{
+    e.preventDefault();e.stopPropagation();noteFmt(btn.dataset.fmt,ta);
+    if(headingPicker){headingPicker.classList.remove('open');headingTrigger.setAttribute('aria-expanded','false');}
+  }));
+  ta.addEventListener('pointerdown',()=>{if(headingPicker){headingPicker.classList.remove('open');headingTrigger.setAttribute('aria-expanded','false');}});
   body.scrollTop=0;
   const target=tlSheetSegs[segIndex];
   let offset=0;
@@ -16968,8 +17008,20 @@ function noteFmt(kind,el){
     const ins=M+(sel||PH)+M;
     ta.value=before+ins+after;
     ta.selectionStart=ta.selectionEnd=start+ins.length;
+  }else if(kind==='h1'||kind==='h2'||kind==='t'){
+    // 章节编辑器的明确三级：H1 大标题 / H2 普通标题 / T 正文。
+    const lineStart=before.lastIndexOf('\n')+1;
+    const lineEnd=ta.value.indexOf('\n',start);
+    const lineEndIdx=lineEnd<0?ta.value.length:lineEnd;
+    const curLine=ta.value.slice(lineStart,lineEndIdx);
+    const plain=curLine.replace(/^#{1,3}\s+/,'');
+    const prefix=kind==='h1'?'# ':kind==='h2'?'## ':'';
+    const next=prefix+plain;
+    ta.value=ta.value.slice(0,lineStart)+next+ta.value.slice(lineEndIdx);
+    const caret=lineStart+next.length;
+    ta.selectionStart=ta.selectionEnd=caret;
   }else if(kind==='h'){
-    // 循环切换 # / ## / ### / 无（去掉所有 # ）
+    // 其他笔记编辑器继续循环 # / ## / ### / 无（去掉所有 # ）
     const lineStart=before.lastIndexOf('\n')+1;
     const lineEnd=ta.value.indexOf('\n',start);
     const lineEndIdx=lineEnd<0?ta.value.length:lineEnd;
