@@ -14904,18 +14904,21 @@ function drawCalInlineOutline(geometry){
   if(!panel||!day)return;
   const b=geometry?geometry.bounds:panel.getBoundingClientRect(),t=geometry?geometry.tab:day.getBoundingClientRect();
   if(!b.width||!b.height)return;
-  const left=.5,right=b.width-.5,bottom=Math.max(.5,b.height-.5);
-  const x=t.left-b.left+.5,x2=t.right-b.left-.5,top=t.top-b.top+.5;
+  // iOS Safari 会把正好贴在 SVG/网格裁切边界上的 1px 描边削掉抗锯齿外沿，
+  // 看起来只剩半条。四边向内留满 1px；普通日历与食记共用这份轮廓。
+  const inset=1;
+  const left=inset,right=b.width-inset,bottom=Math.max(inset,b.height-inset);
+  const x=t.left-b.left+inset,x2=t.right-b.left-inset,top=t.top-b.top+inset;
   const r=Math.min((geometry?geometry.radius:parseFloat(getComputedStyle(day).borderTopLeftRadius)||10),(x2-x)/2, -top/2);
-  const bodyR=Math.min(r,Math.max(0,(bottom-.5)/2));
+  const bodyR=Math.min(r,Math.max(0,(bottom-inset)/2));
   const edgeLeft=panel.dataset.col==='0',edgeRight=panel.dataset.col==='6';
   const shoulder=Math.min(r,edgeLeft?Infinity:(x-left)/2,edgeRight?Infinity:(right-x2)/2);
   let d=`M ${x+r} ${top} H ${x2-r} Q ${x2} ${top} ${x2} ${top+r}`;
   d+=edgeRight?` V ${bottom-bodyR}`:
-    ` V ${.5-shoulder} Q ${x2} .5 ${x2+shoulder} .5 H ${right-bodyR} Q ${right} .5 ${right} ${.5+bodyR} V ${bottom-bodyR}`;
+    ` V ${inset-shoulder} Q ${x2} ${inset} ${x2+shoulder} ${inset} H ${right-bodyR} Q ${right} ${inset} ${right} ${inset+bodyR} V ${bottom-bodyR}`;
   d+=` Q ${right} ${bottom} ${right-bodyR} ${bottom} H ${left+bodyR} Q ${left} ${bottom} ${left} ${bottom-bodyR}`;
   d+=edgeLeft?` V ${top+r}`:
-    ` V ${.5+bodyR} Q ${left} .5 ${left+bodyR} .5 H ${x-shoulder} Q ${x} .5 ${x} ${.5-shoulder} V ${top+r}`;
+    ` V ${inset+bodyR} Q ${left} ${inset} ${left+bodyR} ${inset} H ${x-shoulder} Q ${x} ${inset} ${x} ${inset-shoulder} V ${top+r}`;
   d+=` Q ${x} ${top} ${x+r} ${top} Z`;
   let svg=panel.querySelector('.cal-inline-outline');
   if(!svg){
@@ -14923,9 +14926,9 @@ function drawCalInlineOutline(geometry){
     svg.classList.add('cal-inline-outline');svg.setAttribute('aria-hidden','true');
     svg.appendChild(document.createElementNS(svg.namespaceURI,'path'));panel.appendChild(svg);
   }
-  svg.style.top=(top-.5)+'px';svg.setAttribute('width',b.width);
-  svg.setAttribute('height',b.height-top+.5);
-  svg.setAttribute('viewBox',`0 ${top-.5} ${b.width} ${b.height-top+.5}`);
+  svg.style.top=(top-inset)+'px';svg.setAttribute('width',b.width);
+  svg.setAttribute('height',b.height-top+inset);
+  svg.setAttribute('viewBox',`0 ${top-inset} ${b.width} ${b.height-top+inset}`);
   svg.firstChild.setAttribute('d',d);
 }
 window.addEventListener('resize',()=>{
