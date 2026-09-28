@@ -2477,8 +2477,14 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 .chapter-action-menu *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 .chapter-action-menu.open{display:block;}
-.chapter-action-panel{position:fixed;width:164px;box-sizing:border-box;padding:4px;border:1px solid var(--border-soft);
-  border-radius:var(--r);background:var(--surface);box-shadow:0 6px 20px rgba(0,0,0,.12);}
+.chapter-action-panel{position:fixed;width:164px;box-sizing:border-box;padding:4px;border:var(--bd) solid var(--ink);
+  border-radius:var(--r);background:var(--surface);box-shadow:none;}
+/* 长按章节时只标记章节卡片；长按小节时只标记对应的小节卡片。 */
+#detailBookNoteCard .tl-item.chapter-action-selected,
+#detailBookNoteCard .tl-chapter-group.chapter-action-selected,
+#detailBookNoteCard .tl-section-btn.chapter-action-selected{
+  border-color:var(--accent);background:rgba(var(--accent-rgb),.08);
+}
 .chapter-action-item{display:block;width:100%;min-height:40px;border:0;border-radius:8px;background:transparent;
   color:var(--text-primary);text-align:left;padding:8px 12px;font:var(--fs-body) var(--zh);cursor:pointer;touch-action:manipulation;}
 .chapter-action-item:active{background:var(--surface-2);}
@@ -11504,10 +11510,13 @@ function openGraphForAnchor(anchor){
   rgAnchorFilter=anchor;
   openRelationGraph(graphs[0].id);
 }
-let chapterActionTarget=null,chapterPress=null,chapterClickBlock=null;
+let chapterActionTarget=null,chapterPress=null,chapterClickBlock=null,chapterActionSelectedEl=null;
 function openChapterActionMenu(el,point){
   if(!el||!detailId)return;
   chapterActionTarget={chapter:el.dataset.graphChapter,group:el.dataset.graphGroup,title:el.dataset.graphTitle||''};
+  chapterActionSelectedEl?.classList.remove('chapter-action-selected');
+  chapterActionSelectedEl=el.classList.contains('tl-chapter-group-head')?el.closest('.tl-chapter-group'):el;
+  chapterActionSelectedEl?.classList.add('chapter-action-selected');
   const menu=document.getElementById('chapterActionMenu');menu.classList.add('open');menu.setAttribute('aria-hidden','false');
   window.getSelection()?.removeAllRanges();
   const panel=menu.querySelector('.chapter-action-panel'),rect=el.getBoundingClientRect();
@@ -11519,6 +11528,7 @@ function openChapterActionMenu(el,point){
 }
 function closeChapterActionMenu(){
   const menu=document.getElementById('chapterActionMenu');menu.classList.remove('open');menu.setAttribute('aria-hidden','true');
+  chapterActionSelectedEl?.classList.remove('chapter-action-selected');chapterActionSelectedEl=null;
   chapterActionTarget=null;chapterClickBlock=null;
 }
 function openChapterActionGraph(){
