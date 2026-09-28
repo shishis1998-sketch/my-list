@@ -2821,7 +2821,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   }
   .nfrow #nfchips{flex-wrap:nowrap;flex-shrink:0;}
   .nfrow::-webkit-scrollbar{display:none;}
-  .nfrow .nfchip{padding:var(--sp-6) var(--sp-14);font-size:var(--fs-caption);}
+  /* 与媒体“全部”页顶部分类统一：36px 高，避免 button 默认行高导致笔记胶囊偏矮 */
+  .nfrow .nfchip{height:36px;padding:0 var(--sp-14);font-size:var(--fs-caption);line-height:var(--lh-loose);}
   .nfrow .flbl{font-size:var(--fs-foot);}
   .note-card{padding:var(--sp-12) var(--sp-14);}
   .note-title{font-size:var(--fs-body);}
@@ -3079,7 +3080,8 @@ mark.shl{
 /* 子分类胶囊条 */
 .nfrow .nfchip{
   font-family:var(--zh);font-weight:600;
-  border:var(--bd) solid var(--ink);background:var(--surface);color:var(--text-primary);
+  /* 与媒体“全部”页分类胶囊一致：浅灰填充 + 浅灰边框 */
+  border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);
   box-shadow:none;
 }
 .nfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
