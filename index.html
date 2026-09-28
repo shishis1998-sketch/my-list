@@ -2821,8 +2821,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   }
   .nfrow #nfchips{flex-wrap:nowrap;flex-shrink:0;}
   .nfrow::-webkit-scrollbar{display:none;}
-  /* 与媒体“全部”页顶部分类统一：36px 高，避免 button 默认行高导致笔记胶囊偏矮 */
-  .nfrow .nfchip{height:36px;padding:0 var(--sp-14);font-size:var(--fs-caption);line-height:var(--lh-loose);}
+  /* 与媒体“全部”页顶部分类使用相同的内边距和行高，不额外放大 */
+  .nfrow .nfchip{padding:var(--sp-6) var(--sp-14);font-size:var(--fs-caption);line-height:var(--lh-loose);}
   .nfrow .flbl{font-size:var(--fs-foot);}
   .note-card{padding:var(--sp-12) var(--sp-14);}
   .note-title{font-size:var(--fs-body);}
@@ -16748,15 +16748,11 @@ async function toggleNoteLocal(id){
 }
 
 // 分类按钮只使用原生 click：不拦截 pointerup，也不吞掉浏览器合成的点击。
-// 分类/数量未变时保留按钮节点；选中样式单独更新，避免按下后目标被重建。
+// 分类未变时保留按钮节点；选中样式单独更新，避免按下后目标被重建。
 function renderNoteChips(){
-  const un=userNotes();
-  const subCnt={};
-  noteSubs.forEach(s=>subCnt[s]=0);
-  un.forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
-  const chips=[`<button type="button" class="nfchip" data-note-sub="all" onclick="filterCat('notes:'+this.dataset.noteSub)">全部<span class="nfchip-cnt">${un.length}</span></button>`];
+  const chips=[`<button type="button" class="nfchip" data-note-sub="all" onclick="filterCat('notes:'+this.dataset.noteSub)">全部</button>`];
   noteSubs.forEach(s=>{
-    chips.push(`<button type="button" class="nfchip" data-note-sub="${esc(s)}" onclick="filterCat('notes:'+this.dataset.noteSub)">${esc(s)}<span class="nfchip-cnt">${subCnt[s]||0}</span></button>`);
+    chips.push(`<button type="button" class="nfchip" data-note-sub="${esc(s)}" onclick="filterCat('notes:'+this.dataset.noteSub)">${esc(s)}</button>`);
   });
   const box=document.getElementById('nfchips'),html=chips.join('');
   if(box._noteChipsHTML!==html){box.innerHTML=html;box._noteChipsHTML=html;}
