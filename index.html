@@ -13533,6 +13533,9 @@ function calendarMedia(){return calView==='food'?[]:data;}
 let foodEditor=false;
 function setFoodEditor(on){
   foodEditor=on;
+  const titleInput=document.getElementById('nf-title');
+  titleInput.type='text';
+  delete titleInput.dataset.diaryDate;
   document.getElementById('noteModal').classList.toggle('food-editor',on);
   const body=document.getElementById('nf-body');
   if(body.dataset.notePlaceholder===undefined)body.dataset.notePlaceholder=body.placeholder;
@@ -16522,10 +16525,42 @@ function memoCopy(e,noteId,key){
 
 // ── 备忘编辑器逻辑 ────────────────────────────────────────────
 // 在编辑器打开/子分类切换时调用
+function noteDateInputValue(value){
+  const m=String(value||'').trim().match(/^((?:19|20)\d{2})[\/.\-年](\d{1,2})[\/.\-月](\d{1,2})日?$/);
+  if(!m)return '';
+  const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]),dt=new Date(y,mo-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d)return '';
+  return String(y).padStart(4,'0')+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+}
+
+function applyNoteTitleMode(){
+  const input=document.getElementById('nf-title');
+  const label=input.previousElementSibling;
+  const sub=document.getElementById('nf-sub').value;
+  const isDiary=!foodEditor&&sub==='日记';
+  const wasDiary=input.dataset.diaryDate==='1';
+  if(isDiary){
+    const dateValue=noteDateInputValue(input.value)||calToday();
+    input.type='date';
+    input.value=dateValue;
+    input.placeholder='';
+    input.dataset.diaryDate='1';
+    label.textContent='日期';
+  }else{
+    const dateValue=wasDiary?input.value:'';
+    input.type='text';
+    if(wasDiary&&dateValue)input.value=dateValue.replace(/-/g,'/');
+    delete input.dataset.diaryDate;
+    label.textContent=foodEditor?'日期':'标题';
+    input.placeholder=foodEditor?'YYYY/MM/DD':'可留空';
+  }
+}
+
 function applyMemoEditorMode(){
   const sub=document.getElementById('nf-sub').value;
   const isMemo=(sub==='备忘');
   const isBook=(sub==='读书笔记');
+  applyNoteTitleMode();
   document.getElementById('nf-body-group').style.display=isMemo?'none':'';
   document.getElementById('memo-fields-group').style.display=isMemo?'':'none';
   document.getElementById('memo-local-group').style.display=isMemo?'':'none';
@@ -16820,9 +16855,11 @@ function renderNoteSubSelect(cur){
 }
 
 function saveNote(){
-  const title=document.getElementById('nf-title').value.trim();
   const sub=foodEditor?'食记':document.getElementById('nf-sub').value;
-  if(foodEditor&&!validFoodDate(title)){toast('日期请填写 YYYY/MM/DD');return false;}
+  const rawTitle=document.getElementById('nf-title').value.trim();
+  const isDiary=!foodEditor&&sub==='日记';
+  const title=isDiary?rawTitle.replace(/-/g,'/'):rawTitle;
+  if((foodEditor||isDiary)&&!validFoodDate(title)){toast('请选择正确的日期');return false;}
   if(foodEditor&&!document.getElementById('nf-body').value.trim()){toast('请填写食记内容');return false;}
   const isMemo=(sub==='备忘');
   const now=Date.now();
