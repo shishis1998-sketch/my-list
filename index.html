@@ -11903,7 +11903,17 @@ function renderGraphLegend(relations){
   const legend=document.getElementById('rgLegend'),used=new Set(relations.filter(r=>rgState.filters.has(r.type)).map(r=>r.type));
   const types=relationTypes(data.find(d=>d.id===detailId)).filter(t=>used.has(t.id));
   legend.classList.toggle('single',types.length===1);
+  legend.style.width='';
   legend.innerHTML=types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
+  // iOS Safari 在绝对定位的 flex 容器里会把 max-content 网格按最小内容宽计算，
+  // 只禁止换行仍会让文字溢出卡片。直接量两列真实内容宽，再明确写回卡片宽度。
+  const items=Array.from(legend.children);
+  if(items.length){
+    const cols=types.length===1?1:2,colWidths=Array(cols).fill(0);
+    items.forEach((el,i)=>{colWidths[i%cols]=Math.max(colWidths[i%cols],Math.ceil(el.scrollWidth));});
+    const gaps=(cols-1)*12,paddingAndBorder=26;
+    legend.style.width=Math.min(window.innerWidth-24,colWidths.reduce((a,w)=>a+w,0)+gaps+paddingAndBorder)+'px';
+  }
   updateGraphLabelButton();
 }
 function currentGraphData(){
