@@ -2524,6 +2524,10 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   pointer-events:none;}
 .rg-legend:empty{display:none;}
 .rg-legend.single{grid-template-columns:max-content;}
+/* 手机端两列图例直接铺满可用宽度。iOS Safari 在绝对定位的 max-content 网格里
+   会把 scrollWidth 也按压缩后的轨道宽度回报，不能再靠 JS 测量来决定卡片宽度。 */
+.rg-legend.mobile-wide{grid-template-columns:repeat(2,minmax(0,1fr));width:calc(100vw - 24px)!important;}
+.rg-legend.mobile-wide .rg-legend-item{min-width:0;}
 .rg-legend-item{display:flex;align-items:center;gap:7px;min-width:max-content;color:var(--text-secondary);font-size:var(--fs-caption);}
 .rg-legend-item span:last-child{white-space:nowrap;overflow-wrap:normal;}
 .rg-legend-line{flex:0 0 20px;height:0;border-top:2px solid var(--rg-rel-color);}
@@ -11903,12 +11907,14 @@ function renderGraphLegend(relations){
   const legend=document.getElementById('rgLegend'),used=new Set(relations.filter(r=>rgState.filters.has(r.type)).map(r=>r.type));
   const types=relationTypes(data.find(d=>d.id===detailId)).filter(t=>used.has(t.id));
   legend.classList.toggle('single',types.length===1);
+  const mobileWide=types.length>1&&window.matchMedia('(max-width:700px)').matches;
+  legend.classList.toggle('mobile-wide',mobileWide);
   legend.style.width='';
   legend.innerHTML=types.map(t=>`<div class="rg-legend-item"><span class="rg-legend-line ${t.id==='conflict'?'conflict':''}" style="--rg-rel-color:${t.color}"></span><span>${esc(t.lbl)}</span></div>`).join('');
-  // iOS Safari 在绝对定位的 flex 容器里会把 max-content 网格按最小内容宽计算，
-  // 只禁止换行仍会让文字溢出卡片。直接量两列真实内容宽，再明确写回卡片宽度。
+  // 手机端固定使用完整可用宽度，避开 iOS Safari 对绝对定位 max-content 网格的错误测量。
+  // 桌面端仍按两列真实内容宽收紧，避免图例无意义地铺满大屏。
   const items=Array.from(legend.children);
-  if(items.length){
+  if(items.length&&!mobileWide){
     const cols=types.length===1?1:2,colWidths=Array(cols).fill(0);
     items.forEach((el,i)=>{colWidths[i%cols]=Math.max(colWidths[i%cols],Math.ceil(el.scrollWidth));});
     const gaps=(cols-1)*12,paddingAndBorder=26;
