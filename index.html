@@ -10582,6 +10582,9 @@ let dtTab='info';
   root.addEventListener('touchstart',e=>{
     if(e.touches.length!==1){tracking=false;return;}
     const t=e.touches[0];
+    // 屏幕左缘始终留给系统返回：无论当前是概览、备注、时间线还是人物，
+    // 都不能让栏目横滑的 preventDefault 抢走 iOS Safari 的边缘手势。
+    if(t.clientX<=24){tracking=false;blocked=true;moved=[];removePeek();return;}
     sx=t.clientX;sy=t.clientY;lastDx=0;horizontal=false;tracking=true;
     blocked=!!e.target.closest(interactive);
     moved=blocked?[]:getMovables();
