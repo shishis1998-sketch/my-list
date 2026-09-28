@@ -11273,6 +11273,7 @@ function renderDetailTL(item){
       <details class="people-more">
         <summary aria-label="笔记更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
         <div class="people-more-menu">
+          <button type="button" class="people-more-item" onclick="peopleMenuAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
           <button type="button" class="people-more-item" onclick="peopleMenuAction('booknote',this,event)"><span>编辑全文</span></button>
         </div>
       </details>
