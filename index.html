@@ -8136,8 +8136,8 @@ window.PV = (function(){
     //   · 未来：用最近若干个周期的平均值外推
     // 结果不落盘、每次渲染现算，所以改任意一天的经血量后自动跟着变，
     // 也不会和 Gist 同步的数据打架。
-    // 全部参数都可调（设置 › 经期）：存本机 localStorage，不进 Gist——
-    // 这是「怎么算」的偏好，不是经期数据本身，没必要跟着同步走。
+    // 全部参数都可调（设置 › 经期）：本机即时保存，同时进入 Gist 同步。
+    // 这样新设备拉取数据后会沿用同一套开关和推算参数，不会重新回到默认开启。
     // 默认值是人群统计上的常见值，不是对每个人都对的值：周期本来就有人 24 天、
     // 有人 45 天，黄体期也不是人人 14 天，所以一个都不写死。
     const OVU_KEY = 'my_list_ovu_cfg_v1';
@@ -8224,9 +8224,10 @@ window.PV = (function(){
     function getOvuRange() { return JSON.parse(JSON.stringify(OVU_RANGE)); }
     function getOvuDefault() { return Object.assign({}, OVU_DEFAULT); }
     // replace=true 时用 patch 整个换掉（恢复默认用），否则按字段合并
-    function setOvuCfg(patch, replace) {
+    function setOvuCfg(patch, replace, skipSync) {
       OVU = clampOvu(replace ? patch : Object.assign({}, OVU, patch));
       try { localStorage.setItem(OVU_KEY, JSON.stringify(OVU)); } catch (e) {}
+      if (!skipSync && typeof window.pvOvuPersist === 'function') window.pvOvuPersist();
       if (_inited) render();   // 日历正开着就立刻重画；没开过则下次进入自然生效
     }
     // 立刻读一次：设置页在 PV.init 之前就要渲染出正确的开关状态
@@ -8768,6 +8769,8 @@ function savePeriod(){
   scheduleSyncPush();
 }
 window.pvPersist=savePeriod;
+// 排卵期推算开关与参数也是跨设备偏好；任何修改都触发同一套防抖云同步。
+window.pvOvuPersist=()=>scheduleSyncPush();
 // 经期数据被云端同步/导入换掉后，把当前正开着的那个视图重画一遍
 function refreshCalPeriodView(){
   if(!window.PV||!_pvInited)return;
@@ -9615,6 +9618,7 @@ async function syncPush(allowCreate){
       data, categories:cats,
       notes:notesToSync, noteSubs,
       period: periodData,
+      ovuConfig: (window.PV&&PV.getOvuCfg)?PV.getOvuCfg():null,
       theme: getTheme()
     };
     // 有主密码 → 整份加密上云，Gist 里只剩一团密文（媒体、笔记、经期一并盖住）；
@@ -9800,6 +9804,15 @@ async function syncPull(silent){
     if(Array.isArray(remote.categories)&&remote.categories.length)cats=remote.categories;
     // 主题色跟着同步走；旧 Gist 没这个字段时保持本机选择
     if(typeof remote.theme==='string')applyTheme(remote.theme,true,true);
+    // 排卵期推算配置跟着同步。应用云端值时跳过反向上传，避免拉取后产生无意义回写。
+    // 旧 Gist 没该字段：若本机已有明确保存过的配置，就把它补进下一次推送；
+    // 新设备没有本地配置时不补，避免默认“开启”反过来覆盖旧设备的选择。
+    if(remote.ovuConfig&&typeof remote.ovuConfig==='object'&&window.PV){
+      PV.setOvuCfg(remote.ovuConfig,true,true);
+      renderOvuRow();
+    }else if(localStorage.getItem('my_list_ovu_cfg_v1')){
+      scheduleSyncPush();
+    }
     // 笔记数据兼容:旧 Gist 没有 notes/noteSubs 字段时保持现状
     // 合并策略：保留本机的 🔒 仅本机笔记，云端覆盖云端同步的笔记
     if(Array.isArray(remote.notes)){
