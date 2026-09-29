@@ -2162,22 +2162,23 @@ body.cal-searching .cw-card{display:none;}
   transition:transform .2s var(--nav-ease);}
 .tl-chapter-group.collapsed .tl-chapter-group-arrow{transform:rotate(-90deg);}
 .tl-section-grid{display:grid;grid-template-columns:minmax(0,1fr);
-  gap:var(--sp-8);margin-top:var(--sp-8);}
+  gap:0;margin-top:var(--sp-8);}
 .tl-chapter-group.collapsed .tl-section-grid{display:none;}
-.tl-section-btn{height:40px;min-width:0;border:var(--bd) solid var(--ink);
-  border-radius:var(--r);background:var(--surface);color:var(--text-primary);
+.tl-section-btn{height:40px;min-width:0;border:0;border-bottom:var(--bd) solid var(--border);
+  border-radius:0;background:transparent;color:var(--text-primary);
   font-family:var(--zh);font-size:var(--fs-headline);font-weight:600;cursor:pointer;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px;
-  display:grid;place-items:center;transition:border-color .15s,background .15s,transform .1s;}
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 0 0 13px;
+  display:flex;align-items:center;justify-content:flex-start;text-align:left;
+  transition:border-color .15s,background .15s;}
 .tl-section-name{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tl-section-btn:active{transform:scale(.98);background:var(--surface-2);}
+.tl-section-btn:active{background:var(--surface-2);}
 @media (hover:hover){.tl-section-btn:hover{border-color:var(--accent);}}
 /* 搜正文时卡片临时改成单列，并在章名下面露出命中上下文；退出搜索后恢复原布局。 */
 #detailBookNoteCard.timeline-searching .tl{grid-template-columns:minmax(0,1fr);}
 .tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px;
   display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:5px;
   text-align:left;white-space:normal;}
-.tl-section-btn.has-search-hit .tl-section-name{align-self:center;}
+.tl-section-btn.has-search-hit .tl-section-name{align-self:flex-start;}
 .timeline-search-hit{min-width:0;font-size:var(--fs-caption);font-weight:400;
   color:var(--text-secondary);line-height:var(--lh-normal);display:flex;
   flex-direction:column;gap:4px;}
