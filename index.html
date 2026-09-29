@@ -2149,11 +2149,8 @@ body.cal-searching .cw-card{display:none;}
 .tl-chapter-group{min-width:0;background:var(--surface);border:var(--bd) solid var(--ink);
   border-radius:var(--rlg);padding:var(--sp-12);}
 .tl-chapter-group-head{width:100%;display:flex;align-items:center;gap:var(--sp-10);
-  border:0;background:none;padding:0;color:var(--text-primary);font-family:var(--zh);
+  border:0;background:none;padding:0 0 0 2px;color:var(--text-primary);font-family:var(--zh);
   cursor:pointer;text-align:left;}
-/* 带小节的总章名也保留普通章节左侧的主题色竖条。 */
-.tl-chapter-group-head::before{content:'';flex:0 0 3px;align-self:stretch;min-height:20px;
-  border-radius:2px;background:var(--accent-light);}
 .tl-chapter-group-title{font-size:var(--fs-headline);font-weight:700;line-height:var(--lh-normal);
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-chapter-group-count{margin-left:auto;flex-shrink:0;font-size:var(--fs-caption);
@@ -2167,7 +2164,7 @@ body.cal-searching .cw-card{display:none;}
 .tl-section-btn{height:40px;min-width:0;border:0;border-bottom:var(--bd) solid var(--border);
   border-radius:0;background:transparent;color:var(--text-primary);
   font-family:var(--zh);font-size:var(--fs-headline);font-weight:600;cursor:pointer;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 0 0 13px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 0 0 30px;
   display:flex;align-items:center;justify-content:flex-start;text-align:left;
   transition:border-color .15s,background .15s;}
 .tl-section-name{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -2175,7 +2172,7 @@ body.cal-searching .cw-card{display:none;}
 @media (hover:hover){.tl-section-btn:hover{border-color:var(--accent);}}
 /* 搜正文时卡片临时改成单列，并在章名下面露出命中上下文；退出搜索后恢复原布局。 */
 #detailBookNoteCard.timeline-searching .tl{grid-template-columns:minmax(0,1fr);}
-.tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px;
+.tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px 10px 30px;
   display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:5px;
   text-align:left;white-space:normal;}
 .tl-section-btn.has-search-hit .tl-section-name{align-self:flex-start;}
@@ -2200,8 +2197,7 @@ body.cal-searching .cw-card{display:none;}
     var(--accent-light);}
 .timeline-jump-mark{background:var(--accent);color:var(--on-accent);border-radius:3px;
   padding:0 1px;}
-/* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。
-   竖条和章节卡那道 .tl-bar 同族，只是更深更实——大条管小条，层级一眼看得出来 */
+/* 分部小标题：书分「第一部 / 第二部」时，每部一行标题、底下排它自己的章节卡。 */
 /* 上下留白不对称是故意的：上面 24 是「和上一部的卡拉开」，下面 6（加 .tl 自己的
    6 共 12）是「和自己管的卡贴紧」。一疏一密，部名归属哪一堆一眼看得出来 */
 .tl-part{display:flex;align-items:center;gap:var(--sp-8);font-size:14px;font-weight:700;
@@ -2235,10 +2231,9 @@ body.cal-searching .cw-card{display:none;}
 .tl-item:active{transform:scale(.99);}
 .tl-item.open{border-color:var(--accent);}
 
-/* 章节标题区(可点击折叠)：紧凑高度。两列后卡片变窄，竖条到标题收到 10px、
-   四周统一 12px，横竖留白一致 */
+/* 章节标题区：紧凑高度，四周统一 12px。 */
 .tl-head{
-  display:flex;align-items:stretch;gap:var(--sp-10);cursor:pointer;
+  display:flex;align-items:stretch;cursor:pointer;
   padding:var(--sp-12);
   user-select:none;-webkit-user-select:none;
   transition:background .18s;
@@ -2246,9 +2241,6 @@ body.cal-searching .cw-card{display:none;}
 /* 方案 D：展开时标题行铺满墨绿底带、内容反白，像给这一章加了个「表头」 */
 .tl-item.open .tl-head{background:var(--accent);
   border-radius:calc(var(--rlg) - var(--bd)) calc(var(--rlg) - var(--bd)) 0 0;}
-/* 左侧墨绿竖条：区分章节、暗示可展开，不用数字；展开时在墨绿底带上转为半透明白 */
-.tl-bar{flex-shrink:0;width:3px;border-radius:2px;background:var(--accent-light);transition:background .18s;}
-.tl-item.open .tl-bar{background:var(--on-accent-soft);}
 /* 章名（一行截断） */
 .tl-main{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
 .tl-ch{font-size:var(--fs-headline);font-weight:600;color:var(--text-primary);line-height:var(--lh-normal);
@@ -15745,13 +15737,13 @@ function renderTimelineChapterCards(chs,openFn){
     if(entry.type==='single'){
       const x=entry.item;
       return `<div class="tl-item has-paras" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
-        <div class="tl-head"><span class="tl-bar"></span><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
+        <div class="tl-head"><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`;
     }
     return `<div class="tl-chapter-group" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
       <button type="button" class="tl-chapter-group-head" aria-expanded="true" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
-        <span class="tl-chapter-group-title">${esc(entry.title)}</span>
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        <span class="tl-chapter-group-title">${esc(entry.title)}</span>
       </button>
       <div class="tl-section-grid">
         ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}"><span class="tl-section-name">${esc(x.section)}</span></button>`).join('')}
