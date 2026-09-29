@@ -10439,7 +10439,20 @@ BACK_LAYERS.forEach(L=>{
     backSync();
   }).observe(el,{attributes:true,attributeFilter:['class']});
 });
-window.addEventListener('popstate',()=>{
+window.addEventListener('popstate',event=>{
+  // 关系图的列表、具体图和编辑页各自拥有真实 history 记录。
+  // 返回到某个关系图记录时，直接恢复该页，不要消耗共用的浮层哨兵。
+  if(event.state?.relationGraph){
+    restoreRelationGraphHistory(event.state.relationGraph);
+    return;
+  }
+  // 从关系图的第一层返回时，浏览器只是回到了详情页已有的 {ov:1}
+  // 哨兵，并没有把它吃掉；关闭关系图后仍要保留 backArmed，下一次返回
+  // 才应退出详情页。旧逻辑在这里把它误设为 false，导致浏览器直接退出。
+  if(document.getElementById('relGraph')?.classList.contains('open')&&event.state?.ov===1){
+    closeRelationGraphCompletely(true);
+    return;
+  }
   if(!backArmed) return;               // 这条不是我们压的：没浮层开着，照常后退（退出网页）
   backArmed=false;                     // 我们那条刚被这一下吃掉
   const L=backOpen[backOpen.length-1];
@@ -11495,15 +11508,21 @@ function closeNoteSheet(save=false){
 
 // ── 全屏人物关系图 ───────────────────────────────────────────────
 // 旧版整书关系保持原有字段；新图各自保存成员、边和布局。
-let rgGraphId='',rgAnchorFilter='',rgScreen='list',rgEntryTab='people',rgNavStack=[];
+let rgGraphId='',rgAnchorFilter='',rgScreen='list',rgEntryTab='people';
 function relationGraphSnapshot(){return {screen:rgScreen,graphId:rgGraphId,anchorFilter:rgAnchorFilter};}
 function beginRelationGraphNavigation(root){
   if(root.classList.contains('open'))return false;
-  rgEntryTab=dtTab;rgNavStack=[];
+  rgEntryTab=dtTab;
   return true;
 }
-function pushRelationGraphStep(root){
-  if(root.classList.contains('open'))rgNavStack.push(relationGraphSnapshot());
+function relationGraphHistoryState(){
+  return {...relationGraphSnapshot(),entryTab:rgEntryTab,detailId};
+}
+function pushRelationGraphHistory(){
+  try{history.pushState({relationGraph:relationGraphHistoryState()},'');}catch(e){}
+}
+function replaceRelationGraphHistory(){
+  try{history.replaceState({relationGraph:relationGraphHistoryState()},'');}catch(e){}
 }
 function graphChapterKey(title,n){return encodeURIComponent(title)+'|'+n;}
 function graphAnchors(item){
@@ -11669,11 +11688,11 @@ function renderGraphLibrary(){
 function openGraphLibrary(anchor='',recordStep=true){
   const it=data.find(d=>d.id===detailId);if(!it)return;
   const root=document.getElementById('relGraph');beginRelationGraphNavigation(root);
-  if(recordStep)pushRelationGraphStep(root);
   ensurePeopleIds(it,true);rgAnchorFilter=anchor;rgGraphId='';
   root.classList.add('open');root.setAttribute('aria-hidden','false');
   backLayerOpenedNow('relGraph');
   document.body.classList.add('rel-graph-open');renderGraphLibrary();
+  if(recordStep)pushRelationGraphHistory();
 }
 function graphAnchorOptions(item,selected){return `<option value="">全书／不关联章节</option>`+
   graphAnchors(item).map(a=>`<option value="${esc(a.key)}" ${a.key===selected?'selected':''}>${esc(a.title)}</option>`).join('')+
@@ -11681,7 +11700,6 @@ function graphAnchorOptions(item,selected){return `<option value="">全书／不
 function openGraphManager(id=rgGraphId,recordStep=true){
   const it=data.find(d=>d.id===detailId);if(!it)return;
   const root=document.getElementById('relGraph');beginRelationGraphNavigation(root);
-  if(recordStep)pushRelationGraphStep(root);
   if(id==='new')rgGraphId='new';else if(id)rgGraphId=id;
   const g=graphForItem(it),fresh=rgGraphId==='new',people=ensurePeopleIds(it,false);
   document.getElementById('rgTitle').textContent=fresh?'新建关系图':'编辑关系图';
@@ -11695,6 +11713,7 @@ function openGraphManager(id=rgGraphId,recordStep=true){
     ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'?!(g?.excludedPersonIds||[]).includes(p.id)?'checked':'':g?.personIds?.includes(p.id)?'checked':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
     <div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div></div>
     ${rgGraphId==='legacy'?'':renderGraphRelationEditor(it,g)}`}`;
+  if(recordStep)pushRelationGraphHistory();
 }
 function renderGraphRelationEditor(item,g){
   const people=ensurePeopleIds(item,false).filter(p=>g?.personIds?.includes(p.id));
@@ -11739,14 +11758,13 @@ function changeGraphRelation(id,type){const it=data.find(d=>d.id===detailId),g=i
   if(g.relationships.some(x=>x.id!==id&&relKey(x.a,x.b)===relKey(r.a,r.b)&&x.type===type)){toast('两人已有该类别关系');openGraphManager(g.id,false);return;}
   r.type=type;touchRec(it);persist();}
 function removeGraphRelation(id){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g)return;g.relationships=g.relationships.filter(r=>r.id!==id);touchRec(it);persist();openGraphManager(g.id,false);}
-function deleteCurrentGraph(){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g||g.id==='legacy'||!confirm('删除「'+g.title+'」及图中的关系？'))return;it.relationGraphs=it.relationGraphs.filter(x=>x.id!==g.id);touchRec(it);persist();rgGraphId='';rgNavStack=[];renderGraphLibrary();}
+function deleteCurrentGraph(){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g||g.id==='legacy'||!confirm('删除「'+g.title+'」及图中的关系？'))return;it.relationGraphs=it.relationGraphs.filter(x=>x.id!==g.id);touchRec(it);persist();rgGraphId='';renderGraphLibrary();replaceRelationGraphHistory();}
 let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',showLabels:true,pan:null,pinch:null,nodeDrag:null,suppressNodeClickUntil:0,suppressBlankClickUntil:0,pointers:new Map(),canvasSize:1200};
 let rgEditingPerson='';
 function openRelationGraph(id,recordStep=true){
   const it=data.find(d=>d.id===detailId);if(!it)return;
   if(!id){openGraphLibrary('',recordStep);return;}
   const root=document.getElementById('relGraph');beginRelationGraphNavigation(root);
-  if(recordStep)pushRelationGraphStep(root);
   rgGraphId=id;const g=graphForItem(it);if(!g)return;
   const {people,relations}=currentGraphData(),ids=new Set(people.map(p=>p.id));
   rgState.filters=new Set(relationTypes(it).map(t=>t.id));
@@ -11762,6 +11780,7 @@ function openRelationGraph(id,recordStep=true){
   backLayerOpenedNow('relGraph');
   graphScreen('graph');
   renderRelationGraph(people,relations);
+  if(recordStep)pushRelationGraphHistory();
   requestAnimationFrame(()=>{
     rgState.scale=1;centerGraphOn(rgState.centerId,false);bindGraphPan();
   });
@@ -11769,7 +11788,9 @@ function openRelationGraph(id,recordStep=true){
 function closeRelationGraph(){
   relationGraphBack();
 }
-function restoreRelationGraphStep(step){
+function restoreRelationGraphHistory(step){
+  if(step.detailId&&step.detailId!==detailId)return;
+  rgEntryTab=step.entryTab||rgEntryTab;
   rgGraphId=step.graphId;rgAnchorFilter=step.anchorFilter;
   if(step.screen==='list')renderGraphLibrary();
   else if(step.screen==='manage')openGraphManager(step.graphId,false);
@@ -11777,14 +11798,11 @@ function restoreRelationGraphStep(step){
 }
 function relationGraphBack(){
   const root=document.getElementById('relGraph');if(!root||!root.classList.contains('open'))return;
-  const step=rgNavStack.pop();
-  if(step){restoreRelationGraphStep(step);return;}
-  closeRelationGraphCompletely(true);
+  try{history.back();}catch(e){closeRelationGraphCompletely(true);}
 }
 function closeRelationGraphCompletely(restoreEntry=true){
   const root=document.getElementById('relGraph');if(!root||!root.classList.contains('open'))return;
   root.classList.remove('open');root.setAttribute('aria-hidden','true');document.body.classList.remove('rel-graph-open');
-  rgNavStack=[];
   if(restoreEntry&&detailId){dtTab=rgEntryTab;renderDetail();}
 }
 function layoutGraph(people,relations,centerId){
