@@ -11590,8 +11590,8 @@ function deleteChapterAction(){
   closeChapterActionMenu();
   if(!indexes.length)return;
   const prompt=indexes.length>1
-    ?`确定删除「${title}」及其中 ${indexes.length} 个小节吗？删除后无法撤销。`
-    :`确定删除章节「${title}」吗？删除后无法撤销。`;
+    ?`确定删除「${title}」及其中 ${indexes.length} 个小节吗？可在设置 › 回收站恢复。`
+    :`确定删除章节「${title}」吗？可在设置 › 回收站恢复。`;
   if(!confirm(prompt))return;
 
   // 关系图本身保留，只解除被删章节的关联，避免人物和关系数据一起丢失。
@@ -11599,10 +11599,19 @@ function deleteChapterAction(){
   indexes.forEach(i=>{if(anchors[i]?.key)removedAnchors.add(anchors[i].key);});
   if(target.group!=null)removedAnchors.add('group:'+target.group);
 
+  const detachedGraphs=Array.isArray(it.relationGraphs)
+    ?it.relationGraphs.filter(g=>removedAnchors.has(g.anchor)).map(g=>({id:g.id,anchor:g.anchor})):[];
+
   let next=body;
   indexes.slice().sort((a,b)=>b-a).forEach(i=>{
     const c=chs[i];
     next=next.slice(0,c.chStart)+next.slice(c.chEnd);
+  });
+  // 保存完整原文和删除后的原文，恢复时只在正文仍一致时原位回填。
+  // 如果期间又编辑了正文，恢复会追加被删段落，避免覆盖新改动。
+  trashPush('chapter',{
+    itemId:it.id,itemName:it.name,title,before:body,after:next.trim(),
+    segments:indexes.map(i=>chs[i].raw),detachedGraphs
   });
   it.bookNote=next.trim();
   if(Array.isArray(it.relationGraphs))it.relationGraphs.forEach(g=>{
@@ -11610,7 +11619,7 @@ function deleteChapterAction(){
   });
   touchRec(it);persist();
   renderDetail();render();
-  toast(indexes.length>1?'章节组已删除':'章节已删除');
+  toast('已删除，可在设置 › 回收站找回','delete');
 }
 document.addEventListener('pointerdown',e=>{
   const el=e.target.closest?.('#detailBookNoteCard [data-graph-longpress]');
@@ -12977,14 +12986,14 @@ function saveTagMgr(){
 }
 
 // ── 回收站 ────────────────────────────────────────────────────────
-// 删记录、删笔记不再是当场抹掉，先在这儿放 30 天。
+// 删记录、笔记、时间线章节先在这儿放 30 天。
 //
 // 只存本机、不进 Gist：回收站里躺的是「已经决定不要了」的东西，把它们也推上云，
 // 等于每台设备都要背一份垃圾，还得跟着做备忘那套加解密。所以云端看到的一直是
 // 删干净之后的样子——在手机上删的，iPad 拉一次也会消失，但**要找回得回手机上找**。
 // 换个说法：回收站是「这台设备的后悔药」，不是第二个数据源。
 //
-// 只收记录和笔记这两样。分类、标签删掉只是记录改归属或少个标签，本体还在；
+// 分类、标签删掉只是记录改归属或少个标签，本体还在；
 // 导入的日历事件本来就能重新导入一份，都没必要占回收站的位置。
 const TRASH_KEY='my_list_trash_v1';
 const TRASH_KEEP_DAYS=30;   // 超过就自动清掉，免得 localStorage 被慢慢撑满
@@ -13011,7 +13020,7 @@ function purgeTrash(){
   if(trash.length>TRASH_MAX)trash.length=TRASH_MAX;
   return before-trash.length;
 }
-// kind：'item' 记录 / 'note' 笔记。整个对象原样收着，恢复时才好一字不差地放回去
+// kind：'item' 记录 / 'note' 笔记 / 'chapter' 时间线章节。
 function trashPush(kind,obj){
   if(!obj)return;
   trash.unshift({tid:uid(),kind,deletedAt:Date.now(),payload:JSON.parse(JSON.stringify(obj))});
@@ -13020,10 +13029,12 @@ function trashPush(kind,obj){
 }
 function trashTitle(t){
   const o=t.payload||{};
+  if(t.kind==='chapter')return o.title||'未命名章节';
   // 记录用 name，笔记用 title；备忘可能没标题，退回子分类名，再不济给个占位
   return o.name||o.title||(t.kind==='note'?(o.subCat?o.subCat+'（无标题）':'无标题笔记'):'未命名记录');
 }
 function trashKindLabel(t){
+  if(t.kind==='chapter')return '时间线章节 · '+((t.payload||{}).itemName||'记录');
   if(t.kind!=='note')return '记录';
   const sub=(t.payload||{}).subCat;
   return sub?'笔记 · '+sub:'笔记';
@@ -13059,7 +13070,7 @@ function renderTrashList(){
   const el=document.getElementById('trashList');
   if(!el)return;
   if(!trash.length){
-    el.innerHTML='<div class="trash-empty">回收站是空的。<br>以后删掉的记录和笔记会先放这儿，'+
+    el.innerHTML='<div class="trash-empty">回收站是空的。<br>以后删掉的记录、笔记和章节会先放这儿，'+
       TRASH_KEEP_DAYS+' 天内随时能捡回来。</div>';
   }else{
     el.innerHTML=trash.map(t=>`
@@ -13081,7 +13092,29 @@ function restoreTrash(tid){
   if(i<0)return;
   const t=trash[i];
   const o=t.payload;
-  if(t.kind==='note'){
+  let chapterAppended=false;
+  if(t.kind==='chapter'){
+    const it=data.find(d=>d.id===o.itemId);
+    if(!it){toast('请先恢复所属记录，再恢复章节');return;}
+    const unchanged=(it.bookNote||'')===o.after;
+    if(unchanged){
+      it.bookNote=o.before;
+    }else{
+      chapterAppended=true;
+      const existing=it.bookNote||'';
+      const added=(o.segments||[]).join('').trim();
+      if(!added){toast('章节内容无法恢复');return;}
+      it.bookNote=existing.trim()?(existing.trim()+'\n\n'+added):added;
+    }
+    if(Array.isArray(it.relationGraphs)){
+      (o.detachedGraphs||[]).forEach(saved=>{
+        const graph=it.relationGraphs.find(g=>g.id===saved.id);
+        if(graph&&graph.anchor==='')graph.anchor=saved.anchor;
+      });
+    }
+    touchRec(it);persist();
+    if(detailId===it.id)renderDetail();
+  }else if(t.kind==='note'){
     // 万一这个 id 已经被别的笔记占了（比如从别的设备同步下来一条同 id 的），
     // 换个新 id 放回去，宁可多一条也不要覆盖掉现有的
     if(notes.some(n=>n.id===o.id))o.id=nuid();
@@ -13096,7 +13129,7 @@ function restoreTrash(tid){
   persistTrash();
   renderTrashList();
   render();
-  toast('已恢复「'+trashTitle(t)+'」','success');
+  toast('已恢复「'+trashTitle(t)+'」'+(chapterAppended?'（追加到正文末尾）':''),'success');
 }
 
 function dropTrash(tid){
