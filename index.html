@@ -3210,16 +3210,16 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-filter-item.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
   letter-spacing:.03em;padding:0;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;}
-#calViewHeat .hm-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-12);
-  margin-bottom:var(--sp-12);padding:var(--sp-12);background:var(--surface);
-  border:var(--bd) solid var(--border);border-radius:var(--rlg);}
+#calViewHeat .hm-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-8);
+  margin-bottom:var(--sp-12);}
 #calViewHeat .hm-summary:has(.hm-summary-item:only-child){grid-template-columns:minmax(0,1fr);}
-#calViewHeat .hm-summary-item{min-width:0;display:flex;flex-direction:column;gap:4px;}
-#calViewHeat .hm-summary-item+.hm-summary-item{border-left:var(--bd) solid var(--border);padding-left:var(--sp-12);}
+#calViewHeat .hm-summary-item{min-width:0;min-height:78px;display:flex;flex-direction:column;gap:4px;
+  padding:var(--sp-10);background:var(--surface);border:var(--bd) solid var(--border);border-radius:var(--rlg);}
 #calViewHeat .hm-summary-label{font-size:var(--fs-foot);color:var(--text-muted);}
 #calViewHeat .hm-summary-value{font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
   overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere;}
-#calViewHeat .hm-summary-count{font-size:var(--fs-foot);color:var(--accent);}
+#calViewHeat .hm-summary-count{font-size:9px;line-height:1.3;color:var(--accent);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
 /* 统计卡改回迷你月历：一行三张，每张仍代表一个标签或食记。
    月历按周一开头排列，日期数字直接放进格内；有记录的日期用主题色填充。 */
 #calViewHeat .hm-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
@@ -8559,6 +8559,25 @@ window.PV = (function(){
     return [...names];
   }
 
+  // 统计页的「水果」是自动汇总卡：原来的桃子、蓝莓等单项仍各自保留，
+  // 同时把常见鲜果合到一张卡里。只认水果本身，避免把果汁、果酱、蛋糕等算进去。
+  const HEAT_FRUIT_NAMES = new Set([
+    '苹果','香蕉','桃','桃子','油桃','水蜜桃','黄桃','蟠桃','猕猴桃','奇异果',
+    '梨','雪梨','香梨','草莓','蓝莓','树莓','覆盆子','黑莓','桑葚','葡萄','提子',
+    '橙','橙子','柑','柑橘','橘子','桔子','柚子','西柚','葡萄柚','柠檬','青柠',
+    '西瓜','哈密瓜','甜瓜','香瓜','木瓜','芒果','菠萝','凤梨','火龙果','百香果',
+    '石榴','樱桃','车厘子','李子','杏','杏子','梅子','枇杷','荔枝','龙眼','桂圆',
+    '山竹','榴莲','杨梅','柿子','无花果','椰子','牛油果','鳄梨','番石榴','芭乐',
+    '莲雾','杨桃','冬枣','红枣','鲜枣','圣女果'
+  ]);
+  function isHeatFruitName(name){
+    let normalized = String(name || '').toLowerCase().replace(/\s+/g, '');
+    // 兼容「1个苹果 / 半个西瓜」这类简单份量写法。
+    normalized = normalized.replace(/^(?:约|大约)?(?:半|[一二两三四五六七八九十百\d]+(?:\.\d+)?)(?:个|颗|粒|片|块|瓣|串|盒|碗|杯|份)?/, '');
+    normalized = normalized.replace(/(?:[一二两三四五六七八九十百\d]+(?:\.\d+)?)(?:个|颗|粒|片|块|瓣|串|盒|碗|杯|份)$/,'');
+    return HEAT_FRUIT_NAMES.has(normalized);
+  }
+
   let heatLayoutFrame = 0;
   let heatLayoutObserver;
   let heatSettleTimer = 0;
@@ -8673,12 +8692,14 @@ window.PV = (function(){
       const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
       if (y !== heatYear || m !== heatMonth || d < 1 || d > dim) return;
       heatFoodNames(note.body).forEach(name => {
-        if (!foodGroups.has(name)) foodGroups.set(name, { tag: name, type: '食记', count: 0, days: new Set() });
+        if (!foodGroups.has(name)) foodGroups.set(name, { tag: name, type: '食记', count: 0, days: new Set(), isFruit: isHeatFruitName(name) });
         const group = foodGroups.get(name);
         group.count++;
         group.days.add(d);
       });
     });
+    const topFruitGroup = [...foodGroups.values()].filter(group => group.isFruit)
+      .sort((a, b) => (b.count - a.count) || (b.days.size - a.days.size))[0];
     const foodCards = [...foodGroups.values()].filter(group => group.count >= 2)
       // 先按记录次数降序；次数相同，再按实际出现天数降序。
       // 两项都相同则保持首次出现顺序（稳定排序）。
@@ -8702,17 +8723,33 @@ window.PV = (function(){
     const topFood = visibleCards.filter(card => card.type === '食记')
       .sort((a, b) => b.count - a.count)[0];
     const topTag = visibleCards.filter(card => card.type === '标签')[0];
-    const summary = (topFood || topTag) ? '<section class="hm-summary" aria-label="本月总结">' +
-      (heatTypeFilter !== '标签' ? '<div class="hm-summary-item"><span class="hm-summary-label">本月最常吃</span>' +
-        `<span class="hm-summary-value" title="${topFood ? escapeAttr(topFood.tag) : '暂无重复食记'}">${topFood ? escapeHtml(topFood.tag) : '暂无重复食记'}</span>` +
-        `<span class="hm-summary-count">${topFood ? `${topFood.count} 次 · ${topFood.days.length} 天` : '记录 2 次以上才统计'}</span></div>` : '') +
-      (heatTypeFilter !== '食记' ? '<div class="hm-summary-item"><span class="hm-summary-label">出现最多的标签</span>' +
-        `<span class="hm-summary-value" title="${topTag ? escapeAttr(topTag.tag) : '暂无标签'}">${topTag ? escapeHtml(topTag.tag) : '暂无标签'}</span>` +
-        `<span class="hm-summary-count">${topTag ? `${topTag.days.length} 天` : '本月没有标签记录'}</span></div>` : '') +
-      '</section>' : '';
+    const now = new Date();
+    const todayTitle = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+    const todayFoodNames = new Set();
+    let todayFoodCount = 0;
+    notes.forEach(note => {
+      if (note.calendarId !== 'food' || note.title !== todayTitle) return;
+      heatFoodNames(note.body).forEach(name => { todayFoodNames.add(name); todayFoodCount++; });
+    });
+    const foodSummary = '<section class="hm-summary" aria-label="本月总结">' +
+      '<div class="hm-summary-item"><span class="hm-summary-label">本月最常吃</span>' +
+        `<span class="hm-summary-value" title="${topFood ? escapeAttr(topFood.tag) : '暂无'}">${topFood ? escapeHtml(topFood.tag) : '暂无'}</span>` +
+        `<span class="hm-summary-count">${topFood ? `${topFood.count} 次 · ${topFood.days.length} 天` : '本月还没有重复食记'}</span></div>` +
+      '<div class="hm-summary-item"><span class="hm-summary-label">本月水果</span>' +
+        `<span class="hm-summary-value" title="${topFruitGroup ? escapeAttr(topFruitGroup.tag) : '暂无'}">${topFruitGroup ? escapeHtml(topFruitGroup.tag) : '暂无'}</span>` +
+        `<span class="hm-summary-count">${topFruitGroup ? `${topFruitGroup.count} 次 · ${topFruitGroup.days.size} 天` : '本月还没有水果记录'}</span></div>` +
+      '<div class="hm-summary-item"><span class="hm-summary-label">今天吃了</span>' +
+        `<span class="hm-summary-value">${todayFoodNames.size} 样</span>` +
+        `<span class="hm-summary-count">${todayFoodCount ? `${todayFoodCount} 次记录` : '今天还没有记录'}</span></div>` +
+      '</section>';
+    const tagSummary = topTag ? '<section class="hm-summary" aria-label="本月总结"><div class="hm-summary-item">' +
+      '<span class="hm-summary-label">出现最多的标签</span>' +
+      `<span class="hm-summary-value" title="${escapeAttr(topTag.tag)}">${escapeHtml(topTag.tag)}</span>` +
+      `<span class="hm-summary-count">${topTag.days.length} 天</span></div></section>` : '';
+    const summary = heatTypeFilter === '标签' ? tagSummary : foodSummary;
 
     if (!visibleCards.length) {
-      box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
+      box.innerHTML = summary + '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
         `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有出现2次及以上的食记内容' : '这个月还没有标签记录'}</p>` +
         `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容2次及以上'}</small></div>`;
       return;
