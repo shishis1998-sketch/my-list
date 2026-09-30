@@ -5048,6 +5048,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .sync-hint{margin:var(--sp-4) 0 0;}
 #syncModal .sync-card>.btn{display:block;width:100%;min-height:24px;height:auto;padding:0;margin:0;background:transparent;border:0;box-shadow:none;text-align:left;white-space:normal;}
 #syncModal .sync-card>.btn:active{background:var(--press);}
+#syncModal .sync-clear-card{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-12);min-height:48px;padding:0 var(--sp-14);background:var(--danger-bg);}
+#syncModal .sync-clear-card>.btn{flex:0 0 auto;width:auto;color:var(--danger);}
+#syncModal .sync-clear-card>.sync-hint{flex:1;margin:0;color:var(--danger);text-align:right;}
 #syncModal .sync-readonly{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-12);width:100%;min-height:48px;padding:0;margin:0;background:transparent;color:var(--text-primary);border:0;cursor:pointer;text-align:left;}
 #syncModal .sync-switch-track{position:relative;flex:0 0 42px;width:42px;height:24px;background:var(--border);border-radius:999px;transition:background .2s ease;}
 #syncModal .sync-switch-track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s ease;}
@@ -5835,14 +5838,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <div id="sync-uploadlocal-hint" class="sync-hint"></div>
     </div>
 
-    <div class="sync-card sync-option-card">
-      <button class="btn btn-d" style="width:100%" onclick="wipeLocalDevice()">清除这台设备</button>
-      <div class="sync-hint">
-        仅清除本机数据，云端不受影响。
-      </div>
-    </div>
-
-
     <div class="fg sync-field">
       <label for="f-gh-token">GitHub Token</label>
       <input type="password" id="f-gh-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
@@ -5858,11 +5853,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </div>
     </div>
     <div class="fg sync-field">
-      <label for="f-gh-pw">主密码</label>
+      <label for="f-gh-pw">PIN码</label>
       <input type="password" id="f-gh-pw" placeholder="设置后备忘会加密上云" autocomplete="new-password" spellcheck="false">
       <div class="sync-hint">
-        仅存本机；换设备需使用同一密码，忘记后无法解密。
+        仅存本机；换设备需使用同一PIN码，忘记后无法解密。
       </div>
+    </div>
+
+    <div class="sync-card sync-clear-card">
+      <button class="btn btn-d" onclick="wipeLocalDevice()">清除数据</button>
+      <div class="sync-hint">仅清除本机数据</div>
     </div>
     </div><!-- /mbody -->
 
@@ -9567,10 +9567,10 @@ async function openPayload(raw){
   if(!raw.encAll)return raw;                       // 老格式：明文，原样返回
   if(!cryptoOk())throw new Error('云端数据已整体加密，当前环境无法解密（请用 https 打开网页）');
   const pw=getMasterPw();
-  if(!pw)throw new Error('云端数据已整体加密，请在「云同步」设置里填入主密码');
+  if(!pw)throw new Error('云端数据已整体加密，请在「云同步」设置里填入PIN码');
   let innerData;
   try{innerData=await decryptJSON(raw.encAll,pw);}
-  catch(e){throw new Error('主密码不对，无法解开云端数据');}
+  catch(e){throw new Error('PIN码不对，无法解开云端数据');}
   return {...raw,...innerData};
 }
 // 云端解不开 = 这台设备手上没有真相，一律不准写云端（见 syncPush 开头的闸门）
@@ -9593,7 +9593,7 @@ async function syncPush(allowCreate){
   // 云端是加密的、而这台设备解不开 → 硬闸。它手上要么是空的、要么是本地旧数据，
   // 推上去等于用「解不开就当没有」的结果覆盖真数据。
   if(_cloudEncLocked){
-    lastSyncErr='云端已加密且本机解不开（主密码不对或没填），已停止上传以免覆盖';
+    lastSyncErr='云端已加密且本机解不开（PIN码不对或没填），已停止上传以免覆盖';
     isSyncing=false;updateSyncBadge();
     console.warn('[Sync push blocked] 云端密文解不开');
     return false;
@@ -9711,8 +9711,8 @@ async function uploadAllLocalMemos(){
   if(isReadOnly()){toast('👀 这台设备是只读模式，请先关闭只读再上云');return;}
   const pw=getMasterPw();
   if(!pw||!cryptoOk()){
-    if(!confirm('还没有设置主密码（或当前环境不支持加密），这 '+targets.length+' 条备忘会以【明文】同步到 Gist。\n\n'
-      +'建议先在下面填好主密码保存，再回来上云。\n\n仍要以明文上传吗？'))return;
+    if(!confirm('还没有设置PIN码（或当前环境不支持加密），这 '+targets.length+' 条备忘会以【明文】同步到 Gist。\n\n'
+      +'建议先在下面填好PIN码保存，再回来上云。\n\n仍要以明文上传吗？'))return;
   }else if(!confirm('把 '+targets.length+' 条「仅本机」备忘加密后同步到云端？\n\n'
       +'上云后它们才有异地备份，不会因为清缓存而丢失。云端只存密文。')){
     return;
@@ -9887,7 +9887,7 @@ async function syncPull(silent){
         encLeft++;
       }
       notes=[...filteredRemote,...localOnlyNotes];
-      if(encLeft&&!silent)toast('🔒 有 '+encLeft+' 条加密备忘需要主密码，请在云同步设置中填写');
+      if(encLeft&&!silent)toast('🔒 有 '+encLeft+' 条加密备忘需要PIN码，请在云同步设置中填写');
     }
     if(Array.isArray(remote.noteSubs)&&remote.noteSubs.length) noteSubs=remote.noteSubs;
     if(remote.period&&remote.period.ALL_DATA){
@@ -9937,7 +9937,7 @@ function refreshCloudSyncToggle(){
   toggle.setAttribute('aria-checked',String(on));
   const status=document.getElementById('sync-status-box');
   status.textContent=!on?'尚未启用云同步':lastSyncErr?'最近一次同步失败：'+lastSyncErr:
-    (getMasterPw()&&cryptoOk()?'云端数据已加密':'未加密，设置主密码后加密');
+    (getMasterPw()&&cryptoOk()?'云端数据已加密':'未加密，设置PIN码后加密');
   status.title=status.textContent;
   status.style.color=on&&lastSyncErr?'var(--danger)':'var(--text-secondary)';
 }
@@ -10070,11 +10070,11 @@ async function saveSyncCfg(){
   //    这么重的动作绝不能静默执行，必须让人明确确认。
   if(!p&&hadPw){
     const n=notes.filter(x=>x.subCat==='备忘'&&!x.localOnly).length;
-    if(!confirm('主密码框是空的。\n\n继续保存会清除主密码，后果有两个：\n\n'
+    if(!confirm('PIN码输入框是空的。\n\n继续保存会清除PIN码，后果有两个：\n\n'
       +'1. '+n+' 条上云备忘会从云端全部撤下（改为仅本机）。'
       +'其它设备下次同步时，会照着这份「没有备忘」的数据把本机备忘删掉。\n\n'
       +'2. 云端将退回明文存储——媒体、笔记、经期数据会以明文写进 Gist，不再整份加密。\n\n'
-      +'如果你只是想改 token 或 Gist ID，请点「取消」，把主密码重新填回去再保存。\n\n确定要清除主密码吗？')){
+      +'如果你只是想改 token 或 Gist ID，请点「取消」，把PIN码重新填回去再保存。\n\n确定要清除PIN码吗？')){
       return;
     }
   }
@@ -10088,7 +10088,7 @@ async function saveSyncCfg(){
   if(clearedPw){
     notes.forEach(n=>{if(n.subCat==='备忘'&&!n.localOnly){n.localOnly=true;}});
     localStorage.setItem(NSK,JSON.stringify(notes));render();
-    toast('已清除主密码，备忘改回仅本机存储');
+    toast('已清除PIN码，备忘改回仅本机存储');
   }
   // 首次设置主密码 → 解锁全部备忘（此后默认加密上云）
   // ⚠️ 必须放在拉取之后执行：拉取是「云端覆盖本地」，只有 localOnly 的笔记受保护，
@@ -10168,7 +10168,7 @@ function wipeLocalDevice(){
   let msg='这会清空【这台设备】上本应用的全部本机数据：\n'
     +'· 所有收集、笔记、日历、经期数据的本机副本\n'
     +(dec?'· '+dec+' 条已解密的备忘明文\n':'')
-    +'· 主密码、token、Gist ID\n\n'
+    +'· PIN码、token、Gist ID\n\n'
     +'☁️ 云端 Gist 不受影响。以后在这台设备重新填 token 就能再拉下来。\n\n';
   if(risk){
     msg+='⚠️ 注意：有 '+risk+' 条备忘处于「仅本机 / 待上云」状态，云端没有副本，'
@@ -16699,15 +16699,15 @@ function renderMemoCard(n){
     stTitle='仅本机存储，不上云。点击改为加密上云';
   }else if(getMasterPw()){
     stCls='enc';stIcon=MEMO_ICON.shield;stLbl='已加密';
-    stTitle='已用主密码加密后同步到云。点击改为仅本机';
+    stTitle='已用PIN码加密后同步到云。点击改为仅本机';
   }else{
     stCls='plain';stIcon=MEMO_ICON.lockOpen;stLbl='明文上云';
-    stTitle='⚠️ 未设置主密码，内容以明文同步！点击改为仅本机，或在云同步设置中设置主密码';
+    stTitle='⚠️ 未设置PIN码，内容以明文同步！点击改为仅本机，或在云同步设置中设置PIN码';
   }
   const all=memoCollectFields(n);
   let fieldsHtml='';
   if(isEncLocked(n)){
-    fieldsHtml='<div class="memo-empty-hint">🔒 已加密——在「云同步」设置中填入主密码后可见</div>';
+    fieldsHtml='<div class="memo-empty-hint">🔒 已加密——在「云同步」设置中填入PIN码后可见</div>';
   }else if(!all.length){
     fieldsHtml='<div class="memo-empty-hint">（点击编辑添加内容）</div>';
   }else{
@@ -16791,7 +16791,7 @@ function applyMemoEditorMode(){
   // 说明文字按是否设了主密码调整（设了主密码时，不勾选=加密上云）
   const ld=document.getElementById('memoLocalDesc');
   if(ld) ld.textContent=getMasterPw()
-    ?'勾选后不上传云端、仅本设备可见。不勾选则用主密码加密后同步到云（🛡 已加密）。'
+    ?'勾选后不上传云端、仅本设备可见。不勾选则用PIN码加密后同步到云（🛡 已加密）。'
     :'不上传 Gist，只在当前设备能看到。重要密码建议保持勾选。';
   const ta=document.getElementById('nf-body');
   ta.classList.toggle('is-book',isBook);
@@ -16975,7 +16975,7 @@ function openNoteEdit(id){
   const n=notes.find(x=>x.id===id);
   if(!n)return;
   // 密文态备忘禁止编辑（避免保存空字段覆盖掉云端内容）
-  if(isEncLocked(n)){toast('🔒 这条备忘已加密，请先在云同步设置中填入正确的主密码');openSyncCfg();return;}
+  if(isEncLocked(n)){toast('🔒 这条备忘已加密，请先在云同步设置中填入正确的PIN码');openSyncCfg();return;}
   setFoodEditor(n.calendarId==='food');
   editNoteId=id;
   curNoteTags=(n.tags||[]).slice();
