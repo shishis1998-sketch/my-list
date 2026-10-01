@@ -12458,6 +12458,7 @@ function scheduleCatRender(){
 function filterCat(cat){
   cancelNoteMonthTap();
   const previousCat=curCat;
+  const leavingSettings=isMobileLayout()&&document.body.classList.contains('sb-open');
   const noteSubChanged=previousCat!==cat&&previousCat.startsWith('notes:')&&cat.startsWith('notes:');
   // 「全部 / 笔记」虽然共用同一个 window 滚动容器，视觉上是两个一级页面；
   // 跨一级 tab 时也必须回到新页面顶部，不能沿用另一页的 scrollY。
@@ -12489,8 +12490,9 @@ function filterCat(cat){
   if(isMobileLayout()) toggleSidebar(false);
   syncBottomTabs();     // 高亮先切过去：按下就有反应，不用等列表画完
   scheduleCatRender();
-  // 一级「全部 / 笔记」和笔记子分类都共用滚动容器；每次切到新页都从顶部开始。
-  if(mainTabChanged||noteSubChanged) scrollResultsTop();
+  // 一级「全部 / 笔记」、笔记子分类和设置页共用 window 滚动容器；
+  // 从设置返回列表时也必须归零，不能把设置页的 scrollY 带到列表。
+  if(leavingSettings||mainTabChanged||noteSubChanged) scrollResultsTop();
   saveLastView();
 }
 
