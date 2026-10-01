@@ -3195,18 +3195,21 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
   padding:calc(env(safe-area-inset-top) + var(--sp-12)) calc(var(--sp-14) + var(--sp-12)) var(--sp-12);}
 #calViewHeat .hm-hdr-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;margin-left:var(--sp-8);}
 #calViewHeat .hm-hdr-actions>.cal-navbtn,
-#calViewHeat .hm-filter-btn{width:28px;height:28px;flex:0 0 28px;border:none;border-radius:50%;
+#calViewHeat .hm-filter-btn,
+#calViewHeat .hm-search-btn{width:28px;height:28px;flex:0 0 28px;border:none;border-radius:50%;
   background:var(--surface);color:var(--text-primary);display:inline-flex;align-items:center;
   justify-content:center;cursor:pointer;padding:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
 #calViewHeat .hm-hdr-actions>.cal-navbtn{line-height:1;}
 #calViewHeat .hm-hdr-actions>.cal-navbtn svg{display:block;width:16px;height:16px;}
 #calViewHeat .hm-filter{position:relative;display:flex;}
-#calViewHeat .hm-filter-btn{line-height:1;}
-#calViewHeat .hm-filter-btn svg{display:block;width:16px;height:16px;flex-shrink:0;}
+#calViewHeat .hm-filter-btn,#calViewHeat .hm-search-btn{line-height:1;}
+#calViewHeat .hm-filter-btn svg,#calViewHeat .hm-search-btn svg{display:block;width:16px;height:16px;flex-shrink:0;}
 #calViewHeat .hm-filter-label{display:none;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;white-space:nowrap;}
 #calViewHeat .hm-filter-btn:active,
+#calViewHeat .hm-search-btn:active,
 #calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
 #calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
+#calViewHeat .hm-search-btn.act{background:var(--accent-light);color:var(--accent);}
 #calViewHeat .hm-filter-btn.act{width:auto;flex:0 0 auto;gap:var(--sp-4);padding:0 var(--sp-10);border-radius:999px;background:var(--accent-light);color:var(--accent);}
 #calViewHeat .hm-filter-btn.act .hm-filter-label{display:block;}
 #calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
@@ -3218,6 +3221,19 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-filter-item{padding:9px 12px;border-radius:var(--r);font-size:var(--fs-caption);
   color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
 #calViewHeat .hm-filter-item.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
+#calViewHeat .hm-searchbar{display:none;margin:0 0 var(--sp-12);}
+#calViewHeat .hm-searchbar.show{display:block;}
+#calViewHeat .hm-searchfield{height:40px;display:flex;align-items:center;gap:var(--sp-8);
+  padding:0 var(--sp-12);background:var(--surface);border:var(--bd) solid var(--border);
+  border-radius:999px;color:var(--text-muted);}
+#calViewHeat .hm-searchfield:focus-within{border-color:var(--accent);}
+#calViewHeat .hm-searchfield>svg{width:16px;height:16px;flex:0 0 16px;}
+#calViewHeat .hm-searchfield input{min-width:0;flex:1;border:0;outline:0;background:transparent;
+  color:var(--text-primary);font:inherit;font-size:16px;padding:0;}
+#calViewHeat .hm-searchfield input::placeholder{color:var(--text-muted);}
+#calViewHeat .hm-searchclear{width:24px;height:24px;flex:0 0 24px;border:0;border-radius:50%;
+  padding:0;background:var(--surface-2);color:var(--text-secondary);display:grid;place-items:center;cursor:pointer;}
+#calViewHeat .hm-searchclear svg{width:13px;height:13px;}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
   letter-spacing:.03em;padding:0;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 #calViewHeat .hm-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-8);
@@ -5546,6 +5562,18 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
               </button>
               <div class="hm-filter-menu" id="hmFilterMenu"></div>
             </div>
+            <button class="hm-search-btn" id="hmSearchBtn" onclick="PV.toggleHeatSearch()" aria-label="搜索统计" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="hm-searchbar" id="hmSearchbar">
+          <div class="hm-searchfield">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input id="hmSearchInput" type="text" placeholder="搜索标签或食记" oninput="PV.setHeatSearch(this.value)" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <button class="hm-searchclear" type="button" onclick="PV.closeHeatSearch()" aria-label="退出搜索">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
           </div>
         </div>
         <div id="hmContent"></div>
@@ -8458,6 +8486,7 @@ window.PV = (function(){
   // 移植自经期 App 热力图的「月」视图（renderTagCards），只读 SYMPTOMS_*，不写数据。
   let heatYear = 0, heatMonth = 0, heatPos = false;
   let heatTypeFilter = '全部';
+  let heatSearchQuery = '';
 
   // 从「经期 / 年度」切进来 → 跟随那边当前停留的年月；
   // 从「日历」切进来 → 保留自己的位置，本次日历页会话里第一次进入才回到当前月
@@ -8550,6 +8579,39 @@ window.PV = (function(){
   function closeHeatFilter(){
     document.getElementById('hmFilterMenu')?.classList.remove('show');
     document.getElementById('hmFilterBtn')?.classList.remove('open');
+  }
+
+  function toggleHeatSearch(){
+    closeHeatFilter();
+    const bar = document.getElementById('hmSearchbar');
+    const input = document.getElementById('hmSearchInput');
+    const btn = document.getElementById('hmSearchBtn');
+    if (!bar || !input || !btn) return;
+    const open = !bar.classList.contains('show');
+    bar.classList.toggle('show', open);
+    btn.classList.toggle('act', open);
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) requestAnimationFrame(() => input.focus());
+    else closeHeatSearch();
+  }
+
+  function setHeatSearch(value){
+    heatSearchQuery = String(value || '');
+    renderHeat();
+  }
+
+  function closeHeatSearch(){
+    heatSearchQuery = '';
+    const bar = document.getElementById('hmSearchbar');
+    const input = document.getElementById('hmSearchInput');
+    const btn = document.getElementById('hmSearchBtn');
+    if (bar) bar.classList.remove('show');
+    if (input) input.value = '';
+    if (btn) {
+      btn.classList.remove('act');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    renderHeat();
   }
 
   document.addEventListener('click', event => {
@@ -8719,10 +8781,12 @@ window.PV = (function(){
       .map(group => ({ ...group, days: [...group.days].sort((a, b) => a - b) }));
     cards.push(...foodCards);
 
+    const normalizedQuery = heatSearchQuery.trim().toLocaleLowerCase();
     const visibleCards = (heatTypeFilter === '全部'
       ? [...cards]
       : cards.filter(card => card.type === heatTypeFilter)
-    ).sort((a, b) => {
+    ).filter(card => !normalizedQuery || String(card.tag).toLocaleLowerCase().includes(normalizedQuery))
+    .sort((a, b) => {
       // 第一排序：卡片上显示的主频率降序（食记看次数，标签看天数）。
       // 第二排序：主频率相同时，实际出现天数更多的排在前面。
       // 两项都相同则由稳定排序保留原始记录顺序。
@@ -8758,12 +8822,12 @@ window.PV = (function(){
       '<span class="hm-summary-label">出现最多的标签</span>' +
       `<span class="hm-summary-value" title="${escapeAttr(topTag.tag)}">${escapeHtml(topTag.tag)}</span>` +
       `<span class="hm-summary-count">${topTag.days.length} 天</span></div></section>` : '';
-    const summary = heatTypeFilter === '标签' ? tagSummary : foodSummary;
+    const summary = normalizedQuery ? '' : (heatTypeFilter === '标签' ? tagSummary : foodSummary);
 
     if (!visibleCards.length) {
       box.innerHTML = summary + '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
-        `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有出现2次及以上的食记内容' : '这个月还没有标签记录'}</p>` +
-        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容2次及以上'}</small></div>`;
+        `<p>${normalizedQuery ? `没有找到“${escapeHtml(heatSearchQuery.trim())}”` : heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有出现2次及以上的食记内容' : '这个月还没有标签记录'}</p>` +
+        `<small>${normalizedQuery ? '试试其他关键词，或切换右上角的筛选范围' : heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容2次及以上'}</small></div>`;
       return;
     }
     const firstDayOffset = (new Date(heatYear, heatMonth - 1, 1).getDay() + 6) % 7;
@@ -8789,7 +8853,7 @@ window.PV = (function(){
 
   return {
     init, open, render, resetPos, hasPos,
-    openHeat, renderHeat, toggleHeatFilter,
+    openHeat, renderHeat, toggleHeatFilter, toggleHeatSearch, setHeatSearch, closeHeatSearch,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, toggleLabelsExpanded, setHomeView, changeViewMonth,
