@@ -3234,6 +3234,11 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-searchclear{width:24px;height:24px;flex:0 0 24px;border:0;border-radius:50%;
   padding:0;background:var(--surface-2);color:var(--text-secondary);display:grid;place-items:center;cursor:pointer;}
 #calViewHeat .hm-searchclear svg{width:13px;height:13px;}
+#calViewHeat .hm-search-summary{margin:0 0 var(--sp-12);font-size:var(--fs-foot);color:var(--text-muted);}
+#calViewHeat .hm-search-group{margin-top:var(--sp-16);}
+#calViewHeat .hm-search-group:first-of-type{margin-top:0;}
+#calViewHeat .hm-search-month{margin:0 0 var(--sp-8);font-size:var(--fs-caption);font-weight:700;
+  color:var(--text-secondary);}
 #calViewHeat .hm-title{font-size:var(--fs-title);font-weight:700;color:var(--text-primary);
   letter-spacing:.03em;padding:0;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 #calViewHeat .hm-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-8);
@@ -8721,6 +8726,86 @@ window.PV = (function(){
   if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleHeatLayout);
   if (document.fonts) document.fonts.ready.then(scheduleHeatLayout);
 
+  function heatCardsHtml(cardList, cardYear, cardMonth){
+    const dim = new Date(cardYear, cardMonth, 0).getDate();
+    const firstDayOffset = (new Date(cardYear, cardMonth - 1, 1).getDay() + 6) % 7;
+    return '<div class="hm-cards">' + cardList.map(c => {
+      const frequency = Number(c.type === '食记' ? c.count : c.days.length) || 0;
+      let cells = '<span class="hm-day blank" aria-hidden="true"></span>'.repeat(firstDayOffset);
+      for (let d = 1; d <= dim; d++) {
+        const on = c.days.includes(d);
+        const column = (firstDayOffset + d - 1) % 7;
+        const joinPrev = column > 0 && d > 1 && c.days.includes(d - 1) === on;
+        const joinNext = column < 6 && d < dim && c.days.includes(d + 1) === on;
+        cells += `<span class="hm-day${on ? ' on' : ''}${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}"${on ? ` aria-label="${d}日，有记录"` : ''}>${d}</span>`;
+      }
+      return `<div class="hm-card" style="order:${-frequency}" data-frequency="${frequency}">` +
+        '<div class="hm-card-hd">' +
+          `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
+          `<span class="hm-card-meta">本月 ${c.type === '食记' ? `<b>${c.count}</b> 次 · ` : ''}<b>${c.days.length}</b> 天</span>` +
+        '</div>' +
+        `<div class="hm-month-grid">${cells}</div></div>`;
+    }).join('') + '</div>';
+  }
+
+  // 搜索态不受顶部年月限制：扫描全部经期标签与全部食记，再按年月分组。
+  function renderGlobalHeatSearch(box, normalizedQuery){
+    const months = new Map();
+    const getMonth = (y, m) => {
+      const key = `${y}-${String(m).padStart(2, '0')}`;
+      if (!months.has(key)) months.set(key, { key, year:y, month:m, cards:new Map() });
+      return months.get(key);
+    };
+    const addDay = (y, m, d, tag, type, count) => {
+      if (heatTypeFilter !== '全部' && heatTypeFilter !== type) return;
+      if (!String(tag).toLocaleLowerCase().includes(normalizedQuery)) return;
+      const month = getMonth(y, m);
+      const key = type + '\u0000' + tag;
+      if (!month.cards.has(key)) month.cards.set(key, { tag, type, count:0, days:new Set() });
+      const card = month.cards.get(key);
+      card.count += count || 0;
+      card.days.add(d);
+    };
+
+    Object.entries(SYMPTOMS_DATA || {}).forEach(([date, list]) => {
+      const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(date);
+      if (!match || !Array.isArray(list)) return;
+      const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
+      list.forEach(tag => addDay(y, m, d, tag, '标签', 0));
+    });
+    notes.forEach(note => {
+      if (note.calendarId !== 'food') return;
+      const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(note.title || '');
+      if (!match) return;
+      const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
+      heatFoodNames(note.body).forEach(name => addDay(y, m, d, name, '食记', 1));
+    });
+
+    const groups = [...months.values()].map(group => {
+      const cards = [...group.cards.values()].map(card => ({
+        ...card,
+        days:[...card.days].sort((a, b) => a - b)
+      })).sort((a, b) => {
+        const af = a.type === '食记' ? a.count : a.days.length;
+        const bf = b.type === '食记' ? b.count : b.days.length;
+        return (bf - af) || (b.days.length - a.days.length);
+      });
+      return {...group, cards};
+    }).filter(group => group.cards.length).sort((a, b) => b.key.localeCompare(a.key));
+
+    if (!groups.length) {
+      box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
+        `<p>没有找到“${escapeHtml(heatSearchQuery.trim())}”</p>` +
+        '<small>试试其他关键词，或切换右上角的筛选范围</small></div>';
+      return;
+    }
+    const resultCount = groups.reduce((sum, group) => sum + group.cards.length, 0);
+    box.innerHTML = `<div class="hm-search-summary">找到 ${groups.length} 个月 · ${resultCount} 个结果</div>` +
+      groups.map(group => '<section class="hm-search-group">' +
+        `<h3 class="hm-search-month">${group.year} 年 ${group.month} 月</h3>` +
+        heatCardsHtml(group.cards, group.year, group.month) + '</section>').join('');
+  }
+
   function renderHeat(){
     const box = document.getElementById('hmContent');
     if (!box) return;
@@ -8740,6 +8825,12 @@ window.PV = (function(){
     renderHeatFilter();
 
     const dim = new Date(heatYear, heatMonth, 0).getDate();
+    const normalizedQuery = heatSearchQuery.trim().toLocaleLowerCase();
+    if (normalizedQuery) {
+      renderGlobalHeatSearch(box, normalizedQuery);
+      scheduleHeatLayout();
+      return;
+    }
 
     // 先按 SYMPTOMS_LIB 原序收集当月记过的标签
     const cards = [];
@@ -8781,12 +8872,10 @@ window.PV = (function(){
       .map(group => ({ ...group, days: [...group.days].sort((a, b) => a - b) }));
     cards.push(...foodCards);
 
-    const normalizedQuery = heatSearchQuery.trim().toLocaleLowerCase();
     const visibleCards = (heatTypeFilter === '全部'
       ? [...cards]
       : cards.filter(card => card.type === heatTypeFilter)
-    ).filter(card => !normalizedQuery || String(card.tag).toLocaleLowerCase().includes(normalizedQuery))
-    .sort((a, b) => {
+    ).sort((a, b) => {
       // 第一排序：卡片上显示的主频率降序（食记看次数，标签看天数）。
       // 第二排序：主频率相同时，实际出现天数更多的排在前面。
       // 两项都相同则由稳定排序保留原始记录顺序。
@@ -8822,33 +8911,15 @@ window.PV = (function(){
       '<span class="hm-summary-label">出现最多的标签</span>' +
       `<span class="hm-summary-value" title="${escapeAttr(topTag.tag)}">${escapeHtml(topTag.tag)}</span>` +
       `<span class="hm-summary-count">${topTag.days.length} 天</span></div></section>` : '';
-    const summary = normalizedQuery ? '' : (heatTypeFilter === '标签' ? tagSummary : foodSummary);
+    const summary = heatTypeFilter === '标签' ? tagSummary : foodSummary;
 
     if (!visibleCards.length) {
       box.innerHTML = summary + '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
-        `<p>${normalizedQuery ? `没有找到“${escapeHtml(heatSearchQuery.trim())}”` : heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有出现2次及以上的食记内容' : '这个月还没有标签记录'}</p>` +
-        `<small>${normalizedQuery ? '试试其他关键词，或切换右上角的筛选范围' : heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容2次及以上'}</small></div>`;
+        `<p>${heatTypeFilter === '全部' ? '这个月还没有标签或符合条件的食记' : heatTypeFilter === '食记' ? '这个月还没有出现2次及以上的食记内容' : '这个月还没有标签记录'}</p>` +
+        `<small>${heatTypeFilter === '标签' ? '在「经期」里添加标签后，这里就会显示统计' : heatTypeFilter === '食记' ? '同一内容在本月记录2次及以上，就会显示统计' : '记录经期标签，或在本月记录同一食记内容2次及以上'}</small></div>`;
       return;
     }
-    const firstDayOffset = (new Date(heatYear, heatMonth - 1, 1).getDay() + 6) % 7;
-    box.innerHTML = summary + '<div class="hm-cards">' + visibleCards.map(c => {
-      // CSS Grid 也按频率强制排位，避免卡片沿用数据生成时的插入顺序。
-      const frequency = Number(c.type === '食记' ? c.count : c.days.length) || 0;
-      let cells = '<span class="hm-day blank" aria-hidden="true"></span>'.repeat(firstDayOffset);
-      for (let d = 1; d <= dim; d++) {
-        const on = c.days.includes(d);
-        const column = (firstDayOffset + d - 1) % 7;
-        const joinPrev = column > 0 && d > 1 && c.days.includes(d - 1) === on;
-        const joinNext = column < 6 && d < dim && c.days.includes(d + 1) === on;
-        cells += `<span class="hm-day${on ? ' on' : ''}${joinPrev ? ' join-prev' : ''}${joinNext ? ' join-next' : ''}"${on ? ` aria-label="${d}日，有记录"` : ''}>${d}</span>`;
-      }
-      return `<div class="hm-card" style="order:${-frequency}" data-frequency="${frequency}">` +
-        '<div class="hm-card-hd">' +
-          `<span class="hm-card-name">${escapeHtml(c.tag)}</span>` +
-          `<span class="hm-card-meta">本月 ${c.type === '食记' ? `<b>${c.count}</b> 次 · ` : ''}<b>${c.days.length}</b> 天</span>` +
-        '</div>' +
-        `<div class="hm-month-grid">${cells}</div></div>`;
-    }).join('') + '</div>';
+    box.innerHTML = summary + heatCardsHtml(visibleCards, heatYear, heatMonth);
   }
 
   return {
