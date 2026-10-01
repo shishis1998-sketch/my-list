@@ -5017,9 +5017,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 #modal .tlsheet-head{background:var(--bg);}
 /* 食记内容点击菜单：沿用书籍 / 日记的竖向操作菜单，不再使用左右并排按钮。 */
-#calNotePreviewModal.food-actions{z-index:120 !important;align-items:center;justify-content:center;padding:var(--sp-16);}
+#calNotePreviewModal.food-actions{z-index:120 !important;padding:0;background:transparent;}
+#calNotePreviewModal.food-actions.open{animation:none;}
 #calNotePreviewModal.food-actions.open .mbox{animation:mboxPopIn var(--nav-dur) var(--nav-ease);}
-#calNotePreviewModal.food-actions .mbox{height:auto;min-height:0;max-width:184px;width:100%;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;}
+#calNotePreviewModal.food-actions .mbox{position:fixed;height:auto;min-height:0;max-width:calc(100vw - 24px);width:184px;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;}
 #calNotePreviewModal.food-actions .mhdr{display:none;}
 #calNotePreviewModal.food-actions .mbody{padding:6px;}
 .food-action-buttons{display:flex;flex-direction:column;gap:2px;}
@@ -14276,7 +14277,7 @@ function deleteFoodEntry(id){
   refreshFoodCalendar();
   toast('已删除','delete');
 }
-function openFoodActions(note){
+function openFoodActions(note,point){
   const dlg=document.getElementById('calNotePreviewModal');
   const body=document.getElementById('cnp-body');
   body.replaceChildren();
@@ -14293,12 +14294,18 @@ function openFoodActions(note){
   });
   body.appendChild(actions);
   dlg.classList.add('food-actions','open');
+  const panel=dlg.querySelector('.mbox');
+  const w=panel.offsetWidth,h=panel.offsetHeight;
+  const x=Number.isFinite(point?.x)?point.x:window.innerWidth/2;
+  const y=Number.isFinite(point?.y)?point.y:window.innerHeight/2;
+  panel.style.left=Math.max(12,Math.min(x+8,window.innerWidth-w-12))+'px';
+  panel.style.top=Math.max(12,Math.min(y+8+h<=window.innerHeight-12?y+8:y-h-8,window.innerHeight-h-12))+'px';
 }
 
-function showCalNotePreview(id){
+function showCalNotePreview(id,point){
   const note=notes.find(n=>n.id===id);
   if(!note)return;
-  if(note.calendarId==='food'){openFoodActions(note);return;}
+  if(note.calendarId==='food'){openFoodActions(note,point);return;}
   document.getElementById('calNotePreviewModal').classList.remove('food-actions');
   // 事件名进了天数卡，正文里就别再重复一遍
   const rest=calNoteBodyRest(note);
@@ -14674,9 +14681,9 @@ function calDayRange(dateStr,x,y){
 // 时间线一条：节点 + (封面) + 名称 + 右侧时间 tail；isCur=当天（墨绿实心节点）
 // 点开一条记录：笔记弹预览卡，收集条目回详情页。
 // 「当天」卡的时间线行和周卡片的色块共用这一条——两处点下去看到的东西才是一样的
-function openCalRec(r){
+function openCalRec(r,point){
   if(!r)return;
-  if(r._isNote){showCalNotePreview(r.id);return;}
+  if(r._isNote){showCalNotePreview(r.id,point);return;}
   hideCalSheet();closeCalendar();openEdit(r.id);
 }
 
@@ -14757,12 +14764,12 @@ function makeCalTlRow(r,tail,isCur){
   let main;
   if(r._isNote){
     main=`<span class="cal-tl-nm">${esc(calNoteTitle(r))}</span>`;
-    div.onclick=()=>openCalRec(r);
+    div.onclick=e=>openCalRec(r,{x:e.clientX,y:e.clientY});
   }else{
     const c=getCat(r.type);
     const coverH=r.cover?`<img src="${esc(r.cover)}" onerror="this.parentNode.textContent='${c.emoji||'📌'}'">`:(c.emoji||'📌');
     main=`<span class="cal-row-cover">${coverH}</span><span class="cal-tl-nm">${esc(r.name)}</span>`;
-    div.onclick=()=>openCalRec(r);
+    div.onclick=e=>openCalRec(r,{x:e.clientX,y:e.clientY});
   }
   div.innerHTML=`<span class="cal-tl-dot"></span>${main}<span class="cal-tl-tail">${tail||''}</span>`;
   // 节点用这条记录自己的颜色（和月历格子里的圆点同一套色）：
@@ -14932,7 +14939,7 @@ function layoutWeekPills(days){
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     // 先把下面「当天」卡切到它那一天（跨天的取第一天），再打开这条记录——
     // 和在「当天」卡里点这条是同一个结果（见 openCalRec）
-    el.onclick=()=>{openCalDay(g.dates[0]);openCalRec(g.rec);};
+    el.onclick=e=>{openCalDay(g.dates[0]);openCalRec(g.rec,{x:e.clientX,y:e.clientY});};
     box.appendChild(el);
     return el;
   };
