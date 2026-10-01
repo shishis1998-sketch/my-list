@@ -2449,6 +2449,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-form-card input:not([type=checkbox]),.rg-form-card select{box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font:var(--fs-body) var(--zh);padding:8px 10px;}
 .rg-form-card input[type=checkbox]{accent-color:var(--accent);}
 .rg-form-card .rg-check{display:flex;align-items:center;gap:8px;min-height:36px;margin:0;color:var(--text-primary);font-size:var(--fs-body);}
+.rg-rel-add-fields{display:grid;gap:8px;}
 .rg-form-actions{display:flex;justify-content:flex-end;gap:8px;margin:12px 0;}
 .rg-form-actions button,.rg-small-btn{border:0;border-radius:999px;background:var(--accent-light);color:var(--accent);padding:9px 13px;font:600 var(--fs-caption) var(--zh);cursor:pointer;}
 .rg-form-actions button.primary{background:var(--accent);color:var(--on-accent);}
@@ -11762,9 +11763,9 @@ function renderGraphRelationEditor(item,g){
   const names=new Map(people.map(p=>[p.id,p.name]));
   return `<div class="rg-form-card"><h3>这张图的关系</h3>
     ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${relationTypes(item).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><button type="button" class="rg-small-btn" onclick="removeGraphRelation('${r.id}')">删除</button></div>`).join('')||'<p>还没有关系线</p>'}
-    ${people.length>1?`<label>添加关系</label><select id="rgRelA">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
+    ${people.length>1?`<label>添加关系</label><div class="rg-rel-add-fields"><select id="rgRelA">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelB">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
-    <select id="rgRelType">${relationTypes(item).map(t=>`<option value="${t.id}">${esc(t.lbl)}</option>`).join('')}</select>
+    <select id="rgRelType">${relationTypes(item).map(t=>`<option value="${t.id}">${esc(t.lbl)}</option>`).join('')}</select></div>
     <div class="rg-form-actions"><button type="button" class="primary" onclick="addGraphRelation()">添加关系</button></div>`:''}</div>`;
 }
 function saveGraphManager(){
