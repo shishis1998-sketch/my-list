@@ -2455,6 +2455,9 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-form-actions button.primary{background:var(--accent);color:var(--on-accent);}
 .rg-form-actions button.danger,.rg-small-btn.danger{background:var(--danger-bg);color:var(--danger);}
 .rg-form-actions button.danger:active,.rg-small-btn.danger:active{background:var(--danger-bg-hover);}
+.rg-rel-remove{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;padding:0;border:0;
+  border-radius:50%;background:var(--danger-bg);color:var(--danger);font:400 20px/1 var(--zh);cursor:pointer;}
+.rg-rel-remove:active{background:var(--danger-bg-hover);}
 .rg-form-card h3{font-size:var(--fs-sub);margin:6px 0 12px;}
 .rg-rel-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:var(--fs-caption);}
 .rg-rel-row span{flex:1;min-width:0;overflow-wrap:anywhere;}
@@ -11764,7 +11767,7 @@ function renderGraphRelationEditor(item,g){
   const people=ensurePeopleIds(item,false).filter(p=>g?.personIds?.includes(p.id));
   const names=new Map(people.map(p=>[p.id,p.name]));
   return `<div class="rg-form-card"><h3>这张图的关系</h3>
-    ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${relationTypes(item).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><button type="button" class="rg-small-btn danger" onclick="removeGraphRelation('${r.id}')">删除</button></div>`).join('')||'<p>还没有关系线</p>'}
+    ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${relationTypes(item).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><button type="button" class="rg-rel-remove" aria-label="删除关系" onclick="removeGraphRelation('${r.id}')">×</button></div>`).join('')||'<p>还没有关系线</p>'}
     ${people.length>1?`<label>添加关系</label><div class="rg-rel-add-fields"><select id="rgRelA">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelB">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelType">${relationTypes(item).map(t=>`<option value="${t.id}">${esc(t.lbl)}</option>`).join('')}</select></div>
