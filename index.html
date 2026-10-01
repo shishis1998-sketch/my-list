@@ -2455,9 +2455,12 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-form-actions button.primary{background:var(--accent);color:var(--on-accent);}
 .rg-form-actions button.danger,.rg-small-btn.danger{background:var(--danger-bg);color:var(--danger);}
 .rg-form-actions button.danger:active,.rg-small-btn.danger:active{background:var(--danger-bg-hover);}
-.rg-rel-remove{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;padding:0;
+.rg-rel-remove{position:relative;display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;padding:0;
   border:1px solid var(--border);border-radius:50%;background:transparent;color:var(--text-muted);
-  font:400 20px/1 var(--zh);cursor:pointer;}
+  font-size:0;cursor:pointer;}
+.rg-rel-remove::before,.rg-rel-remove::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:2px;
+  border-radius:2px;background:currentColor;transform:translate(-50%,-50%) rotate(45deg);}
+.rg-rel-remove::after{transform:translate(-50%,-50%) rotate(-45deg);}
 .rg-rel-remove:active{background:var(--surface-2);color:var(--text-secondary);}
 .rg-form-card h3{font-size:var(--fs-sub);margin:6px 0 12px;}
 .rg-rel-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:var(--fs-caption);}
