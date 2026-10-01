@@ -14907,12 +14907,12 @@ function layoutWeekPills(days){
     const el=document.createElement('div');
     el.className='cw-p'+(isSpan?' cw-span':'');
     // 高度不写死：交给 CSS 按一行/两行自己长（top 等量完再补，见下）
+    // 食记是一组同类内容，不需要沿用日历「笔记」分类的固定蓝绿色；
+    // 改用当前主题的浅色底，切换主题/深色模式时也会一起变化。
+    const pillBg=calView==='food'?'var(--accent-light)':calHexA(g.color,.44);
     el.style.cssText=`left:${left}px;width:${w}px`+
-      // 淡底浓度 44%：16% 下书籍的米、其他的灰几乎一个样，一周里几件事挨在一起
-      // 认不出是哪一类；浓到 44% 各档颜色彼此拉得开。字压上去浅色模式最低 7.5:1，
-      // 深色模式那档暖灰的日历色最低 6.5:1——都还远在 AA(4.5:1) 之上。
-      // 再往上就得同时把 .cw-p span 的字色压深一档了。
-      `;background:${calHexA(g.color,.44)}`;
+      // 普通日历继续使用各分类的 44% 淡色，保留一眼区分不同记录类型的能力。
+      `;background:${pillBg}`;
     el.innerHTML=`<span>${esc(g.name)}</span>`;
     // 先把下面「当天」卡切到它那一天（跨天的取第一天），再打开这条记录——
     // 和在「当天」卡里点这条是同一个结果（见 openCalRec）
