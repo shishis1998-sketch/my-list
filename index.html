@@ -9009,7 +9009,9 @@ function setCalView(v){
   const isP=(v==='month'||v==='year');   // 经期日历
   const isH=(v==='heat');                // 统计视图
   document.body.classList.toggle('cal-view-heat',isH);
-  if(isH)window.scrollTo(0,0);
+  // 日历 / 食记 / 经期 / 年度 / 统计都是独立页面；切换后从顶部开始，
+  // 不能沿用年度长页面留下的 window.scrollY。
+  if(prev!==v)window.scrollTo(0,0);
   const cv=document.getElementById('calViewCalendar');
   const pv=document.getElementById('calViewPeriod');
   const hv=document.getElementById('calViewHeat');
@@ -13989,6 +13991,9 @@ function closeCalendar(){
   closeCalFilter();                // 退出日历时收起筛选
   hideCalSheet();
   setCalTabActive(false);          // 恢复原本的 tab 高亮
+  // 日历体系和列表/设置共用 window 滚动容器；退出年度等长页面时，
+  // 目标页面必须从顶部开始，不能继承年度页的滚动高度。
+  scrollResultsTop();
   saveLastView();
 }
 // 底部 tab 高亮：日历页时点亮「日历」，退出时交还给 syncBottomTabs
