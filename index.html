@@ -5078,6 +5078,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 .chapter-action-item.danger{--menu-press-bg:var(--danger-bg);}
 .people-more-item:is(:disabled,[aria-disabled="true"]):active{background:transparent;}
+
+/* 手机端用显式按压状态兜底 :active；离开选项或滑动时立即取消。 */
+:is(.bb-sortopt,.people-more-item,.cal-filter-row,.chapter-action-item,#diaryActionMenu .chapter-action-item,#calViewPeriod .home-filter-item,#calViewHeat .hm-filter-item,.rg-filter button,.chapter-heading-option,#pvCardsSheet .pv-row[role="switch"]):not(:disabled):not([aria-disabled="true"]).menu-pressed{
+  background:var(--menu-press-bg,var(--press));
+}
+.people-more-item.menu-action-pending{pointer-events:none;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -10853,11 +10859,49 @@ function setSortPeople(on){
   renderDetail();
 }
 function peopleMenuAction(action,button,event){
-  button?.closest('.people-more')?.removeAttribute('open');
-  if(action==='graph')openGraphLibrary();
-  else if(action==='sort')setSortPeople(true);
-  else if(action==='booknote')tapNoteCard(event,'booknote');
+  if(button?.classList.contains('menu-action-pending'))return;
+  const run=()=>{
+    button?.classList.remove('menu-pressed','menu-action-pending');
+    button?.closest('.people-more')?.removeAttribute('open');
+    if(action==='graph')openGraphLibrary();
+    else if(action==='sort')setSortPeople(true);
+    else if(action==='booknote')tapNoteCard(event,'booknote');
+  };
+  if(!button){run();return;}
+  // 先画出整行按压底色，再关闭菜单：快速点按也能看见反馈。
+  button.classList.add('menu-pressed','menu-action-pending');
+  requestAnimationFrame(()=>setTimeout(run,80));
 }
+
+// 菜单触摸反馈不依赖浏览器是否触发 :active；事件委托覆盖动态生成的选项。
+(function(){
+  const selector=".bb-sortopt,.people-more-item,.cal-filter-row,.chapter-action-item,#diaryActionMenu .chapter-action-item,#calViewPeriod .home-filter-item,#calViewHeat .hm-filter-item,.rg-filter button,.chapter-heading-option,#pvCardsSheet .pv-row[role=\"switch\"]";
+  let press=null;
+  function clear(){
+    if(press&&!press.el.classList.contains('menu-action-pending'))press.el.classList.remove('menu-pressed');
+    press=null;
+  }
+  document.addEventListener('pointerdown',e=>{
+    clear();
+    if(e.button!==0||e.isPrimary===false)return;
+    const el=e.target.closest?.(selector);
+    if(!el||el.matches(':disabled,[aria-disabled="true"]'))return;
+    el.classList.add('menu-pressed');
+    press={el,id:e.pointerId,x:e.clientX,y:e.clientY};
+  },{capture:true,passive:true});
+  document.addEventListener('pointermove',e=>{
+    if(!press||e.pointerId!==press.id)return;
+    const rect=press.el.getBoundingClientRect();
+    if(Math.hypot(e.clientX-press.x,e.clientY-press.y)>10||
+       e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)clear();
+  },{capture:true,passive:true});
+  ['pointerup','pointercancel'].forEach(type=>{
+    document.addEventListener(type,e=>{if(press&&e.pointerId===press.id)clear();},{capture:true,passive:true});
+  });
+  document.addEventListener('scroll',clear,{capture:true,passive:true});
+  window.addEventListener('blur',clear);
+})();
+
 function togglePeopleMenu(event,summary){
   event.preventDefault();
   const menu=summary.closest('.people-more');
