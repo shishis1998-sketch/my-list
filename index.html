@@ -5025,6 +5025,48 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .sync-grip{touch-action:none;user-select:none;cursor:grab;}
 #syncModal .sync-grip:active{cursor:grabbing;}
 #syncModal .mbox.sync-dragging{animation:none!important;will-change:transform;}
+
+/* 小型菜单统一规格：外框 12 / 选项 8 / 正文 15 / 组标题 12 / 行高 44。
+   胶囊筛选按钮、信息标签和底部抽屉保留各自布局。 */
+:root{
+  --menu-radius:12px;
+  --menu-item-radius:8px;
+  --menu-font-size:calc(15px * var(--fs-scale));
+  --menu-label-size:calc(12px * var(--fs-scale));
+  --menu-item-height:44px;
+}
+:is(.bb-sortpanel,.people-more-menu,.cal-filterpop,.chapter-action-panel,
+    #diaryActionMenu .chapter-action-panel,#calViewPeriod .home-filter-menu,
+    #calViewHeat .hm-filter-menu,.rg-filter,.chapter-heading-menu){
+  padding:6px;
+  border:1px solid var(--border);
+  border-radius:var(--menu-radius);
+  background:var(--surface);
+  box-shadow:none;
+}
+.pv-sym-popover{box-shadow:none;}
+:is(.bb-sortopt,.people-more-item,.cal-filter-row,.chapter-action-item,
+    #diaryActionMenu .chapter-action-item,#calViewPeriod .home-filter-item,
+    #calViewHeat .hm-filter-item,.chapter-heading-option){
+  box-sizing:border-box;
+  min-height:var(--menu-item-height);
+  padding:10px 12px;
+  border-radius:var(--menu-item-radius);
+  font-family:var(--zh);
+  font-size:var(--menu-font-size);
+  font-weight:400;
+  line-height:1.5;
+}
+.chapter-heading-option{height:auto;}
+:is(.bb-sortgrp,.bb-filter-glbl,.cal-filterpop-hd){
+  font-family:var(--zh);
+  font-size:var(--menu-label-size);
+  font-weight:600;
+  letter-spacing:0;
+  text-transform:none;
+}
+:is(.bb-sortopt.on,#calViewPeriod .home-filter-item.on,
+    #calViewHeat .hm-filter-item.on){font-weight:600;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
