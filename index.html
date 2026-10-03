@@ -5067,6 +5067,17 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 :is(.bb-sortopt.on,#calViewPeriod .home-filter-item.on,
     #calViewHeat .hm-filter-item.on){font-weight:600;}
+
+/* 菜单按下反馈：松开即恢复原背景，选中态继续由 .on 控制。 */
+/* :not(:disabled) 同时排除原生禁用项与 aria-disabled 项。 */
+:is(.bb-sortopt,.people-more-item,.cal-filter-row,.chapter-action-item,
+    #diaryActionMenu .chapter-action-item,#calViewPeriod .home-filter-item,
+    #calViewHeat .hm-filter-item,.rg-filter button,.chapter-heading-option,
+    #pvCardsSheet .pv-row[role="switch"]):not(:disabled):not([aria-disabled="true"]):active{
+  background:var(--menu-press-bg,var(--press));
+}
+.chapter-action-item.danger{--menu-press-bg:var(--danger-bg);}
+.people-more-item:is(:disabled,[aria-disabled="true"]):active{background:transparent;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
