@@ -6168,7 +6168,6 @@ window.PV = (function(){
 
   // ── 首页视图状态 ──
   let year = new Date().getFullYear();
-  let unsaved = false;
   let homeView = 'month';            // 'month' 单月 | 'year' 全年
   let homeSwapDir = null;
   let viewMonth = new Date().getMonth() + 1;
@@ -6182,8 +6181,6 @@ window.PV = (function(){
 
   // ── 提示：复用 my-list 的 toast ──
   function showToast(msg){ if (typeof window.toast === 'function') window.toast(msg); }
-  // 未保存红点：经期视图不用独立保存按钮，置空
-  function setUnsavedDots(){}
 
   function getLevel(y, m, d){ return ALL_DATA[`${y}-${m}-${d}`] || 0; }
   function setLevel(y, m, d, val){
@@ -7480,27 +7477,7 @@ window.PV = (function(){
       refreshDayCard();   // 排卵期已在上面重算，这里同步状态卡
     }
 
-    // ── 放大某个月卡片 ──
-    let zoomedMonth = null;   // 旧「弹窗放大」已废弃,保留变量恒为 null 以兼容历史判断
     let selectedView = null;  // {y, m, d} - 当前在信息栏查看/编辑的日期
-
-    // 旧「放大某月」→ 现在等价于切到该月的月视图
-    function zoomMonth(month) {
-      openMonthView(month);
-    }
-
-    // 旧「收起放大」→ 现在无弹窗,仅清空选中
-    function unzoomMonth() {
-      selectedView = null;
-      document.body.style.overflow = '';
-    }
-
-    function selectColor(lv) {
-      // 保留兼容性占位,新逻辑里色卡点击直接调 applySelectedColor
-      document.querySelectorAll('.swatch').forEach(s => {
-        s.classList.toggle('selected', +s.dataset.level === lv);
-      });
-    }
 
     // 每次 render() 之后自动调用。
     // 年视图:点整月 → 放大进该月月视图;月视图:注入色板 + 信息栏 + 本月状态记录。
@@ -8385,37 +8362,6 @@ window.PV = (function(){
     const SWATCH_CLASS = { 1: 'swatch-1', 2: 'swatch-2', 3: 'swatch-3', 4: 'swatch-g' };
     const LEGEND_CLASS = { 1: 'lg-f1', 2: 'lg-f2', 3: 'lg-f3', 4: 'lg-gotas' };   // 卡内标记图例的小色点
     const LEVEL_SUFFIX = { 1: '(少)', 2: '(中)', 3: '(多)', 4: '(点滴)' };
-    // 颜色一律用 #RRGGBB 十六进制(不能用 var()，否则 <input type="color"> 会回退成黑色)
-    const DEFAULT_PALETTE = {
-      1: { name: 'POCO',  color: '#FFD5DC' },  // = --brand-tint
-      2: { name: 'MEDIO', color: '#cf4865' },
-      3: { name: 'MUCHO', color: '#834047' },
-      4: { name: 'GOTAS', color: '#CBD5E1' }   // = --disabled
-    };
-    /* PALETTE held at module scope, seeded via PV.init */
-
-    function loadPalette() {
-      // 优先级：默认 → 文件内嵌(SAVED_PALETTE) → 本机 localStorage
-      if (typeof SAVED_PALETTE !== 'undefined' && SAVED_PALETTE) PALETTE = mergePalette(SAVED_PALETTE);
-      try {
-        const raw = localStorage.getItem('itimeline_palette');
-        if (raw) PALETTE = mergePalette(JSON.parse(raw));
-      } catch (e) {}
-    }
-    function savePalette() {
-      try { localStorage.setItem('itimeline_palette', JSON.stringify(PALETTE)); } catch (e) {}
-    }
-    function mergePalette(src) {
-      const out = JSON.parse(JSON.stringify(DEFAULT_PALETTE));
-      [1, 2, 3, 4].forEach(l => {
-        if (src && src[l]) {
-          if (src[l].name)  out[l].name  = String(src[l].name).slice(0, 12);
-          if (src[l].color) out[l].color = src[l].color;
-        }
-      });
-      return out;
-    }
-
     function textOn(hex) {
       const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
       if (!m) return 'var(--ink-2)';
@@ -14289,8 +14235,6 @@ function calSearchItems(){
   });
   return items;
 }
-// 结果里的日期：统一 YYYY-MM-DD，等宽对齐、长短一致
-function calSearchDate(dateStr){return dateStr;}
 // 十六进制色 → rgba（给搜索结果的整行淡底用）
 function calHexA(hex,a){
   const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');
