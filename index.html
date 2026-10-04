@@ -4435,6 +4435,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #calViewPeriod .home-filter-btn{width:32px;height:32px;border:none !important;background:transparent !important;
   color:var(--text-primary);}
 #calViewPeriod .home-filter-btn.act{background:transparent !important;color:var(--accent) !important;}
+/* 当前筛选文字与图标一起显示；长标签省略，完整名称保留在按钮提示中。 */
+#calViewPeriod .home-filter-btn.act{width:auto;max-width:100%;gap:4px;border-radius:8px;}
+#calViewPeriod .home-filter-btn svg{flex-shrink:0;}
+#calViewPeriod .home-filter-label{min-width:0;max-width:5em;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-family:var(--zh);font-size:var(--fs-footnote);line-height:1.2;}
+#calViewPeriod .home-filter-label[hidden]{display:none;}
+#calViewPeriod:not(.pv-year) .home-header-right{min-width:0;flex-shrink:1;}
+#calViewPeriod:not(.pv-year) .home-filter{min-width:0;flex-shrink:1;}
+#calViewPeriod.pv-year .home-filter-btn.act{width:auto;}
+
 /* 去掉内层月卡重复卡片样式（外层 pv-cardwrap 已是卡片） */
 #calViewPeriod .calendar-container.month-view .month{background:transparent !important;border:none !important;
   box-shadow:none !important;padding:0 !important;margin:0 !important;}
@@ -5433,6 +5443,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
             <div class="home-filter" id="homeFilter">
               <button class="home-filter-btn" id="homeFilterBtn" onclick="PV.toggleHomeFilter(event)" aria-label="筛选标签或食记">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
+                <span class="home-filter-label" id="homeFilterLabel" hidden></span>
               </button>
               <div class="home-filter-menu" id="homeFilterMenu"></div>
             </div>
@@ -6266,7 +6277,16 @@ window.PV = (function(){
       menu.querySelectorAll('.home-filter-item').forEach(el => {
         el.onclick = () => { closeHomeFilter(); setHomeSymFilter(el.dataset.name); };
       });
-      btn.classList.toggle('act', homeSymFilter !== '全部');
+      const active = homeSymFilter !== '全部';
+      btn.classList.toggle('act', active);
+      const label = document.getElementById('homeFilterLabel');
+      if (label) {
+        label.textContent = active ? homeSymFilter : '';
+        label.hidden = !active;
+      }
+      const description = active ? '当前筛选：' + homeSymFilter : '筛选标签或食记';
+      btn.setAttribute('aria-label', description);
+      btn.setAttribute('title', description);
     }
     // 头部筛选下拉:开合与关闭(按钮同步 .open 态,呈现淡灰底反馈)
     function toggleHomeFilter(e) {
