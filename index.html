@@ -4685,6 +4685,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 状态卡 / 信息卡 / 本月状态记录：卡片外独立卡，卡间距 12px（与普通日历一致），用 flex gap 保证等距 */
 #calViewPeriod #pvExtras{margin:0 14px;display:flex;flex-direction:column;gap:12px;}
 #calViewPeriod #pvExtras > *{margin:0 !important;}
+/* 分区标题：距日历卡 24px（原卡片下距 12px + 顶部留白 12px），距记录卡 12px。 */
+#calViewPeriod .dc-section-title{margin:0;padding:12px 16px 0;
+  color:var(--text-primary);font-size:var(--fs-title);font-weight:700;line-height:var(--lh-tight);}
+
 /* ── 当天状态卡：日历卡下方的一行摘要（方案 A）──────────────
    外部间距全部继承 #pvExtras（页边距 14 / 卡间距 12 / 子元素禁带 margin），
    卡片只管内部；外壳的圆角与描边照抄 .pv-trend-card。
@@ -7481,7 +7485,7 @@ window.PV = (function(){
       // 这里不再往日历下方注入常驻色板/状态栏/信息栏。
       const host = extras || cal;
 
-      // 日历下方只保留当天状态卡。
+      // 日历下方显示「当天记录」标题和当天状态卡。
       mountDayCard(host);
 
       updateSelectedHighlight();
@@ -7677,6 +7681,11 @@ window.PV = (function(){
 
     // 建卡 + 插入 + 收症状行，三步必须连着做（收之前得先有布局）
     function mountDayCard(host) {
+      const title = document.createElement('h2');
+      title.className = 'dc-section-title';
+      title.id = 'pvDayRecordTitle';
+      title.textContent = '当天记录';
+      host.appendChild(title);
       const card = buildDayCard();
       host.appendChild(card);
       clampDaySyms(card);
