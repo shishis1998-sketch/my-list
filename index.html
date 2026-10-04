@@ -3483,8 +3483,6 @@ body.cal-view-period #calViewPeriod .home-header{
    否则经期红压在 MUCHO 的深色底上几乎读不出来 */
 #calViewPeriod .today {font-weight: 700;}
 #calViewPeriod .today:not(.level-1):not(.level-2):not(.level-3):not(.level-g) {color: var(--brand) !important;}
-#calViewPeriod .calendar-container.sym-on .day:not(.sym-hit) {opacity: .28;}
-#calViewPeriod .day.sym-hit {outline: 2px solid var(--brand); outline-offset: -2px; z-index: 3;}
 #calViewPeriod .sync-bar {display: flex; justify-content: center; gap: 10px;
       margin: 12px 30px 6px;}
 #calViewPeriod .sync-btn {flex: 1; padding: 9px 0; border: none; border-radius: var(--r-sm);
@@ -4539,8 +4537,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-ovu .day-meta{
   position:relative;z-index:2;color:#fff !important;opacity:1;}
 /* 当前选中日改为整格细框；今天已有「今」字，不再重复加边框。 */
-#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
-#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after{
   content:"";position:absolute;z-index:4;inset:1px;border:1.5px solid var(--brand);
   border-radius:10px;pointer-events:none;box-sizing:border-box;}
 #calViewPeriod .calendar-container.month-view .day.today,
@@ -4561,8 +4558,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-end::before{border-radius:0 999px 999px 0;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-pred.band-start.band-end::before,
 #calViewPeriod .calendar-container.month-view .daywrap.band-ovu-ring::before,
-#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
-#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{border-radius:999px;}
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after{border-radius:999px;}
 .pv-sym-popover{position:fixed;z-index:180;display:flex;flex-wrap:wrap;gap:6px;
   width:max-content;max-width:min(220px,calc(100vw - 24px));max-height:40vh;overflow-y:auto;
   padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;
@@ -4591,8 +4587,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   margin-top:5px;color:var(--text-muted)!important;opacity:1;background:transparent;}
 #calViewPeriod .calendar-container.month-view .daywrap.band-pred::before,
 #calViewPeriod .calendar-container.month-view .daywrap.band-ovu-ring::before,
-#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after,
-#calViewPeriod .calendar-container.month-view .daywrap.band-sym-hit:not(.band-today)::after{
+#calViewPeriod .calendar-container.month-view .daywrap.band-selected:not(.band-today)::after{
   top:3px;bottom:auto;height:24px;}
 
 
@@ -6207,7 +6202,7 @@ window.PV = (function(){
       return l===4?'level-g':l===1?'level-1':l===2?'level-2':l===3?'level-3':'';
     }
 
-    // 首页症状标签筛选(置顶标签条)：'全部' 或某个标签名 → 高亮当年记过该标签的日期
+    // 首页症状标签筛选：只显示选中的日期标签，不改变日期样式。
     let homeSymFilter = '全部';
     let labelsExpanded = false;
     function syncLabelsExpanded() {
@@ -6295,15 +6290,8 @@ window.PV = (function(){
     });
     function setHomeSymFilter(name) {
       homeSymFilter = name;
+      if (homeSymFilter !== '全部') labelsExpanded = true;
       render();
-      // 选中具体标签时，自动跳到当年第一个高亮日期(rAF 等新 DOM 布局完成)
-      if (homeSymFilter !== '全部') {
-        requestAnimationFrame(() => {
-          const first = document.querySelector('#calendar .day.sym-hit');
-          if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          else showToast(`「${homeSymFilter}」${year} 年还没有记录`);
-        });
-      }
     }
 
     // 月视图直接显示前两项症状，+N 在日期旁显示其余症状。
@@ -6355,10 +6343,10 @@ window.PV = (function(){
     },true);
 
     function dayMetaHtml(y, m, d, list) {
-      // 日期下方标签只调整展示顺序，不改动实际保存的数据：
+      // 日期下方标签只筛选和调整展示顺序，不改动实际保存的数据：
       // 中文按拼音 A-Z 排列，英文/数字同样按自然升序。
       const syms = Array.isArray(list)
-        ? list.slice().sort((a, b) => String(a).localeCompare(String(b), 'zh-CN-u-co-pinyin', { sensitivity: 'base' }))
+        ? list.filter(name => homeSymFilter === '全部' || name === homeSymFilter).sort((a, b) => String(a).localeCompare(String(b), 'zh-CN-u-co-pinyin', { sensitivity: 'base' }))
         : [];
       if (!syms.length) return '<div class="day-meta"></div>';
       return '<div class="day-meta">'+syms.map(name =>
@@ -6411,7 +6399,6 @@ window.PV = (function(){
         const isToday = new Date().getFullYear()===year && new Date().getMonth()+1===month && new Date().getDate()===day;
         const symList = SYMPTOMS_DATA[`${year}-${month}-${day}`] || [];
         const hasSym = symList.length > 0;
-        const symHit = homeSymFilter && homeSymFilter !== '全部' && symList.includes(homeSymFilter);
         // 排卵期标记：已记录经血量的那天优先保留原色，排卵日改用描边、
         // 易孕期/预测经期则整个让位（记录是事实，预测不该盖在事实上面）
         const fk = fertKind(year, month, day);
@@ -6429,12 +6416,11 @@ window.PV = (function(){
             (!prev || prev.key !== band.key ? ' band-start' : '') +
             (!next || next.key !== band.key ? ' band-end' : '') +
             (isToday ? ' band-today' : '') +
-            (symHit ? ' band-sym-hit' : '') +
             (lv && fk === 'ovu' ? ' band-ovu-ring' : '');
         }
         html += `<div class="daywrap ${hasSym?'has-rec':''}${bandCls}">` +
                   `<div data-month="${month}" data-day="${day}"` +
-                  ` class="day ${getLevelClass(lv)} ${fcls} ${isToday?'today':''} ${symHit?'sym-hit':''}"` +
+                  ` class="day ${getLevelClass(lv)} ${fcls} ${isToday?'today':''}"` +
                   ` style="user-select:none;-webkit-user-select:none;">${isToday?'今':day}</div>` +
                   (withNav ? dayMetaHtml(year, month, day, symList)
                            : `<div class="dot-slot"><span class="rec-dot"></span></div>`) +
@@ -6860,7 +6846,6 @@ window.PV = (function(){
         cal.classList.remove('year-view', 'one-col');
       }
       syncLabelsExpanded();
-      cal.classList.toggle('sym-on', !!homeSymFilter && homeSymFilter !== '全部');
       // 切月度/年度时内容横向滑入(与热力图一致);仅切视图时触发
       const dir = homeSwapDir; homeSwapDir = null;
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
