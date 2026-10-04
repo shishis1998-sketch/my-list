@@ -4429,21 +4429,21 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #calViewPeriod .pv-navbtn{width:26px;height:32px;border:none;background:transparent;border-radius:8px;
   cursor:pointer;font-size:16px;color:var(--text-primary);display:inline-flex;align-items:center;justify-content:center;
   padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
-/* 筛选按钮：去掉圆形描边和白底，跟普通日历一样朴素 */
-/* 筛选按钮：常态与翻页箭头同色（白天黑、夜间白）；只有真的在筛选时才亮成墨绿，
-   让「有没有在筛」一眼能分辨 */
+/* 筛选按钮：未筛选时保持图标，筛选时沿用统计页胶囊样式，使用经期红色。 */
 #calViewPeriod .home-filter-btn{width:32px;height:32px;border:none !important;background:transparent !important;
   color:var(--text-primary);}
-#calViewPeriod .home-filter-btn.act{background:transparent !important;color:var(--accent) !important;}
-/* 当前筛选文字与图标一起显示；长标签省略，完整名称保留在按钮提示中。 */
-#calViewPeriod .home-filter-btn.act{width:auto;max-width:100%;gap:4px;border-radius:8px;}
+/* 月度、年度都显示浅红底与红色图标/文字；颜色变量同时适配深色模式。 */
+#calViewPeriod .home-filter-btn.act,
+#calViewPeriod.pv-year .home-filter-btn.act{width:auto;height:28px;max-width:100%;gap:var(--sp-4);
+  padding:0 var(--sp-10);border-radius:999px;box-sizing:border-box;
+  background:var(--brand-soft) !important;color:var(--brand) !important;}
+/* 长标签省略，完整名称保留在按钮提示中。 */
 #calViewPeriod .home-filter-btn svg{flex-shrink:0;}
 #calViewPeriod .home-filter-label{min-width:0;max-width:5em;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;font-family:var(--zh);font-size:var(--fs-footnote);line-height:1.2;}
+  white-space:nowrap;font-family:var(--zh);font-size:var(--fs-caption);font-weight:600;line-height:1;}
 #calViewPeriod .home-filter-label[hidden]{display:none;}
 #calViewPeriod:not(.pv-year) .home-header-right{min-width:0;flex-shrink:1;}
 #calViewPeriod:not(.pv-year) .home-filter{min-width:0;flex-shrink:1;}
-#calViewPeriod.pv-year .home-filter-btn.act{width:auto;}
 
 /* 去掉内层月卡重复卡片样式（外层 pv-cardwrap 已是卡片） */
 #calViewPeriod .calendar-container.month-view .month{background:transparent !important;border:none !important;
