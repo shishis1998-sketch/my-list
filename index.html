@@ -7485,7 +7485,7 @@ window.PV = (function(){
       // 这里不再往日历下方注入常驻色板/状态栏/信息栏。
       const host = extras || cal;
 
-      // 日历下方显示「当天记录」标题和当天状态卡。
+      // 日历下方显示「这天记录」标题和当天状态卡。
       mountDayCard(host);
 
       updateSelectedHighlight();
@@ -7684,7 +7684,7 @@ window.PV = (function(){
       const title = document.createElement('h2');
       title.className = 'dc-section-title';
       title.id = 'pvDayRecordTitle';
-      title.textContent = '当天记录';
+      title.textContent = '这天记录';
       host.appendChild(title);
       const card = buildDayCard();
       host.appendChild(card);
