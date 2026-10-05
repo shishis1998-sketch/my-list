@@ -1050,16 +1050,16 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   /* z-index 120：详情页打开时底栏被提到 115（见 body.detail-open 那条），
      不越过它的话，从详情页点出来的这张面板底部「取消 / 保存」会被底栏盖住。
      同 #icsColorModal 的处理。 */
-  #modal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
-  #modal.moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
-  #modal .mbox{
+  :is(#modal,#timeModal).moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
+  :is(#modal,#timeModal).moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  :is(#modal,#timeModal) .mbox{
     width:100%;max-width:100%;height:70vh;max-height:70vh;min-height:0;
     border-radius:var(--rxl) var(--rxl) 0 0;
     box-shadow:0 -4px 24px rgba(0,0,0,.18);
     transform:translateZ(0);            /* 同 #noteModal：安卓 Chrome 的圆角裁剪 */
   }
   /* 抽屉顶部小抓手；贴底的面板不需要给刘海让位，把通用规则那份 padding-top 收回来 */
-  #modal .tlsheet-head{position:relative;}
+  :is(#modal,#timeModal) .tlsheet-head{position:relative;}
 
   /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
   /* padding-bottom:0 覆盖下方为导航条留白的通用规则，让抽屉真正贴到屏幕底边，不悬空 */
@@ -2279,13 +2279,13 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 4px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#tlSheet .tlsheet-head,#modal .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
-#tlSheet .tlsheet-grip,#modal .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
+#tlSheet .tlsheet-head,:is(#modal,#timeModal) .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
+#tlSheet .tlsheet-grip,:is(#modal,#timeModal) .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
   transition:background .14s ease,transform .14s ease;}
-#tlSheet .tlsheet-head:active .tlsheet-grip,#modal .tlsheet-head:active .tlsheet-grip,
-#tlSheet.dragging .tlsheet-grip,#modal .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
-#tlSheet .tlsheet-headrow,#modal .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#tlSheet .tlsheet-title,#modal .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
+#tlSheet .tlsheet-head:active .tlsheet-grip,:is(#modal,#timeModal) .tlsheet-head:active .tlsheet-grip,
+#tlSheet.dragging .tlsheet-grip,:is(#modal,#timeModal) .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
+#tlSheet .tlsheet-headrow,:is(#modal,#timeModal) .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#tlSheet .tlsheet-title,:is(#modal,#timeModal) .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
 .tlsheet-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
   color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
@@ -4954,11 +4954,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 
 /* ADD/EDIT 记录抽屉：与时间线章节编辑统一顶部操作栏和高度 */
-#modal .mbox{height:70vh;max-height:70vh;min-height:0;background:var(--bg);}
+:is(#modal,#timeModal) .mbox{height:70vh;max-height:70vh;min-height:0;background:var(--bg);}
 
 
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
-#modal .tlsheet-head{background:var(--bg);}
+:is(#modal,#timeModal) .tlsheet-head{background:var(--bg);}
 /* 食记内容点击菜单：沿用书籍 / 日记的竖向操作菜单，不再使用左右并排按钮。 */
 #calNotePreviewModal.food-actions{z-index:120 !important;padding:0;background:transparent;}
 #calNotePreviewModal.food-actions.open{animation:none;}
@@ -5099,6 +5099,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   background:var(--menu-press-bg,var(--press));
 }
 .people-more-item.menu-action-pending{pointer-events:none;}
+
+/* 独立时间编辑：三行表单，沿用记录编辑的取消 / 完成操作栏。 */
+#timeModal .mbox{height:auto;max-height:min(70vh,100%);}
+#timeModal .time-edit-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;}
+#timeModal .time-edit-row:last-child{margin-bottom:0;}
+#timeModal .time-edit-row label{flex-shrink:0;margin:0;}
+#timeModal .time-edit-row input{min-width:0;width:65%;color:var(--text-primary);}
+#timeModal .time-edit-row output{color:var(--text-primary);font-variant-numeric:tabular-nums;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5645,6 +5653,25 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <!-- 日历视图切换：贴着底栏「日历」tab 上方弹出，替代原顶部四段胶囊条 -->
 <div class="bb-sortsheet" id="calViewSheet" onclick="if(event.target===this)closeCalViewSheet()">
   <div class="bb-sortpanel cal-viewpanel" id="calViewPanel"></div>
+</div>
+
+<!-- 独立时间编辑：取消不保存，用时由起止日期自动计算。 -->
+<div class="moverlay" id="timeModal" onclick="if(event.target===this)closeTimeEditor()">
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="timeEditorTitle">
+    <div class="tlsheet-head" id="timeSheetHead">
+      <div class="tlsheet-grip"></div>
+      <div class="tlsheet-headrow">
+        <button type="button" class="tlsheet-action" onclick="closeTimeEditor()">取消</button>
+        <div class="tlsheet-title" id="timeEditorTitle">修改时间</div>
+        <button type="button" class="tlsheet-action" onclick="saveTimeEditor()">完成</button>
+      </div>
+    </div>
+    <div class="mbody">
+      <div class="fg time-edit-row"><label for="time-start">开始时间</label><input type="date" id="time-start" oninput="updateTimeDuration()"></div>
+      <div class="fg time-edit-row"><label for="time-end">结束时间</label><input type="date" id="time-end" oninput="updateTimeDuration()"></div>
+      <div class="fg time-edit-row"><label for="time-duration">用时</label><output id="time-duration" for="time-start time-end" aria-live="polite">—</output></div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== ADD/EDIT MODAL ===== -->
@@ -10268,6 +10295,7 @@ const BACK_LAYERS=[
   {id:'relGraph',           cls:'open', close:()=>closeRelationGraph()},
   {id:'detailRoot',         cls:'open', close:()=>closeDetail()},
   {id:'noteMonthState',     cls:'open', close:()=>closeNoteMonth()},
+  {id:'timeModal',          cls:'open', close:()=>closeTimeEditor()},
   {id:'modal',              cls:'open', close:()=>closeModal()},
   {id:'noteSheet',          cls:'show', close:()=>closeNoteSheet()},
   {id:'tlSheet',            cls:'show', close:()=>closeChapterSheet()},
@@ -10593,6 +10621,7 @@ function hideDetail(){
   dtSortPeople=false;
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
   if(tlSheetIdx!=null) closeChapterSheet();  // 章节弹窗还开着就一并收掉（同样先落盘）
+  closeTimeEditor();
   detailId=null;
   document.getElementById('detailRoot').classList.remove('open');
   document.body.classList.remove('detail-open');
@@ -10616,6 +10645,49 @@ function editFromDetail(ev){
     if(el.select&&el.tagName==='INPUT'&&el.type==='text') el.select();
   },80);
 }
+
+// 时间独立保存，只更新起止日期和修改时间，不触碰总编辑表单。
+let timeEditorId=null;
+function openTimeEditor(ev){
+  if(ev)ev.stopPropagation();
+  if(window.getSelection&&window.getSelection().toString())return;
+  const item=data.find(d=>d.id===detailId);if(!item)return;
+  timeEditorId=item.id;
+  document.getElementById('time-start').value=item.startDate||'';
+  document.getElementById('time-end').value=item.watchDate||'';
+  updateTimeDuration();
+  const modal=document.getElementById('timeModal');
+  modal.classList.add('open');
+  bindSheetDrag(modal.querySelector('.mbox'),document.getElementById('timeSheetHead'),closeTimeEditor);
+  backLayerOpenedNow('timeModal');
+  modal.querySelector('.tlsheet-action').focus({preventScroll:true});
+}
+function updateTimeDuration(){
+  const start=document.getElementById('time-start').value;
+  const end=document.getElementById('time-end').value;
+  const days=daysBetween(start,end);
+  document.getElementById('time-duration').textContent=start&&end&&start>end?'日期顺序有误':days===null?'—':days+' 天';
+}
+function closeTimeEditor(){
+  const modal=document.getElementById('timeModal');
+  const wasOpen=modal.classList.contains('open');
+  modal.classList.remove('open');timeEditorId=null;
+  if(wasOpen)document.querySelector('#dtBody [aria-label="修改时间"]')?.focus({preventScroll:true});
+}
+function saveTimeEditor(){
+  const item=data.find(d=>d.id===timeEditorId);if(!item){closeTimeEditor();return;}
+  const start=document.getElementById('time-start').value||null;
+  const end=document.getElementById('time-end').value||null;
+  if(start&&end&&start>end){toast('开始时间晚于结束时间','warn');return;}
+  if(item.startDate!==start||item.watchDate!==end){
+    item.startDate=start;item.watchDate=end;touchRec(item);persist();render();
+    if(detailId)renderDetail();
+  }
+  closeTimeEditor();
+}
+document.getElementById('timeModal').addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();closeTimeEditor();}
+});
 
 // 点备注 / 人物卡 → 只弹这一栏的编辑抽屉（见 openNoteSheet），不再端出整张表单。
 // 选文字时不触发，理由同 editFromDetail：这两栏是最常被长按复制的段落。
@@ -11105,10 +11177,10 @@ function renderDetail(previewBox=null, viewTab=dtTab){
     ${viewTab==='info'?`
       <div class="dt-sec">
         <div class="dt-seclbl dt-overview-label">时间</div>
-        <div class="dt-card">
+        <div class="dt-card" role="button" tabindex="0" aria-label="修改时间" onclick="openTimeEditor(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openTimeEditor(event)}">
         <div class="dt-kv">
-          <div data-edit="f-watch-start"><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
-          <div data-edit="f-watch"><div class="dt-k">结束</div><div class="dt-v${item.watchDate?'':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
+          <div><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
+          <div><div class="dt-k">结束</div><div class="dt-v${item.watchDate?'':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
           <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
         </div>
       </div>
