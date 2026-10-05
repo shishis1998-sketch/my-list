@@ -427,6 +427,10 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* --- CONTENT --- */
 .content{padding:var(--sp-20) var(--sp-24);flex:1;overflow-y:auto;}
 .vhdr{display:flex;align-items:baseline;gap:var(--sp-10);margin-bottom:var(--sp-12);}
+.list-filter-summary{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-6);margin-bottom:var(--sp-12);font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-secondary);}
+.list-filter-summary:empty{display:none;}
+.list-filter-summary span{max-width:100%;box-sizing:border-box;padding:var(--sp-4) var(--sp-8);border:1px solid var(--border);border-radius:var(--rchip);background:var(--surface);overflow-wrap:anywhere;}
+.list-filter-summary .filter-value{color:var(--accent);background:var(--accent-light);border-color:rgba(var(--accent-rgb),.18);}
 .vtitle{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);}
 .vcnt{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);}
 
@@ -5277,6 +5281,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <div class="vcnt" id="vcnt"></div>
       <span id="noteMonthState" hidden></span>
     </div>
+    <div class="list-filter-summary" id="listFilterSummary" role="status" aria-live="polite" aria-label="当前排序和筛选"></div>
     <div class="twrap" id="twrap">
       <div id="mlist"></div>
       <div id="empty" class="empty" style="display:none">
@@ -12667,16 +12672,33 @@ function syncFilterBtn(){
     : (curStatus!=='all'||curScore!=='all'||curFilterTags.length>0);
   btn.classList.toggle('active', active);
 }
+// 列表始终显示当前排序；已选状态、评分和标签逐项展示，长文字自然换行。
+function renderListFilterSummary(){
+  const summary=document.getElementById('listFilterSummary');
+  if(!summary) return;
+  const groups=isNoteMode()?SORT_GROUPS_NOTE:SORT_GROUPS_MEDIA;
+  const sort=groups.flatMap(([,opts])=>opts).find(([value])=>value===curSort);
+  const filters=[];
+  if(!isNoteMode()){
+    if(curStatus!=='all') filters.push('状态：'+(SMAP[curStatus]?.lbl||curStatus));
+    const scores={'5':'5/5','4':'≥4/5','3':'≥3/5','12':'≤2/5'};
+    if(curScore!=='all') filters.push('评分：'+(scores[curScore]||curScore));
+  }
+  curFilterTags.forEach(tag=>filters.push('标签：'+tag));
+  summary.innerHTML=(sort?'<span>排序：'+esc(sort[1])+'</span>':'')+
+    filters.map(label=>'<span class="filter-value">'+esc(label)+'</span>').join('');
+}
 function renderTagFilterRow(){
-  syncFilterBtn();
   const tags=getAllCurrentTags();
+  if(!tags.length&&curFilterTags.length) curFilterTags=[];
+  syncFilterBtn();
+  renderListFilterSummary();
   const sep=document.getElementById('ftag-sep');
   const lbl=document.getElementById('ftag-lbl');
   const chips=document.getElementById('ftag-chips');
   if(!sep||!lbl||!chips) return;
   if(!tags.length){
     sep.style.display='none'; lbl.style.display='none'; chips.innerHTML='';
-    if(curFilterTags.length){ curFilterTags=[]; }
     return;
   }
   sep.style.display=''; lbl.style.display='';
