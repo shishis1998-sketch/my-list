@@ -5102,10 +5102,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 独立时间编辑：三行表单，沿用记录编辑的取消 / 完成操作栏。 */
 #timeModal .mbox{height:auto;max-height:min(70vh,100%);}
-#timeModal .time-edit-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;}
-#timeModal .time-edit-row:last-child{margin-bottom:0;}
+#timeModal .mbody{flex:0 1 auto;min-height:0;display:grid;grid-auto-rows:minmax(44px,1fr);gap:16px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
+#timeModal .time-edit-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;margin:0;}
 #timeModal .time-edit-row label{flex-shrink:0;margin:0;font-size:calc(13px * var(--fs-scale));font-weight:600;}
-#timeModal .time-edit-row input{min-width:0;width:65%;color:var(--text-primary);}
+#timeModal .time-edit-row input{min-width:0;width:65%;height:44px;min-height:44px;color:var(--text-primary);}
 #timeModal .time-edit-row output{color:var(--text-primary);font-variant-numeric:tabular-nums;}
 </style>
 <script>
