@@ -534,10 +534,10 @@ body.detail-open .content{display:none!important;}
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
 .dt-lbl{font-size:var(--fs-caption);font-weight:700;color:var(--text-muted);letter-spacing:.1em;margin-bottom:var(--sp-8);}
 /* 时间：开始 / 结束 / 用时 三列 */
-.dt-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-10) var(--sp-12);}
+.dt-kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-10) var(--sp-12);text-align:center;}
+.dt-kv>div{min-width:0;overflow-wrap:anywhere;}
 .dt-k{font-size:var(--fs-caption);color:var(--text-muted);letter-spacing:.06em;}
 .dt-v{font-size:var(--fs-body);font-weight:600;font-family:var(--en);font-variant-numeric:tabular-nums;margin-top:var(--sp-2);}
-.dt-v.end{color:var(--watch-c);}
 .dt-v.none{color:var(--text-muted);font-weight:500;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
@@ -11106,7 +11106,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
         <div class="dt-card">
         <div class="dt-kv">
           <div data-edit="f-watch-start"><div class="dt-k">开始</div><div class="dt-v${item.startDate?'':' none'}">${item.startDate?fmtWatchShort(item.startDate):'—'}</div></div>
-          <div data-edit="f-watch"><div class="dt-k">结束</div><div class="dt-v${item.watchDate?' end':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
+          <div data-edit="f-watch"><div class="dt-k">结束</div><div class="dt-v${item.watchDate?'':' none'}">${item.watchDate?fmtWatchShort(item.watchDate):'—'}</div></div>
           <div><div class="dt-k">用时</div><div class="dt-v${days===null?' none':''}">${days===null?'—':days+' 天'}</div></div>
         </div>
       </div>
