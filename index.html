@@ -5332,6 +5332,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
   <div class="chapter-action-menu" id="chapterActionMenu" onclick="if(event.target===this)closeChapterActionMenu()" aria-hidden="true">
     <div class="chapter-action-panel" role="menu" aria-label="章节操作">
+      <button type="button" class="chapter-action-item" role="menuitem" onclick="openChapterActionSection()">新增小节</button>
       <button type="button" class="chapter-action-item" role="menuitem" onclick="openChapterActionGraph()">关系图</button>
       <button type="button" class="chapter-action-item danger" role="menuitem" onclick="deleteChapterAction()">删除章节</button>
     </div>
@@ -11565,6 +11566,20 @@ function openChapterActionGraph(){
   if(target.chapter!=null)openGraphForChapter(Number(target.chapter));
   else if(target.group!=null)openGraphForGroup(target.group);
 }
+function openChapterActionSection(){
+  const target=chapterActionTarget;
+  const it=target&&data.find(d=>d.id===detailId);
+  if(!target||!it)return;
+  const chs=parseChapters(it.bookNote||'');
+  let chapter=target.group||'';
+  if(!chapter&&target.chapter!=null){
+    const idx=Number(target.chapter),title=chs[idx]?.title||'';
+    chapter=timelineSectionTitle(title)?.chapter||title;
+  }
+  const heading=nextSectionHeading(it.bookNote||'',chapter);
+  closeChapterActionMenu();
+  openNewDetailChapter(heading);
+}
 function deleteChapterAction(){
   const target=chapterActionTarget;
   const it=target&&data.find(d=>d.id===detailId);
@@ -16283,11 +16298,21 @@ function nextChapterHeading(body){
   if(n<100&&!(m&&/\d/.test(m[1]))) return '第'+(n<10?digits[n]:(n<20?'十':digits[Math.floor(n/10)]+'十')+(n%10?digits[n%10]:''))+'章';
   return '第'+n+'章';
 }
-function openNewDetailChapter(){
+function nextSectionHeading(body,chapter){
+  chapter=String(chapter||'').trim();
+  if(!chapter)return nextChapterHeading(body);
+  const sections=parseChapters(body).map(c=>timelineSectionTitle(c.title))
+    .filter(p=>p&&p.chapter===chapter);
+  const last=sections.at(-1)?.section||'';
+  const numbered=last.match(/^(.*?)(\d+)$/u);
+  const section=numbered?numbered[1]+(Number(numbered[2])+1):'';
+  return chapter+(section?' '+section:'');
+}
+function openNewDetailChapter(initialHeading){
   tlHostMedia=detailId;tlCurId=null;
   const body=tlHostBody();if(body==null)return;
   tlChapterNew=true;tlSheetIdx=-1;tlSheetSegs=[];tlSheetLead='';tlChapterSource='';
-  tlChapterDraft=nextChapterHeading(body)+' \n';
+  tlChapterDraft=(initialHeading==null?nextChapterHeading(body):initialHeading)+' \n';
   const sheet=document.getElementById('tlSheet');
   sheet.classList.remove('dragging');sheet.style.transform='';
   alignChapterSheetToCard();
