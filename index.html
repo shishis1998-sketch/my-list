@@ -5104,7 +5104,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #timeModal .mbox{height:auto;max-height:min(70vh,100%);}
 #timeModal .time-edit-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;}
 #timeModal .time-edit-row:last-child{margin-bottom:0;}
-#timeModal .time-edit-row label{flex-shrink:0;margin:0;}
+#timeModal .time-edit-row label{flex-shrink:0;margin:0;font-size:calc(13px * var(--fs-scale));font-weight:600;}
 #timeModal .time-edit-row input{min-width:0;width:65%;color:var(--text-primary);}
 #timeModal .time-edit-row output{color:var(--text-primary);font-variant-numeric:tabular-nums;}
 </style>
@@ -5667,9 +5667,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </div>
     </div>
     <div class="mbody">
+      <div class="fg time-edit-row"><label for="time-duration">用时</label><output id="time-duration" for="time-start time-end" aria-live="polite">—</output></div>
       <div class="fg time-edit-row"><label for="time-start">开始时间</label><input type="date" id="time-start" oninput="updateTimeDuration()"></div>
       <div class="fg time-edit-row"><label for="time-end">结束时间</label><input type="date" id="time-end" oninput="updateTimeDuration()"></div>
-      <div class="fg time-edit-row"><label for="time-duration">用时</label><output id="time-duration" for="time-start time-end" aria-live="polite">—</output></div>
     </div>
   </div>
 </div>
