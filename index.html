@@ -5828,7 +5828,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <button class="mclose" onclick="closeTrash()">✕</button>
     </div>
     <div class="mbody">
-      <p style="font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:var(--sp-12)">删掉的记录和笔记在这儿放 30 天，过期自动清理。只存在这台设备上，不跟着云同步走——在哪台机器上删的，就得回哪台机器找。</p>
+      <p style="font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:var(--sp-12)">删掉的记录、笔记和章节在这儿放 30 天，过期自动清理。开启云同步后，回收站也会在设备间同步；仅本机备忘仍只留在删除它的设备。</p>
       <div id="trashList"></div>
     </div>
     <div class="mftr">
@@ -9529,9 +9529,13 @@ async function syncPush(allowCreate){
       rest.encData=await encryptJSON({fields:fields||{},customFields:customFields||[]},pw,pre);
       return rest;
     }));
+    // 回收站跟随账号同步；但「仅本机」备忘从定义上就不能离开本机，
+    // 即使已经被删进回收站也继续遵守这条边界。
+    const trashToSync=trash.filter(t=>!isLocalOnlyTrash(t));
     const inner={
       data, categories:cats,
       notes:notesToSync, noteSubs,
+      trash:trashToSync,
       period: periodData,
       ovuConfig: (window.PV&&PV.getOvuCfg)?PV.getOvuCfg():null,
       theme: getTheme()
@@ -9717,6 +9721,21 @@ async function syncPull(silent){
     // 都必须靠 localOnly / pendingCloud 标记来免疫,否则会被静默抹掉
     data=remote.data;
     if(Array.isArray(remote.categories)&&remote.categories.length)cats=remote.categories;
+    // 回收站和其它云端数据一样以云端为准。仅本机备忘的回收站条目不上传，
+    // 所以拉取时把它们留在本机，再与云端条目合并。
+    if(Array.isArray(remote.trash)){
+      const localOnlyTrash=trash.filter(isLocalOnlyTrash);
+      const localIds=new Set(localOnlyTrash.map(t=>t.tid));
+      trash=[...remote.trash.filter(t=>t&&!isLocalOnlyTrash(t)&&!localIds.has(t.tid)),...localOnlyTrash];
+      const purged=purgeTrash();
+      try{localStorage.setItem(TRASH_KEY,JSON.stringify(trash));}catch(e){}
+      renderTrashCount();
+      if(document.getElementById('trashModal').classList.contains('open'))renderTrashList();
+      if(purged)scheduleSyncPush();
+    }else{
+      // 旧版云端还没有 trash 字段：保留当前设备已有回收站，并在下一次推送时完成迁移。
+      scheduleSyncPush();
+    }
     // 主题色跟着同步走；旧 Gist 没这个字段时保持本机选择
     if(typeof remote.theme==='string')applyTheme(remote.theme,true,true);
     // 排卵期推算配置跟着同步。应用云端值时跳过反向上传，避免拉取后产生无意义回写。
@@ -9812,7 +9831,7 @@ async function syncPull(silent){
     migrateLegacyChapterHeadings();
     isSyncing=false;updateSyncBadge();
     if(typeof render==='function'){renderTypeSelect();render();}
-    if(!silent)toast('✓ 已从云端同步 '+data.length+' 条记录、'+notes.length+' 条笔记');
+    if(!silent)toast('✓ 已从云端同步 '+data.length+' 条记录、'+notes.length+' 条笔记、'+trash.length+' 条回收站内容');
     return true;
   }catch(e){
     isSyncing=false;lastSyncErr=syncErrText(e);updateSyncBadge();
@@ -13056,12 +13075,8 @@ function saveTagMgr(){
 }
 
 // ── 回收站 ────────────────────────────────────────────────────────
-// 删记录、笔记、时间线章节先在这儿放 30 天。
-//
-// 只存本机、不进 Gist：回收站里躺的是「已经决定不要了」的东西，把它们也推上云，
-// 等于每台设备都要背一份垃圾，还得跟着做备忘那套加解密。所以云端看到的一直是
-// 删干净之后的样子——在手机上删的，iPad 拉一次也会消失，但**要找回得回手机上找**。
-// 换个说法：回收站是「这台设备的后悔药」，不是第二个数据源。
+// 删记录、笔记、时间线章节先在这儿放 30 天，并跟随云同步在设备间共用。
+// 唯一例外是「仅本机」备忘：它既然明确不允许上云，删进回收站后也仍然只留本机。
 //
 // 分类、标签删掉只是记录改归属或少个标签，本体还在；
 // 导入的日历事件本来就能重新导入一份，都没必要占回收站的位置。
@@ -13070,6 +13085,11 @@ const TRASH_KEEP_DAYS=30;   // 超过就自动清掉，免得 localStorage 被�
 const TRASH_MAX=200;        // 再加一道上限：短时间删几百条也不会把存储塞爆
 let trash=[];
 
+function isLocalOnlyTrash(t){
+  const o=t&&t.payload;
+  return !!(t&&t.kind==='note'&&o&&(o.localOnly||o.pendingCloud));
+}
+
 function loadTrash(){
   try{trash=JSON.parse(localStorage.getItem(TRASH_KEY))||[];}catch(e){trash=[];}
   if(!Array.isArray(trash))trash=[];
@@ -13077,9 +13097,9 @@ function loadTrash(){
   if(purgeTrash())persistTrash();
 }
 function persistTrash(){
-  // 刻意不调 scheduleSyncPush：回收站不上云，见上面那段
   try{localStorage.setItem(TRASH_KEY,JSON.stringify(trash));}catch(e){}
   renderTrashCount();
+  scheduleSyncPush();
 }
 // 过期的丢掉、超量的从最旧的一头砍。返回这一趟清掉了几条
 function purgeTrash(){
