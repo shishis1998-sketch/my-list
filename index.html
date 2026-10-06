@@ -442,12 +442,15 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
    列表只回答「是哪本、什么时候读完的」，其余都是翻完之后才想看的东西。 */
 .twrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;box-shadow:var(--shadow);}
 .mrow{
+  --row-inset:var(--sp-16);position:relative;
   display:flex;align-items:center;gap:var(--sp-12);
   padding:var(--sp-12) var(--sp-16);background:var(--surface);
-  border-bottom:1px solid var(--border-soft);
+  border-bottom:1px solid transparent;
   cursor:pointer;transition:background .1s;
 }
+.mrow::after{content:'';position:absolute;left:var(--row-inset);right:0;bottom:0;height:1px;background:var(--border-soft);pointer-events:none;}
 #mlist>.mrow:last-child{border-bottom:none;}
+#mlist>.mrow:last-child::after{display:none;}
 @media (hover:hover){.mrow:hover{background:var(--bg);}}
 .mrow-main{flex:1;min-width:0;}
 /* 书名和「年份 · 作者」都只占一行，长了截断——列表要的是能扫，
@@ -468,7 +471,8 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* 状态颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP）*/
 .mrow-st{display:block;font-size:var(--fs-foot);font-weight:600;color:var(--c);margin-top:1px;}
 :root[data-mode="dark"] .mrow-st{color:var(--cd);}
-.mrow-arr{flex-shrink:0;color:var(--text-muted);font-size:var(--fs-headline);line-height:1;}
+.mrow-arr{flex-shrink:0;color:var(--text-muted);display:flex;align-items:center;justify-content:center;width:calc(18px * var(--fs-scale));height:calc(18px * var(--fs-scale));}
+.mrow-arr svg{width:100%;height:100%;}
 
 /* 状态文字：颜色由 render() 写在行内（--c 浅色 / --cd 深色，来自 SMAP），
    这里只管按模式挑一个。固定语义色的三种状态各有一版深色，避免深墨压在深底上看不见。 */
@@ -995,7 +999,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   /* === 媒体列表（手机端）===
      结构和电脑端是同一套行，只是行内边距和字号各升半档：手机上正文基准是 15px，
      书名跟着提到 headline(16)，右栏日期/状态保持 caption/foot。 */
-  .mrow{padding:var(--sp-12) var(--sp-14);gap:var(--sp-10);}
+  .mrow{--row-inset:var(--sp-14);padding:var(--sp-12) var(--sp-14);gap:var(--sp-10);}
   .cname{font-size:var(--fs-headline);}
   .csub{font-size:var(--fs-caption);}
   .ctag{height:24px;padding:0 var(--sp-12);font-size:var(--fs-caption);}
@@ -2007,6 +2011,7 @@ body.cal-searching .cw-card{display:none;}
 #mlist > .mrow{content-visibility:auto;contain-intrinsic-size:auto 68px;}
 /* 末行的下边线：行被滑动容器包起来后 .mrow:last-child 选不中它了 */
 .swipe-wrap-row:last-child>.mrow{border-bottom:none;}
+.swipe-wrap-row:last-child>.mrow::after{display:none;}
 
 /* ── 日历导入配色弹窗：每本日历一行，一行色块任选 ───── */
 .icsc-row{padding:var(--sp-10) 0;border-bottom:1px solid var(--border-soft);}
@@ -10284,7 +10289,7 @@ function render(){
         <span class="mrow-date${dtCls}">${dt}</span>
         <span class="mrow-st" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
       </div>
-      <span class="mrow-arr">›</span>
+      <span class="mrow-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
     </div>`;
   }).join('');
   enhanceMediaSwipe(list);
