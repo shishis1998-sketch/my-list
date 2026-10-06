@@ -445,7 +445,7 @@ body:not(.notes-mode) .content>.vhdr{display:none;}
 .mrow{
   --row-inset:var(--sp-16);position:relative;
   display:flex;align-items:center;gap:var(--sp-12);
-  padding:var(--sp-12) var(--sp-16);background:var(--surface);
+  padding:var(--sp-8) var(--sp-16);background:var(--surface);
   border-bottom:1px solid transparent;
   cursor:pointer;transition:background .1s;
 }
@@ -634,7 +634,7 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .media-month-card>.mrow:last-child{border-bottom:none;}
 .media-month-card>.mrow:last-child::after{display:none;}
 #mlist .media-month-card>.swipe-wrap-row,
-#mlist .media-month-card>.mrow{content-visibility:auto;contain-intrinsic-size:auto 68px;}
+#mlist .media-month-card>.mrow{content-visibility:auto;contain-intrinsic-size:auto 61px;}
 @media(max-width:1024px), (pointer:coarse){.media-month-title{padding-left:var(--sp-14);padding-right:var(--sp-14);}}
 
 /* ===== MODAL ===== */
@@ -1012,7 +1012,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   /* === 媒体列表（手机端）===
      结构和电脑端是同一套行，只是行内边距和字号各升半档：手机上正文基准是 15px，
      书名跟着提到 headline(16)，右栏日期/状态保持 caption/foot。 */
-  .mrow{--row-inset:var(--sp-14);padding:var(--sp-12) var(--sp-14);gap:var(--sp-10);}
+  .mrow{--row-inset:var(--sp-14);padding:var(--sp-8) var(--sp-14);gap:var(--sp-10);}
   .cname{font-size:var(--fs-headline);}
   .csub{font-size:var(--fs-caption);}
   .ctag{height:24px;padding:0 var(--sp-12);font-size:var(--fs-caption);}
@@ -2021,7 +2021,7 @@ body.cal-searching .cw-card{display:none;}
    写死 68px 的话调过字号就会算歪、滚动条抽动。
    需要 iOS 18+ / Chrome 85+；老浏览器直接忽略这两行，只是没有加速，不会变形。 */
 #mlist > .swipe-wrap-row,
-#mlist > .mrow{content-visibility:auto;contain-intrinsic-size:auto 68px;}
+#mlist > .mrow{content-visibility:auto;contain-intrinsic-size:auto 61px;}
 /* 末行的下边线：行被滑动容器包起来后 .mrow:last-child 选不中它了 */
 .swipe-wrap-row:last-child>.mrow{border-bottom:none;}
 .swipe-wrap-row:last-child>.mrow::after{display:none;}
