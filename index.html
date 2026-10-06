@@ -15732,7 +15732,8 @@ function toggleCollectCard(id, ev){
 // 章号前面可以带一个部名（「第一部第一章 …」这种一行写完的写法也认），显示时会摘掉。
 // 自定义章名的分隔符不接受冒号：否则正文里的「早上6:45，……」也会被误认成新章节。
 // 仍支持「中国史1 春秋」「中国史1+春秋」「中国史1-春秋」等现有命名。
-const TL_CH_RE=/^#{0,3}[ \t]*(?:(?:第[一二三四五六七八九十百零0-9]+[部卷篇][\s·:：—–-]*)?第[一二三四五六七八九十百零0-9]+章[^\n]*|[\p{L}]{1,20}[0-9]+(?:[ \t·—–+＋-]+[^\n]{1,40})?)[ \t]*$/gmu;
+// 自由命名章节保存为四级 Markdown 标题；正文里的普通标题不会被误拆成章节。
+const TL_CH_RE=/^(?:#{4}[ \t]+[^\n]+|#{0,3}[ \t]*(?:(?:第[一二三四五六七八九十百零0-9]+[部卷篇][\s·:：—–-]*)?第[一二三四五六七八九十百零0-9]+章[^\n]*|[\p{L}]{1,20}[0-9]+(?:[ \t·—–+＋-]+[^\n]{1,40})?)[ \t]*)$/gmu;
 // 部/卷/篇：书分「第一部 事实 / 第二部 证词」时，章号往往每部重来一遍，光靠章号分不清谁是谁。
 // 这一行单独占一行、写在它管的那些章前面就算数。
 const TL_PART_RE=/^#{0,3}\s*(?:第[一二三四五六七八九十百零0-9]+[部卷篇]|卷[一二三四五六七八九十百零0-9]+)[^\n]*/gm;
@@ -15766,7 +15767,7 @@ function parseChapters(text){
     let end=i+1<matches.length?matches[i+1].index:text.length;
     for(const p of parts) if(p.idx>m.index&&p.idx<end) end=p.idx;
     // 一行写完的「第一部第一章 …」：卡片上只显示章那一截，部名交给分组去显示
-    const title=m[0].replace(/^#{0,3}\s*/,'').trim().replace(TL_PART_PREFIX,'').trim();
+    const title=m[0].replace(/^#{0,4}[ \t]*/,'').trim().replace(TL_PART_PREFIX,'').trim();
     const body=text.slice(start,end).trim();
     // chStart/chEnd：本章原文（含「第X章」标题行）在 body 中的字符区间，供精准替换
     chs.push({title,body,chStart:m.index,chEnd:end,raw:text.slice(m.index,end)});
@@ -16247,11 +16248,11 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
   tlChapterReadScroll=document.getElementById('tlSheetBody').scrollTop;
   tlWholeEditing=true;
   const raw=tlChapterDraft, nl=raw.indexOf('\n');
-  const title=nl<0?raw:raw.slice(0,nl), content=nl<0?'':raw.slice(nl+1);
+  const title=(nl<0?raw:raw.slice(0,nl)).replace(/^####[ \t]+/,''), content=nl<0?'':raw.slice(nl+1);
   const body=document.getElementById('tlSheetBody');
   body.classList.add('chapter-editing');
   syncChapterKeyboardLayout();
-  body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="中国史1 春秋 / 中国史1 1">
+  body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="章节标题，如：末章 祈福">
     <div class="fmt-bar chapter-format">
       <div class="chapter-heading-picker">
         <button type="button" class="fmt-btn" data-heading-menu aria-label="标题样式" aria-expanded="false">H</button>
@@ -16343,10 +16344,9 @@ function commitChapterSheet(){
   if(!tlWholeEditing) return true;
   const title=document.getElementById('chapterTitleInput').value.trim();
   const content=document.getElementById('chapterWholeText').value;
-  if(!parseChapters(title).some(c=>c.chStart===0&&c.raw.trim()===title)){
-    toast('标题请用「第一章」或「中国史1 春秋」这样的格式');return false;
-  }
-  const raw=title+'\n'+content;
+  if(!title){toast('请填写章节标题');return false;}
+  const recognized=parseChapters(title).some(c=>c.chStart===0&&c.raw.trim()===title);
+  const raw=(recognized?title:'#### '+title)+'\n'+content;
   if(parseChapters(raw).length!==1 || partMarks(content).length){toast('这里只编辑一章，新增章节请使用右下角＋');return false;}
   if(tlChapterNew&&!content.trim()){toast('请填写本章正文');return false;}
   const body=tlHostBody();if(body==null)return false;
