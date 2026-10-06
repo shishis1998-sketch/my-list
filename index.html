@@ -427,6 +427,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* --- CONTENT --- */
 .content{padding:var(--sp-20) var(--sp-24);flex:1;overflow-y:auto;}
 .vhdr{display:flex;align-items:baseline;gap:var(--sp-10);margin-bottom:var(--sp-12);}
+body:not(.notes-mode) .content>.vhdr{display:none;}
 .vtitle{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);}
 .vcnt{font-size:var(--fs-caption);color:var(--text-muted);font-family:var(--en);}
 
@@ -628,7 +629,7 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 /* 日期排序：每月一张白卡，月份标题放在灰色背景上。 */
 #twrap.media-monthly{background:transparent;border:0;border-radius:0;overflow:visible;box-shadow:none;}
 .media-month-group+.media-month-group{margin-top:var(--sp-20);}
-.media-month-title{font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);line-height:var(--lh-normal);padding:0 var(--sp-16);margin:0 0 var(--sp-8);}
+.media-month-title{font-size:var(--fs-headline);font-weight:600;color:var(--text-secondary);line-height:var(--lh-normal);padding:0 var(--sp-16);margin:0 0 var(--sp-8);}
 .media-month-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;}
 .media-month-card>.mrow:last-child{border-bottom:none;}
 .media-month-card>.mrow:last-child::after{display:none;}
