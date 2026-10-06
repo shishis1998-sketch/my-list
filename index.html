@@ -13808,9 +13808,13 @@ function refreshFoodCalendar(){
 let calYear, calMonth, calSelDate=null;
 let calGridRows=6;                 // 当前月网格行数（拖动收起时算全程距离用）
 let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起高），跟手距离用
+let calSearchReturn=null;          // 离开日历时暂存搜索词；null 表示当时没有打开搜索
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
 function openCalendar(){
+  // 从其它底部页面回来时恢复刚才的搜索。空字符串也有意义：它代表搜索页里的「最近搜索」。
+  const returnSearch=calSearchReturn;
+  calSearchReturn=null;
   closeDetail();                                  // 详情页开着的话先退回列表
   document.body.classList.remove('tabs-hidden');  // 列表页可能正收着底栏，这页底栏是唯一导航
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
@@ -13842,15 +13846,19 @@ function openCalendar(){
   // 早先排在 setCalView 前面，上次停在经期视图时 #calViewCalendar 还挂着上一轮的
   // display:none，量出来是 0，块就没摆——回到日历视图后卡片只剩一排日期，底下空着。
   renderWeekCard(true);            // 本周卡片：重开日历一律重画
+  if(returnSearch!==null)openCalSearch(returnSearch,false);
   saveLastView();
 }
 function closeCalendar(){
+  const inp=document.getElementById('calSearchInput');
+  const returnSearch=document.body.classList.contains('cal-searching')?(inp?inp.value:''):null;
   document.getElementById('calRoot').classList.remove('open');
   document.body.classList.remove('cal-open');
   closeCalViewSheet();             // 视图卡片跟着日历页一起收
   syncCalTabLabel();               // cal-open 已去掉 → tab 文字回到「日历」
   document.body.classList.remove('cal-view-period');
   closeCalSearch();                // 退出日历时收起搜索
+  calSearchReturn=returnSearch;     // 只收起界面，不丢掉这次搜索；回来时继续显示
   closeCalFilter();                // 退出日历时收起筛选
   hideCalSheet();
   setCalTabActive(false);          // 恢复原本的 tab 高亮
@@ -14099,15 +14107,15 @@ function toggleCalSearch(){
   const btn=document.getElementById('calSearchBtn');if(btn)btn.blur();  // 防止移动端焦点残留
   document.body.classList.contains('cal-searching')?closeCalSearch():openCalSearch();
 }
-function openCalSearch(){
+function openCalSearch(value='',focus=true){
   closeCalFilter();                     // 打开搜索前收起筛选面板
   document.body.classList.add('cal-searching');
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.add('on');
   hideCalSheet();                       // 收起当天抽屉
   const inp=document.getElementById('calSearchInput');
-  inp.value='';
+  inp.value=value;
   runCalSearch();
-  setTimeout(()=>inp.focus(),60);
+  if(focus)setTimeout(()=>inp.focus(),60);
 }
 // 手指在结果区一滑就把输入框的焦点撤掉（顺带收起键盘）。
 // Chrome 安卓端在页面里有输入框处于聚焦状态时会把地址栏钉住不收，滑动看结果
@@ -14122,6 +14130,7 @@ document.addEventListener('touchmove',function(e){
   inp.blur();
 },{passive:true});
 function closeCalSearch(){
+  calSearchReturn=null;                 // 点 × / 切换日历内部视图时才是真正退出搜索
   const wasSearching=document.body.classList.contains('cal-searching');
   document.body.classList.remove('cal-searching');
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.remove('on');
