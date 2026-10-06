@@ -2138,7 +2138,7 @@ body.cal-searching .cw-card{display:none;}
 .tl-sub{font-size:var(--fs-caption);color:var(--text-muted);margin-top:var(--sp-2);font-family:var(--en);}
 /* ── 时间线「每章一张卡片」：一行两张，点整卡从底部滑起章节弹窗 ── */
 /* 章节列表：一行两张。minmax(0,1fr) 让列可收缩，长章名才能正常省略号截断 */
-.tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-10);margin-top:var(--sp-6);}
+.tl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:var(--sp-10);margin-top:var(--sp-6);}
 /* 标题带小节名（如「中国史1 春秋」）时，只在显示层合成章节卡片。
    章节沿用外层的左右两列，内部小节单列向下排列；原正文、章节索引和保存结构都不动。 */
 .tl-chapter-group{min-width:0;background:var(--surface);border:var(--bd) solid var(--ink);
