@@ -10309,28 +10309,19 @@ function render(){
   else{list.style.display='';empty.style.display='none';}
   syncSearchNoResult(L.length);
 
-  // 一行一条：左边书名 + 「年份 · 作者」，右边结束时间和状态。点整行进详情页。
+  // 一行一条：书名 + 「年份 · 作者」，右边仅保留进入详情的箭头。
   // 评分/分类/标签/备注都不在列表上——它们是翻完之后才想看的东西，见 renderDetail()。
   const renderRow=item=>{
-    const st=SMAP[item.status]||SMAP.completed;
     const yrTxt=item.year?esc(item.year):'';
     const crTxt=item.creator?hl(item.creator):'';
     // 年份和作者都没填时也留着这一行（空格占位）：行高不随有没有作者忽高忽低，
     // 用空行而不是写死 min-height，字号档位改成大/小时照样对得齐
     const sub=(yrTxt||crTxt)?`<div class="csub">${yrTxt}${yrTxt&&crTxt?' · ':''}${crTxt}</div>`
                             :'<div class="csub">&nbsp;</div>';
-    // 右上角：读完了写结束时间，还没读完就写「开始时间 起」，两者都没有画一道杠
-    const dt=item.watchDate?fmtWatchShort(item.watchDate)
-            :(item.startDate?fmtWatchShort(item.startDate)+' 起':'—');
-    const dtCls=item.watchDate?'':' pending';
     return `<div class="mrow" data-id="${item.id}" onclick="openDetail('${item.id}')">
       <div class="mrow-main">
         <div class="cname">${fmtTitle(item)}</div>
         ${sub}
-      </div>
-      <div class="mrow-wd">
-        <span class="mrow-date${dtCls}">${dt}</span>
-        <span class="mrow-st" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
       </div>
       <span class="mrow-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
     </div>`;
