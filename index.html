@@ -4937,6 +4937,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 /* 手机默认字号下：20.3px 行高 + 22px 上下留白 + 2px 边框 ≈ 44px。 */
 #detailBookNoteCard .tl-head{padding:11px var(--sp-12);}
+/* 无小节章节也预留箭头栏：2px 起点 + 18px 箭头 + 10px 间距。 */
+.tl-chapter-single .tl-main{padding-left:30px;}
+#detailBookNoteCard .tl-chapter-single .tl-head{padding-top:var(--sp-12);padding-bottom:var(--sp-12);}
 #detailBookNoteCard .tl-ch,#detailBookNoteCard .tl-chapter-group-title,#detailBookNoteCard .tl-section-btn{font-size:var(--fs-sub);}
 #detailBookNoteCard .chapter-more summary{position:relative;display:flex;align-items:center;justify-content:center;height:24px;padding:0 12px;}
 #detailBookNoteCard .chapter-more summary::before{content:'';position:absolute;inset:-10px 0;}
@@ -15855,7 +15858,7 @@ function renderTimelineChapterCards(chs,openFn){
   return groupTimelineChapters(sortTimelineChapters(chs)).map(entry=>{
     if(entry.type==='single'){
       const x=entry.item;
-      return `<div class="tl-item has-paras" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
+      return `<div class="tl-item tl-chapter-single has-paras" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
         <div class="tl-head"><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`;
     }
