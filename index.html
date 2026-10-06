@@ -4948,6 +4948,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 :is(#modal,#timeModal) .tlsheet-head{background:var(--bg);}
+/* 笔记编辑抽屉：灰色面板 + 白色输入区，与其他编辑弹窗统一。 */
+#noteModal .mbox,#noteModal .mhdr,#noteModal .mbody{background:var(--bg);}
+#noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea,
+#noteModal .tiwrap{background-color:var(--surface);}
+
 /* 食记内容点击菜单：沿用书籍 / 日记的竖向操作菜单，不再使用左右并排按钮。 */
 #calNotePreviewModal.food-actions{z-index:120 !important;padding:0;background:transparent;}
 #calNotePreviewModal.food-actions.open{animation:none;}
