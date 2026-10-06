@@ -624,6 +624,18 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .dt-meta-value{min-width:0;text-align:right;font-family:var(--en);font-variant-numeric:tabular-nums;color:var(--accent);}
 @media (hover:hover){.dt-card.dt-meta:hover{border-color:var(--border);}}
 
+
+/* 日期排序：每月一张白卡，月份标题放在灰色背景上。 */
+#twrap.media-monthly{background:transparent;border:0;border-radius:0;overflow:visible;box-shadow:none;}
+.media-month-group+.media-month-group{margin-top:var(--sp-20);}
+.media-month-title{font-size:var(--fs-caption);font-weight:600;color:var(--text-secondary);line-height:var(--lh-normal);padding:0 var(--sp-16);margin:0 0 var(--sp-8);}
+.media-month-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;}
+.media-month-card>.mrow:last-child{border-bottom:none;}
+.media-month-card>.mrow:last-child::after{display:none;}
+#mlist .media-month-card>.swipe-wrap-row,
+#mlist .media-month-card>.mrow{content-visibility:auto;contain-intrinsic-size:auto 68px;}
+@media(max-width:1024px), (pointer:coarse){.media-month-title{padding-left:var(--sp-14);padding-right:var(--sp-14);}}
+
 /* ===== MODAL ===== */
 .moverlay{display:none;position:fixed;inset:0;background:rgba(10,8,6,.55);z-index:100;align-items:center;justify-content:center;padding:var(--sp-20);}
 
@@ -10248,6 +10260,37 @@ function renderTypeSelect(){
   if(v) s.value=v;
 }
 
+// 日期排序时按对应年月分组；无日期的记录始终放在最后。
+function mediaMonthGroups(items,sort){
+  const field={'watch-desc':'watchDate','watch-asc':'watchDate','start-desc':'startDate'}[sort];
+  const byUpdated=sort==='upd-desc';
+  const byCreated=sort==='date-desc'||sort==='date-asc';
+  if(!field&&!byUpdated&&!byCreated)return null;
+  const groups=new Map();
+  items.forEach(item=>{
+    let key='';
+    if(field){
+      const match=/^(\d{4})-(\d{2})(?:-\d{2})?$/.exec(item[field]||'');
+      if(match&&Number(match[2])>=1&&Number(match[2])<=12)key=match[1]+'-'+match[2];
+    }else{
+      const date=byUpdated?new Date(updatedAtOf(item)||NaN):createdAtOf(item);
+      if(date&&Number.isFinite(date.getTime()))key=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0');
+    }
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(item);
+  });
+  const ascending=sort==='watch-asc'||sort==='date-asc';
+  return [...groups.entries()].sort(([a],[b])=>{
+    if(!a)return b?1:0;
+    if(!b)return -1;
+    return a.localeCompare(b)*(ascending?1:-1);
+  }).map(([key,rows])=>({
+    label:key?Number(key.slice(0,4))+'年'+Number(key.slice(5))+'月':
+      (field==='watchDate'?'未填写看完日期':field==='startDate'?'未填写开始日期':byUpdated?'未填写编辑日期':'未填写添加日期'),
+    items:rows
+  }));
+}
+
 function render(){
   syncAddBtn();
   syncBottomTabs();
@@ -10268,7 +10311,7 @@ function render(){
 
   // 一行一条：左边书名 + 「年份 · 作者」，右边结束时间和状态。点整行进详情页。
   // 评分/分类/标签/备注都不在列表上——它们是翻完之后才想看的东西，见 renderDetail()。
-  list.innerHTML=L.map(item=>{
+  const renderRow=item=>{
     const st=SMAP[item.status]||SMAP.completed;
     const yrTxt=item.year?esc(item.year):'';
     const crTxt=item.creator?hl(item.creator):'';
@@ -10291,7 +10334,13 @@ function render(){
       </div>
       <span class="mrow-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
     </div>`;
-  }).join('');
+  };
+  const monthGroups=mediaMonthGroups(L,curSort);
+  document.getElementById('twrap').classList.toggle('media-monthly',!!monthGroups&&L.length>0);
+  list.innerHTML=monthGroups?monthGroups.map(group=>
+    '<section class="media-month-group"><h2 class="media-month-title">'+esc(group.label)+'</h2>'+
+    '<div class="media-month-card">'+group.items.map(renderRow).join('')+'</div></section>'
+  ).join(''):L.map(renderRow).join('');
   enhanceMediaSwipe(list);
 
   renderStats(); renderSidebar(); renderTagFilterRow();
