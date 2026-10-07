@@ -10860,13 +10860,18 @@ const REL_TYPES=[
 ];
 const CUSTOM_REL_COLORS=['#b35b9b','#008e9b','#a56b35','#668b38','#c44e65','#516eb4','#9662a8','#4f8980'];
 function customRelTypes(item){
-  const seen=new Set(REL_TYPES.map(t=>t.lbl.toLowerCase()));
+  const seen=new Set([...REL_TYPES,...CONNECTION_TYPES].map(t=>t.lbl.toLowerCase()));
   return (Array.isArray(item?.relationshipTypes)?item.relationshipTypes:[]).filter(t=>{
     if(!t||!/^custom_[a-z0-9_-]+$/i.test(t.id)||!String(t.lbl||'').trim()||seen.has(String(t.lbl).trim().toLowerCase()))return false;
     seen.add(String(t.lbl).trim().toLowerCase());return true;
   }).map((t,i)=>({id:t.id,lbl:String(t.lbl).trim(),color:/^#[0-9a-f]{6}$/i.test(t.color)?t.color:CUSTOM_REL_COLORS[i%CUSTOM_REL_COLORS.length]}));
 }
-function relationTypes(item){return [...REL_TYPES,...customRelTypes(item)];}
+const CONNECTION_TYPES=[
+  {id:'connection-line',lbl:'仅连接线',color:'#8a8e96',unlabeled:true},
+  {id:'connection-arrow',lbl:'仅箭头',color:'#8a8e96',unlabeled:true,arrow:true},
+  {id:'connection-both',lbl:'双向箭头',color:'#8a8e96',unlabeled:true,arrow:true,both:true}
+];
+function relationTypes(item){return [...REL_TYPES,...CONNECTION_TYPES,...customRelTypes(item)];}
 function relType(id,item){return relationTypes(item).find(x=>x.id===id)||REL_TYPES[REL_TYPES.length-1];}
 function relKey(a,b){return [String(a),String(b)].sort().join('|');}
 function normRelations(item,people){
@@ -12234,7 +12239,7 @@ function drawGraphLines(relations){
   };
   const visible=relations.filter(r=>rgState.filters.has(r.type)),groups=new Map();
   visible.forEach(r=>{const key=relKey(r.a,r.b);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r);});
-  svg.innerHTML=visible.map(r=>{
+  svg.innerHTML='<defs><marker id="rgConnectionArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#8a8e96" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>'+visible.map(r=>{
     const a=metrics(r.a),b=metrics(r.b);if(!a||!b)return '';
     const from=edgePoint(a,b),to=edgePoint(b,a),t=relType(r.type,data.find(d=>d.id===detailId));
     const group=groups.get(relKey(r.a,r.b)),index=group.indexOf(r);
@@ -12244,8 +12249,8 @@ function drawGraphLines(relations){
     const mx=(from.x+to.x)/2-offset*dy/length*direction,my=(from.y+to.y)/2+offset*dx/length*direction;
     const cx=2*mx-(from.x+to.x)/2,cy=2*my-(from.y+to.y)/2;
     const hi=rgState.selectedId&&(r.a===rgState.selectedId||r.b===rgState.selectedId);
-    const line=`<path class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" d="M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}" stroke="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
-    const label=rgState.showLabels?`<text class="rg-edge-label" x="${mx}" y="${my}" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${esc(t.lbl)}</text>`:'';
+    const line=`<path class="rg-edge${r.type==='conflict'?' conflict':''}${hi?' highlight':''}" d="M ${from.x} ${from.y} Q ${cx} ${cy} ${to.x} ${to.y}" stroke="${t.color}"${t.arrow?' marker-end="url(#rgConnectionArrow)"':''}${t.both?' marker-start="url(#rgConnectionArrow)"':''} style="${rgState.selectedId&&!hi?'opacity:.18':hi?'stroke-width:3':''}"/>`;
+    const label=rgState.showLabels&&!t.unlabeled?`<text class="rg-edge-label" x="${mx}" y="${my}" fill="${t.color}" style="${rgState.selectedId&&!hi?'opacity:.18':''}">${esc(t.lbl)}</text>`:'';
     return line+label;
   }).join('');
 }
