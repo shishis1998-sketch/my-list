@@ -2489,11 +2489,12 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-form-card h3{font-size:var(--fs-sub);margin:6px 0 12px;}
 .rg-manager-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;}
 .rg-manager-actions[hidden]{display:none;}
+.rg-head:has(#rgManagerActions:not([hidden])){padding-right:14px;}
 .rg-manager-actions button{border:0;border-radius:999px;background:var(--accent-light);color:var(--accent);padding:9px 13px;font:600 var(--fs-caption) var(--zh);cursor:pointer;}
 .rg-manager-field{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);margin-bottom:var(--sp-14);}
 .rg-manager-field:last-child{margin-bottom:0;}
 .rg-form-card .rg-manager-field label{margin:0;font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);line-height:var(--lh-normal);}
-.rg-form-card .rg-manager-field input,.rg-form-card .rg-manager-field select{min-width:0;font-size:var(--fs-input);min-height:44px;}
+.rg-form-card .rg-manager-field input,.rg-form-card .rg-manager-field select{min-width:0;font-size:var(--fs-input);min-height:44px;background:var(--bg);}
 
 .rg-rel-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:var(--fs-caption);}
 .rg-rel-row span{flex:1;min-width:0;overflow-wrap:anywhere;}
@@ -5414,7 +5415,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <button type="button" class="rg-back" onclick="closeRelationGraph()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="rg-title" id="rgTitle">人物关系图</div>
       <div class="rg-manager-actions" id="rgManagerActions" hidden>
-        <button type="button" onclick="cancelGraphManager()">取消</button>
         <button type="button" id="rgManagerSave" onclick="saveGraphManager()">保存</button>
       </div>
       <div class="people-toolbar">
