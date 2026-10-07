@@ -1068,16 +1068,16 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
   /* z-index 120：详情页打开时底栏被提到 115（见 body.detail-open 那条），
      不越过它的话，从详情页点出来的这张面板底部「取消 / 保存」会被底栏盖住。
      同 #icsColorModal 的处理。 */
-  :is(#modal,#timeModal).moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
-  :is(#modal,#timeModal).moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
-  :is(#modal,#timeModal) .mbox{
+  :is(#modal,#timeModal,#recordTagsModal).moverlay{z-index:120;align-items:flex-end;justify-content:center;padding-bottom:0;}
+  :is(#modal,#timeModal,#recordTagsModal).moverlay.open .mbox{animation:mboxSheetUp var(--nav-dur) var(--nav-ease);}
+  :is(#modal,#timeModal,#recordTagsModal) .mbox{
     width:100%;max-width:100%;height:70vh;max-height:70vh;min-height:0;
     border-radius:var(--rxl) var(--rxl) 0 0;
     box-shadow:0 -4px 24px rgba(0,0,0,.18);
     transform:translateZ(0);            /* 同 #noteModal：安卓 Chrome 的圆角裁剪 */
   }
   /* 抽屉顶部小抓手；贴底的面板不需要给刘海让位，把通用规则那份 padding-top 收回来 */
-  :is(#modal,#timeModal) .tlsheet-head{position:relative;}
+  :is(#modal,#timeModal,#recordTagsModal) .tlsheet-head{position:relative;}
 
   /* 编辑笔记弹窗：改成从底部升起的抽屉，约占 2/3 屏（不满屏） */
   /* padding-bottom:0 覆盖下方为导航条留白的通用规则，让抽屉真正贴到屏幕底边，不悬空 */
@@ -2289,13 +2289,13 @@ body.cal-searching .cw-card{display:none;}
 .tlsheet-grip{width:34px;height:4px;border-radius:2px;background:var(--on-accent-faint);margin:0 auto 4px;}
 .tlsheet-title{font-size:var(--fs-headline);font-weight:700;color:var(--on-accent);line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#tlSheet .tlsheet-head,:is(#modal,#timeModal) .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
-#tlSheet .tlsheet-grip,:is(#modal,#timeModal) .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
+#tlSheet .tlsheet-head,:is(#modal,#timeModal,#recordTagsModal) .tlsheet-head{background:var(--surface);padding:7px 16px 12px;border-bottom:1px solid var(--border-soft);}
+#tlSheet .tlsheet-grip,:is(#modal,#timeModal,#recordTagsModal) .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;background:rgba(86,86,90,.34);
   transition:background .14s ease,transform .14s ease;}
-#tlSheet .tlsheet-head:active .tlsheet-grip,:is(#modal,#timeModal) .tlsheet-head:active .tlsheet-grip,
-#tlSheet.dragging .tlsheet-grip,:is(#modal,#timeModal) .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
-#tlSheet .tlsheet-headrow,:is(#modal,#timeModal) .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#tlSheet .tlsheet-title,:is(#modal,#timeModal) .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
+#tlSheet .tlsheet-head:active .tlsheet-grip,:is(#modal,#timeModal,#recordTagsModal) .tlsheet-head:active .tlsheet-grip,
+#tlSheet.dragging .tlsheet-grip,:is(#modal,#timeModal,#recordTagsModal) .mbox.dragging .tlsheet-grip{background:var(--accent);transform:scaleX(1.08);}
+#tlSheet .tlsheet-headrow,:is(#modal,#timeModal,#recordTagsModal) .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#tlSheet .tlsheet-title,:is(#modal,#timeModal,#recordTagsModal) .tlsheet-title{min-width:0;text-align:center;color:var(--text-primary);}
 .tlsheet-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
   color:var(--text-primary);font:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
@@ -4967,20 +4967,21 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 
 /* ADD/EDIT 记录抽屉：与时间线章节编辑统一顶部操作栏和高度 */
-:is(#modal,#timeModal) .mbox{height:70vh;max-height:70vh;min-height:0;background:var(--bg);}
+:is(#modal,#timeModal,#recordTagsModal) .mbox{height:70vh;max-height:70vh;min-height:0;background:var(--bg);}
 
 
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
-:is(#modal,#timeModal) .tlsheet-head{background:var(--bg);}
+:is(#modal,#timeModal,#recordTagsModal) .tlsheet-head{background:var(--bg);}
 /* 记录表单：每行左侧标签、右侧输入区，日期和长文本也保留可用宽度。 */
 #modal .frow2{display:block;}
 #modal .fg{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
 #modal .fg>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
-#modal .fg>input,#modal .fg>select,#modal .record-tags-control{min-width:0;width:100%;box-sizing:border-box;}
-#modal .record-tags-row{align-items:start;}
-#modal .record-tags-row>label{padding-top:var(--sp-12);}
-#modal .record-tags-control .tmgr-link{display:block;margin:var(--sp-8) 0 0 auto;}
-#modal .record-tags-control .tiwrap{min-width:0;}
+#modal .fg>input,#modal .fg>select{min-width:0;width:100%;box-sizing:border-box;}
+#recordTagsModal .mbox{height:auto;max-height:min(70vh,100%);}
+#recordTagsModal .mbody{flex:0 1 auto;min-height:0;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
+#recordTagsModal .record-tags-row{margin:0;}
+#recordTagsModal .record-tags-control .tmgr-link{display:block;margin:var(--sp-8) 0 0 auto;}
+#recordTagsModal .record-tags-control .tiwrap{min-width:0;background:var(--surface);}
 /* 笔记编辑抽屉：灰色面板 + 白色输入区，与其他编辑弹窗统一。 */
 #noteModal .mbox,#noteModal .mhdr,#noteModal .mbody{background:var(--bg);}
 #noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea,
@@ -5703,6 +5704,36 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   </div>
 </div>
 
+<div class="moverlay" id="recordTagsModal" onclick="if(event.target===this)closeRecordTagsEditor()">
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="recordTagsTitle">
+    <div class="tlsheet-head" id="recordTagsHead">
+      <div class="tlsheet-grip"></div>
+      <div class="tlsheet-headrow">
+        <button type="button" class="tlsheet-action" onclick="closeRecordTagsEditor()">取消</button>
+        <div class="tlsheet-title" id="recordTagsTitle">编辑标签</div>
+        <button type="button" class="tlsheet-action" onclick="saveRecordTagsEditor()">完成</button>
+      </div>
+    </div>
+    <div class="mbody">
+    <div class="fg record-tags-row">
+      <div class="record-tags-control">
+      <div class="tiwrap" onclick="if(event.target===this)document.getElementById('tinput').focus()">
+        <div id="tchips" style="display:contents"></div>
+        <input type="text" class="tinput" id="tinput" placeholder="输入后按回车或点 +">
+        <button type="button" class="tadd-btn" id="taddBtn" title="添加标签" onclick="addTagFromInput()">+</button>
+      </div>
+      <div class="tsugg-wrap" id="tsuggWrap" style="display:none">
+        <div class="tsugg-lbl"><span id="tsuggCatLbl">该分类</span>常用标签</div>
+        <div class="tsugg-list" id="tsuggList"></div>
+      </div>
+      <button type="button" class="tmgr-link" onclick="openTagMgr('media')">⚙ 管理标签</button>
+      </div>
+    </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- ===== ADD/EDIT MODAL ===== -->
 <div class="moverlay" id="modal">
   <div class="mbox" onclick="event.stopPropagation()">
@@ -5772,21 +5803,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="fg">
       <label>作者</label>
       <input type="text" id="f-creator" placeholder="例: 李安">
-    </div>
-    <div class="fg record-tags-row">
-      <label for="tinput">标签</label>
-      <div class="record-tags-control">
-      <div class="tiwrap" onclick="if(event.target===this)document.getElementById('tinput').focus()">
-        <div id="tchips" style="display:contents"></div>
-        <input type="text" class="tinput" id="tinput" placeholder="输入后按回车或点 +">
-        <button type="button" class="tadd-btn" id="taddBtn" title="添加标签" onclick="addTagFromInput()">+</button>
-      </div>
-      <div class="tsugg-wrap" id="tsuggWrap" style="display:none">
-        <div class="tsugg-lbl"><span id="tsuggCatLbl">该分类</span>常用标签</div>
-        <div class="tsugg-list" id="tsuggList"></div>
-      </div>
-      <button type="button" class="tmgr-link" onclick="openTagMgr('media')">⚙ 管理标签</button>
-      </div>
     </div>
     </div><!-- /mbody -->
   </div>
@@ -10371,6 +10387,7 @@ const BACK_LAYERS=[
   {id:'noteMonthState',     cls:'open', close:()=>closeNoteMonth()},
   {id:'timeModal',          cls:'open', close:()=>closeTimeEditor()},
   {id:'modal',              cls:'open', close:()=>closeModal()},
+  {id:'recordTagsModal',    cls:'open', close:()=>closeRecordTagsEditor()},
   {id:'noteSheet',          cls:'show', close:()=>closeNoteSheet()},
   {id:'tlSheet',            cls:'show', close:()=>closeChapterSheet()},
   {id:'bbSortSheet',        cls:'open', close:()=>closeSortSheet()},
@@ -11288,8 +11305,8 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       </div>
       <div class="dt-sec">
         <div class="dt-seclbl dt-overview-label">标签</div>
-      <div class="dt-card">
-        ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签</div>'}
+      <div class="dt-card" role="button" tabindex="0" aria-label="编辑标签" onclick="openRecordTagsEditor()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRecordTagsEditor();}">
+        ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签，点这里添加</div>'}
       </div>
       </div>
       <button class="dt-fab dt-edit-fab" onclick="openEdit(detailId)" aria-label="编辑记录"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:''}
@@ -12972,7 +12989,7 @@ function pickTag(v){
 function openAdd(){
   // 笔记模式分流
   if(isNoteMode()){ openNoteNew(); return; }
-  editId=null; curTags=[]; tsuggExpanded=false;
+  editId=null;
   document.getElementById('mtitle').textContent='添加记录';
   document.getElementById('f-name').value='';
   renderTypeSelect();
@@ -12982,15 +12999,13 @@ function openAdd(){
   document.getElementById('f-watch').value='';
   document.getElementById('f-watch-start').value='';
   document.getElementById('f-creator').value='';
-  document.getElementById('tinput').value='';
   document.getElementById('f-score').value='';
-  renderChips();
   document.getElementById('modal').classList.add('open');
   setTimeout(()=>document.getElementById('f-name').focus(),60);
 }
 function openEdit(id){
   const item=data.find(d=>d.id===id); if(!item)return;
-  editId=id; curTags=[...(item.tags||[])]; tsuggExpanded=false;
+  editId=id;
   document.getElementById('mtitle').textContent='编辑记录';
   renderTypeSelect();
   document.getElementById('f-name').value=item.name;
@@ -13000,9 +13015,7 @@ function openEdit(id){
   document.getElementById('f-watch').value=item.watchDate||'';
   document.getElementById('f-watch-start').value=item.startDate||'';
   document.getElementById('f-creator').value=item.creator||'';
-  document.getElementById('tinput').value='';
   document.getElementById('f-score').value=item.score?String(item.score):'';
-  renderChips();
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
@@ -13024,17 +13037,45 @@ function saveRec(){
     // 备注和正文都不在这张表里：各自有自己的弹窗（详情页点备注卡 / 时间线「编辑全文」，
     // 见 openNoteSheet）。rec 里没有 note、bookNote 这两项，下面的 {...data[i],...rec}
     // 就不会覆盖已经写好的内容。
-    tags:[...curTags], date:new Date().toISOString().slice(0,10)
+    date:new Date().toISOString().slice(0,10)
   };
   rec.updatedAt=Date.now();   // 「最近修改」排序要用
   if(editId){const i=data.findIndex(d=>d.id===editId);if(i!==-1)data[i]={...data[i],...rec};toast('记录已更新','success');}
-  else{data.unshift({id:uid(),...rec});toast('已添加记录','success');}
+  else{data.unshift({id:uid(),tags:[],...rec});toast('已添加记录','success');}
   persist(); closeModal(); render();
   if(detailId) renderDetail();   // 详情页开着：就地刷新，不退回列表
 }
 
 // ── Tags ──────────────────────────────────────────────────────────
-let tsuggExpanded=false;
+let tsuggExpanded=false, recordTagsEditorId=null;
+function openRecordTagsEditor(){
+  if(window.getSelection&&window.getSelection().toString())return;
+  const item=data.find(d=>d.id===detailId);if(!item)return;
+  recordTagsEditorId=item.id;curTags=[...(item.tags||[])];tsuggExpanded=false;
+  document.getElementById('tinput').value='';
+  renderChips();
+  const modal=document.getElementById('recordTagsModal');
+  modal.classList.add('open');
+  bindSheetDrag(modal.querySelector('.mbox'),document.getElementById('recordTagsHead'),closeRecordTagsEditor);
+  backLayerOpenedNow('recordTagsModal');
+  modal.querySelector('.tlsheet-action').focus({preventScroll:true});
+}
+function closeRecordTagsEditor(){
+  document.getElementById('recordTagsModal').classList.remove('open');
+  recordTagsEditorId=null;curTags=[];
+}
+function saveRecordTagsEditor(){
+  const item=data.find(d=>d.id===recordTagsEditorId);if(!item)return;
+  const pending=document.getElementById('tinput').value.trim().replace(/,$/,'');
+  if(pending&&!curTags.includes(pending))curTags.push(pending);
+  if(JSON.stringify(item.tags||[])!==JSON.stringify(curTags)){
+    item.tags=[...curTags];touchRec(item);persist();render();renderDetail();
+  }
+  closeRecordTagsEditor();
+}
+document.getElementById('recordTagsModal').addEventListener('keydown',event=>{
+  if(event.key==='Escape'){event.preventDefault();closeRecordTagsEditor();}
+});
 function renderChips(){
   document.getElementById('tchips').innerHTML=curTags.map((t,i)=>
     `<span class="tchip">${esc(t)}<button onclick="rmTag(${i})" type="button">×</button></span>`
@@ -13054,13 +13095,12 @@ function pickSuggTag(t){
 }
 // 统计当前编辑分类下的常用标签（按频率排）
 function getSuggTags(){
-  const typeEl=document.getElementById('f-type');
-  const curType=typeEl?typeEl.value:'';
+  const curType=data.find(d=>d.id===recordTagsEditorId)?.type||'';
   if(!curType)return[];
   const cnt={};
   data.forEach(d=>{
     if(d.type!==curType)return;
-    if(editId&&d.id===editId)return; // 当前编辑的不计入
+    if(d.id===recordTagsEditorId)return; // 当前编辑的不计入
     (d.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;});
   });
   return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
@@ -13071,7 +13111,7 @@ function renderTsugg(){
   const avail=all.filter(t=>!curTags.includes(t));
   if(!avail.length){wrap.style.display='none';return;}
   wrap.style.display='';
-  const cat=getCat(document.getElementById('f-type').value);
+  const cat=getCat(data.find(d=>d.id===recordTagsEditorId)?.type);
   document.getElementById('tsuggCatLbl').textContent=cat.name||'该分类';
   const LIMIT=6;
   const shown=tsuggExpanded?avail:avail.slice(0,LIMIT);
@@ -13089,8 +13129,7 @@ document.getElementById('tinput').addEventListener('keydown',function(e){
     addTagFromInput();
   } else if(e.key==='Backspace'&&!this.value&&curTags.length){curTags.pop();renderChips();}
 });
-// 切换分类时刷新常用标签
-document.getElementById('f-type').addEventListener('change',()=>{tsuggExpanded=false;renderTsugg();});
+
 
 // ── Tag Manager (重命名 / 删除已有标签) ────────────────────────────
 let tagMgrScope='media', tagMgrEdits=[];
