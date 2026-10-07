@@ -2474,7 +2474,8 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-members-grid .rg-check input{flex-shrink:0;}
 .rg-members-grid .rg-check span{min-width:0;overflow-wrap:anywhere;}
 
-.rg-rel-add-fields{display:grid;gap:8px;}
+.rg-rel-add-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-8);}
+.rg-rel-add-fields select{min-width:0;}
 .rg-form-actions{display:flex;justify-content:flex-end;gap:8px;margin:12px 0;}
 .rg-form-actions button,.rg-small-btn{border:0;border-radius:999px;background:var(--accent-light);color:var(--accent);padding:9px 13px;font:600 var(--fs-caption) var(--zh);cursor:pointer;}
 .rg-form-actions button.primary{background:var(--accent);color:var(--on-accent);}
@@ -2505,7 +2506,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-rel-row>span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:var(--fs-body);}
 .rg-rel-row:has(.people-more[open]){position:relative;z-index:6;}
 .rg-form-card:has(.rg-rel-row .people-more[open]){position:relative;z-index:6;}
-.rg-rel-row select{width:auto;flex:0 0 128px;min-width:0;font-size:var(--fs-caption);appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238a8e96' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:16px 16px;background-position:right 12px center;}
+.rg-rel-row select{width:auto;flex:0 0 clamp(148px,38%,200px);min-width:0;font-size:var(--fs-caption);appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238a8e96' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:16px 16px;background-position:right 12px center;}
 .rg-rel-add-fields select{appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238a8e96' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:16px 16px;background-position:right 12px center;}
 .chapter-action-menu{display:none;position:fixed;inset:0;z-index:179;background:transparent;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
