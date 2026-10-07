@@ -2407,6 +2407,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   font:var(--fs-body) var(--zh);outline:none;}
 .people-search-field:focus{border-color:var(--accent);}
 .people-search-empty{padding:var(--sp-12) 0;color:var(--text-muted);font-size:var(--fs-body);}
+.dt-global-actions{position:relative;z-index:7;display:flex;justify-content:flex-end;gap:var(--sp-6);margin-bottom:var(--sp-8);}
 .people-more{position:relative;flex:0 0 auto;}
 /* 菜单以三点按钮为右上角，并盖住按钮。 */
 .dt-sec:has(.people-more[open]),.timeline-head:has(.people-more[open]){position:relative;z-index:6;}
@@ -11179,6 +11180,20 @@ function setSortPeople(on){
   }
   renderDetail();
 }
+function detailTopAction(action,button,event){
+  button.closest('.people-more').open=false;
+  if(action==='search-people'){
+    setDetailTab('people');
+    if(!peopleSearchOpen)togglePeopleSearch();else document.getElementById('peopleSearchInput')?.focus();
+  }else if(action==='search-tl'){
+    setDetailTab('tl');
+    if(!timelineSearchOpen)toggleTimelineSearch();else document.getElementById('timelineSearchInput')?.focus();
+  }else{
+    if(action==='sort')setDetailTab('people');
+    if(action==='chapters')setDetailTab('tl');
+    peopleMenuAction(action,null,event);
+  }
+}
 function peopleMenuAction(action,button,event){
   if(button?.classList.contains('menu-action-pending'))return;
   const run=()=>{
@@ -11383,6 +11398,24 @@ function renderDetail(previewBox=null, viewTab=dtTab){
   const thumbCls=['','m','y','h'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
   box.innerHTML=`
     <div class="dt-top">
+      <div class="dt-global-actions people-head-actions">
+        <details class="people-more">
+          <summary aria-label="搜索人物或时间线" title="搜索" onclick="togglePeopleMenu(event,this)">${ICON_PERSON_SEARCH}</summary>
+          <div class="people-more-menu">
+            <button type="button" class="people-more-item" onclick="detailTopAction('search-people',this)">搜索人物</button>
+            <button type="button" class="people-more-item" onclick="detailTopAction('search-tl',this)">搜索时间线</button>
+          </div>
+        </details>
+        <details class="people-more">
+          <summary aria-label="更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
+          <div class="people-more-menu">
+            <button type="button" class="people-more-item" onclick="detailTopAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
+            <button type="button" class="people-more-item" onclick="detailTopAction('sort',this)" ${ensurePeopleIds(item,false).length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
+            <button type="button" class="people-more-item" data-timeline-toggle-all onclick="detailTopAction('chapters',this)">全部收起／展开</button>
+            <button type="button" class="people-more-item" onclick="detailTopAction('booknote',this,event)">编辑全文</button>
+          </div>
+        </details>
+      </div>
       <div class="dt-card dt-hd">
         <div class="dt-hdrow">
           <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
@@ -11446,14 +11479,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
               ? '<button type="button" class="dt-lnk" onclick="setSortPeople(false)">完成</button>'
               : `<div class="people-head-actions">
                   <button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>
-                  <button type="button" class="people-search-toggle${peopleSearchOpen?' active':''}" onclick="togglePeopleSearch()" aria-label="${peopleSearchOpen?'关闭人物搜索':'搜索人物'}" title="搜索人物" aria-expanded="${peopleSearchOpen}">${ICON_PERSON_SEARCH}</button>
-                  <details class="people-more">
-                    <summary aria-label="更多人物操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
-                    <div class="people-more-menu">
-                      <button type="button" class="people-more-item" onclick="peopleMenuAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
-                      <button type="button" class="people-more-item" onclick="peopleMenuAction('sort',this)" ${ppl.length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
-                    </div>
-                  </details>
+
                 </div>`}
           </div>
           ${peopleSearchOpen&&!sorting?`<input id="peopleSearchInput" class="people-search-field" type="search" placeholder="搜索人物姓名、信息或备注" aria-label="搜索人物" value="${esc(peopleSearchQuery)}" oninput="filterPeopleList(this.value)" autocomplete="off">`:''}
@@ -11550,15 +11576,7 @@ function renderDetailTL(item){
   return `<div class="dt-sec">
   <div class="dt-seclbl-row timeline-head">
     <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
-    <div class="people-head-actions">
-      <button type="button" class="people-search-toggle${timelineSearchOpen?' active':''}" onclick="toggleTimelineSearch()" aria-label="${timelineSearchOpen?'关闭时间线搜索':'搜索时间线'}" title="搜索时间线" aria-expanded="${timelineSearchOpen}">${ICON_PERSON_SEARCH}</button>
-      <details class="people-more">
-        <summary aria-label="笔记更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
-        <div class="people-more-menu">
-          <button type="button" class="people-more-item" onclick="peopleMenuAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
-          <button type="button" class="people-more-item" data-timeline-toggle-all onclick="peopleMenuAction('chapters',this)" ${chapterGroups.length?'':'disabled'}><span>${allCollapsed?'全部展开':'全部收起'}</span></button>
-          <button type="button" class="people-more-item" onclick="peopleMenuAction('booknote',this,event)"><span>编辑全文</span></button>
-        </div>
+
       </details>
     </div>
   </div>
