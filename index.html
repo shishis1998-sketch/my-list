@@ -2407,7 +2407,8 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   font:var(--fs-body) var(--zh);outline:none;}
 .people-search-field:focus{border-color:var(--accent);}
 .people-search-empty{padding:var(--sp-12) 0;color:var(--text-muted);font-size:var(--fs-body);}
-.dt-global-actions{position:relative;z-index:7;display:flex;justify-content:flex-end;gap:var(--sp-6);margin-bottom:var(--sp-8);}
+.dt-global-actions{position:relative;z-index:7;display:flex;justify-content:flex-end;align-self:center;flex:0 0 auto;gap:var(--sp-6);}
+.dt-hd:has(.people-more[open]){position:relative;z-index:7;}
 .people-more{position:relative;flex:0 0 auto;}
 /* 菜单以三点按钮为右上角，并盖住按钮。 */
 .dt-sec:has(.people-more[open]),.timeline-head:has(.people-more[open]){position:relative;z-index:6;}
@@ -11398,7 +11399,11 @@ function renderDetail(previewBox=null, viewTab=dtTab){
   const thumbCls=['','m','y','h'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
   box.innerHTML=`
     <div class="dt-top">
-      <div class="dt-global-actions people-head-actions">
+      <div class="dt-card dt-hd">
+        <div class="dt-hdrow">
+          <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
+          ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
+          <div class="dt-global-actions people-head-actions">
         <details class="people-more">
           <summary aria-label="搜索人物或时间线" title="搜索" onclick="togglePeopleMenu(event,this)">${ICON_PERSON_SEARCH}</summary>
           <div class="people-more-menu">
@@ -11416,10 +11421,6 @@ function renderDetail(previewBox=null, viewTab=dtTab){
           </div>
         </details>
       </div>
-      <div class="dt-card dt-hd">
-        <div class="dt-hdrow">
-          <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
-          ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
         </div>
         <div class="dt-hdrow dt-hdrow2">
           <div class="dt-au" data-edit="f-creator">${au}</div>
