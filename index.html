@@ -2437,6 +2437,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   border:0;border-radius:calc(var(--r) - 4px);background:transparent;color:var(--text-primary);
   font:var(--fs-body) var(--zh);text-align:left;cursor:pointer;}
 .people-more-item svg{flex:0 0 auto;width:18px;height:18px;color:var(--text-secondary);}
+.people-more-divider{height:1px;margin:var(--sp-4) var(--sp-10);background:var(--border);}
 .people-more-item:active{background:var(--surface-2);}
 .people-more-item:disabled{opacity:.38;cursor:default;}
 .people-toolbar{display:flex;gap:var(--sp-6);margin-left:auto;}
@@ -11407,8 +11408,10 @@ function renderDetail(previewBox=null, viewTab=dtTab){
           <div class="people-more-menu">
             <button type="button" class="people-more-item" onclick="detailTopAction('search-people',this)">${ICON_PERSON_SEARCH}<span>搜索人物</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('search-tl',this)">${ICON_PERSON_SEARCH}<span>搜索时间线</span></button>
+            <div class="people-more-divider" role="separator"></div>
             <button type="button" class="people-more-item" onclick="detailTopAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('sort',this)" ${ensurePeopleIds(item,false).length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
+            <div class="people-more-divider" role="separator"></div>
             <button type="button" class="people-more-item" data-timeline-toggle-all onclick="detailTopAction('chapters',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6 4-4 4 4M8 18l4 4 4-4M4 10h16M4 14h16"/></svg><span>收起/展开</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('booknote',this,event)">${ICON_EDIT_DOC}<span>编辑全文</span></button>
           </div>
