@@ -4974,9 +4974,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 :is(#modal,#timeModal,#recordTagsModal) .tlsheet-head{background:var(--bg);}
 /* 记录表单：每行左侧标签、右侧输入区，日期和长文本也保留可用宽度。 */
 #modal .frow2{display:block;}
-#modal .fg,#timeModal .time-edit-row{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
-#modal .fg>label,#timeModal .time-edit-row>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
-#modal .fg>input,#modal .fg>select,#timeModal .time-edit-row>input{min-width:0;width:100%;box-sizing:border-box;}
+#modal .fg,#timeModal .time-edit-row,#noteModal .fg{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
+#modal .fg>label,#timeModal .time-edit-row>label,#noteModal .fg>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
+#modal .fg>input,#modal .fg>select,#timeModal .time-edit-row>input,#noteModal .fg>input,#noteModal .fg>select,#noteModal .fg>textarea{min-width:0;width:100%;box-sizing:border-box;}
 #recordTagsModal .mbox{height:auto;max-height:min(70vh,100%);}
 #recordTagsModal .mbody{flex:0 1 auto;min-height:0;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
 #recordTagsModal .record-tags-row{margin:0;}
@@ -4993,6 +4993,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal .mbox,#noteModal .mhdr,#noteModal .mbody{background:var(--bg);}
 #noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea,
 #noteModal .tiwrap{background-color:var(--surface);}
+
+/* 笔记表单共用记录编辑的标签列；多行内容的工具和辅助项留在输入列。 */
+#noteModal .fg>:not(label){grid-column:2;min-width:0;}
+#noteModal .nf-body-wrap textarea{width:100%;box-sizing:border-box;font-size:var(--fs-input);}
+#noteModal #nf-body-group>label,#noteModal #memo-fields-group .fg:has(textarea)>label,#noteModal #memo-fields-group .fg:has(#mf-custom-list)>label{align-self:start;padding-top:var(--sp-12);}
+#noteModal .fg .fmt-bar,#noteModal .fg .tsugg-wrap{margin-top:0;}
+#noteModal .fg .created-val{font-size:var(--fs-input);}
+#noteModal .note-tags-manage{justify-self:end;margin:0;}
+#noteModal #memo-local-group>.local-toggle{grid-column:1 / -1;}
 
 /* 食记内容点击菜单：沿用书籍 / 日记的竖向操作菜单，不再使用左右并排按钮。 */
 #calNotePreviewModal.food-actions{z-index:120 !important;padding:0;background:transparent;}
@@ -6023,12 +6032,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </div>
     </div>
     <div class="fg">
-      <label class="tlbl-row">标签（回车、逗号或 + 添加）<button type="button" class="tmgr-link" onclick="openTagMgr('note')">⚙ 管理标签</button></label>
+      <label>标签</label>
       <div class="tiwrap" onclick="if(event.target===this)document.getElementById('ntinput').focus()">
         <div id="ntchips" style="display:contents"></div>
         <input type="text" class="tinput" id="ntinput" placeholder="输入后按回车或点 +">
         <button type="button" class="tadd-btn" id="ntaddBtn" title="添加标签" onclick="addNoteTagFromInput()">+</button>
       </div>
+      <button type="button" class="tmgr-link note-tags-manage" onclick="openTagMgr('note')">⚙ 管理标签</button>
       <div class="tsugg-wrap" id="ntsuggWrap" style="display:none">
         <div class="tsugg-lbl">笔记常用标签</div>
         <div class="tsugg-list" id="ntsuggList"></div>
