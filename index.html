@@ -5261,6 +5261,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <option value="watch-desc" selected>最近看完</option>
       <option value="watch-asc">最早看完</option>
       <option value="start-desc">最近开始</option>
+      <option value="in-progress">在看</option>
       <option value="name-asc">名称 A→Z</option>
       <option value="score-desc">评分最高</option>
       <option value="year-desc">年份最新</option>
@@ -10158,6 +10159,7 @@ function cmpDateField(a,b,key,desc){
 function filtered(){
   let L=[...data];
   if(curCat!=='all') L=L.filter(d=>d.type===curCat);
+  if(curSort==='in-progress') L=L.filter(d=>!!String(d.startDate||'').trim()&&!String(d.watchDate||'').trim());
   if(curStatus!=='all') L=L.filter(d=>curStatus==='in-progress'
     ? !!String(d.startDate||'').trim()&&!String(d.watchDate||'').trim()
     : d.status===curStatus);
@@ -10177,7 +10179,7 @@ function filtered(){
     if(curSort==='date-asc')  return (a.id||'')>(b.id||'')?1:-1;
     if(curSort==='watch-desc')return cmpDateField(a,b,'watchDate',true);
     if(curSort==='watch-asc') return cmpDateField(a,b,'watchDate',false);
-    if(curSort==='start-desc')return cmpDateField(a,b,'startDate',true);
+    if(curSort==='start-desc'||curSort==='in-progress')return cmpDateField(a,b,'startDate',true);
     if(curSort==='name-asc')  return a.name.localeCompare(b.name,'zh');
     if(curSort==='score-desc')return (b.score||0)-(a.score||0);
     if(curSort==='year-desc') return (b.year||0)-(a.year||0);
@@ -10268,7 +10270,7 @@ function renderTypeSelect(){
 
 // 日期排序时按对应年月分组；无日期的记录始终放在最后。
 function mediaMonthGroups(items,sort){
-  const field={'watch-desc':'watchDate','watch-asc':'watchDate','start-desc':'startDate'}[sort];
+  const field={'watch-desc':'watchDate','watch-asc':'watchDate','start-desc':'startDate','in-progress':'startDate'}[sort];
   const byUpdated=sort==='upd-desc';
   const byCreated=sort==='date-desc'||sort==='date-asc';
   if(!field&&!byUpdated&&!byCreated)return null;
@@ -12769,7 +12771,7 @@ function syncBottomTabs(){
 // 媒体排序按日期和其它方式分组，仅用分隔线区分；笔记排序不分组。
 const SORT_GROUPS_MEDIA=[
   ['时间',[['upd-desc','最近修改'],['date-desc','最近添加'],['date-asc','最早添加'],
-           ['watch-desc','最近看完'],['watch-asc','最早看完'],['start-desc','最近开始']]],
+           ['watch-desc','最近看完'],['watch-asc','最早看完'],['start-desc','最近开始'],['in-progress','在看']]],
   ['其他',[['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']]]
 ];
 const SORT_GROUPS_NOTE=[
