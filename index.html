@@ -5065,7 +5065,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal.food-editor .fmt-bar,
 #noteModal.food-editor #nf-thumb{display:none !important;}
 #noteModal.food-editor .mbox{height:auto;min-height:0;max-height:min(76vh,100%);}
-#noteModal.food-editor #nf-body{height:100px;min-height:100px;max-height:160px;resize:vertical;}
+#noteModal.food-editor .fg{grid-template-columns:48px minmax(0,1fr);}
+#noteModal.food-editor #nf-body{height:calc(1em * var(--lh-normal) + 22px);min-height:0;max-height:none;resize:none;overflow-y:auto;}
+#noteModal.food-editor #nf-body-group>label{align-self:center;padding-top:0;}
 #noteModal.food-editor #nf-body-group{margin-bottom:0;}
 
 /* 云同步：统一卡片排版、间距和右侧开关。 */
