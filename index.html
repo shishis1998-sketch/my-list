@@ -2487,6 +2487,14 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-rel-remove::after{transform:translate(-50%,-50%) rotate(-45deg);}
 .rg-rel-remove:active{background:var(--surface-2);color:var(--text-secondary);}
 .rg-form-card h3{font-size:var(--fs-sub);margin:6px 0 12px;}
+.rg-manager-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;}
+.rg-manager-actions[hidden]{display:none;}
+.rg-manager-actions button{border:0;border-radius:999px;background:var(--accent-light);color:var(--accent);padding:9px 13px;font:600 var(--fs-caption) var(--zh);cursor:pointer;}
+.rg-manager-field{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);margin-bottom:var(--sp-14);}
+.rg-manager-field:last-child{margin-bottom:0;}
+.rg-form-card .rg-manager-field label{margin:0;font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);line-height:var(--lh-normal);}
+.rg-form-card .rg-manager-field input,.rg-form-card .rg-manager-field select{min-width:0;font-size:var(--fs-input);min-height:44px;}
+
 .rg-rel-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:var(--fs-caption);}
 .rg-rel-row span{flex:1;min-width:0;overflow-wrap:anywhere;}
 .rg-rel-row select{width:auto;flex:0 0 128px;min-width:0;font-size:var(--fs-caption);}
@@ -5405,6 +5413,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="rg-head">
       <button type="button" class="rg-back" onclick="closeRelationGraph()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="rg-title" id="rgTitle">人物关系图</div>
+      <div class="rg-manager-actions" id="rgManagerActions" hidden>
+        <button type="button" onclick="cancelGraphManager()">取消</button>
+        <button type="button" id="rgManagerSave" onclick="saveGraphManager()">保存</button>
+      </div>
       <div class="people-toolbar">
         <button type="button" class="people-tool" onclick="toggleGraphSearch()" aria-label="搜索人物"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
         <button type="button" class="people-tool" onclick="toggleGraphFilter()" aria-label="筛选关系"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
@@ -11833,6 +11845,7 @@ function graphForItem(item){return ensureGraphCollection(item).find(g=>g.id===rg
 function graphAnchorName(item,anchor){return graphAnchors(item).find(a=>a.key===anchor)?.title||'原章节已改名';}
 function graphScreen(screen){
   rgScreen=screen;
+  document.getElementById('rgManagerActions').hidden=screen!=='manage';
   document.getElementById('rgLibrary').classList.toggle('open',screen==='list');
   document.getElementById('rgManager').classList.toggle('open',screen==='manage');
   document.getElementById('rgStage').style.display=screen==='graph'?'':'none';
@@ -11885,11 +11898,11 @@ function openGraphManager(id=rgGraphId,recordStep=true){
   if(id==='new')rgGraphId='new';else if(id)rgGraphId=id;
   const g=graphForItem(it),fresh=rgGraphId==='new',people=ensurePeopleIds(it,false);
   document.getElementById('rgTitle').textContent=fresh?'新建关系图':'编辑关系图';
+  document.getElementById('rgManagerSave').textContent=fresh?'创建':'保存';
   graphScreen('manage');
   document.getElementById('rgManager').innerHTML=`<div class="rg-form-card">
-    <label for="rgGraphName">名称</label><input id="rgGraphName" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系">
-    <label for="rgGraphAnchor">关联章节／小节</label><select id="rgGraphAnchor">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select>
-    <div class="rg-form-actions"><button type="button" onclick="cancelGraphManager()">取消</button><button type="button" class="primary" onclick="saveGraphManager()">${fresh?'创建':'保存'}</button></div>
+    <div class="rg-manager-field"><label for="rgGraphName">名称</label><input id="rgGraphName" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系"></div>
+    <div class="rg-manager-field"><label for="rgGraphAnchor">关联</label><select id="rgGraphAnchor" aria-label="关联章节／小节">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select></div>
 
   </div>${fresh?'':`<div class="rg-form-card"><h3>图中人物</h3>
     <div class="rg-members-grid">
