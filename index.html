@@ -4974,9 +4974,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 :is(#modal,#timeModal,#recordTagsModal) .tlsheet-head{background:var(--bg);}
 /* 记录表单：每行左侧标签、右侧输入区，日期和长文本也保留可用宽度。 */
 #modal .frow2{display:block;}
-#modal .fg{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
-#modal .fg>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
-#modal .fg>input,#modal .fg>select{min-width:0;width:100%;box-sizing:border-box;}
+#modal .fg,#timeModal .time-edit-row{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
+#modal .fg>label,#timeModal .time-edit-row>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
+#modal .fg>input,#modal .fg>select,#timeModal .time-edit-row>input{min-width:0;width:100%;box-sizing:border-box;}
 #recordTagsModal .mbox{height:auto;max-height:min(70vh,100%);}
 #recordTagsModal .mbody{flex:0 1 auto;min-height:0;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
 #recordTagsModal .record-tags-row{margin:0;}
@@ -5137,11 +5137,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 独立时间编辑：三行表单，沿用记录编辑的取消 / 完成操作栏。 */
 #timeModal .mbox{height:auto;max-height:min(70vh,100%);}
-#timeModal .mbody{flex:0 1 auto;min-height:0;display:grid;grid-auto-rows:minmax(44px,1fr);gap:16px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
-#timeModal .time-edit-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;margin:0;}
-#timeModal .time-edit-row label{flex-shrink:0;margin:0;font-size:calc(13px * var(--fs-scale));font-weight:600;}
-#timeModal .time-edit-row input{min-width:0;width:65%;height:44px;min-height:44px;color:var(--text-primary);}
-#timeModal .time-edit-row output{color:var(--text-primary);font-variant-numeric:tabular-nums;}
+#timeModal .mbody{flex:0 1 auto;min-height:0;padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom,0px));}
+#timeModal .time-edit-row{min-height:44px;}
+#timeModal .time-edit-row output{display:flex;align-items:center;min-width:0;min-height:44px;padding:0 var(--sp-12);box-sizing:border-box;font-size:var(--fs-input);line-height:var(--lh-normal);color:var(--text-primary);font-variant-numeric:tabular-nums;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
