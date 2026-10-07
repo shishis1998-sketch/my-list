@@ -534,6 +534,7 @@ body.detail-open .content{display:none!important;}
    按基线对齐而不是盒子居中——两侧字号差着 9px（22 对 13），居中会让评分
    浮在书名中腰上；眼睛读的是基线，对齐基线才看着在同一行。 */
 .dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
+.dt-hd>.dt-hdrow:first-child{align-items:center;}
 .dt-hdrow2{margin-top:var(--sp-6);}
 .dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
 .dt-au{font-size:var(--fs-caption);color:var(--text-secondary);flex:1;min-width:0;}
