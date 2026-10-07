@@ -11006,7 +11006,7 @@ function syncDetailChapterToggle(){
   const button=document.querySelector('[data-timeline-toggle-all]');
   if(!button)return;
   button.disabled=!cards.length;
-  button.querySelector('span').textContent=cards.length&&cards.every(c=>c.classList.contains('collapsed'))?'全部展开':'全部收起';
+  button.querySelector('span').textContent='收起/展开';
 }
 function toggleAllDetailChapters(){
   const cards=[...document.querySelectorAll('#detailBookNoteCard .tl-chapter-group')];
@@ -11412,7 +11412,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
             <button type="button" class="people-more-item" onclick="detailTopAction('search-tl',this)">${ICON_PERSON_SEARCH}<span>搜索时间线</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('sort',this)" ${ensurePeopleIds(item,false).length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
-            <button type="button" class="people-more-item" data-timeline-toggle-all onclick="detailTopAction('chapters',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6 4-4 4 4M8 18l4 4 4-4M4 10h16M4 14h16"/></svg><span>全部收起／展开</span></button>
+            <button type="button" class="people-more-item" data-timeline-toggle-all onclick="detailTopAction('chapters',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6 4-4 4 4M8 18l4 4 4-4M4 10h16M4 14h16"/></svg><span>收起/展开</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('booknote',this,event)">${ICON_EDIT_DOC}<span>编辑全文</span></button>
           </div>
         </details>
