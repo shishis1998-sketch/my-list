@@ -11974,8 +11974,8 @@ function openGraphManager(id=rgGraphId,recordStep=true){
   document.getElementById('rgTitle').textContent=fresh?'新建关系图':'编辑关系图';
   graphScreen('manage');
   document.getElementById('rgManager').innerHTML=`<div class="rg-form-card">
-    <div class="rg-manager-field"><label for="rgGraphName">名称</label><input id="rgGraphName" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系"></div>
-    <div class="rg-manager-field"><label for="rgGraphAnchor">关联</label><select id="rgGraphAnchor" aria-label="关联章节／小节">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select></div>
+    <div class="rg-manager-field"><label for="rgGraphName">名称</label><input id="rgGraphName" onchange="autoSaveGraphField('title',this)" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系"></div>
+    <div class="rg-manager-field"><label for="rgGraphAnchor">关联</label><select id="rgGraphAnchor" onchange="autoSaveGraphField('anchor',this)" aria-label="关联章节／小节">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select></div>
 
   </div>${fresh?'':`<h3 class="rg-manager-section-title">人物</h3><div class="rg-form-card">
     <div class="rg-members-grid">
@@ -11983,7 +11983,7 @@ function openGraphManager(id=rgGraphId,recordStep=true){
     </div>
     <div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div></div>
     ${rgGraphId==='legacy'?'':renderGraphRelationEditor(it,g)}`}
-    <div class="rg-manager-actions rg-manager-bottom-actions"><button type="button" id="rgManagerSave" onclick="saveGraphManager()">${fresh?'创建':'保存'}</button></div>`;
+    ${fresh?'<div class="rg-manager-actions rg-manager-bottom-actions"><button type="button" id="rgManagerSave" onclick="saveGraphManager()">创建</button></div>':''}`;
   if(recordStep)pushRelationGraphHistory();
 }
 function renderGraphRelationEditor(item,g){
@@ -11999,6 +11999,14 @@ function renderGraphRelationEditor(item,g){
 function setGraphConnectionMode(id,type){
   changeGraphRelation(id,type);
   openGraphManager(rgGraphId,false);
+}
+function autoSaveGraphField(field,input){
+  if(rgGraphId==='new')return;
+  const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g)return;
+  const value=field==='title'?input.value.trim():input.value;
+  if(field==='title'&&!value){input.value=g.title;toast('名称不能为空');return;}
+  if(g[field]===value)return;
+  g[field]=value;touchRec(it);persist();
 }
 function saveGraphManager(){
   const it=data.find(d=>d.id===detailId);if(!it)return;
