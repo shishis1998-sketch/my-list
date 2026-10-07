@@ -2490,6 +2490,10 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-manager-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;}
 .rg-manager-actions[hidden]{display:none;}
 .rg-head:has(#rgManagerActions:not([hidden])){padding-right:14px;}
+.rg-manager{scrollbar-width:none;}
+.rg-manager::-webkit-scrollbar{display:none;}
+.rg-manager .rg-form-card{margin-bottom:var(--sp-24);}
+.rg-manager-section-title{font-size:var(--fs-title);font-weight:700;line-height:var(--lh-normal);margin:0 0 var(--sp-12);color:var(--text-primary);}
 .rg-manager-actions button{border:0;border-radius:999px;background:var(--accent-light);color:var(--accent);padding:9px 13px;font:600 var(--fs-caption) var(--zh);cursor:pointer;}
 .rg-manager-field{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);margin-bottom:var(--sp-14);}
 .rg-manager-field:last-child{margin-bottom:0;}
@@ -11904,7 +11908,7 @@ function openGraphManager(id=rgGraphId,recordStep=true){
     <div class="rg-manager-field"><label for="rgGraphName">名称</label><input id="rgGraphName" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系"></div>
     <div class="rg-manager-field"><label for="rgGraphAnchor">关联</label><select id="rgGraphAnchor" aria-label="关联章节／小节">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select></div>
 
-  </div>${fresh?'':`<div class="rg-form-card"><h3>图中人物</h3>
+  </div>${fresh?'':`<h3 class="rg-manager-section-title">人物</h3><div class="rg-form-card">
     <div class="rg-members-grid">
     ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'?!(g?.excludedPersonIds||[]).includes(p.id)?'checked':'':g?.personIds?.includes(p.id)?'checked':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
     </div>
