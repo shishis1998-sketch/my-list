@@ -1392,6 +1392,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     text-transform:uppercase;color:var(--text-muted);padding:var(--sp-8) var(--sp-10) var(--sp-4);}
   .bb-sortgrp.sep,.bb-filter-glbl:not(:first-child){
     border-top:1px solid var(--border-soft);margin-top:var(--sp-4);padding-top:var(--sp-8);}
+  .bb-sortsep{border-top:1px solid var(--border-soft);margin:var(--sp-4) 0;}
   .bb-filter-hint{margin-left:var(--sp-4);font-weight:400;letter-spacing:0;text-transform:none;color:var(--text-muted);opacity:.8;}
   .bb-filter-empty{padding:var(--sp-8) var(--sp-10);color:var(--text-muted);font-size:var(--fs-caption);}
 }
@@ -10157,7 +10158,9 @@ function cmpDateField(a,b,key,desc){
 function filtered(){
   let L=[...data];
   if(curCat!=='all') L=L.filter(d=>d.type===curCat);
-  if(curStatus!=='all') L=L.filter(d=>d.status===curStatus);
+  if(curStatus!=='all') L=L.filter(d=>curStatus==='in-progress'
+    ? !!String(d.startDate||'').trim()&&!String(d.watchDate||'').trim()
+    : d.status===curStatus);
   if(curScore!=='all'){
     if(curScore==='12') L=L.filter(d=>!d.score||d.score<=2);
     else{const m=parseInt(curScore)-.5; L=L.filter(d=>d.score&&d.score>m);}
@@ -12763,8 +12766,7 @@ function syncBottomTabs(){
 }
 
 // ── 底部栏排序小卡片 ──────────────────────────────────────────────
-// 媒体模式 / 笔记模式各自的排序选项。媒体那九项按「时间 / 其他」分两组，
-// 一眼能看出前六项都是按日期排的；笔记只有四项，不分组。
+// 媒体排序按日期和其它方式分组，仅用分隔线区分；笔记排序不分组。
 const SORT_GROUPS_MEDIA=[
   ['时间',[['upd-desc','最近修改'],['date-desc','最近添加'],['date-asc','最早添加'],
            ['watch-desc','最近看完'],['watch-asc','最早看完'],['start-desc','最近开始']]],
@@ -12791,7 +12793,7 @@ function openSortSheet(){
   const groups=isNoteMode()?SORT_GROUPS_NOTE:SORT_GROUPS_MEDIA;
   // 当前项不打勾，只用绿底+绿字标出来：省下一个勾的宽度，卡片能再窄一截
   panel.innerHTML=groups.map(([g,opts],gi)=>
-    (g?`<div class="bb-sortgrp${gi?' sep':''}">${g}</div>`:'')+
+    (gi?'<div class="bb-sortsep" role="separator"></div>':'')+
     opts.map(([v,lbl])=>
       `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">${lbl}</button>`
     ).join('')
