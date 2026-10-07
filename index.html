@@ -59,7 +59,7 @@
   --fs-title:calc(18px * var(--fs-scale));
   --fs-headline:calc(16px * var(--fs-scale));
   --fs-sub:calc(14px * var(--fs-scale));
-  --fs-body:calc(14px * var(--fs-scale));
+  --fs-body:calc(15px * var(--fs-scale));
   --fs-caption:calc(13px * var(--fs-scale));
   --fs-foot:calc(11px * var(--fs-scale));
   /* 输入框专用：iOS 上聚焦时字号 <16px 会自动放大整页，「小」档会把 headline
@@ -846,7 +846,7 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
    下面另外五处 (max-width…), (pointer: coarse) 与这里是同一条判定，
    JS 侧的 isMobileLayout() 也必须跟着一字不差，改一处就得改全部。 */
 @media (max-width: 1024px), (pointer: coarse){
-  /* 手机端正文基准升半档（14→15）；其余各级沿用电脑端基线。
+  /* 手机端正文与电脑端统一为 15px；其余各级沿用电脑端基线。
      同样乘 --fs-scale，字号档位在手机上照样生效 */
   :root{--fs-body:calc(15px * var(--fs-scale));}
   body{font-size:var(--fs-body);-webkit-text-size-adjust:100%;}
