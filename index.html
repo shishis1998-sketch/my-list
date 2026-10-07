@@ -5092,6 +5092,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 云同步底部弹窗：仅内容滚动，底部操作始终可见。 */
 #syncModal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding:0;}
 #syncModal .mbox{box-sizing:border-box;width:100%;max-width:540px;height:85vh;height:85dvh;max-height:100%;min-height:0;margin:0;border:0;border-radius:var(--rxl) var(--rxl) 0 0;overflow:hidden;box-shadow:none;}
+#syncModal .sync-diff-card[hidden]{display:none;}
+#syncModal .sync-diff-card{padding:var(--sp-14);}
+#syncModal .sync-diff-card summary{font-size:var(--fs-body);font-weight:600;cursor:pointer;}
+#syncModal .sync-diff-time{margin-top:var(--sp-8);font-size:var(--fs-caption);color:var(--text-muted);}
+#syncModal .sync-diff-group{margin-top:var(--sp-14);font-size:var(--fs-caption);color:var(--text-secondary);}
+#syncModal .sync-diff-item{padding:var(--sp-10) 0;font-size:var(--fs-body);overflow-wrap:anywhere;}
+#syncModal .sync-diff-item+.sync-diff-item{border-top:1px solid var(--border-soft);}
+#syncModal .sync-diff-item small{display:block;font-size:var(--fs-caption);color:var(--text-muted);}
 #syncModal .sync-grip{display:flex;align-items:center;justify-content:center;flex:0 0 28px;width:100%;height:28px;padding:0;border:0;background:transparent;cursor:pointer;}
 #syncModal .sync-grip span{width:36px;height:4px;border-radius:999px;background:var(--text-muted);}
 #syncModal .sync-grip:active span{background:var(--accent);}
@@ -5961,6 +5969,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </button>
     </div>
 
+
+    <details id="sync-diff-card" class="sync-card sync-diff-card" hidden><summary id="sync-diff-summary">上次同步差异</summary><div id="sync-diff-list"></div></details>
 
     <div class="sync-card sync-readonly-card">
       <button type="button" class="sync-readonly" id="roToggle" role="switch" aria-checked="false" onclick="toggleReadOnly()">
@@ -9779,6 +9789,35 @@ async function readGistPayload(f,token){
   return JSON.parse(await fetchGistRawText(f.raw_url,token));
 }
 
+const SYNC_DIFF_KEY='my_list_sync_diff_v1';
+function captureSyncDifference(remote){
+  const local=[],cloud=[];
+  function compare(localItems,remoteItems,kind){
+    const l=localItems.filter(x=>x&&!x.localOnly),r=remoteItems.filter(x=>x&&!x.localOnly);
+    const lIds=new Set(l.map(x=>x.id)),rIds=new Set(r.map(x=>x.id));
+    const describe=x=>({title:String(x.title||x.name||'未命名'),kind:kind==='笔记'?(x.subCat||kind):kind});
+    local.push(...l.filter(x=>!rIds.has(x.id)).map(describe));
+    cloud.push(...r.filter(x=>!lIds.has(x.id)).map(describe));
+  }
+  compare(data,remote.data,'记录');
+  if(Array.isArray(remote.notes))compare(notes,remote.notes,'笔记');
+  const diff={time:Date.now(),local,cloud};
+  if(local.length||cloud.length){
+    try{localStorage.setItem(SYNC_DIFF_KEY,JSON.stringify(diff));}catch(e){}
+    renderSyncDifference(diff);
+  }
+  return diff;
+}
+function renderSyncDifference(diff){
+  const card=document.getElementById('sync-diff-card');if(!card)return;
+  if(!diff){try{diff=JSON.parse(localStorage.getItem(SYNC_DIFF_KEY)||'null');}catch(e){}}
+  card.hidden=!diff||(!diff.local?.length&&!diff.cloud?.length);
+  if(card.hidden)return;
+  document.getElementById('sync-diff-summary').textContent='上次同步差异 · 本机独有 '+diff.local.length+' 条 · 云端独有 '+diff.cloud.length+' 条';
+  const group=(items,label)=>items.length?'<div class="sync-diff-group">'+label+'</div>'+items.map(x=>'<div class="sync-diff-item">'+esc(x.title)+'<small>'+esc(x.kind)+'</small></div>').join(''):'';
+  document.getElementById('sync-diff-list').innerHTML='<div class="sync-diff-time">'+esc(new Date(diff.time).toLocaleString())+' · 同步前的记录对比</div>'+group(diff.local,'本机有，云端没有')+group(diff.cloud,'云端有，本机没有');
+}
+
 async function syncPull(silent){
   const token=getToken(),gistId=getGistId();
   if(!token||!gistId){if(!silent)toast('请先配置 token 和 Gist ID');return false;}
@@ -9812,11 +9851,9 @@ async function syncPull(silent){
       return false;
     }
     if(!remote||!Array.isArray(remote.data)){throw new Error('云端数据格式异常');}
-    // 云端记录减少时保留提示。
-    const rTotal=(Array.isArray(remote.data)?remote.data.length:0)+(Array.isArray(remote.notes)?remote.notes.length:0);
-    const lTotal=(Array.isArray(data)?data.length:0)+(Array.isArray(notes)?notes.length:0);
-    if(rTotal<lTotal){
-      toast('⚠️ 云端比本机少 '+(lTotal-rTotal)+' 条，本机同步数据将以云端为准');
+    const syncDiff=captureSyncDifference(remote);
+    if(syncDiff.local.length){
+      toast('⚠️ '+syncDiff.local.length+' 条本机记录云端没有，可在「云同步 › 上次同步差异」查看');
     }
     // 简单的「云端覆盖本地」策略:适用于单用户多设备场景
     // 注意:这里不做 updatedAt 比较,云端一律覆盖本机 —— 所以任何还没成功上云的改动
@@ -9969,6 +10006,7 @@ async function toggleCloudSync(){
 }
 
 function openSyncCfg(){
+  renderSyncDifference();
   document.getElementById('f-gh-token').value=getToken();
   document.getElementById('f-gh-gist').value=getGistId();
   document.getElementById('f-gh-pw').value=getMasterPw();
