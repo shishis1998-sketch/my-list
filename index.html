@@ -2501,8 +2501,10 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-form-card .rg-manager-field input,.rg-form-card .rg-manager-field select{min-width:0;font-size:var(--fs-input);min-height:44px;background:var(--bg);}
 
 .rg-rel-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:var(--fs-caption);}
-.rg-rel-row span{flex:1;min-width:0;overflow-wrap:anywhere;}
-.rg-rel-row select{width:auto;flex:0 0 128px;min-width:0;font-size:var(--fs-caption);}
+.rg-rel-row>span{flex:1;min-width:0;overflow-wrap:anywhere;}
+.rg-rel-row:has(.people-more[open]){position:relative;z-index:6;}
+.rg-form-card:has(.rg-rel-row .people-more[open]){position:relative;z-index:6;}
+.rg-rel-row select{width:auto;flex:0 0 128px;min-width:0;font-size:var(--fs-caption);appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238a8e96' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:16px 16px;background-position:right 12px center;}
 .chapter-action-menu{display:none;position:fixed;inset:0;z-index:179;background:transparent;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 .chapter-action-menu *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
@@ -11972,8 +11974,8 @@ function openGraphManager(id=rgGraphId,recordStep=true){
 function renderGraphRelationEditor(item,g){
   const people=ensurePeopleIds(item,false).filter(p=>g?.personIds?.includes(p.id));
   const names=new Map(people.map(p=>[p.id,p.name]));
-  return `<div class="rg-form-card"><h3>这张图的关系</h3>
-    ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${relationTypes(item).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><button type="button" class="rg-rel-remove" aria-label="删除关系" onclick="removeGraphRelation('${r.id}')">×</button></div>`).join('')||'<p>还没有关系线</p>'}
+  return `<h3 class="rg-manager-section-title">关系</h3><div class="rg-form-card">
+    ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${relationTypes(item).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><details class="people-more rg-list-more"><summary onclick="togglePeopleMenu(event,this)" aria-label="关系菜单">${ICON_MORE}</summary><div class="people-more-menu"><button type="button" class="people-more-item danger" onclick="removeGraphRelation('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg><span>删除关系</span></button></div></details></div>`).join('')||'<p>还没有关系线</p>'}
     ${people.length>1?`<label>添加关系</label><div class="rg-rel-add-fields"><select id="rgRelA">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelB">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelType">${relationTypes(item).map(t=>`<option value="${t.id}">${esc(t.lbl)}</option>`).join('')}</select></div>
