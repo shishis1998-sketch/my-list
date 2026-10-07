@@ -11467,8 +11467,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
         ${(()=>{const ppl=ensurePeopleIds(item,false);
           // 排序态：只剩一个人就没什么可排的，自动退出（比如在排序态里删掉了人）
           const sorting=dtSortPeople&&ppl.length>1;
-          return `<div class="dt-seclbl-row">
-            <div class="dt-seclbl">人物</div>
+          return `<div class="dt-seclbl-row" style="justify-content:flex-end">
             ${sorting
               ? '<button type="button" class="dt-lnk" onclick="setSortPeople(false)">完成</button>'
               : `<div class="people-head-actions">
@@ -11568,12 +11567,6 @@ function renderDetailTL(item){
   // 章节内点正文编辑整章；右下角新增，全文编辑保留在更多菜单。
   // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
   return `<div class="dt-sec">
-  <div class="dt-seclbl-row timeline-head">
-    <div class="dt-seclbl">${lbl} · ${np?`${np} 部 · ${displayCount} 章`:`共 ${displayCount} 章`}</div>
-
-      </details>
-    </div>
-  </div>
   ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
   <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
