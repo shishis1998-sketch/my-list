@@ -2458,6 +2458,9 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-library.open,.rg-manager.open{display:block;}
 .rg-list-card,.rg-form-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--r);padding:14px;margin-bottom:10px;}
 .rg-list-card{display:flex;align-items:center;gap:10px;}
+.rg-list-card:has(.people-more[open]){position:relative;z-index:6;}
+.rg-list-more .people-more-item.danger,.rg-list-more .people-more-item.danger svg{color:var(--danger);}
+.rg-list-more .people-more-item.danger:active{background:var(--danger-bg);}
 .rg-list-open{flex:1;min-width:0;border:0;background:none;text-align:left;color:var(--text-primary);font:inherit;padding:0;cursor:pointer;}
 .rg-list-open strong,.rg-list-open small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rg-list-open small{margin-top:5px;color:var(--text-muted);font-size:var(--fs-caption);}
@@ -11849,8 +11852,20 @@ function renderGraphLibrary(){
   document.getElementById('rgLibrary').innerHTML=graphs.map(g=>`<div class="rg-list-card">
     <button type="button" class="rg-list-open" onclick="openRelationGraph('${g.id}')"><strong>${esc(g.title)}</strong>
     <small>${g.anchor?esc(graphAnchorName(it,g.anchor)):'全书'} · ${g.id==='legacy'?ensurePeopleIds(it,false).filter(p=>!(g.excludedPersonIds||[]).includes(p.id)).length:g.personIds?.length||0} 人</small></button>
-    <button type="button" class="rg-small-btn" onclick="openGraphManager('${g.id}')" aria-label="编辑${esc(g.title)}">编辑</button></div>`).join('')+
+    <details class="people-more rg-list-more">
+      <summary aria-label="${esc(g.title)}的菜单" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
+      <div class="people-more-menu">
+        <button type="button" class="people-more-item" onclick="graphLibraryAction('edit','${g.id}',this)">${ICON_EDIT_DOC}<span>编辑</span></button>
+        ${g.id==='legacy'?'':`<button type="button" class="people-more-item danger" onclick="graphLibraryAction('delete','${g.id}',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg><span>删除</span></button>`}
+      </div>
+    </details></div>`).join('')+
     `<div class="rg-form-actions"><button type="button" class="primary" onclick="openGraphManager('new')">＋ 新建关系图</button></div>`;
+}
+function graphLibraryAction(action,id,button){
+  const menu=button.closest('.people-more');
+  if(menu){menu.open=false;menu.classList.remove('closing');clearTimeout(menu.closeTimer);}
+  if(action==='edit')openGraphManager(id);
+  else if(action==='delete')deleteCurrentGraph(id);
 }
 function openGraphLibrary(anchor='',recordStep=true){
   const it=data.find(d=>d.id===detailId);if(!it)return;
@@ -11875,7 +11890,7 @@ function openGraphManager(id=rgGraphId,recordStep=true){
     <label for="rgGraphName">名称</label><input id="rgGraphName" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系">
     <label for="rgGraphAnchor">关联章节／小节</label><select id="rgGraphAnchor">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select>
     <div class="rg-form-actions"><button type="button" onclick="cancelGraphManager()">取消</button><button type="button" class="primary" onclick="saveGraphManager()">${fresh?'创建':'保存'}</button></div>
-    ${!fresh&&rgGraphId!=='legacy'?'<div class="rg-form-actions"><button type="button" class="danger" onclick="deleteCurrentGraph()">删除这张关系图</button></div>':''}
+
   </div>${fresh?'':`<div class="rg-form-card"><h3>图中人物</h3>
     <div class="rg-members-grid">
     ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'?!(g?.excludedPersonIds||[]).includes(p.id)?'checked':'':g?.personIds?.includes(p.id)?'checked':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
@@ -11927,7 +11942,7 @@ function changeGraphRelation(id,type){const it=data.find(d=>d.id===detailId),g=i
   if(g.relationships.some(x=>x.id!==id&&relKey(x.a,x.b)===relKey(r.a,r.b)&&x.type===type)){toast('两人已有该类别关系');openGraphManager(g.id,false);return;}
   r.type=type;touchRec(it);persist();}
 function removeGraphRelation(id){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g)return;g.relationships=g.relationships.filter(r=>r.id!==id);touchRec(it);persist();openGraphManager(g.id,false);}
-function deleteCurrentGraph(){const it=data.find(d=>d.id===detailId),g=it&&graphForItem(it);if(!g||g.id==='legacy'||!confirm('删除「'+g.title+'」及图中的关系？'))return;it.relationGraphs=it.relationGraphs.filter(x=>x.id!==g.id);touchRec(it);persist();rgGraphId='';renderGraphLibrary();replaceRelationGraphHistory();}
+function deleteCurrentGraph(id=rgGraphId){const it=data.find(d=>d.id===detailId),g=it&&ensureGraphCollection(it).find(x=>x.id===id);if(!g||g.id==='legacy'||!confirm('删除「'+g.title+'」及图中的关系？'))return;it.relationGraphs=it.relationGraphs.filter(x=>x.id!==g.id);touchRec(it);persist();rgGraphId='';renderGraphLibrary();replaceRelationGraphHistory();}
 let rgState={x:0,y:0,scale:1,filters:new Set(),positions:{},centerId:'',selectedId:'',showLabels:true,pan:null,pinch:null,nodeDrag:null,suppressNodeClickUntil:0,suppressBlankClickUntil:0,pointers:new Map(),canvasSize:1200};
 let rgEditingPerson='';
 function openRelationGraph(id,recordStep=true){
