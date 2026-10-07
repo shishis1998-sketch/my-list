@@ -5257,7 +5257,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <option value="upd-desc">最近修改</option>
       <option value="date-desc">最近添加</option>
       <option value="date-asc">最早添加</option>
-      <option value="watch-desc">最新看完</option>
+      <option value="watch-desc" selected>最近看完</option>
       <option value="watch-asc">最早看完</option>
       <option value="start-desc">最近开始</option>
       <option value="name-asc">名称 A→Z</option>
@@ -8848,7 +8848,7 @@ const RO_KEY='my_list_readonly_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:all', curSearch='', curSort='upd-desc', curStatus='all', curScore='all';
+let curCat='notes:all', curSearch='', curSort='watch-desc', curStatus='all', curScore='all';
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
 let curNoteSub='all'; // 笔记子分类筛选
@@ -12656,7 +12656,7 @@ function applyModeUI(){
   }else{
     if(ssort.dataset.noteMode){
       ssort.innerHTML=ssort.dataset.mediaHTML;
-      ssort.value=ssort.dataset.mediaVal||'upd-desc';
+      ssort.value=ssort.dataset.mediaVal||'watch-desc';
       curSort=ssort.value;
       delete ssort.dataset.noteMode;
     }
@@ -12767,7 +12767,7 @@ function syncBottomTabs(){
 // 一眼能看出前六项都是按日期排的；笔记只有四项，不分组。
 const SORT_GROUPS_MEDIA=[
   ['时间',[['upd-desc','最近修改'],['date-desc','最近添加'],['date-asc','最早添加'],
-           ['watch-desc','最新看完'],['watch-asc','最早看完'],['start-desc','最近开始']]],
+           ['watch-desc','最近看完'],['watch-asc','最早看完'],['start-desc','最近开始']]],
   ['其他',[['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']]]
 ];
 const SORT_GROUPS_NOTE=[
