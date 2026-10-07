@@ -535,7 +535,9 @@ body.detail-open .content{display:none!important;}
    浮在书名中腰上；眼睛读的是基线，对齐基线才看着在同一行。 */
 .dt-hdrow{display:flex;align-items:baseline;gap:var(--sp-12);}
 .dt-hd>.dt-hdrow:first-child{align-items:center;}
-.dt-hdrow2{margin-top:var(--sp-6);}
+.dt-hdrow2{margin-top:var(--sp-6);line-height:var(--lh-tight);}
+/* 状态与三点共用 36px 宽的右侧位置；按钮高度跟随标题行，不额外撑高卡片。 */
+.dt-hdrow2>.cstatus{min-width:36px;text-align:center;}
 .dt-name{font-size:var(--fs-heading);font-weight:700;color:var(--text-primary);line-height:var(--lh-tight);margin:0;flex:1;min-width:0;}
 .dt-au{font-size:var(--fs-caption);color:var(--text-secondary);flex:1;min-width:0;}
 .dt-side{flex-shrink:0;text-align:right;white-space:nowrap;}
@@ -2409,6 +2411,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .people-search-field:focus{border-color:var(--accent);}
 .people-search-empty{padding:var(--sp-12) 0;color:var(--text-muted);font-size:var(--fs-body);}
 .dt-global-actions{position:relative;z-index:7;display:flex;justify-content:flex-end;align-self:center;flex:0 0 auto;gap:var(--sp-6);}
+.dt-global-actions .people-more summary{height:calc(var(--fs-heading) * var(--lh-tight));}
 .dt-hd:has(.people-more[open]){position:relative;z-index:7;}
 .people-more{position:relative;flex:0 0 auto;}
 /* 菜单以三点按钮为右上角，并盖住按钮。 */
