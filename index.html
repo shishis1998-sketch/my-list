@@ -2465,6 +2465,11 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
 .rg-form-card input:not([type=checkbox]),.rg-form-card select{box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font:var(--fs-body) var(--zh);padding:8px 10px;}
 .rg-form-card input[type=checkbox]{accent-color:var(--accent);}
 .rg-form-card .rg-check{display:flex;align-items:center;gap:8px;min-height:36px;margin:0;color:var(--text-primary);font-size:var(--fs-body);}
+.rg-members-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--sp-12);row-gap:var(--sp-4);}
+.rg-members-grid .rg-check{min-width:0;}
+.rg-members-grid .rg-check input{flex-shrink:0;}
+.rg-members-grid .rg-check span{min-width:0;overflow-wrap:anywhere;}
+
 .rg-rel-add-fields{display:grid;gap:8px;}
 .rg-form-actions{display:flex;justify-content:flex-end;gap:8px;margin:12px 0;}
 .rg-form-actions button,.rg-small-btn{border:0;border-radius:999px;background:var(--accent-light);color:var(--accent);padding:9px 13px;font:600 var(--fs-caption) var(--zh);cursor:pointer;}
@@ -11872,7 +11877,9 @@ function openGraphManager(id=rgGraphId,recordStep=true){
     <div class="rg-form-actions"><button type="button" onclick="cancelGraphManager()">取消</button><button type="button" class="primary" onclick="saveGraphManager()">${fresh?'创建':'保存'}</button></div>
     ${!fresh&&rgGraphId!=='legacy'?'<div class="rg-form-actions"><button type="button" class="danger" onclick="deleteCurrentGraph()">删除这张关系图</button></div>':''}
   </div>${fresh?'':`<div class="rg-form-card"><h3>图中人物</h3>
+    <div class="rg-members-grid">
     ${people.length?people.map(p=>`<label class="rg-check"><input type="checkbox" data-graph-person="${p.id}" ${rgGraphId==='legacy'?!(g?.excludedPersonIds||[]).includes(p.id)?'checked':'':g?.personIds?.includes(p.id)?'checked':''}><span>${esc(p.name)}</span></label>`).join(''):'请先在人物页添加人物'}
+    </div>
     <div class="rg-form-actions"><button type="button" class="primary" onclick="saveGraphMembers()">保存人物</button></div></div>
     ${rgGraphId==='legacy'?'':renderGraphRelationEditor(it,g)}`}`;
   if(recordStep)pushRelationGraphHistory();
