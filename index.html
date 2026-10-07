@@ -4972,6 +4972,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 :is(#modal,#timeModal) .tlsheet-head{background:var(--bg);}
+/* 记录表单：每行左侧标签、右侧输入区，日期和长文本也保留可用宽度。 */
+#modal .frow2{display:block;}
+#modal .fg{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
+#modal .fg>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-caption);}
+#modal .fg>input,#modal .fg>select,#modal .record-tags-control{min-width:0;width:100%;box-sizing:border-box;}
+#modal .record-tags-row{align-items:start;}
+#modal .record-tags-row>label{padding-top:var(--sp-12);}
+#modal .record-tags-control .tmgr-link{display:block;margin:var(--sp-8) 0 0 auto;}
+#modal .record-tags-control .tiwrap{min-width:0;}
 /* 笔记编辑抽屉：灰色面板 + 白色输入区，与其他编辑弹窗统一。 */
 #noteModal .mbox,#noteModal .mhdr,#noteModal .mbody{background:var(--bg);}
 #noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea,
@@ -5768,8 +5777,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <label>封面图片 URL（可选）</label>
       <input type="text" id="f-cover" placeholder="https://...">
     </div>
-    <div class="fg">
-      <label class="tlbl-row">标签（回车、逗号或 + 添加）<button type="button" class="tmgr-link" onclick="openTagMgr('media')">⚙ 管理标签</button></label>
+    <div class="fg record-tags-row">
+      <label for="tinput">标签</label>
+      <div class="record-tags-control">
       <div class="tiwrap" onclick="if(event.target===this)document.getElementById('tinput').focus()">
         <div id="tchips" style="display:contents"></div>
         <input type="text" class="tinput" id="tinput" placeholder="输入后按回车或点 +">
@@ -5778,6 +5788,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <div class="tsugg-wrap" id="tsuggWrap" style="display:none">
         <div class="tsugg-lbl"><span id="tsuggCatLbl">该分类</span>常用标签</div>
         <div class="tsugg-list" id="tsuggList"></div>
+      </div>
+      <button type="button" class="tmgr-link" onclick="openTagMgr('media')">⚙ 管理标签</button>
       </div>
     </div>
     <div class="fg fg-created" id="f-created-row" style="display:none">
