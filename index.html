@@ -5003,6 +5003,17 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal .note-tags-manage{justify-self:end;margin:0;}
 #noteModal #memo-local-group>.local-toggle{grid-column:1 / -1;}
 
+/* 单字段编辑沿用记录编辑的两列、字号和表单留白。 */
+#mfSheet{padding:0;box-shadow:none;}
+#mfSheet .mfsheet-head{margin:0;}
+#mfSheet .mfsheet-body{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;column-gap:var(--sp-12);row-gap:var(--sp-14);padding:var(--sp-20) var(--sp-24) calc(var(--sp-24) + env(safe-area-inset-bottom,0px));}
+#mfSheetHolder{display:contents;}
+#mfSheet .mfsheet-label{grid-column:1;margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
+#mfSheet .mfsheet-input{grid-column:2;min-width:0;width:100%;height:44px;min-height:44px;padding:0 var(--sp-12);font-size:var(--fs-input);line-height:var(--lh-normal);}
+#mfSheet textarea.mfsheet-input{height:auto;min-height:110px;padding:var(--sp-10) var(--sp-12);}
+#mfSheet .mfsheet-body:has(textarea) .mfsheet-label{align-self:start;padding-top:var(--sp-12);}
+@media(max-width:1024px){#mfSheet .mfsheet-body{padding-top:var(--sp-14);padding-left:var(--sp-20);padding-right:var(--sp-20);}}
+
 /* 食记内容点击菜单：沿用书籍 / 日记的竖向操作菜单，不再使用左右并排按钮。 */
 #calNotePreviewModal.food-actions{z-index:120 !important;padding:0;background:transparent;}
 #calNotePreviewModal.food-actions.open{animation:none;}
@@ -6203,8 +6214,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <button type="button" class="mfsheet-action" onpointerdown="event.preventDefault();closeMemoSheet(true)">完成</button>
     </div>
   </div>
-  <div class="mfsheet-label" id="mfSheetLabel"></div>
-  <div id="mfSheetHolder"></div>
+  <div class="mfsheet-body">
+    <div class="mfsheet-label" id="mfSheetLabel"></div>
+    <div id="mfSheetHolder"></div>
+  </div>
 </div>
 
 <!-- ===== TOAST ===== -->
