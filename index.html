@@ -5092,6 +5092,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 云同步底部弹窗：仅内容滚动，底部操作始终可见。 */
 #syncModal.moverlay{z-index:120;align-items:flex-end;justify-content:center;padding:0;}
 #syncModal .mbox{box-sizing:border-box;width:100%;max-width:540px;height:85vh;height:85dvh;max-height:100%;min-height:0;margin:0;border:0;border-radius:var(--rxl) var(--rxl) 0 0;overflow:hidden;box-shadow:none;}
+#syncModal .sync-local-memo{display:flex;align-items:center;gap:var(--sp-10);padding:var(--sp-12) 0;font-size:var(--fs-body);color:var(--text-primary);cursor:pointer;}
+#syncModal .sync-local-memo input{width:16px;height:16px;flex-shrink:0;accent-color:var(--accent);}
+#syncModal .sync-local-memo span{min-width:0;overflow-wrap:anywhere;}
+#syncModal .sync-local-memo+.sync-local-memo{border-top:1px solid var(--border-soft);}
+#syncModal #sync-uploadlocal-btn:disabled{opacity:.5;cursor:default;}
 #syncModal .sync-diff-card[hidden]{display:none;}
 #syncModal .sync-diff-card{padding:var(--sp-14);}
 #syncModal .sync-diff-card summary{font-size:var(--fs-body);font-weight:600;cursor:pointer;}
@@ -5980,8 +5985,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
 
     <div id="sync-uploadlocal-row" class="sync-card sync-option-card" style="display:none">
-      <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn">备忘加密上云</button>
       <div id="sync-uploadlocal-hint" class="sync-hint"></div>
+      <div id="sync-uploadlocal-list"></div>
+      <button class="btn btn-g" style="width:100%" onclick="uploadAllLocalMemos()" id="sync-uploadlocal-btn" disabled>请先选择备忘</button>
     </div>
 
     <div class="fg sync-field">
@@ -9714,8 +9720,10 @@ function isProtectedNote(n){return !!(n.localOnly||n.pendingCloud);}
 // 「仅本机」的备忘只活在这个浏览器的 localStorage 里，清一次缓存就没了。
 // 一条条点锁按钮会触发几十次推送，这里合并成一次。
 async function uploadAllLocalMemos(){
-  const targets=notes.filter(n=>n.subCat==='备忘'&&n.localOnly);
-  if(!targets.length){toast('没有「仅本机」的备忘');return;}
+  if(isSyncing){toast('同步中，请稍后再试');return;}
+  const selectedIds=new Set([...document.querySelectorAll('#sync-uploadlocal-list input:checked')].map(x=>x.value));
+  const targets=notes.filter(n=>n.subCat==='备忘'&&n.localOnly&&selectedIds.has(String(n.id)));
+  if(!targets.length){toast('请先选择要上云的备忘');return;}
   if(!getToken()){toast('请先配置 token');return;}
   if(isReadOnly()){toast('👀 这台设备是只读模式，请先关闭只读再上云');return;}
   const pw=getMasterPw();
@@ -9746,14 +9754,21 @@ async function uploadAllLocalMemos(){
 }
 function refreshUploadLocalRow(){
   const row=document.getElementById('sync-uploadlocal-row');if(!row)return;
-  const n=notes.filter(x=>x.subCat==='备忘'&&x.localOnly).length;
-  if(!n||!getToken()){row.style.display='none';return;}
+  const targets=notes.filter(x=>x.subCat==='备忘'&&x.localOnly);
+  if(!targets.length||!getToken()){row.style.display='none';return;}
   row.style.display='block';
-  document.getElementById('sync-uploadlocal-btn').textContent='将 '+n+' 条本机备忘加密上云';
   document.getElementById('sync-uploadlocal-hint').textContent=
-    '这 '+n+' 条只存在本机，清掉浏览器数据就没了。上云后云端只存密文。';
+    targets.length+' 条备忘仅存在本机。先勾选要上云的条目，未选中的继续仅存本机。';
+  document.getElementById('sync-uploadlocal-list').innerHTML=targets.map(n=>
+    '<label class="sync-local-memo"><input type="checkbox" value="'+esc(String(n.id))+'" onchange="refreshSelectedMemoUpload()"><span>'+esc(n.title||'未命名备忘')+'</span></label>').join('');
+  refreshSelectedMemoUpload();
 }
-
+function refreshSelectedMemoUpload(){
+  const count=document.querySelectorAll('#sync-uploadlocal-list input:checked').length;
+  const button=document.getElementById('sync-uploadlocal-btn');
+  button.disabled=!count;
+  button.textContent=count?'将选中的 '+count+' 条备忘'+(getMasterPw()&&cryptoOk()?'加密':'')+'上云':'请先选择备忘';
+}
 
 // ── 读云端那份 JSON ────────────────────────────────────────────
 // GitHub 的 Gist API 对大文件只回前面一段 content、把 truncated 置真，完整内容
