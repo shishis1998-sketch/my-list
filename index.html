@@ -11467,18 +11467,19 @@ function renderDetail(previewBox=null, viewTab=dtTab){
         ${(()=>{const ppl=ensurePeopleIds(item,false);
           // 排序态：只剩一个人就没什么可排的，自动退出（比如在排序态里删掉了人）
           const sorting=dtSortPeople&&ppl.length>1;
-          return `<div class="dt-seclbl-row" style="justify-content:flex-end">
+          return `
+          ${peopleSearchOpen&&!sorting?`<input id="peopleSearchInput" class="people-search-field" type="search" placeholder="搜索人物姓名、信息或备注" aria-label="搜索人物" value="${esc(peopleSearchQuery)}" oninput="filterPeopleList(this.value)" autocomplete="off">`:''}
+          <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
+            ${ppl.length?renderPeople(ppl,sorting):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
+            ${ppl.length&&peopleSearchOpen&&!sorting?'<div id="peopleSearchEmpty" class="people-search-empty" hidden>没有找到匹配的人物</div>':''}
+          </div>
+          <div class="dt-seclbl-row" style="justify-content:flex-end">
             ${sorting
               ? '<button type="button" class="dt-lnk" onclick="setSortPeople(false)">完成</button>'
               : `<div class="people-head-actions">
                   <button type="button" class="dt-lnk dt-lnk-add" onclick="tapPerson(event,-1)">＋ 添加</button>
 
                 </div>`}
-          </div>
-          ${peopleSearchOpen&&!sorting?`<input id="peopleSearchInput" class="people-search-field" type="search" placeholder="搜索人物姓名、信息或备注" aria-label="搜索人物" value="${esc(peopleSearchQuery)}" oninput="filterPeopleList(this.value)" autocomplete="off">`:''}
-          <div class="dt-card"${ppl.length?'':' onclick="tapPerson(event,-1)"'}>
-            ${ppl.length?renderPeople(ppl,sorting):'<div class="dt-tl-empty">还没有人物，点这里记一笔</div>'}
-            ${ppl.length&&peopleSearchOpen&&!sorting?'<div id="peopleSearchEmpty" class="people-search-empty" hidden>没有找到匹配的人物</div>':''}
           </div>
           ${ppl.length&&!sorting?`<button type="button" class="dt-fab" aria-label="添加人物" title="添加人物"
             onclick="tapPerson(event,-1)">${ICON_ADD_PERSON}</button>`:''}`;})()}
