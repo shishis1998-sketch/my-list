@@ -5770,7 +5770,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </div>
     </div>
     <div class="fg">
-      <label>导演 / 作者 / 艺人</label>
+      <label>作者</label>
       <input type="text" id="f-creator" placeholder="例: 李安">
     </div>
     <div class="fg record-tags-row">
@@ -5787,10 +5787,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </div>
       <button type="button" class="tmgr-link" onclick="openTagMgr('media')">⚙ 管理标签</button>
       </div>
-    </div>
-    <div class="fg fg-created" id="f-created-row" style="display:none">
-      <label>首次添加</label>
-      <div class="created-val" id="f-created"></div>
     </div>
     </div><!-- /mbody -->
   </div>
@@ -12985,7 +12981,6 @@ function openAdd(){
   document.getElementById('f-year').value='';
   document.getElementById('f-watch').value='';
   document.getElementById('f-watch-start').value='';
-  fillCreatedRow('f-created-row','f-created',null);   // 新增时没有首次添加可言
   document.getElementById('f-creator').value='';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value='';
@@ -13004,7 +12999,6 @@ function openEdit(id){
   document.getElementById('f-year').value=item.year||'';
   document.getElementById('f-watch').value=item.watchDate||'';
   document.getElementById('f-watch-start').value=item.startDate||'';
-  fillCreatedRow('f-created-row','f-created',item);
   document.getElementById('f-creator').value=item.creator||'';
   document.getElementById('tinput').value='';
   document.getElementById('f-score').value=item.score?String(item.score):'';
