@@ -598,9 +598,9 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .dt-lnk-icon{align-self:center;display:grid;place-items:center;width:40px;height:40px;
   padding:0;margin:-10px calc(-1 * var(--sp-4)) -10px auto;}
 .dt-lnk-icon svg{width:18px;height:18px;}
-.dt-pitem+.dt-pitem{border-top:1px solid var(--border-soft);}
-.dt-pitem:first-child{padding-top:0;}
-.dt-pitem:last-child{padding-bottom:0;}
+.dt-pitem:not([hidden])~.dt-pitem:not([hidden]){border-top:1px solid var(--border-soft);}
+.dt-pitem:nth-child(1 of .dt-pitem:not([hidden])){padding-top:0;}
+.dt-pitem:nth-last-child(1 of .dt-pitem:not([hidden])){padding-bottom:0;}
 /* keep-all：名字真长到要折行时，断点交给 nameHtml() 插在符号处，不按字硬切 */
 .dt-pname{font-size:var(--fs-body);font-weight:700;color:var(--text-primary);
   line-height:var(--lh-tight);word-break:keep-all;overflow-wrap:break-word;}
