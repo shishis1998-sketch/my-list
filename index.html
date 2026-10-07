@@ -11405,19 +11405,14 @@ function renderDetail(previewBox=null, viewTab=dtTab){
           ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
           <div class="dt-global-actions people-head-actions">
         <details class="people-more">
-          <summary aria-label="搜索人物或时间线" title="搜索" onclick="togglePeopleMenu(event,this)">${ICON_PERSON_SEARCH}</summary>
-          <div class="people-more-menu">
-            <button type="button" class="people-more-item" onclick="detailTopAction('search-people',this)">搜索人物</button>
-            <button type="button" class="people-more-item" onclick="detailTopAction('search-tl',this)">搜索时间线</button>
-          </div>
-        </details>
-        <details class="people-more">
           <summary aria-label="更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
           <div class="people-more-menu">
+            <button type="button" class="people-more-item" onclick="detailTopAction('search-people',this)">${ICON_PERSON_SEARCH}<span>搜索人物</span></button>
+            <button type="button" class="people-more-item" onclick="detailTopAction('search-tl',this)">${ICON_PERSON_SEARCH}<span>搜索时间线</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('graph',this)">${ICON_RELATION}<span>关系图</span></button>
             <button type="button" class="people-more-item" onclick="detailTopAction('sort',this)" ${ensurePeopleIds(item,false).length>1?'':'disabled'}>${ICON_SORT}<span>排序人物</span></button>
-            <button type="button" class="people-more-item" data-timeline-toggle-all onclick="detailTopAction('chapters',this)">全部收起／展开</button>
-            <button type="button" class="people-more-item" onclick="detailTopAction('booknote',this,event)">编辑全文</button>
+            <button type="button" class="people-more-item" data-timeline-toggle-all onclick="detailTopAction('chapters',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6 4-4 4 4M8 18l4 4 4-4M4 10h16M4 14h16"/></svg><span>全部收起／展开</span></button>
+            <button type="button" class="people-more-item" onclick="detailTopAction('booknote',this,event)">${ICON_EDIT_DOC}<span>编辑全文</span></button>
           </div>
         </details>
       </div>
