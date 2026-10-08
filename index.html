@@ -8013,9 +8013,70 @@ window.PV = (function(){
       if (!wrap) return;
       const list = SYMPTOMS_DATA[`${y}-${m}-${d}`] || [];
       const has = list.length > 0;
-      wrap.classList.toggle('has-rec', 
-... 2453 bytes omitted ...
-�均值外推
+      wrap.classList.toggle('has-rec', has);
+      const old = wrap.querySelector('.day-meta');
+      if (old) old.outerHTML = dayMetaHtml(y, m, d, list);
+      closeMoreSymptoms();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, ch => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      })[ch]);
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    function computeCycles() {
+      const dates = [];
+      Object.keys(ALL_DATA).forEach(key => {
+        // 只统计真正的月经期(POCO=1 / MEDIO=2 / MUCHO=3)
+        // GOTAS(level 4, 灰色点滴)不算经期,排除
+        const lv = ALL_DATA[key];
+        if (lv === 1 || lv === 2 || lv === 3) {
+          const [y, m, d] = key.split('-').map(Number);
+          dates.push(new Date(y, m - 1, d));
+        }
+      });
+      if (dates.length === 0) return { periods: [], cycles: [] };
+
+      dates.sort((a, b) => a - b);
+
+      const periods = []; // [{ start: Date, end: Date, length: 天数 }]
+      let curStart = dates[0];
+      let curEnd = dates[0];
+      const TOLERANCE_DAYS = 1; // 容差:间隔超过 1 天才算新一段
+      for (let i = 1; i < dates.length; i++) {
+        const gap = Math.round((dates[i] - curEnd) / (1000 * 60 * 60 * 24));
+        if (gap <= TOLERANCE_DAYS) {
+          curEnd = dates[i];
+        } else {
+          periods.push({
+            start: curStart, end: curEnd,
+            length: Math.round((curEnd - curStart) / 86400000) + 1
+          });
+          curStart = dates[i];
+          curEnd = dates[i];
+        }
+      }
+      periods.push({
+        start: curStart, end: curEnd,
+        length: Math.round((curEnd - curStart) / 86400000) + 1
+      });
+
+      // 周期 = 这次开始 → 下次开始 之间的天数
+      const cycles = [];
+      for (let i = 1; i < periods.length; i++) {
+        const days = Math.round((periods[i].start - periods[i-1].start) / 86400000);
+        cycles.push(days);
+      }
+      return { periods, cycles };
+    }
+
+    // ── 排卵期推算（黄体期倒推法）────────────────────────────────
+    // 排卵日 ≈ 下次月经来潮日 − 14 天。黄体期长度个体差异很小(12–16 天)，
+    // 比「周期 ÷ 2」稳得多，对周期不规律的人尤其如此。
+    //   · 历史：用真实发生的下次经期倒推，等于事后校准，最准
+    //   · 未来：用最近若干个周期的平均值外推
     // 结果不落盘、每次渲染现算，所以改任意一天的经血量后自动跟着变，
     // 也不会和 Gist 同步的数据打架。
     // 全部参数都可调（设置 › 经期）：本机即时保存，同时进入 Gist 同步。
