@@ -2591,6 +2591,7 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);
   text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;
   transition:left .42s cubic-bezier(.22,1,.36,1),top .42s cubic-bezier(.22,1,.36,1),opacity .2s,border-color .2s,background .2s;}
+.rg-canvas.text-left .rg-node{align-items:flex-start;text-align:left;}
 .rg-node.dragging{z-index:2;cursor:grabbing;transition:none;}
 .rg-node.center{border:2px solid var(--accent);background:var(--accent);color:var(--on-accent);}
 .rg-node.center .rg-node-info{color:var(--on-accent-soft);}
@@ -11978,6 +11979,7 @@ function openGraphManager(id=rgGraphId,recordStep=true){
   document.getElementById('rgManager').innerHTML=`<div class="rg-form-card">
     <div class="rg-manager-field"><label for="rgGraphName">名称</label><input id="rgGraphName" onchange="autoSaveGraphField('title',this)" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系"></div>
     <div class="rg-manager-field"><label for="rgGraphAnchor">关联</label><select id="rgGraphAnchor" onchange="autoSaveGraphField('anchor',this)" aria-label="关联章节／小节">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select></div>
+    <div class="rg-manager-field"><label for="rgGraphTextAlign">文字对齐</label><select id="rgGraphTextAlign" onchange="autoSaveGraphField('textAlign',this)"><option value="center" ${g?.textAlign!=='left'?'selected':''}>居中</option><option value="left" ${g?.textAlign==='left'?'selected':''}>靠左</option></select></div>
 
   </div>${fresh?'':`<h3 class="rg-manager-section-title">人物</h3><div class="rg-form-card">
     <div class="rg-members-grid">
@@ -12015,7 +12017,7 @@ function saveGraphManager(){
   const title=document.getElementById('rgGraphName')?.value.trim();if(!title){toast('请填写关系图名称');return;}
   const anchor=document.getElementById('rgGraphAnchor').value;
   if(rgGraphId==='new'){
-    const g={id:'g_'+newPersonId(),title,anchor,personIds:[],relationships:[],centerId:'',positions:null};
+    const g={id:'g_'+newPersonId(),title,anchor,textAlign:document.getElementById('rgGraphTextAlign').value,personIds:[],relationships:[],centerId:'',positions:null};
     it.relationGraphs.push(g);rgGraphId=g.id;
   }else{const g=graphForItem(it);if(!g)return;g.title=title;g.anchor=anchor;}
   touchRec(it);persist();openGraphManager(rgGraphId,false);toast('已保存');
@@ -12232,6 +12234,7 @@ function separateGraphCards(){
 }
 function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
+  canvas.classList.toggle('text-left',graphForItem(data.find(d=>d.id===detailId))?.textAlign==='left');
   const types=relationTypes(data.find(d=>d.id===detailId));
   if(!people.length){canvas.innerHTML='<div class="rg-empty">这张关系图还没有人物。可点右下角编辑图标添加。</div>';
     document.getElementById('rgFilter').innerHTML='';renderGraphLegend(relations);return;}
@@ -12526,16 +12529,21 @@ function setGraphCenter(id){
 function snapGraphNodePosition(d,rawX,rawY){
   const movingW=d.el.offsetWidth,movingH=d.el.offsetHeight;
   const centerX=rawX+movingW/2,centerY=rawY+movingH/2;
-  // 以屏幕上的 12px 作为吸附范围；画布缩放后仍保持相同手感。
+  // 中心和左边缘都可吸附；选屏幕距离最近的对齐位置。
   const threshold=12/Math.max(.01,rgState.scale);
-  let bestX=null,bestY=null,bestXGap=threshold+1,bestYGap=threshold+1;
+  let bestX=null,bestY=null,bestXGap=Infinity,bestYGap=Infinity;
   document.querySelectorAll('#rgCanvas .rg-node').forEach(el=>{
     if(el===d.el)return;
     const pos=rgState.positions[el.dataset.person];if(!pos)return;
     const otherX=pos.x+el.offsetWidth/2,otherY=pos.y+el.offsetHeight/2;
-    const xGap=Math.abs(centerX-otherX),yGap=Math.abs(centerY-otherY);
-    if(xGap<bestXGap){bestXGap=xGap;bestX={id:el.dataset.person,value:otherX-movingW/2};}
-    if(yGap<bestYGap){bestYGap=yGap;bestY={id:el.dataset.person,value:otherY-movingH/2};}
+    [{kind:'left',value:pos.x,gap:Math.abs(rawX-pos.x)},
+     {kind:'center',value:otherX-movingW/2,gap:Math.abs(centerX-otherX)}].forEach(target=>{
+      if(target.gap<=threshold&&target.gap<bestXGap){
+        bestXGap=target.gap;bestX={id:el.dataset.person+':'+target.kind,value:target.value};
+      }
+    });
+    const yGap=Math.abs(centerY-otherY);
+    if(yGap<=threshold&&yGap<bestYGap){bestYGap=yGap;bestY={id:el.dataset.person,value:otherY-movingH/2};}
   });
   const nextSnapX=bestX?.id||'',nextSnapY=bestY?.id||'';
   if((nextSnapX&&nextSnapX!==d.snapX)||(nextSnapY&&nextSnapY!==d.snapY))haptic('tap');
