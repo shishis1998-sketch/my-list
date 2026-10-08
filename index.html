@@ -4970,7 +4970,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 .chapter-heading-option:active{background:var(--press);}
 .chapter-heading-option+.chapter-heading-option{border-left:1px solid var(--border);}
-.chapter-heading-option.on{background:var(--accent-light);color:var(--accent);font-weight:600;}
+.chapter-heading-option.chapter-heading-picked{background:var(--accent-light);color:var(--accent);}
 .chapter-heading-option sub{font-size:.65em;vertical-align:-.25em;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-whole-text:focus,.chapter-title-input:focus{outline:1px solid var(--accent);}
@@ -16743,25 +16743,18 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
     if(!headingPicker)return;
     headingPicker.classList.remove('open');
     headingTrigger.setAttribute('aria-expanded','false');
-  };
-  const syncHeadingChoice=()=>{
-    const pos=ta.selectionStart||0;
-    const lineStart=ta.value.lastIndexOf('\n',Math.max(0,pos-1))+1;
-    const lineEnd=ta.value.indexOf('\n',pos);
-    const line=ta.value.slice(lineStart,lineEnd<0?ta.value.length:lineEnd);
-    const current=/^#\s/.test(line)?'h1':/^##\s/.test(line)?'h2':'t';
-    headingOptions.forEach(option=>option.classList.toggle('on',option.dataset.fmt===current));
+    headingOptions.forEach(option=>option.classList.remove('chapter-heading-picked'));
   };
   if(headingTrigger)headingTrigger.addEventListener('pointerdown',e=>{
     e.preventDefault();e.stopPropagation();
     const open=headingPicker.classList.toggle('open');
-    if(open)syncHeadingChoice();
     headingTrigger.setAttribute('aria-expanded',String(open));
   });
   body.querySelectorAll('[data-fmt]').forEach(btn=>btn.addEventListener('pointerdown',e=>{
     e.preventDefault();e.stopPropagation();noteFmt(btn.dataset.fmt,ta);
     if(btn.classList.contains('chapter-heading-option')){
-      headingOptions.forEach(option=>option.classList.toggle('on',option===btn));
+      headingOptions.forEach(option=>option.classList.remove('chapter-heading-picked'));
+      btn.classList.add('chapter-heading-picked');
       setTimeout(closeHeadingPicker,90);
     }else closeHeadingPicker();
   }));
