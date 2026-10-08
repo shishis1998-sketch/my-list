@@ -8013,70 +8013,9 @@ window.PV = (function(){
       if (!wrap) return;
       const list = SYMPTOMS_DATA[`${y}-${m}-${d}`] || [];
       const has = list.length > 0;
-      wrap.classList.toggle('has-rec', has);
-      const old = wrap.querySelector('.day-meta');
-      if (old) old.outerHTML = dayMetaHtml(y, m, d, list);
-      closeMoreSymptoms();
-    }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, ch => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-      })[ch]);
-    }
-    function escapeAttr(s) { return escapeHtml(s); }
-
-    function computeCycles() {
-      const dates = [];
-      Object.keys(ALL_DATA).forEach(key => {
-        // 只统计真正的月经期(POCO=1 / MEDIO=2 / MUCHO=3)
-        // GOTAS(level 4, 灰色点滴)不算经期,排除
-        const lv = ALL_DATA[key];
-        if (lv === 1 || lv === 2 || lv === 3) {
-          const [y, m, d] = key.split('-').map(Number);
-          dates.push(new Date(y, m - 1, d));
-        }
-      });
-      if (dates.length === 0) return { periods: [], cycles: [] };
-
-      dates.sort((a, b) => a - b);
-
-      const periods = []; // [{ start: Date, end: Date, length: 天数 }]
-      let curStart = dates[0];
-      let curEnd = dates[0];
-      const TOLERANCE_DAYS = 1; // 容差:间隔超过 1 天才算新一段
-      for (let i = 1; i < dates.length; i++) {
-        const gap = Math.round((dates[i] - curEnd) / (1000 * 60 * 60 * 24));
-        if (gap <= TOLERANCE_DAYS) {
-          curEnd = dates[i];
-        } else {
-          periods.push({
-            start: curStart, end: curEnd,
-            length: Math.round((curEnd - curStart) / 86400000) + 1
-          });
-          curStart = dates[i];
-          curEnd = dates[i];
-        }
-      }
-      periods.push({
-        start: curStart, end: curEnd,
-        length: Math.round((curEnd - curStart) / 86400000) + 1
-      });
-
-      // 周期 = 这次开始 → 下次开始 之间的天数
-      const cycles = [];
-      for (let i = 1; i < periods.length; i++) {
-        const days = Math.round((periods[i].start - periods[i-1].start) / 86400000);
-        cycles.push(days);
-      }
-      return { periods, cycles };
-    }
-
-    // ── 排卵期推算（黄体期倒推法）────────────────────────────────
-    // 排卵日 ≈ 下次月经来潮日 − 14 天。黄体期长度个体差异很小(12–16 天)，
-    // 比「周期 ÷ 2」稳得多，对周期不规律的人尤其如此。
-    //   · 历史：用真实发生的下次经期倒推，等于事后校准，最准
-    //   · 未来：用最近若干个周期的平均值外推
+      wrap.classList.toggle('has-rec', 
+... 2453 bytes omitted ...
+�均值外推
     // 结果不落盘、每次渲染现算，所以改任意一天的经血量后自动跟着变，
     // 也不会和 Gist 同步的数据打架。
     // 全部参数都可调（设置 › 经期）：本机即时保存，同时进入 Gist 同步。
@@ -9355,7 +9294,7 @@ function boot(){
   // 「日记」迁移：配了同步就等 pull 后按云端状态执行（syncPull 里会调），避免被云端覆盖；
   // 没配同步则直接在本机迁移。
   if(getToken()&&getGistId()) setTimeout(()=>syncPull(true),400);
-  else { migrateDiary(); migrateBookNotes(); migrateLegacyChapterHeadings(); }
+  else { migrateDiary(); migrateBookNotes(); migrateShuangjiangTimeline(); migrateLegacyChapterHeadings(); }
   updateSyncBadge();
   renderTrashCount();   // 设置页那一行右边的「N 条」
 }
@@ -9406,6 +9345,111 @@ function migrateBookNotes(){
   const stillMigratable=(notes||[]).some(n=>n.subCat==='读书笔记'&&!n.movedToMedia&&((n.title||'').trim()||(n.body||'').trim()));
   if(!stillMigratable)localStorage.setItem(FLAG,'1');
   if(moved||made)console.log(`[迁移] 读书笔记搬进媒体记录：并入已有 ${moved} 篇，新建记录 ${made} 条${skipped?`，跳过 ${skipped} 篇空笔记`:''}`);
+}
+
+// 一次性导入《霜降》剧情时间线。正文来自 shuangjiang_timeline.html，只取可见文字，
+// 不带原文件的 HTML/CSS。版本号跟着媒体记录同步，完成后不会反复覆盖用户后续编辑。
+const SHUANGJIANG_TIMELINE_VERSION=1;
+const SHUANGJIANG_TIMELINE=`第一章
+1. 霜降，18岁，农村姑娘独自去北京
+2. 她有个小男友叫小赵（中学同学），现给深宅大院做事，霜降过去后住在深宅的一间空房间里
+3. 院子主人是个老爷子，79岁的老将军，共有9个孩子
+4. 其中老四（四星）叫霜降进他屋里，四星称其屋子为牢房
+
+第二章
+1. 霜降在四星的要求下被带去见老爷子（程司令员），他夫人叫孩儿妈
+2. 老爷子同意之后，小赵被调走了
+3. 管家，孙管理员
+4. 他们其中一个儿子很像老爷子秘书，孩儿妈生下他后便落下病根
+5. 霜降一共负责4个孩子
+6. 小女儿上大学，留学时跟老外相好，老爷子不同意他们相处，这才安排她回京
+
+第三章
+1. 老九，程大江，博士生
+2. 老五，淮海，制片人
+3. 大江约霜降去饭店跳舞
+4. 老七，川南
+5. 淮海川南兄妹俩有不正当男女关系
+6. 四星搂住霜降，大江和孩儿妈都看见了
+
+第四章
+1. 大江在晨跑，霜降在附近捡豆子
+2. 东旗不被允许接触自己的孩子
+3. 老爷子对霜降不老实，孩儿妈来她才得以脱身
+4. 淮海沾花惹草，他老婆知道
+5. 霜降赴了大江的约
+6. 大江不知道霜降是他家女佣
+
+第五章
+1. 他们家隔壁是已故将军的家人，几乎变成了贫民窟
+2. 霜降管的其中俩孩子被送去国外
+3. 老爷子就变着法的让霜降在自己身边干活
+4. 老爷子让霜降在自己的浴盆里洗澡，还偷窥她
+5. 大江走了
+6. 四星儿子，都都，在幼儿园被欺负
+
+第六章
+1. 六嫂，四星前妻，离婚后不能接触孩子
+2. 四星想收了霜降，但是她心里想着大江
+3. 霜降听说工厂招女工，想着走
+4. 四星吃安眠药企图自杀，然后被送医院
+5. 孩儿妈叫霜降去医院看看四星
+
+第七章
+1. 四星出院后长胖了也不失眠了
+2. 四星出事后大江回来了
+3. 大江女朋友，兆兆，家境不错，她父亲的官比老爷子的大
+4. 大江坦白从一开始就想带霜降离开这院子
+5. 并提到他和兆兆并不互相喜欢
+
+第八章
+1. 孩儿妈尽量不偏袒任何一个孩子，否则会被老爷子怀疑那孩子不是他亲生的
+2. 川南结婚，东旗把房间让出来给她当婚房，她自己去住校
+3. 霜降原本半年前提了辞职，正好赶上四星出事，孩儿妈不准任何人离开
+4. 霜降送走大江时，大江坦白说喜欢她
+
+第九章
+1. 淮海老婆出国后他跟小保姆李子同居
+2. 李子和川南都有了身孕，李子被解雇
+3. 霜降给四星送饭然后一起吃
+4. 四星说会娶她
+
+第十章
+1. 大江腿受伤后回来，写信给霜降让她去医院看他
+2. 六嫂被拘留后出来跟洋人结婚
+3. 淮海被误抓后放回来
+4. 几个月后兆兆回来了
+5. 四星答应霜降带她去国外
+
+第十一章
+1. 淮海这次真的被抓，老爷子出去求人都被拒绝了
+2. 霜降最后没有跟四星一起出国
+
+第十二章
+1. 淮海被判死刑
+2. 老爷子住院
+3. 孩儿妈癌症晚期
+4. 霜降本来跟大江约好见面，但是发现自己怀孕了就没去赴约，后来做了人流
+
+#### 尾声
+1. 大江和霜降最后相遇了，但并没有相认`;
+
+function migrateShuangjiangTimeline(){
+  const norm=t=>String(t||'').replace(/[\s《》「」【】\[\]()（）]/g,'').toLowerCase();
+  let item=data.find(d=>norm(d.name)==='霜降');
+  if(item&&item._shuangjiangTimelineVersion>=SHUANGJIANG_TIMELINE_VERSION)return;
+  if(!item){
+    const bookCat=(cats.find(c=>/书/.test(c.name||''))||cats[0]||{}).id;
+    const today=new Date().toISOString().slice(0,10);
+    item={id:uid(),name:'霜降',type:bookCat,status:'in-progress',score:null,year:null,
+      startDate:null,watchDate:null,creator:'',cover:'',note:'',bookNote:'',tags:[],date:today};
+    data.unshift(item);
+  }
+  item.bookNote=SHUANGJIANG_TIMELINE;
+  item._shuangjiangTimelineVersion=SHUANGJIANG_TIMELINE_VERSION;
+  touchRec(item);
+  localStorage.setItem(SK,JSON.stringify(data));
+  scheduleSyncPush();
 }
 
 // 一次性迁移：新增「日记」子分类，把「收集」里带「随笔」标签的笔记移过去（并去掉随笔标签）。
@@ -9997,6 +10041,8 @@ async function syncPull(silent){
     migrateDiary();
     // 「读书笔记 → 媒体记录」同理：云端可能还带着没搬的旧数据
     migrateBookNotes();
+    // 《霜降》只在云端最新数据落地后补入，避免先写本机再被 pull 覆盖
+    migrateShuangjiangTimeline();
     localStorage.setItem(SK,JSON.stringify(data));
     localStorage.setItem(CK,JSON.stringify(cats));
     localStorage.setItem(NSK,JSON.stringify(notes));
