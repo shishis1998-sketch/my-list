@@ -12546,6 +12546,13 @@ function setGraphCenter(id){
   saveGraphPositions();
 }
 function snapGraphNodePosition(d,rawX,rawY){
+  const item=data.find(it=>it.id===detailId),graph=item&&graphForItem(item);
+  // 网格显示时按画布坐标取整：左、上边缘始终落在同一套 20px 网格上。
+  // 此时网格优先，避免卡片间吸附把它拉离网格线。
+  if(graph&&graph.showGrid!==false){
+    d.snapX=d.snapY='';
+    return {x:Math.round(rawX/20)*20,y:Math.round(rawY/20)*20};
+  }
   const movingW=d.el.offsetWidth,movingH=d.el.offsetHeight;
   const centerX=rawX+movingW/2,centerY=rawY+movingH/2;
   // 中心和左边缘都可吸附；选屏幕距离最近的对齐位置。
