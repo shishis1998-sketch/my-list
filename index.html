@@ -4948,7 +4948,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-more summary{list-style:none;cursor:pointer;padding:8px 12px;color:var(--text-muted);font-size:22px;line-height:1;}
 .chapter-more summary::-webkit-details-marker{display:none;}
 .chapter-more[open]>.dt-lnk{position:absolute;right:0;top:100%;z-index:2;white-space:nowrap;padding:12px 16px;background:var(--surface);border:1px solid var(--ink);border-radius:var(--rlg);}
-#tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;}
+/* 新增 / 整章编辑：灰色抽屉和顶部栏，白色标题、正文输入框。 */
+#tlSheet:has(#tlSheetBody.chapter-editing),
+#tlSheet:has(#tlSheetBody.chapter-editing) .tlsheet-head{background:var(--bg);}
+#tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg);}
 .chapter-title-input{flex-shrink:0;width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;font:inherit;font-size:var(--fs-input);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-format{flex-shrink:0;margin:0;}
 /* 章节标题级别：H 打开 H1 / H2 / T 菜单；菜单向上展开，不挤压正文。 */
