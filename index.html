@@ -10887,6 +10887,15 @@ let dtTab='info';
 })();
 let dtTabTransitionDir=0;
 let dtTabColorTimer=0;
+function resetDetailTabScroll(){
+  // 手机端详情页跟随整页滚动；部分宽屏布局下则可能由 detailRoot 自己滚。
+  // 两边都归零，避免切换概览 / 备注 / 时间线 / 人物后继承上一栏的位置。
+  const root=document.getElementById('detailRoot');
+  if(root)root.scrollTop=0;
+  const page=document.scrollingElement||document.documentElement;
+  if(page)page.scrollTop=0;
+  window.scrollTo(0,0);
+}
 function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（顺序落手时已存）
   const next=DT_TABS.some(t=>t.id===v)?v:'info';
   const oldI=DT_TABS.findIndex(t=>t.id===dtTab);
@@ -10896,6 +10905,11 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
   const oldThumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
   const fromTransform=oldThumb?getComputedStyle(oldThumb).transform:null;
   dtTab=next; renderDetail();
+  if(oldI!==newI){
+    resetDetailTabScroll();
+    // 重绘后的下一帧再校正一次，挡住浏览器因新旧栏目高度不同触发的滚动锚定。
+    requestAnimationFrame(resetDetailTabScroll);
+  }
   const thumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
   if(oldI!==newI&&thumb&&fromTransform&&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
