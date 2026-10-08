@@ -2591,7 +2591,8 @@ html.scrolling .notesheet-ta::-webkit-scrollbar-thumb{
   border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);
   text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;
   transition:left .42s cubic-bezier(.22,1,.36,1),top .42s cubic-bezier(.22,1,.36,1),opacity .2s,border-color .2s,background .2s;}
-.rg-canvas.text-left .rg-node{align-items:flex-start;text-align:left;}
+.rg-node.text-left{align-items:flex-start;text-align:left;}
+.rg-node.text-left .rg-node-name,.rg-node.text-left .rg-node-info{width:100%;}
 .rg-node.dragging{z-index:2;cursor:grabbing;transition:none;}
 .rg-node.center{border:2px solid var(--accent);background:var(--accent);color:var(--on-accent);}
 .rg-node.center .rg-node-info{color:var(--on-accent-soft);}
@@ -11979,7 +11980,6 @@ function openGraphManager(id=rgGraphId,recordStep=true){
   document.getElementById('rgManager').innerHTML=`<div class="rg-form-card">
     <div class="rg-manager-field"><label for="rgGraphName">名称</label><input id="rgGraphName" onchange="autoSaveGraphField('title',this)" value="${esc(g?.title||'')}" placeholder="例如：春秋人物关系"></div>
     <div class="rg-manager-field"><label for="rgGraphAnchor">关联</label><select id="rgGraphAnchor" onchange="autoSaveGraphField('anchor',this)" aria-label="关联章节／小节">${graphAnchorOptions(it,g?.anchor||rgAnchorFilter)}</select></div>
-    <div class="rg-manager-field"><label for="rgGraphTextAlign">文字对齐</label><select id="rgGraphTextAlign" onchange="autoSaveGraphField('textAlign',this)"><option value="center" ${g?.textAlign!=='left'?'selected':''}>居中</option><option value="left" ${g?.textAlign==='left'?'selected':''}>靠左</option></select></div>
 
   </div>${fresh?'':`<h3 class="rg-manager-section-title">人物</h3><div class="rg-form-card">
     <div class="rg-members-grid">
@@ -12017,7 +12017,7 @@ function saveGraphManager(){
   const title=document.getElementById('rgGraphName')?.value.trim();if(!title){toast('请填写关系图名称');return;}
   const anchor=document.getElementById('rgGraphAnchor').value;
   if(rgGraphId==='new'){
-    const g={id:'g_'+newPersonId(),title,anchor,textAlign:document.getElementById('rgGraphTextAlign').value,personIds:[],relationships:[],centerId:'',positions:null};
+    const g={id:'g_'+newPersonId(),title,anchor,personIds:[],relationships:[],centerId:'',positions:null};
     it.relationGraphs.push(g);rgGraphId=g.id;
   }else{const g=graphForItem(it);if(!g)return;g.title=title;g.anchor=anchor;}
   touchRec(it);persist();openGraphManager(rgGraphId,false);toast('已保存');
@@ -12234,14 +12234,14 @@ function separateGraphCards(){
 }
 function renderRelationGraph(people,relations){
   const canvas=document.getElementById('rgCanvas');if(!canvas)return;
-  canvas.classList.toggle('text-left',graphForItem(data.find(d=>d.id===detailId))?.textAlign==='left');
+  const graph=graphForItem(data.find(d=>d.id===detailId));
   const types=relationTypes(data.find(d=>d.id===detailId));
   if(!people.length){canvas.innerHTML='<div class="rg-empty">这张关系图还没有人物。可点右下角编辑图标添加。</div>';
     document.getElementById('rgFilter').innerHTML='';renderGraphLegend(relations);return;}
   layoutGraph(people,relations,rgState.centerId);
   canvas.style.width=canvas.style.height=rgState.canvasSize+'px';
   canvas.innerHTML=`<svg class="rg-lines" id="rgLines" viewBox="0 0 ${rgState.canvasSize} ${rgState.canvasSize}" style="width:${rgState.canvasSize}px;height:${rgState.canvasSize}px"></svg>`+
-    people.map(p=>{const pos=rgState.positions[p.id];return `<div class="rg-node" data-person="${p.id}" style="left:${pos.x}px;top:${pos.y}px">
+    people.map(p=>{const pos=rgState.positions[p.id];return `<div class="rg-node${graph?.nodeTextAlign?.[p.id]==='left'?' text-left':''}" data-person="${p.id}" style="left:${pos.x}px;top:${pos.y}px">
       <div class="rg-node-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-node-info">${esc(p.info)}</div>`:''}</div>`;}).join('');
   canvas.querySelectorAll('.rg-node').forEach(el=>{el.addEventListener('click',()=>{
     if(Date.now()<rgState.suppressNodeClickUntil)return;
@@ -12500,7 +12500,19 @@ function selectGraphPerson(id,showCard){
   rgState.selectedId=id;updateGraphHighlights();drawGraphLines(relations);
   if(showCard){const byId=new Map(people.map(x=>[x.id,x])),rows=relations.filter(r=>r.a===id||r.b===id).map(r=>`${relType(r.type,data.find(d=>d.id===detailId)).lbl} · ${byId.get(r.a===id?r.b:r.a)?.name||'未命名人物'}`);
     const editing=rgEditingPerson===id,item=data.find(d=>d.id===detailId);
-    const card=document.getElementById('rgPersonCard');card.innerHTML=`<div class="rg-pc-head"><div class="rg-pc-main"><div class="rg-pc-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-pc-info">${esc(p.info)}</div>`:''}</div></div>${p.note?`<div class="rg-pc-note">${esc(p.note)}</div>`:''}${editing?renderGraphPersonRelationEditor(id,people,relations,item):rows.length?`<div class="rg-pc-rel">${rows.map(esc).join('<br>')}</div>`:''}<div class="rg-pc-actions">${editing?`<button type="button" class="rg-pc-btn rg-pc-close" onclick="toggleGraphPersonRelations('${id}')">完成</button>`:`<button type="button" class="rg-pc-btn rg-pc-delete" onclick="removeGraphPersonCard('${id}')" title="只从这张关系图移除，不删除人物资料">删除卡片</button><button type="button" class="rg-pc-btn rg-pc-edit" onclick="toggleGraphPersonRelations('${id}')">编辑关系</button>`}${id===rgState.centerId?'':`<button type="button" class="rg-pc-btn rg-pc-center" onclick="setGraphCenter('${id}')">设为中心</button>`}</div>`;card.classList.toggle('editing',editing);card.classList.add('open');}
+    const card=document.getElementById('rgPersonCard');card.innerHTML=`<div class="rg-pc-head"><div class="rg-pc-main"><div class="rg-pc-name">${esc(p.name||'未命名人物')}</div>${p.info?`<div class="rg-pc-info">${esc(p.info)}</div>`:''}</div></div>${p.note?`<div class="rg-pc-note">${esc(p.note)}</div>`:''}${editing?renderGraphPersonRelationEditor(id,people,relations,item):rows.length?`<div class="rg-pc-rel">${rows.map(esc).join('<br>')}</div>`:''}<div class="rg-pc-actions"><button type="button" class="rg-pc-btn" onclick="toggleGraphCardTextAlign('${id}')">${graphForItem(item)?.nodeTextAlign?.[id]==='left'?'文字居中':'文字靠左'}</button>${editing?`<button type="button" class="rg-pc-btn rg-pc-close" onclick="toggleGraphPersonRelations('${id}')">完成</button>`:`<button type="button" class="rg-pc-btn rg-pc-delete" onclick="removeGraphPersonCard('${id}')" title="只从这张关系图移除，不删除人物资料">删除卡片</button><button type="button" class="rg-pc-btn rg-pc-edit" onclick="toggleGraphPersonRelations('${id}')">编辑关系</button>`}${id===rgState.centerId?'':`<button type="button" class="rg-pc-btn rg-pc-center" onclick="setGraphCenter('${id}')">设为中心</button>`}</div>`;card.classList.toggle('editing',editing);card.classList.add('open');}
+}
+function toggleGraphCardTextAlign(id){
+  const item=data.find(d=>d.id===detailId),graph=item&&graphForItem(item);
+  if(!graph||!currentGraphData().people.some(p=>p.id===id))return;
+  if(!graph.nodeTextAlign||typeof graph.nodeTextAlign!=='object')graph.nodeTextAlign={};
+  const next=graph.nodeTextAlign[id]==='left'?'center':'left';
+  graph.nodeTextAlign[id]=next;
+  touchRec(item);persist();
+  const node=document.querySelector('#rgCanvas .rg-node[data-person="'+CSS.escape(id)+'"]');
+  if(node)node.classList.toggle('text-left',next==='left');
+  drawGraphLines(currentGraphData().relations);
+  selectGraphPerson(id,true);
 }
 function closeGraphPersonCard(){rgEditingPerson='';const card=document.getElementById('rgPersonCard');card.classList.remove('open','editing');}
 function removeGraphPersonCard(id){
