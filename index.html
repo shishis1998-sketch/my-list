@@ -4953,7 +4953,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #tlSheet:has(#tlSheetBody.chapter-editing) .tlsheet-head{background:var(--bg);}
 #tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg);}
 .chapter-title-input{flex-shrink:0;width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;font:inherit;font-size:var(--fs-input);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
-.chapter-format{flex-shrink:0;align-self:flex-start;margin:0;padding:4px;background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
+.chapter-format{flex-shrink:0;margin:0;}
+.chapter-format .fmt-btn{background:var(--surface);}
 /* 章节标题级别：H 打开 H1 / H2 / T 菜单；菜单向上展开，不挤压正文。 */
 .chapter-heading-picker{position:relative;display:inline-flex;}
 .chapter-heading-menu{
@@ -4984,7 +4985,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 #tlSheet.chapter-keyboard #tlSheetBody{gap:8px;padding:10px 16px 8px;overflow:hidden;}
 #tlSheet.chapter-keyboard .chapter-title-input{min-height:40px;padding:6px 10px;}
-#tlSheet.chapter-keyboard .chapter-format{gap:6px;padding:4px;}
+#tlSheet.chapter-keyboard .chapter-format{gap:6px;padding:0;}
 #tlSheet.chapter-keyboard .chapter-format .fmt-btn{min-height:32px;height:32px;padding:4px 10px;}
 #tlSheet.chapter-keyboard .chapter-whole-text{min-height:0;}
 
