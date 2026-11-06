@@ -5311,7 +5311,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 JSON
       </button>
       <button class="nitem" onclick="document.getElementById('imp').click()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>导入 JSON
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>覆盖导入 JSON
       </button>
       <button class="nitem" onclick="exportCSV()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>导出 CSV
@@ -8980,6 +8980,8 @@ let curNoteMonth='';  // 收集/日记的月份明细；空值=月份总览
 let editId=null, curTags=[], delId=null, editCats=[];
 let editNoteId=null, curNoteTags=[], editNoteSubs=[];
 let syncTimer=null, isSyncing=false, lastSyncErr=null;
+const JSON_RESTORE_KEY='my_list_json_restore_gist';
+const JSON_RESTORE_NOTES_KEY='my_list_json_restore_notes_';
 
 const DCATS=[
   {id:'film', name:'影视', color:'#3D3580', emoji:'🎬'},
@@ -9368,7 +9370,10 @@ function boot(){
   // 启动后尝试从云端拉取最新数据(若已配置)。
   // 「日记」迁移：配了同步就等 pull 后按云端状态执行（syncPull 里会调），避免被云端覆盖；
   // 没配同步则直接在本机迁移。
-  if(getToken()&&getGistId()) setTimeout(()=>syncPull(true),400);
+  if(getToken()&&getGistId()) setTimeout(()=>{
+    if(hasPendingJSONRestore())syncPush(false);
+    else syncPull(true);
+  },400);
   else { migrateDiary(); migrateBookNotes(); migrateShuangjiangTimeline(); migrateLegacyChapterHeadings(); }
   updateSyncBadge();
   renderTrashCount();   // 设置页那一行右边的「N 条」
@@ -9607,6 +9612,7 @@ function toggleReadOnly(){
 function getToken(){return localStorage.getItem(TK_KEY)||'';}
 function getGistId(){return localStorage.getItem(GIST_KEY)||'';}
 function getMasterPw(){return localStorage.getItem(MPW_KEY)||'';}
+function hasPendingJSONRestore(){return !!getGistId()&&localStorage.getItem(JSON_RESTORE_KEY)===getGistId();}
 function cryptoOk(){return !!(window.crypto&&crypto.subtle);}
 
 // ── 备忘端到端加密（AES-GCM + PBKDF2）─────────────────────────────
@@ -9738,11 +9744,14 @@ let _cloudAligned=false,_aligning=false;
 // 把这台设备手上那点数据当成「云端」，而真正的那份从此再也同步不上。
 async function syncPush(allowCreate){
   const token=getToken();if(!token)return false;
+  const restoring=hasPendingJSONRestore();
+  const restoreGist=restoring?getGistId():null;
+  if(restoring&&(isSyncing||_aligning))return false;
   // 只读模式是硬闸：不管从哪条路径调进来，这台设备一律不写云端
   if(isReadOnly()){console.warn('[Sync push blocked] 只读模式');return false;}
   // 云端是加密的、而这台设备解不开 → 硬闸。它手上要么是空的、要么是本地旧数据，
   // 推上去等于用「解不开就当没有」的结果覆盖真数据。
-  if(_cloudEncLocked){
+  if(_cloudEncLocked&&!restoring){
     lastSyncErr='云端已加密且本机解不开（PIN码不对或没填），已停止上传以免覆盖';
     isSyncing=false;updateSyncBadge();
     console.warn('[Sync push blocked] 云端密文解不开');
@@ -9756,13 +9765,17 @@ async function syncPush(allowCreate){
     return false;
   }
   // 已有 gist 却还没成功拉取过 → 先拉一次对齐，别拿可能过时的本机数据盖掉云端
-  if(getGistId()&&!_cloudAligned&&!_aligning){
+  if(getGistId()&&(restoring||!_cloudAligned)&&!_aligning){
     _aligning=true;
+    const verifyPw=restoring?getMasterPw():null;
     let aligned=false;
-    try{aligned=await syncPull(true);}catch(e){aligned=false;}
+    try{aligned=await syncPull(true,restoring);}catch(e){aligned=false;}
     _aligning=false;
+    if(restoring&&(getGistId()!==restoreGist||getToken()!==token||getMasterPw()!==verifyPw||isReadOnly())){
+      return false;
+    }
     if(!aligned){
-      lastSyncErr='尚未与云端对齐，已暂停上传（避免旧数据覆盖云端）';
+      lastSyncErr=lastSyncErr||'尚未与云端对齐，已暂停上传（避免旧数据覆盖云端）';
       isSyncing=false;updateSyncBadge();
       console.warn('[Sync push skipped] 未能先拉取对齐，跳过本次推送');
       return false;
@@ -9800,6 +9813,8 @@ async function syncPush(allowCreate){
     // 有主密码 → 整份加密上云，Gist 里只剩一团密文（媒体、笔记、经期一并盖住）；
     // 没有主密码 → 维持老的明文格式，功能不受影响。
     // 复用备忘那一批的 pre（同一把密钥、每次调用各自随机 IV），不额外做 310000 轮 PBKDF2。
+    const notesRestore=localStorage.getItem(JSON_RESTORE_NOTES_KEY+getGistId());
+    if(notesRestore)inner.notesRestore=notesRestore;
     const payload=(pw&&cryptoOk())
       ? {version:2,enc:'all',updatedAt:new Date().toISOString(),encAll:await encryptJSON(inner,pw,pre)}
       : {version:1,updatedAt:new Date().toISOString(),...inner};
@@ -9808,6 +9823,9 @@ async function syncPush(allowCreate){
       files:{[GIST_FILE]:{content:JSON.stringify(payload,null,2)}}
     };
     let gistId=getGistId();
+    if(restoring&&(gistId!==restoreGist||getToken()!==token||getMasterPw()!==pw||isReadOnly())){
+      throw new Error('同步配置已更改，覆盖导入尚未上传');
+    }
     let url,method;
     if(gistId){url='https://api.github.com/gists/'+gistId;method='PATCH';}
     else{url='https://api.github.com/gists';method='POST';body.public=false;}
@@ -9827,6 +9845,10 @@ async function syncPush(allowCreate){
     const j=await res.json();
     // 刚创建的 gist 里就是本机这份，天然是对齐的
     if(!gistId&&j.id){localStorage.setItem(GIST_KEY,j.id);_cloudAligned=true;toast('✓ 已创建云端备份');}
+    if(restoring&&getGistId()===gistId&&hasPendingJSONRestore()){
+      localStorage.removeItem(JSON_RESTORE_KEY);
+      _cloudAligned=true;
+    }
     // ✅ 云端已确认收到这批笔记 → 摘掉「等待上云」标记，它们从此可以被云端覆盖
     clearPendingCloud(pushedIds);
     isSyncing=false;updateSyncBadge();
@@ -9972,7 +9994,11 @@ function renderSyncDifference(diff){
   document.getElementById('sync-diff-list').innerHTML='<div class="sync-diff-time">'+esc(new Date(diff.time).toLocaleString())+' · 同步前的记录对比</div>'+group(diff.local,'本机有，云端没有')+group(diff.cloud,'云端有，本机没有');
 }
 
-async function syncPull(silent){
+async function syncPull(silent,verifyOnly=false){
+  if(!verifyOnly&&hasPendingJSONRestore()){
+    if(!silent)toast('覆盖导入尚未上传，已保留本机内容。可重新打开应用重试同步。');
+    return false;
+  }
   const token=getToken(),gistId=getGistId();
   if(!token||!gistId){if(!silent)toast('请先配置 token 和 Gist ID');return false;}
   isSyncing=true;lastSyncErr=null;updateSyncBadge();
@@ -10005,6 +10031,8 @@ async function syncPull(silent){
       return false;
     }
     if(!remote||!Array.isArray(remote.data)){throw new Error('云端数据格式异常');}
+    // 恢复备份时只验证云端可读取，不能用旧云端数据覆盖刚导入的本机数据。
+    if(verifyOnly){isSyncing=false;updateSyncBadge();return true;}
     const syncDiff=captureSyncDifference(remote);
     if(syncDiff.local.length){
       toast('⚠️ '+syncDiff.local.length+' 条本机记录云端没有，可在「云同步 › 上次同步差异」查看');
@@ -10044,12 +10072,16 @@ async function syncPull(silent){
     // 合并策略：保留本机的 🔒 仅本机笔记，云端覆盖云端同步的笔记
     if(Array.isArray(remote.notes)){
       const remoteIds=new Set(remote.notes.map(n=>n.id));
+      const restoreKey=JSON_RESTORE_NOTES_KEY+gistId;
+      const notesRestore=typeof remote.notesRestore==='string'?remote.notesRestore:'';
+      // 显式恢复的批量删除不能被其它设备的笔记丢失保护补回云端。
+      const restoredNotes=!!notesRestore&&notesRestore!==localStorage.getItem(restoreKey);
       // 兜底：本机有、云端没有、又不是 localOnly 的备忘 → 说明「以为上了云其实没上」。
       // 直接覆盖会永久丢失（备忘里是账号密码，不可再生），因此退回 localOnly 保护并提示用户。
       // 代价：在另一台设备上删掉的备忘会以「仅本机」的形式留在这台设备上，需要手动再删一次。
       // 这个方向的错误是可逆的，反过来（静默删除）不可逆，所以宁可留着。
       let rescued=0;
-      notes.forEach(n=>{
+      if(!restoredNotes)notes.forEach(n=>{
         if(n.subCat!=='备忘')return;
         if(n.localOnly||remoteIds.has(n.id))return;
         // pendingCloud = 正在上云的途中（推送还没回来），云端暂时没有它是正常的，
@@ -10061,9 +10093,11 @@ async function syncPull(silent){
       // 单条消失多半是你在另一台设备上删的，照办；但一次少掉一批，那是事故不是意图——
       // 这种情况把它们留在本机，下次推送会自动补回云端。
       const BULK_LOSS=3;
-      const orphans=notes.filter(n=>n.subCat!=='备忘'&&!remoteIds.has(n.id));
+      const orphans=restoredNotes?[]:notes.filter(n=>n.subCat!=='备忘'&&!remoteIds.has(n.id));
       const keepIds=new Set(orphans.length>=BULK_LOSS?orphans.map(n=>n.id):[]);
-      const localOnlyNotes=notes.filter(n=>isProtectedNote(n)||keepIds.has(n.id));
+      const localOnlyNotes=restoredNotes
+        ?notes.filter(n=>isProtectedNote(n)&&!remoteIds.has(n.id))
+        :notes.filter(n=>isProtectedNote(n)||keepIds.has(n.id));
       // 远端笔记不会有 localOnly:true（推送时已过滤），但保险起见还是 filter 一次
       const remoteNotes=remote.notes.filter(n=>!n.localOnly);
       // 去重：如果云端笔记的 id 和本机受保护笔记的 id 冲突，云端优先（极少出现，但避免重复）
@@ -10122,6 +10156,9 @@ async function syncPull(silent){
     localStorage.setItem(CK,JSON.stringify(cats));
     localStorage.setItem(NSK,JSON.stringify(notes));
     localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
+    if(Array.isArray(remote.notes)&&typeof remote.notesRestore==='string'&&remote.notesRestore){
+      localStorage.setItem(JSON_RESTORE_NOTES_KEY+gistId,remote.notesRestore);
+    }
     _cloudAligned=true;   // 从此本机这份是基于云端最新数据改出来的，可以安全覆盖云端
     migrateLegacyChapterHeadings();
     isSyncing=false;updateSyncBadge();
@@ -13815,38 +13852,98 @@ function exportCSV(){
   const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   dl(b,'我的清单_'+today()+'.csv'); toast('已导出 CSV');
 }
-function importJSON(e){
+async function importJSON(e){
   const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=ev=>{
-    try{
-      const p=JSON.parse(ev.target.result);
-      let imp,ic,ino,insub,iperiod;
-      if(Array.isArray(p)){imp=p;}else{imp=p.data||[];ic=p.categories;ino=p.notes;insub=p.noteSubs;iperiod=p.period;}
-      if(!Array.isArray(imp))throw 0;
-      if(ic&&ic.length){cats=ic;persistCats();renderTypeSelect();}
-      // 经期数据：备份里有就采用并回写本地 + 同步
-      if(iperiod&&iperiod.ALL_DATA){
-        periodData=_normPeriod(iperiod);
-        try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
-        if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
-        scheduleSyncPush();
+  e.target.value='';
+  let backup;
+  try{
+    const parsed=JSON.parse(await file.text());
+    backup=Array.isArray(parsed)?{data:parsed}:parsed;
+    const isObject=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+    const isRecord=value=>isObject(value)&&
+      ((typeof value.id==='string'&&value.id.length>0)||Number.isFinite(value.id));
+    const isRecordList=value=>Array.isArray(value)&&value.every(isRecord)&&
+      new Set(value.map(record=>String(record.id))).size===value.length;
+    if(!isObject(backup)||!isRecordList(backup.data))throw new Error('书影数据无效');
+    for(const key of ['categories','notes']){
+      if(Object.hasOwn(backup,key)&&!isRecordList(backup[key]))throw new Error('分类或笔记数据无效');
+    }
+    if(Object.hasOwn(backup,'noteSubs')&&
+      (!Array.isArray(backup.noteSubs)||!backup.noteSubs.every(value=>typeof value==='string'))){
+      throw new Error('笔记分类无效');
+    }
+    if(Object.hasOwn(backup,'period')){
+      const period=backup.period;
+      if(!isObject(period)||!isObject(period.ALL_DATA)||
+        (Object.hasOwn(period,'SYMPTOMS_LIB')&&!Array.isArray(period.SYMPTOMS_LIB))||
+        (Object.hasOwn(period,'SYMPTOMS_DATA')&&!isObject(period.SYMPTOMS_DATA))||
+        (Object.hasOwn(period,'PALETTE')&&!isObject(period.PALETTE))){
+        throw new Error('经期数据无效');
       }
-      // 笔记导入:存在则合并(按 id 去重)
-      let addedN=0;
-      if(Array.isArray(ino)){
-        const exN=new Set(notes.map(n=>n.id));
-        ino.forEach(n=>{if(!exN.has(n.id)){notes.push(n);addedN++;}});
-        persistNotes();
-      }
-      if(Array.isArray(insub)&&insub.length){noteSubs=insub;persistNoteSubs();}
-      const ex=new Set(data.map(d=>d.id));let added=0;
-      imp.forEach(item=>{if(!ex.has(item.id)){data.push(item);added++;}});
-      persist();render();
-      toast(`导入完成,记录 +${added} 条,笔记 +${addedN} 条`);
-    }catch{toast('导入失败:格式不正确');}
-  };
-  r.readAsText(file); e.target.value='';
+    }
+  }catch(err){
+    toast('导入失败：请选择有效的 My List JSON 备份');
+    return;
+  }
+
+  if(isSyncing||_aligning){toast('请等待云同步结束后再导入');return;}
+  const restored=[
+    {key:SK,label:'书影',value:backup.data},
+    {key:CK,label:'书影分类',value:backup.categories?.length===0?DCATS.map(c=>({...c})):backup.categories},
+    {key:NSK,label:'笔记',value:backup.notes},
+    {key:NSUBK,label:'笔记分类',value:backup.noteSubs?.length===0?DEFAULT_NOTE_SUBS.slice():backup.noteSubs},
+    {key:PERIOD_KEY,label:'经期',value:backup.period===undefined?undefined:_normPeriod(backup.period)}
+  ].filter(entry=>entry.value!==undefined);
+  const sync=!!(getToken()&&getGistId()&&!isReadOnly());
+  const scope=restored.map(entry=>entry.label).join('、');
+  const syncMessage=sync?'\n已启用云同步，导入结果也会覆盖云端。':
+    getToken()&&isReadOnly()?'\n当前设备为只读模式，导入结果仅保存在本机。':'';
+  if(!confirm('用此备份覆盖'+scope+'？\n这些栏目内，备份中没有的现有记录会被移除。'+syncMessage))return;
+
+  const restoredPeriod=restored.find(entry=>entry.key===PERIOD_KEY)?.value;
+  if(restoredPeriod){
+    // 其它设备按版本号选择较新的经期数据，恢复旧内容本身也是一次新修改。
+    restoredPeriod.__rev=Math.max(Date.now(),periodData?.__rev||0,restoredPeriod.__rev)+1;
+  }
+  const writes=restored.map(entry=>[entry.key,JSON.stringify(entry.value)]);
+  if(sync){
+    if(backup.notes!==undefined)writes.push([JSON_RESTORE_NOTES_KEY+getGistId(),uid()]);
+    writes.push([JSON_RESTORE_KEY,getGistId()]);
+  }
+  const previous=[];
+  try{
+    for(const [key,value] of writes){
+      const old=localStorage.getItem(key);
+      localStorage.setItem(key,value);
+      previous.push([key,old]);
+    }
+  }catch(err){
+    // 撤销已经写入的键；优先释放本次增加的空间，再恢复旧值。
+    previous.forEach(([key])=>localStorage.removeItem(key));
+    previous.forEach(([key,value])=>{if(value!==null)localStorage.setItem(key,value);});
+    toast('导入失败：本机存储空间不足或不可用');
+    return;
+  }
+
+  data=backup.data;
+  for(const {key,value} of restored){
+    if(key===CK)cats=value;
+    if(key===NSK)notes=value;
+    if(key===NSUBK)noteSubs=value;
+    if(key===PERIOD_KEY){
+      periodData=value;
+      if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
+    }
+  }
+  renderTypeSelect();
+  render();
+  if(sync){
+    clearTimeout(syncTimer);
+    const uploaded=await syncPush(false);
+    toast(uploaded?'覆盖导入完成，已同步到云端':'覆盖导入已保存到本机，云端尚未更新。重新打开应用可重试。');
+  }else{
+    toast('覆盖导入完成：'+scope);
+  }
 }
 // —— 从 .ics（Google 日历 / Apple 日历导出）导入为日历笔记 ——
 function unescapeICS(s){return (s||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');}
