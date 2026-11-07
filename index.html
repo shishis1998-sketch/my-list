@@ -8127,7 +8127,6 @@ window.PV = (function(){
     // 这样新设备拉取数据后会沿用同一套开关和推算参数，不会重新回到默认开启。
     // 默认值是人群统计上的常见值，不是对每个人都对的值：周期本来就有人 24 天、
     // 有人 45 天，黄体期也不是人人 14 天，所以一个都不写死。
-    const OVU_KEY = 'my_list_ovu_cfg_v1';
     const OVU_DEFAULT = {
       on: true,
       luteal:     14,   // 黄体期长度：排卵日 = 下次经期 − 这个数
@@ -8997,6 +8996,7 @@ const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
 const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist', MPW_KEY='my_list_master_pw';
 const RO_KEY='my_list_readonly_v1';
 const LOCAL_VAULT_KEY='my_list_local_vault_v1';
+const OVU_KEY='my_list_ovu_cfg_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
@@ -9694,7 +9694,7 @@ let _vaultWriteChain=Promise.resolve();
 let _syncDiffMemory=null,_calendarRecentMemory={cal:[],food:[]};
 let _pendingRestoreGist='',_notesRestoreMarkers={};
 const LEGACY_SENSITIVE_KEYS=[
-  SK,CK,NSK,NSUBK,PERIOD_KEY,'my_list_trash_v1','my_list_ovu_cfg_v1','my_list_cal_colors_v1',
+  SK,CK,NSK,NSUBK,PERIOD_KEY,'my_list_trash_v1',OVU_KEY,'my_list_cal_colors_v1',
   'my_list_sync_diff_v1','my_list_cal_recent_v1','my_list_cal_recent_v1_food',
   JSON_RESTORE_KEY,MPW_KEY,TK_KEY,GIST_KEY,RO_KEY
 ];
