@@ -3257,11 +3257,12 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
   padding:calc(env(safe-area-inset-top) + var(--sp-8)) var(--sp-14) var(--sp-20);}
 #calViewHeat::-webkit-scrollbar{display:none;}
 /* 月份导航：与「经期」的「‹ 年 月 ›」同款——标题与箭头都用正文色（白天黑、夜间白）*/
-/* 保持整页滚动，月份栏吸顶；使用页面灰底遮住从下方滑过的卡片。 */
+/* 保持整页滚动，月份栏或搜索栏吸顶，遮住从下方滑过的卡片。 */
 body.cal-open.cal-view-heat .main{overflow:visible;}
+#calViewHeat .hm-hdr,
+#calViewHeat .hm-searchbar{position:sticky;top:0;z-index:50;background:var(--bg);
+  margin-left:calc(-1 * var(--sp-14));margin-right:calc(-1 * var(--sp-14));}
 #calViewHeat .hm-hdr{display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:50;background:var(--bg);
-  margin-left:calc(-1 * var(--sp-14));margin-right:calc(-1 * var(--sp-14));
   padding:calc(env(safe-area-inset-top) + var(--sp-12)) calc(var(--sp-14) + var(--sp-12)) var(--sp-12);}
 #calViewHeat .hm-hdr-actions{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;margin-left:var(--sp-8);}
 #calViewHeat .hm-hdr-actions>.cal-navbtn,
@@ -3279,7 +3280,6 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-search-btn:active,
 #calViewHeat .hm-hdr-actions>.cal-navbtn:active{transform:scale(.9);}
 #calViewHeat .hm-filter-btn.open{background:var(--border-soft);}
-#calViewHeat .hm-search-btn.act{background:var(--accent-light);color:var(--accent);}
 #calViewHeat .hm-filter-btn.act{width:auto;flex:0 0 auto;gap:var(--sp-4);padding:0 var(--sp-10);border-radius:999px;background:var(--accent-light);color:var(--accent);}
 #calViewHeat .hm-filter-btn.act .hm-filter-label{display:block;}
 #calViewHeat .hm-filter-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;
@@ -3291,8 +3291,10 @@ body.cal-open.cal-view-heat .main{overflow:visible;}
 #calViewHeat .hm-filter-item{padding:9px 12px;border-radius:var(--r);font-size:var(--fs-caption);
   color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
 #calViewHeat .hm-filter-item.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
-#calViewHeat .hm-searchbar{display:none;margin:0 0 var(--sp-12);}
-#calViewHeat .hm-searchbar.show{display:block;}
+#calViewHeat .hm-searchbar{display:none;
+  padding:calc(env(safe-area-inset-top) + var(--sp-12)) var(--sp-14) var(--sp-12);}
+#calViewHeat.is-searching .hm-hdr{display:none;}
+#calViewHeat.is-searching .hm-searchbar{display:block;}
 #calViewHeat .hm-searchfield{height:40px;display:flex;align-items:center;gap:var(--sp-8);
   padding:0 var(--sp-12);background:var(--surface);border:var(--bd) solid var(--border);
   border-radius:999px;color:var(--text-muted);}
@@ -5696,12 +5698,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
               </button>
               <div class="hm-filter-menu" id="hmFilterMenu"></div>
             </div>
-            <button class="hm-search-btn" id="hmSearchBtn" onclick="PV.toggleHeatSearch()" aria-label="搜索统计" aria-expanded="false">
+            <button class="hm-search-btn" id="hmSearchBtn" onclick="PV.openHeatSearch()" aria-label="搜索统计">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
             </button>
           </div>
         </div>
-        <div class="hm-searchbar" id="hmSearchbar">
+        <div class="hm-searchbar">
           <div class="hm-searchfield">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
             <input id="hmSearchInput" type="text" placeholder="搜索标签或食记" oninput="PV.setHeatSearch(this.value)" autocomplete="off" autocapitalize="off" spellcheck="false">
@@ -8482,18 +8484,10 @@ window.PV = (function(){
     document.getElementById('hmFilterBtn')?.classList.remove('open');
   }
 
-  function toggleHeatSearch(){
+  function openHeatSearch(){
     closeHeatFilter();
-    const bar = document.getElementById('hmSearchbar');
-    const input = document.getElementById('hmSearchInput');
-    const btn = document.getElementById('hmSearchBtn');
-    if (!bar || !input || !btn) return;
-    const open = !bar.classList.contains('show');
-    bar.classList.toggle('show', open);
-    btn.classList.toggle('act', open);
-    btn.setAttribute('aria-expanded', String(open));
-    if (open) requestAnimationFrame(() => input.focus());
-    else closeHeatSearch();
+    document.getElementById('calViewHeat').classList.add('is-searching');
+    requestAnimationFrame(() => document.getElementById('hmSearchInput').focus());
   }
 
   function setHeatSearch(value){
@@ -8503,16 +8497,10 @@ window.PV = (function(){
 
   function closeHeatSearch(){
     heatSearchQuery = '';
-    const bar = document.getElementById('hmSearchbar');
-    const input = document.getElementById('hmSearchInput');
-    const btn = document.getElementById('hmSearchBtn');
-    if (bar) bar.classList.remove('show');
-    if (input) input.value = '';
-    if (btn) {
-      btn.classList.remove('act');
-      btn.setAttribute('aria-expanded', 'false');
-    }
+    document.getElementById('calViewHeat').classList.remove('is-searching');
+    document.getElementById('hmSearchInput').value = '';
     renderHeat();
+    document.getElementById('hmSearchBtn').focus({preventScroll:true});
   }
 
   document.addEventListener('click', event => {
@@ -8566,7 +8554,8 @@ window.PV = (function(){
     let bottom = top + (viewport ? viewport.height : window.innerHeight);
     const nav = document.getElementById('bottombar');
     if (nav && nav.getClientRects().length) bottom = Math.min(bottom, nav.getBoundingClientRect().top);
-    const header = document.querySelector('#calViewHeat .hm-hdr');
+    const view = document.getElementById('calViewHeat');
+    const header = view.querySelector(view.classList.contains('is-searching') ? '.hm-searchbar' : '.hm-hdr');
     const contentTop = header ? Math.max(top, header.getBoundingClientRect().bottom) : top;
     return {top:contentTop, bottom: bottom - 10};
   }
@@ -8710,9 +8699,8 @@ window.PV = (function(){
     if (box.getClientRects().length) window.scrollTo(0, 0);
     if (!heatLayoutObserver && window.ResizeObserver) {
       heatLayoutObserver = new ResizeObserver(scheduleHeatLayout);
-      [document.querySelector('#calViewHeat .hm-hdr'), document.getElementById('bottombar')].forEach(el => {
-        if (el) heatLayoutObserver.observe(el);
-      });
+      document.querySelectorAll('#calViewHeat .hm-hdr, #calViewHeat .hm-searchbar, #bottombar')
+        .forEach(el => heatLayoutObserver.observe(el));
     }
     scheduleHeatLayout();
     if (!heatPos) heatToToday();
@@ -8820,7 +8808,7 @@ window.PV = (function(){
 
   return {
     init, open, render, resetPos, hasPos,
-    openHeat, renderHeat, toggleHeatFilter, toggleHeatSearch, setHeatSearch, closeHeatSearch,
+    openHeat, renderHeat, toggleHeatFilter, openHeatSearch, setHeatSearch, closeHeatSearch,
     // 供内联 onclick 使用的处理器
     changeYear, openYearPicker, closeYearPicker,
     toggleHomeFilter, toggleLabelsExpanded, setHomeView, changeViewMonth,
