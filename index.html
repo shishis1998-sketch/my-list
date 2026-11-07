@@ -807,6 +807,19 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .toast{position:fixed;bottom:18px;right:18px;pointer-events:none;background:var(--accent);color:var(--on-accent);padding:var(--sp-10) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);box-shadow:var(--shadowlg);transform:translateY(70px);opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:1600;display:flex;align-items:center;gap:var(--sp-6);}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast>svg{flex-shrink:0;}   /* 长句换行时对勾不被挤扁 */
+.vault-lock{position:fixed;inset:0;z-index:200000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;}
+.vault-lock[hidden]{display:none;}
+.vault-lock-card{width:min(100%,380px);background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:24px;}
+.vault-lock-icon{width:44px;height:44px;border-radius:50%;margin:0 auto 14px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;}
+.vault-lock-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.vault-lock-title{text-align:center;font-size:var(--fs-title);font-weight:700;color:var(--text-primary);}
+.vault-lock-text{text-align:center;font-size:var(--fs-caption);line-height:var(--lh-loose);color:var(--text-secondary);margin:6px 0 18px;white-space:pre-line;}
+.vault-lock-fields{display:grid;gap:10px;}
+.vault-lock-input{width:100%;height:44px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text-primary);font:inherit;font-size:var(--fs-input);padding:0 12px;outline:none;}
+.vault-lock-input:focus{border-color:var(--accent);}
+.vault-lock-confirm[hidden]{display:none;}
+.vault-lock-error{min-height:20px;margin-top:8px;color:var(--danger);font-size:var(--fs-caption);text-align:center;}
+.vault-lock-btn{width:100%;height:42px;margin-top:10px;border:0;border-radius:var(--r);background:var(--accent);color:var(--on-accent);font:inherit;font-size:var(--fs-body);font-weight:700;cursor:pointer;}
 
 /* 滚动条：滑起来才出现，停下就收起（同 macOS 的浮层滚动条）。
    槽 10、两边各留 2 的透明边（background-clip 只填内容盒）＝ 看得见的 6px，
@@ -6040,9 +6053,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="fg sync-field">
       <label for="f-gh-pw">PIN码</label>
-      <input type="password" id="f-gh-pw" placeholder="设置后备忘会加密上云" autocomplete="new-password" spellcheck="false">
+      <input type="password" id="f-gh-pw" placeholder="留空则沿用本次解锁PIN" autocomplete="off" spellcheck="false">
       <div class="sync-hint">
-        仅存本机；换设备需使用同一PIN码，忘记后无法解密。
+        PIN不写入本机；刷新或重新打开后需再次输入。忘记后无法解密本机和云端数据。
       </div>
     </div>
 
@@ -6300,9 +6313,26 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <span id="tmsg"></span>
 </div>
 
+<!-- 本机保险库：PIN 只留在当前页面内存，刷新或重新打开后必须再次输入。 -->
+<div class="vault-lock" id="vaultLock" role="dialog" aria-modal="true" aria-labelledby="vaultLockTitle">
+  <form class="vault-lock-card" id="vaultLockForm">
+    <div class="vault-lock-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    </div>
+    <div class="vault-lock-title" id="vaultLockTitle">解锁 My List</div>
+    <div class="vault-lock-text" id="vaultLockText">输入云同步 PIN，解密这台设备上的数据。</div>
+    <div class="vault-lock-fields">
+      <input class="vault-lock-input" id="vaultLockPin" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="PIN码">
+      <input class="vault-lock-input vault-lock-confirm" id="vaultLockConfirm" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="再次输入PIN码" hidden>
+    </div>
+    <div class="vault-lock-error" id="vaultLockError" aria-live="polite"></div>
+    <button class="vault-lock-btn" id="vaultLockBtn" type="submit">解锁</button>
+  </form>
+</div>
+
 <script>
 // 经期数据不再内嵌在这个文件里：本仓库和 GitHub Pages 都是公开的，
-// 写进这里等于把记录公开发布。数据现在只存在于本机 localStorage 和你的私密 Gist，
+// 写进这里等于把记录公开发布。数据现在只存在于本机加密保险库和你的私密 Gist，
 // 新设备打开时经期页是空的，接入云同步后才会拉到。
 // 这里只留调色板（不含任何个人记录），作为本机还没有数据时的默认值。
 const PERIOD_DEFAULT_PALETTE = {"1":{"name":"POCO","color":"#ffd5dc"},"2":{"name":"MEDIO","color":"#cf4865"},"3":{"name":"MUCHO","color":"#834047"},"4":{"name":"GOTAS","color":"#dbdbdf"}};
@@ -8145,9 +8175,8 @@ window.PV = (function(){
     }
 
     function loadOvuCfg() {
-      let raw = null;
-      try { raw = JSON.parse(localStorage.getItem(OVU_KEY)); } catch (e) {}
-      OVU = clampOvu(raw && typeof raw === 'object' ? raw : null);
+      // 真正保存的配置由本机保险库解密后通过 setOvuCfg 注入；脚本加载阶段先用默认值。
+      OVU = clampOvu(null);
     }
     function resetOvuCfg() { setOvuCfg(Object.assign({}, OVU_DEFAULT), true); }
     // ── 有效周期区间：默认从你自己的记录里推，不用手填 ──────────────
@@ -8183,7 +8212,7 @@ window.PV = (function(){
     // replace=true 时用 patch 整个换掉（恢复默认用），否则按字段合并
     function setOvuCfg(patch, replace, skipSync) {
       OVU = clampOvu(replace ? patch : Object.assign({}, OVU, patch));
-      try { localStorage.setItem(OVU_KEY, JSON.stringify(OVU)); } catch (e) {}
+      if (!skipSync && typeof window.persistLocalVault === 'function') window.persistLocalVault();
       if (!skipSync && typeof window.pvOvuPersist === 'function') window.pvOvuPersist();
       if (_inited) render();   // 日历正开着就立刻重画；没开过则下次进入自然生效
     }
@@ -8825,12 +8854,10 @@ function _normPeriod(p){
 // 这里刻意不写 localStorage、也不推送：一台还没拉过云端的空设备
 // 绝不能把「空经期」推上去，那会抹掉云端的记录。
 function loadPeriod(){
-  let stored=null;
-  try{stored=JSON.parse(localStorage.getItem(PERIOD_KEY));}catch(e){stored=null;}
-  periodData=_normPeriod(stored&&stored.ALL_DATA?stored:null);
+  periodData=_normPeriod(periodData&&periodData.ALL_DATA?periodData:null);
 }
 function savePeriod(){
-  try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
+  persistLocalVault();
   scheduleSyncPush();
 }
 window.pvPersist=savePeriod;
@@ -8969,6 +8996,7 @@ const SK='my_list_v4', CK='my_list_cats_v3';
 const NSK='my_list_notes_v1', NSUBK='my_list_note_subs_v1';
 const TK_KEY='my_list_gh_token', GIST_KEY='my_list_gh_gist', MPW_KEY='my_list_master_pw';
 const RO_KEY='my_list_readonly_v1';
+const LOCAL_VAULT_KEY='my_list_local_vault_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
@@ -9139,6 +9167,7 @@ function applyTheme(id,save,quiet){
   else document.documentElement.setAttribute('data-theme',t);
   if(save){
     try{localStorage.setItem(THEME_KEY,t);}catch(e){}
+    if(typeof persistLocalVault==='function')persistLocalVault();
     if(!quiet){
       const name=(THEMES.find(x=>x.id===t)||{}).name||'';
       toast('已切换到'+name);
@@ -9181,6 +9210,7 @@ function applyMode(id,save,quiet){
   if(mt)mt.setAttribute('content',dark?'#121214':'#F7F7F5');
   if(save){
     try{localStorage.setItem(MODE_KEY,m);}catch(e){}
+    if(typeof persistLocalVault==='function')persistLocalVault();
     if(!quiet)toast('已切换到'+(MODES.find(x=>x.id===m)||{}).name);
   }
   renderThemeRow();   // 开关和三条主题色同在一张卡片，一起重画
@@ -9211,6 +9241,7 @@ function applyFontSize(id,save){
   else document.documentElement.setAttribute('data-fontsize',f);
   if(save){
     try{localStorage.setItem(FS_KEY,f);}catch(e){}
+    if(typeof persistLocalVault==='function')persistLocalVault();
     haptic('tap');
     toast('字号已调整为'+(FONTSIZES.find(x=>x.id===f)||{}).name);
   }
@@ -9347,24 +9378,22 @@ function stepOvu(key,delta){
 }
 
 function boot(){
-  applyTheme(getTheme(),false);
-  applyMode(getMode(),false);
+  applyTheme(curTheme||getTheme(),false);
+  applyMode(curMode||getMode(),false);
   // 属性首帧脚本已经写过了，这里只是把 curFontSize 对齐，好让设置页画出选中态
-  applyFontSize(getFontSize(),false);
+  applyFontSize(curFontSize||getFontSize(),false);
   loadPeriod();
   // 设置页要显示「按你的记录推出 X–Y 天」，得先让 PV 拿到经期数据——
   // 否则没进过经期视图时那行只能显示「还没有足够记录」。
   if(window.PV&&periodData&&!_pvInited){PV.init(periodData);_pvInited=true;}
   renderOvuRow();
   loadTrash();        // 顺手把过期的清掉；渲染计数要等 DOM 有了，放在下面 renderTrashCount
-  try{data=JSON.parse(localStorage.getItem(SK))||[];}catch{data=[];}
-  try{const c=JSON.parse(localStorage.getItem(CK));cats=c||null;}catch{cats=null;}
+  if(!Array.isArray(data))data=[];
   if(!cats||!cats.length) cats=DCATS.map(c=>({...c}));
-  try{notes=JSON.parse(localStorage.getItem(NSK))||[];}catch{notes=[];}
-  try{const s=JSON.parse(localStorage.getItem(NSUBK));noteSubs=s||null;}catch{noteSubs=null;}
+  if(!Array.isArray(notes))notes=[];
   if(!noteSubs||!noteSubs.length) noteSubs=DEFAULT_NOTE_SUBS.slice();
   // 「日历」不再作为笔记子分类：导入事件只进日历页、不进笔记列表
-  if(noteSubs.includes('日历')){noteSubs=noteSubs.filter(s=>s!=='日历');localStorage.setItem(NSUBK,JSON.stringify(noteSubs));}
+  if(noteSubs.includes('日历')){noteSubs=noteSubs.filter(s=>s!=='日历');persistLocalVault();}
   restoreLastCat();   // 分类得赶在首次 render 之前定下来
   migrateWatchDate();
   // 启动后尝试从云端拉取最新数据(若已配置)。
@@ -9419,8 +9448,8 @@ function migrateBookNotes(){
     n.movedToMedia=it.id; n.updatedAt=Date.now();
   });
   // 分类本身收起来：以后读书笔记只在书的详情页里写
-  if(hasSub){noteSubs=noteSubs.filter(s=>s!=='读书笔记');localStorage.setItem(NSUBK,JSON.stringify(noteSubs));}
-  if(moved||made){localStorage.setItem(SK,JSON.stringify(data));localStorage.setItem(NSK,JSON.stringify(notes));scheduleSyncPush();}
+  if(hasSub){noteSubs=noteSubs.filter(s=>s!=='读书笔记');persistLocalVault();}
+  if(moved||made){persistLocalVault();scheduleSyncPush();}
   // 剩下的只可能是空笔记（既没标题也没正文），它们永远搬不动，落地标记别每次启动重跑
   const stillMigratable=(notes||[]).some(n=>n.subCat==='读书笔记'&&!n.movedToMedia&&((n.title||'').trim()||(n.body||'').trim()));
   if(!stillMigratable)localStorage.setItem(FLAG,'1');
@@ -9528,7 +9557,7 @@ function migrateShuangjiangTimeline(){
   item.bookNote=SHUANGJIANG_TIMELINE;
   item._shuangjiangTimelineVersion=SHUANGJIANG_TIMELINE_VERSION;
   touchRec(item);
-  localStorage.setItem(SK,JSON.stringify(data));
+  persistLocalVault();
   scheduleSyncPush();
 }
 
@@ -9547,8 +9576,7 @@ function migrateDiary(){
     n.tags=n.tags.filter(t=>t!=='随笔');
     n.updatedAt=Date.now();
   });
-  localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
-  localStorage.setItem(NSK,JSON.stringify(notes));
+  persistLocalVault();
   scheduleSyncPush();
   if(pending.length)console.log(`[迁移] 新增「日记」分类，从「收集」移入 ${pending.length} 条随笔`);
 }
@@ -9565,25 +9593,25 @@ function migrateWatchDate(){
     }
   });
   if(changed){
-    localStorage.setItem(SK,JSON.stringify(data));
+    persistLocalVault();
     console.log(`[迁移] ${changed} 条记录的 watchDate 已从月级补成「当月 1 号」`);
   }
   localStorage.setItem(FLAG,'1');
 }
 function persist(){
-  localStorage.setItem(SK,JSON.stringify(data));
+  persistLocalVault();
   scheduleSyncPush();
 }
 function persistCats(){
-  localStorage.setItem(CK,JSON.stringify(cats));
+  persistLocalVault();
   scheduleSyncPush();
 }
 function persistNotes(){
-  localStorage.setItem(NSK,JSON.stringify(notes));
+  persistLocalVault();
   scheduleSyncPush();
 }
 function persistNoteSubs(){
-  localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
+  persistLocalVault();
   scheduleSyncPush();
 }
 
@@ -9592,31 +9620,33 @@ function persistNoteSubs(){
 // 副机的典型用法是「只想看看」，但推送是整份覆盖，一旦它手上的数据是旧的，
 // 随手改一条就会把云端顶掉。与其事后补救，不如让这类设备根本没有写权限。
 // 每台设备各自开关，存在本机，不进 Gist。
-function isReadOnly(){return localStorage.getItem(RO_KEY)==='1';}
+let _syncTokenMemory='',_syncGistMemory='',_readOnlyMemory=false;
+function isReadOnly(){return _readOnlyMemory;}
 function toggleReadOnly(){
   const on=!isReadOnly();
   if(on){
     const pend=notes.filter(n=>n.pendingCloud).length;
     if(pend&&!confirm('还有 '+pend+' 条备忘正在上云途中。\n开启只读模式后它们不会被上传，会退回「仅本机」。\n\n继续？'))return;
     notes.forEach(n=>{if(n.pendingCloud){n.localOnly=true;delete n.pendingCloud;}});
-    if(pend)localStorage.setItem(NSK,JSON.stringify(notes));
+    if(pend)persistLocalVault();
     clearTimeout(syncTimer);
   }
-  localStorage.setItem(RO_KEY,on?'1':'0');
+  _readOnlyMemory=on;persistLocalVault();
   document.getElementById('roToggle').classList.toggle('on',on);
   document.getElementById('roToggle').setAttribute('aria-checked',String(on));
   updateSyncBadge();render();
   toast(on?'👀 已开启只读模式，这台设备不会再上传任何数据':'已关闭只读模式，改动会照常同步');
 }
 
-function getToken(){return localStorage.getItem(TK_KEY)||'';}
-function getGistId(){return localStorage.getItem(GIST_KEY)||'';}
-function getMasterPw(){return localStorage.getItem(MPW_KEY)||'';}
-function hasPendingJSONRestore(){return !!getGistId()&&localStorage.getItem(JSON_RESTORE_KEY)===getGistId();}
+function getToken(){return _syncTokenMemory;}
+function getGistId(){return _syncGistMemory;}
+let _masterPwMemory='';
+function getMasterPw(){return _masterPwMemory;}
+function hasPendingJSONRestore(){return !!getGistId()&&_pendingRestoreGist===getGistId();}
 function cryptoOk(){return !!(window.crypto&&crypto.subtle);}
 
 // ── 备忘端到端加密（AES-GCM + PBKDF2）─────────────────────────────
-// 主密码只存本机 localStorage，永不进入 Gist；云端只有密文
+// PIN只留在当前页面内存，永不写入 localStorage 或 Gist；云端只有密文
 function bufB64(buf){let s='';const b=new Uint8Array(buf);for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
 function b64Buf(s){const bin=atob(s);const b=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b;}
 async function deriveKey(pass,salt){
@@ -9655,6 +9685,198 @@ async function decryptJSON(blob,pass){
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64Buf(blob.iv)},key,b64Buf(blob.ct));
   return JSON.parse(new TextDecoder().decode(pt));
 }
+
+// ── 本机保险库 ────────────────────────────────────────────────────
+// 正文数据只以一份 AES-GCM 密文落进 localStorage。PIN 与派生密钥只在当前页面内存中；
+// 刷新、关闭或系统回收页面后都会消失。Token / Gist ID 也只放进同一份本机密文。
+let _localVaultKey=null,_localVaultSalt='',_vaultReady=false;
+let _vaultWriteChain=Promise.resolve();
+let _syncDiffMemory=null,_calendarRecentMemory={cal:[],food:[]};
+let _pendingRestoreGist='',_notesRestoreMarkers={};
+const LEGACY_SENSITIVE_KEYS=[
+  SK,CK,NSK,NSUBK,PERIOD_KEY,'my_list_trash_v1','my_list_ovu_cfg_v1','my_list_cal_colors_v1',
+  'my_list_sync_diff_v1','my_list_cal_recent_v1','my_list_cal_recent_v1_food',
+  JSON_RESTORE_KEY,MPW_KEY,TK_KEY,GIST_KEY,RO_KEY
+];
+
+function cloneData(v){return JSON.parse(JSON.stringify(v));}
+function portableBackup(){
+  return {
+    backupVersion:2,
+    exportedAt:new Date().toISOString(),
+    data, categories:cats, notes, noteSubs,
+    trash,
+    period:periodData,
+    ovuConfig:(window.PV&&PV.getOvuCfg)?PV.getOvuCfg():null,
+    theme:curTheme||getTheme(),
+    mode:curMode||getMode(),
+    fontSize:curFontSize||getFontSize(),
+    calendarColors:icsColorMap||{}
+  };
+}
+function localVaultSnapshot(){
+  const out=portableBackup();
+  out.localVaultVersion=1;
+  // 同步凭据只进入本机密文，绝不进入 portableBackup() 导出的明文 JSON。
+  out.syncConfig={token:_syncTokenMemory,gistId:_syncGistMemory,readOnly:_readOnlyMemory};
+  out.privateState={syncDiff:_syncDiffMemory,calendarRecent:_calendarRecentMemory};
+  out.privateState.pendingRestoreGist=_pendingRestoreGist;
+  out.privateState.notesRestoreMarkers=_notesRestoreMarkers;
+  return cloneData(out);
+}
+function purgeLegacySensitiveStorage(){
+  LEGACY_SENSITIVE_KEYS.forEach(k=>localStorage.removeItem(k));
+  const dynamic=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);if(k&&k.startsWith(JSON_RESTORE_NOTES_KEY))dynamic.push(k);
+  }
+  dynamic.forEach(k=>localStorage.removeItem(k));
+}
+function applyVaultPayload(p){
+  p=p&&typeof p==='object'?p:{};
+  data=Array.isArray(p.data)?p.data:[];
+  cats=Array.isArray(p.categories)?p.categories:null;
+  notes=Array.isArray(p.notes)?p.notes:[];
+  noteSubs=Array.isArray(p.noteSubs)?p.noteSubs:null;
+  trash=Array.isArray(p.trash)?p.trash:[];
+  periodData=_normPeriod(p.period&&p.period.ALL_DATA?p.period:null);
+  if(window.PV&&p.ovuConfig&&typeof p.ovuConfig==='object')PV.setOvuCfg(p.ovuConfig,true,true);
+  if(typeof p.theme==='string')applyTheme(p.theme,false,true);
+  if(typeof p.mode==='string')applyMode(p.mode,false,true);
+  if(typeof p.fontSize==='string')applyFontSize(p.fontSize,false);
+  icsColorMap=p.calendarColors&&typeof p.calendarColors==='object'&&!Array.isArray(p.calendarColors)
+    ?p.calendarColors:{};
+  const sync=p.syncConfig&&typeof p.syncConfig==='object'?p.syncConfig:{};
+  _syncTokenMemory=typeof sync.token==='string'?sync.token:'';
+  _syncGistMemory=typeof sync.gistId==='string'?sync.gistId:'';
+  _readOnlyMemory=sync.readOnly===true;
+  const privateState=p.privateState&&typeof p.privateState==='object'?p.privateState:{};
+  _syncDiffMemory=privateState.syncDiff&&typeof privateState.syncDiff==='object'?privateState.syncDiff:null;
+  const recent=privateState.calendarRecent&&typeof privateState.calendarRecent==='object'?privateState.calendarRecent:{};
+  _calendarRecentMemory={cal:Array.isArray(recent.cal)?recent.cal:[],food:Array.isArray(recent.food)?recent.food:[]};
+  _pendingRestoreGist=typeof privateState.pendingRestoreGist==='string'?privateState.pendingRestoreGist:'';
+  _notesRestoreMarkers=privateState.notesRestoreMarkers&&typeof privateState.notesRestoreMarkers==='object'
+    ?privateState.notesRestoreMarkers:{};
+}
+async function writeVaultSnapshot(snapshot){
+  if(!_localVaultKey||!_localVaultSalt)throw new Error('本机保险库尚未解锁');
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt(
+    {name:'AES-GCM',iv},_localVaultKey,new TextEncoder().encode(JSON.stringify(snapshot))
+  );
+  const envelope={v:1,salt:_localVaultSalt,iv:bufB64(iv),ct:bufB64(ct)};
+  localStorage.setItem(LOCAL_VAULT_KEY,JSON.stringify(envelope));
+  purgeLegacySensitiveStorage();
+  return true;
+}
+function persistLocalVault(){
+  if(!_vaultReady||!_localVaultKey)return Promise.resolve(false);
+  const snapshot=localVaultSnapshot();
+  const run=()=>writeVaultSnapshot(snapshot);
+  _vaultWriteChain=_vaultWriteChain.then(run,run);
+  return _vaultWriteChain;
+}
+window.persistLocalVault=persistLocalVault;
+
+async function rekeyLocalVault(pin){
+  if(!pin)throw new Error('PIN码不能为空');
+  const old={pin:_masterPwMemory,key:_localVaultKey,salt:_localVaultSalt};
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const key=await deriveKey(pin,salt);
+  _masterPwMemory=pin;_localVaultKey=key;_localVaultSalt=bufB64(salt);clearKeyCache();
+  try{await writeVaultSnapshot(localVaultSnapshot());}
+  catch(e){_masterPwMemory=old.pin;_localVaultKey=old.key;_localVaultSalt=old.salt;throw e;}
+}
+
+let _vaultPromptResolve=null;
+function askVaultPin(mode,message,errorMessage){
+  const lock=document.getElementById('vaultLock');
+  const create=mode==='create';
+  document.getElementById('vaultLockTitle').textContent=create?'设置本机加密PIN':'解锁 My List';
+  document.getElementById('vaultLockText').textContent=message||
+    (create?'设置后，本机只保存密文。PIN不会写入设备，忘记后无法恢复数据。':'输入PIN，解密这台设备上的数据。');
+  document.getElementById('vaultLockBtn').textContent=create?'加密并进入':'解锁';
+  const pin=document.getElementById('vaultLockPin'),confirmPin=document.getElementById('vaultLockConfirm');
+  pin.value='';confirmPin.value='';confirmPin.hidden=!create;
+  document.getElementById('vaultLockError').textContent=errorMessage||'';
+  lock.hidden=false;
+  setTimeout(()=>pin.focus(),50);
+  return new Promise(resolve=>{_vaultPromptResolve={resolve,mode};});
+}
+document.getElementById('vaultLockForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(!_vaultPromptResolve)return;
+  const pin=document.getElementById('vaultLockPin').value;
+  const again=document.getElementById('vaultLockConfirm').value;
+  const error=document.getElementById('vaultLockError');
+  if(!pin){error.textContent='请输入PIN码';return;}
+  if(_vaultPromptResolve.mode==='create'&&pin!==again){error.textContent='两次输入的PIN码不一致';return;}
+  const done=_vaultPromptResolve;_vaultPromptResolve=null;done.resolve(pin);
+});
+
+function legacyJson(key,fallback){
+  try{const v=JSON.parse(localStorage.getItem(key));return v==null?fallback:v;}catch(e){return fallback;}
+}
+function legacyPayload(){
+  const legacyGist=localStorage.getItem(GIST_KEY)||'';
+  const legacyRestoreMarker=legacyGist?localStorage.getItem(JSON_RESTORE_NOTES_KEY+legacyGist)||'':'';
+  return {
+    data:legacyJson(SK,[]),categories:legacyJson(CK,null),notes:legacyJson(NSK,[]),
+    noteSubs:legacyJson(NSUBK,null),trash:legacyJson(TRASH_KEY,[]),
+    period:legacyJson(PERIOD_KEY,null),ovuConfig:legacyJson(OVU_KEY,null),
+    calendarColors:legacyJson(ICS_COLOR_KEY,{}),theme:getTheme(),mode:getMode(),fontSize:getFontSize(),
+    syncConfig:{
+      token:localStorage.getItem(TK_KEY)||'',gistId:localStorage.getItem(GIST_KEY)||'',
+      readOnly:localStorage.getItem(RO_KEY)==='1'
+    },
+    privateState:{
+      syncDiff:legacyJson('my_list_sync_diff_v1',null),
+      calendarRecent:{
+        cal:legacyJson('my_list_cal_recent_v1',[]),food:legacyJson('my_list_cal_recent_v1_food',[])
+      },
+      pendingRestoreGist:localStorage.getItem(JSON_RESTORE_KEY)||'',
+      notesRestoreMarkers:legacyGist&&legacyRestoreMarker?{[legacyGist]:legacyRestoreMarker}:{}
+    }
+  };
+}
+async function initializeLocalVault(){
+  if(!cryptoOk()){
+    document.getElementById('vaultLockText').textContent='当前环境不支持安全加密，请通过 HTTPS 打开 My List。';
+    document.getElementById('vaultLockPin').hidden=true;
+    document.getElementById('vaultLockBtn').hidden=true;
+    return false;
+  }
+  const raw=localStorage.getItem(LOCAL_VAULT_KEY);
+  if(raw){
+    let env;try{env=JSON.parse(raw);}catch(e){env=null;}
+    if(!env||!env.salt||!env.iv||!env.ct){
+      document.getElementById('vaultLockText').textContent='本机密文格式损坏，请从 Gist 或 JSON 备份恢复。';
+      return false;
+    }
+    let unlockError='';
+    for(;;){
+      const pin=await askVaultPin('unlock',null,unlockError);
+      try{
+        const key=await deriveKey(pin,b64Buf(env.salt));
+        const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64Buf(env.iv)},key,b64Buf(env.ct));
+        const payload=JSON.parse(new TextDecoder().decode(pt));
+        _masterPwMemory=pin;_localVaultKey=key;_localVaultSalt=env.salt;_vaultReady=true;
+        applyVaultPayload(payload);purgeLegacySensitiveStorage();
+        document.getElementById('vaultLock').hidden=true;
+        return true;
+      }catch(e){unlockError='PIN码不正确，无法解密本机数据';}
+    }
+  }
+  // 首次升级优先使用旧版曾保存的PIN自动迁移；没有PIN时要求创建，避免再写明文。
+  const oldPin=localStorage.getItem(MPW_KEY)||'';
+  const pin=oldPin||await askVaultPin('create','首次启用本机加密。若已有云同步，请输入同一个PIN；建议使用至少8位且独有的密码。PIN不会写入设备。');
+  applyVaultPayload(legacyPayload());
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  _masterPwMemory=pin;_localVaultKey=await deriveKey(pin,salt);_localVaultSalt=bufB64(salt);_vaultReady=true;
+  await writeVaultSnapshot(localVaultSnapshot());
+  document.getElementById('vaultLock').hidden=true;
+  return true;
+}
 // 备忘是否处于「有密文但尚未解密」状态（主密码缺失或不对）
 function isEncLocked(n){return !!(n&&n.encData&&!n.fields);}
 // 用当前主密码尝试解开本机所有未解密的备忘，返回成功条数
@@ -9672,7 +9894,7 @@ async function decryptPendingMemos(){
       ok++;
     }catch(e){/* 主密码不对，保持密文 */}
   }
-  if(ok){localStorage.setItem(NSK,JSON.stringify(notes));render();}
+  if(ok){persistLocalVault();render();}
   return ok;
 }
 
@@ -9813,7 +10035,7 @@ async function syncPush(allowCreate){
     // 有主密码 → 整份加密上云，Gist 里只剩一团密文（媒体、笔记、经期一并盖住）；
     // 没有主密码 → 维持老的明文格式，功能不受影响。
     // 复用备忘那一批的 pre（同一把密钥、每次调用各自随机 IV），不额外做 310000 轮 PBKDF2。
-    const notesRestore=localStorage.getItem(JSON_RESTORE_NOTES_KEY+getGistId());
+    const notesRestore=_notesRestoreMarkers[getGistId()]||'';
     if(notesRestore)inner.notesRestore=notesRestore;
     const payload=(pw&&cryptoOk())
       ? {version:2,enc:'all',updatedAt:new Date().toISOString(),encAll:await encryptJSON(inner,pw,pre)}
@@ -9844,9 +10066,9 @@ async function syncPush(allowCreate){
     }
     const j=await res.json();
     // 刚创建的 gist 里就是本机这份，天然是对齐的
-    if(!gistId&&j.id){localStorage.setItem(GIST_KEY,j.id);_cloudAligned=true;toast('✓ 已创建云端备份');}
+    if(!gistId&&j.id){_syncGistMemory=j.id;persistLocalVault();_cloudAligned=true;toast('✓ 已创建云端备份');}
     if(restoring&&getGistId()===gistId&&hasPendingJSONRestore()){
-      localStorage.removeItem(JSON_RESTORE_KEY);
+      _pendingRestoreGist='';persistLocalVault();
       _cloudAligned=true;
     }
     // ✅ 云端已确认收到这批笔记 → 摘掉「等待上云」标记，它们从此可以被云端覆盖
@@ -9872,13 +10094,13 @@ function clearPendingCloud(ids){
   const s=new Set(ids);
   let changed=0;
   notes.forEach(n=>{if(n.pendingCloud&&s.has(n.id)){delete n.pendingCloud;changed++;}});
-  if(changed)localStorage.setItem(NSK,JSON.stringify(notes));
+  if(changed)persistLocalVault();
 }
 // 尚未被云端确认过的笔记（等同于 localOnly，受拉取覆盖保护）
 function isProtectedNote(n){return !!(n.localOnly||n.pendingCloud);}
 
 // ── 批量把「仅本机」备忘加密上云 ───────────────────────────────────
-// 「仅本机」的备忘只活在这个浏览器的 localStorage 里，清一次缓存就没了。
+// 「仅本机」的备忘只活在这个浏览器的加密保险库里，清一次站点数据仍会丢失。
 // 一条条点锁按钮会触发几十次推送，这里合并成一次。
 async function uploadAllLocalMemos(){
   if(isSyncing){toast('同步中，请稍后再试');return;}
@@ -9898,7 +10120,7 @@ async function uploadAllLocalMemos(){
   const ids=targets.map(n=>n.id);
   // 两段式：先标 pendingCloud（拉取免疫），推送被云端确认后才算数
   targets.forEach(n=>{n.localOnly=false;n.pendingCloud=true;});
-  localStorage.setItem(NSK,JSON.stringify(notes));render();
+  persistLocalVault();render();
   toast('正在加密并上传 '+ids.length+' 条备忘…');
   clearTimeout(syncTimer);
   const ok=await syncPush(false);
@@ -9907,7 +10129,7 @@ async function uploadAllLocalMemos(){
   }else{
     const s=new Set(ids);
     notes.forEach(n=>{if(s.has(n.id)){n.localOnly=true;delete n.pendingCloud;}});
-    localStorage.setItem(NSK,JSON.stringify(notes));
+    persistLocalVault();
     toast('⚠️ 上云失败，'+ids.length+' 条已全部退回「仅本机」，请检查网络后重试');
   }
   render();updateSyncBadge();
@@ -9979,14 +10201,14 @@ function captureSyncDifference(remote){
   if(Array.isArray(remote.notes))compare(notes,remote.notes,'笔记');
   const diff={time:Date.now(),local,cloud};
   if(local.length||cloud.length){
-    try{localStorage.setItem(SYNC_DIFF_KEY,JSON.stringify(diff));}catch(e){}
+    _syncDiffMemory=diff;persistLocalVault();
     renderSyncDifference(diff);
   }
   return diff;
 }
 function renderSyncDifference(diff){
   const card=document.getElementById('sync-diff-card');if(!card)return;
-  if(!diff){try{diff=JSON.parse(localStorage.getItem(SYNC_DIFF_KEY)||'null');}catch(e){}}
+  if(!diff)diff=_syncDiffMemory;
   card.hidden=!diff||(!diff.local?.length&&!diff.cloud?.length);
   if(card.hidden)return;
   document.getElementById('sync-diff-summary').textContent='上次同步差异 · 本机独有 '+diff.local.length+' 条 · 云端独有 '+diff.cloud.length+' 条';
@@ -10049,7 +10271,7 @@ async function syncPull(silent,verifyOnly=false){
       const localIds=new Set(localOnlyTrash.map(t=>t.tid));
       trash=[...remote.trash.filter(t=>t&&!isLocalOnlyTrash(t)&&!localIds.has(t.tid)),...localOnlyTrash];
       const purged=purgeTrash();
-      try{localStorage.setItem(TRASH_KEY,JSON.stringify(trash));}catch(e){}
+      persistLocalVault();
       renderTrashCount();
       if(document.getElementById('trashModal').classList.contains('open'))renderTrashList();
       if(purged)scheduleSyncPush();
@@ -10065,17 +10287,17 @@ async function syncPull(silent,verifyOnly=false){
     if(remote.ovuConfig&&typeof remote.ovuConfig==='object'&&window.PV){
       PV.setOvuCfg(remote.ovuConfig,true,true);
       renderOvuRow();
-    }else if(localStorage.getItem('my_list_ovu_cfg_v1')){
+    }else{
+      // 本机配置已在加密保险库里，不再靠独立 localStorage 键判断；旧 Gist 缺字段就补上。
       scheduleSyncPush();
     }
     // 笔记数据兼容:旧 Gist 没有 notes/noteSubs 字段时保持现状
     // 合并策略：保留本机的 🔒 仅本机笔记，云端覆盖云端同步的笔记
     if(Array.isArray(remote.notes)){
       const remoteIds=new Set(remote.notes.map(n=>n.id));
-      const restoreKey=JSON_RESTORE_NOTES_KEY+gistId;
       const notesRestore=typeof remote.notesRestore==='string'?remote.notesRestore:'';
       // 显式恢复的批量删除不能被其它设备的笔记丢失保护补回云端。
-      const restoredNotes=!!notesRestore&&notesRestore!==localStorage.getItem(restoreKey);
+      const restoredNotes=!!notesRestore&&notesRestore!==(_notesRestoreMarkers[gistId]||'');
       // 兜底：本机有、云端没有、又不是 localOnly 的备忘 → 说明「以为上了云其实没上」。
       // 直接覆盖会永久丢失（备忘里是账号密码，不可再生），因此退回 localOnly 保护并提示用户。
       // 代价：在另一台设备上删掉的备忘会以「仅本机」的形式留在这台设备上，需要手动再删一次。
@@ -10136,7 +10358,7 @@ async function syncPull(silent,verifyOnly=false){
       // 云端版本不低于本机就采纳，否则说明云端那份更旧，保留本机并推上去。
       if(rRev>=lRev){
         periodData=_normPeriod(remote.period);
-        try{localStorage.setItem(PERIOD_KEY,JSON.stringify(periodData));}catch(e){}
+        persistLocalVault();
         if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
       }else{
         // 本机这份更新 → 保留本机并推上云端，覆盖旧 period
@@ -10152,13 +10374,10 @@ async function syncPull(silent,verifyOnly=false){
     migrateBookNotes();
     // 《霜降》只在云端最新数据落地后补入，避免先写本机再被 pull 覆盖
     migrateShuangjiangTimeline();
-    localStorage.setItem(SK,JSON.stringify(data));
-    localStorage.setItem(CK,JSON.stringify(cats));
-    localStorage.setItem(NSK,JSON.stringify(notes));
-    localStorage.setItem(NSUBK,JSON.stringify(noteSubs));
     if(Array.isArray(remote.notes)&&typeof remote.notesRestore==='string'&&remote.notesRestore){
-      localStorage.setItem(JSON_RESTORE_NOTES_KEY+gistId,remote.notesRestore);
+      _notesRestoreMarkers[gistId]=remote.notesRestore;
     }
+    persistLocalVault();
     _cloudAligned=true;   // 从此本机这份是基于云端最新数据改出来的，可以安全覆盖云端
     migrateLegacyChapterHeadings();
     isSyncing=false;updateSyncBadge();
@@ -10202,7 +10421,7 @@ function openSyncCfg(){
   renderSyncDifference();
   document.getElementById('f-gh-token').value=getToken();
   document.getElementById('f-gh-gist').value=getGistId();
-  document.getElementById('f-gh-pw').value=getMasterPw();
+  document.getElementById('f-gh-pw').value='';
   refreshCloudSyncToggle();
   document.getElementById('roToggle').classList.toggle('on',isReadOnly());
   document.getElementById('roToggle').setAttribute('aria-checked',String(isReadOnly()));
@@ -10305,68 +10524,23 @@ function closeSyncCfg(){
 async function saveSyncCfg(){
   const t=document.getElementById('f-gh-token').value.trim();
   const g=document.getElementById('f-gh-gist').value.trim();
-  const p=document.getElementById('f-gh-pw').value;
+  const enteredPw=document.getElementById('f-gh-pw').value;
+  const p=getMasterPw();
   if(!t){toast('请填入 token');return;}
-  if(p&&!cryptoOk()){toast('当前浏览器环境不支持加密（需要 https 或本地打开）');return;}
-  const hadPw=!!getMasterPw();
-  // ⚠️ 清空主密码框 = 把「所有」上云备忘从云端撤下。密码框是预填的，
-  //    被输入法/密码管理器清掉、或误以为是「再输一次」而清空，都会走到这里。
-  //    这一步会推一份不含任何备忘的数据覆盖云端，其它设备下次拉取就会照着删本机的备忘。
-  //    这么重的动作绝不能静默执行，必须让人明确确认。
-  if(!p&&hadPw){
-    const n=notes.filter(x=>x.subCat==='备忘'&&!x.localOnly).length;
-    if(!confirm('PIN码输入框是空的。\n\n继续保存会清除PIN码，后果有两个：\n\n'
-      +'1. '+n+' 条上云备忘会从云端全部撤下（改为仅本机）。'
-      +'其它设备下次同步时，会照着这份「没有备忘」的数据把本机备忘删掉。\n\n'
-      +'2. 云端将退回明文存储——媒体、笔记、经期数据会以明文写进 Gist，不再整份加密。\n\n'
-      +'如果你只是想改 token 或 Gist ID，请点「取消」，把PIN码重新填回去再保存。\n\n确定要清除PIN码吗？')){
-      return;
-    }
-  }
-  localStorage.setItem(TK_KEY,t);
-  if(g)localStorage.setItem(GIST_KEY,g);
-  if(p)localStorage.setItem(MPW_KEY,p);
-  else localStorage.removeItem(MPW_KEY);
-  clearKeyCache();   // 主密码变了，旧的派生密钥全部作废
-  const setPw=!!p&&!hadPw, clearedPw=!p&&hadPw;
-  // 清除主密码 → 全部备忘立即重新上锁（随后的推送会把它们从云端撤下，避免以后明文上云）
-  if(clearedPw){
-    notes.forEach(n=>{if(n.subCat==='备忘'&&!n.localOnly){n.localOnly=true;}});
-    localStorage.setItem(NSK,JSON.stringify(notes));render();
-    toast('已清除PIN码，备忘改回仅本机存储');
-  }
-  // 首次设置主密码 → 解锁全部备忘（此后默认加密上云）
-  // ⚠️ 必须放在拉取之后执行：拉取是「云端覆盖本地」，只有 localOnly 的笔记受保护，
-  //    先解锁再拉取会让尚未上云的本机备忘被覆盖丢失
-  // ⚠️ 翻转必须配合 pendingCloud：在推送被云端确认之前，这批备忘不能失去覆盖保护，
-  //    否则推送一失败它们就既不在云端、也不受 localOnly 保护，下次拉取即永久丢失。
-  const unlockMemos=()=>{
-    if(!setPw)return[];
-    const flipped=[];
-    notes.forEach(n=>{if(n.subCat==='备忘'&&n.localOnly){n.localOnly=false;n.pendingCloud=true;flipped.push(n.id);}});
-    if(flipped.length){localStorage.setItem(NSK,JSON.stringify(notes));render();toast('正在将 '+flipped.length+' 条备忘加密上云…');}
-    return flipped;
-  };
-  // 推送没成功就把这批备忘退回「仅本机」，宁可不上云也不能丢
-  const settleUnlocked=async(flipped,allowCreate)=>{
-    const ok=await syncPush(allowCreate);
-    if(!flipped.length)return;
-    if(ok){toast('✓ 已将 '+flipped.length+' 条备忘加密上云');return;}
-    const s=new Set(flipped);
-    notes.forEach(n=>{if(s.has(n.id)){n.localOnly=true;delete n.pendingCloud;}});
-    localStorage.setItem(NSK,JSON.stringify(notes));render();
-    toast('⚠️ 上云失败，'+flipped.length+' 条备忘已退回「仅本机」保护');
-  };
+  if(enteredPw&&enteredPw!==p){toast('本机已解锁；这里留空即可。修改PIN请先导出JSON备份。');return;}
+  if(!p){toast('请先解锁本机数据');return;}
+  if(!cryptoOk()){toast('当前浏览器环境不支持加密（需要 https 或本地打开）');return;}
+  _syncTokenMemory=t;
+  if(g)_syncGistMemory=g;
+  try{await persistLocalVault();}
+  catch(e){toast('同步设置保存失败，本机密文没有更新');return;}
   toast('设置已保存,开始同步...');
   closeSyncCfg();
   // 有 gist id → 先拉取;无 → 直接推送(会自动创建 gist)
   if(g){
-    syncPull(false).then(async ok=>{
+    syncPull(false).then(async()=>{
       const dec=await decryptPendingMemos();
       if(dec)toast('✓ 已解密 '+dec+' 条备忘');
-      const flipped=unlockMemos();
-      // 主密码变更需要强制推送：把新加密的备忘送上云 / 把撤回的备忘从云端删掉
-      if(setPw||clearedPw||(ok===false&&!lastSyncErr))await settleUnlocked(flipped,false);
     });
   }else{
     // 唯一允许新建 Gist 的入口，但绝不静默执行：
@@ -10379,25 +10553,26 @@ async function saveSyncCfg(){
       updateSyncBadge();
       return;
     }
-    await settleUnlocked(unlockMemos(),true);
+    await syncPush(true);
   }
   updateSyncBadge();
 }
 
-function syncPullNow(){
+async function syncPullNow(){
   const t=document.getElementById('f-gh-token').value.trim();
   const g=document.getElementById('f-gh-gist').value.trim();
-  const p=document.getElementById('f-gh-pw').value;
+  const enteredPw=document.getElementById('f-gh-pw').value;
+  const p=getMasterPw();
   if(!t||!g){toast('请先填入 token 和 Gist ID 再拉取');return;}
-  localStorage.setItem(TK_KEY,t);localStorage.setItem(GIST_KEY,g);
-  if(p){localStorage.setItem(MPW_KEY,p);clearKeyCache();}
+  if(enteredPw&&enteredPw!==p){toast('PIN已在本次解锁时输入；这里留空即可');return;}
+  _syncTokenMemory=t;_syncGistMemory=g;
+  try{await persistLocalVault();}catch(e){toast('同步设置保存失败，本机密文没有更新');return;}
   closeSyncCfg();
   syncPull(false);
 }
 
 // ── 用完清除：把这台设备上的本机痕迹擦干净 ────────────────────────
-// 备忘一旦用主密码解开，明文就写进了 localStorage —— 只清主密码是不够的，
-// 明文还在。借来的手机 / 副机用完，应该整个抹掉。云端 Gist 不受影响。
+// 正文落盘只有保险库密文；借来的手机 / 副机用完仍可整个抹掉。云端 Gist 不受影响。
 // 唯一的风险是「仅本机 / 待上云」的备忘：那些云端没有副本，抹了就没了，所以要拦一道。
 function appLocalKeys(){
   const ks=[];
@@ -10412,8 +10587,8 @@ function wipeLocalDevice(){
   const dec=notes.filter(n=>n.subCat==='备忘'&&n.fields).length;
   let msg='这会清空【这台设备】上本应用的全部本机数据：\n'
     +'· 所有收集、笔记、日历、经期数据的本机副本\n'
-    +(dec?'· '+dec+' 条已解密的备忘明文\n':'')
-    +'· PIN码、token、Gist ID\n\n'
+    +(dec?'· 当前会话中已解锁的 '+dec+' 条备忘\n':'')
+    +'· 本机密文、token、Gist ID\n\n'
     +'☁️ 云端 Gist 不受影响。以后在这台设备重新填 token 就能再拉下来。\n\n';
   if(risk){
     msg+='⚠️ 注意：有 '+risk+' 条备忘处于「仅本机 / 待上云」状态，云端没有副本，'
@@ -10433,13 +10608,12 @@ function clearSyncCfg(){
     +(nm?'\n\n另外 '+nm+' 条上云备忘会改回「仅本机」。以后重新配置 token 时，第一次推送会把它们从云端撤下——'
         +'那之后这些备忘就只存在这台设备上了，清掉浏览器数据就没了。':'')
     +'\n\n确定?'))return;
-  localStorage.removeItem(TK_KEY);
-  localStorage.removeItem(GIST_KEY);
-  localStorage.removeItem(MPW_KEY);
+  _syncTokenMemory='';
+  _syncGistMemory='';
   clearKeyCache();
   // 断开后备忘回到「仅本机」的安全默认，避免以后重新配置 token 时明文上云
   notes.forEach(n=>{if(n.subCat==='备忘'&&!n.localOnly){n.localOnly=true;}});
-  localStorage.setItem(NSK,JSON.stringify(notes));
+  persistLocalVault();
   lastSyncErr=null;
   toast('已断开同步');
   closeSyncCfg();
@@ -13594,13 +13768,12 @@ function isLocalOnlyTrash(t){
 }
 
 function loadTrash(){
-  try{trash=JSON.parse(localStorage.getItem(TRASH_KEY))||[];}catch(e){trash=[];}
   if(!Array.isArray(trash))trash=[];
   // 清掉的立刻落盘：不写回去的话下次启动又原样读出来，再白清一遍
   if(purgeTrash())persistTrash();
 }
 function persistTrash(){
-  try{localStorage.setItem(TRASH_KEY,JSON.stringify(trash));}catch(e){}
+  persistLocalVault();
   renderTrashCount();
   scheduleSyncPush();
 }
@@ -13839,8 +14012,9 @@ function saveCats(){
 
 // ── Import / Export ───────────────────────────────────────────────
 function exportJSON(){
-  const b=new Blob([JSON.stringify({data,categories:cats,notes,noteSubs,period:periodData},null,2)],{type:'application/json'});
-  dl(b,'我的清单_'+today()+'.json'); toast('已导出 JSON');
+  // 导出文件刻意保持明文，方便查看和恢复旧版本；Token、Gist ID、PIN 永不进入备份。
+  const b=new Blob([JSON.stringify(portableBackup(),null,2)],{type:'application/json'});
+  dl(b,'我的清单_'+today()+'.json'); toast('已导出完整 JSON（明文）');
 }
 function exportCSV(){
   const hdr=['名称','分类','作品年份','开始时间','结束时间','导演/作者','评分','状态','标签','备注','人物','添加日期'];
@@ -13868,6 +14042,10 @@ async function importJSON(e){
     for(const key of ['categories','notes']){
       if(Object.hasOwn(backup,key)&&!isRecordList(backup[key]))throw new Error('分类或笔记数据无效');
     }
+    if(Object.hasOwn(backup,'trash')&&(!Array.isArray(backup.trash)||
+      !backup.trash.every(value=>isObject(value)&&typeof value.tid==='string'))){
+      throw new Error('回收站数据无效');
+    }
     if(Object.hasOwn(backup,'noteSubs')&&
       (!Array.isArray(backup.noteSubs)||!backup.noteSubs.every(value=>typeof value==='string'))){
       throw new Error('笔记分类无效');
@@ -13881,6 +14059,9 @@ async function importJSON(e){
         throw new Error('经期数据无效');
       }
     }
+    for(const key of ['ovuConfig','calendarColors']){
+      if(Object.hasOwn(backup,key)&&backup[key]!==null&&!isObject(backup[key]))throw new Error('设置数据无效');
+    }
   }catch(err){
     toast('导入失败：请选择有效的 My List JSON 备份');
     return;
@@ -13888,11 +14069,17 @@ async function importJSON(e){
 
   if(isSyncing||_aligning){toast('请等待云同步结束后再导入');return;}
   const restored=[
-    {key:SK,label:'书影',value:backup.data},
-    {key:CK,label:'书影分类',value:backup.categories?.length===0?DCATS.map(c=>({...c})):backup.categories},
-    {key:NSK,label:'笔记',value:backup.notes},
-    {key:NSUBK,label:'笔记分类',value:backup.noteSubs?.length===0?DEFAULT_NOTE_SUBS.slice():backup.noteSubs},
-    {key:PERIOD_KEY,label:'经期',value:backup.period===undefined?undefined:_normPeriod(backup.period)}
+    {prop:'data',label:'书影',value:backup.data},
+    {prop:'categories',label:'书影分类',value:backup.categories?.length===0?DCATS.map(c=>({...c})):backup.categories},
+    {prop:'notes',label:'笔记',value:backup.notes},
+    {prop:'noteSubs',label:'笔记分类',value:backup.noteSubs?.length===0?DEFAULT_NOTE_SUBS.slice():backup.noteSubs},
+    {prop:'trash',label:'回收站',value:backup.trash},
+    {prop:'period',label:'经期',value:backup.period===undefined?undefined:_normPeriod(backup.period)},
+    {prop:'ovuConfig',label:'排卵期设置',value:backup.ovuConfig},
+    {prop:'theme',label:'主题',value:backup.theme},
+    {prop:'mode',label:'明暗模式',value:backup.mode},
+    {prop:'fontSize',label:'字号',value:backup.fontSize},
+    {prop:'calendarColors',label:'日历配色',value:backup.calendarColors}
   ].filter(entry=>entry.value!==undefined);
   const sync=!!(getToken()&&getGistId()&&!isReadOnly());
   const scope=restored.map(entry=>entry.label).join('、');
@@ -13900,41 +14087,40 @@ async function importJSON(e){
     getToken()&&isReadOnly()?'\n当前设备为只读模式，导入结果仅保存在本机。':'';
   if(!confirm('用此备份覆盖'+scope+'？\n这些栏目内，备份中没有的现有记录会被移除。'+syncMessage))return;
 
-  const restoredPeriod=restored.find(entry=>entry.key===PERIOD_KEY)?.value;
+  const restoredPeriod=restored.find(entry=>entry.prop==='period')?.value;
   if(restoredPeriod){
     // 其它设备按版本号选择较新的经期数据，恢复旧内容本身也是一次新修改。
     restoredPeriod.__rev=Math.max(Date.now(),periodData?.__rev||0,restoredPeriod.__rev)+1;
   }
-  const writes=restored.map(entry=>[entry.key,JSON.stringify(entry.value)]);
-  if(sync){
-    if(backup.notes!==undefined)writes.push([JSON_RESTORE_NOTES_KEY+getGistId(),uid()]);
-    writes.push([JSON_RESTORE_KEY,getGistId()]);
+  const previous=localVaultSnapshot();
+  data=backup.data;
+  for(const {prop,value} of restored){
+    if(prop==='categories')cats=value;
+    if(prop==='notes')notes=value;
+    if(prop==='noteSubs')noteSubs=value;
+    if(prop==='trash')trash=value;
+    if(prop==='period')periodData=value;
+    if(prop==='ovuConfig'&&value&&window.PV)PV.setOvuCfg(value,true,true);
+    if(prop==='theme')applyTheme(value,false,true);
+    if(prop==='mode')applyMode(value,false,true);
+    if(prop==='fontSize')applyFontSize(value,false);
+    if(prop==='calendarColors')icsColorMap=value||{};
   }
-  const previous=[];
+  if(sync){
+    if(backup.notes!==undefined)_notesRestoreMarkers[getGistId()]=uid();
+    _pendingRestoreGist=getGistId();
+  }
   try{
-    for(const [key,value] of writes){
-      const old=localStorage.getItem(key);
-      localStorage.setItem(key,value);
-      previous.push([key,old]);
-    }
+    await persistLocalVault();
   }catch(err){
-    // 撤销已经写入的键；优先释放本次增加的空间，再恢复旧值。
-    previous.forEach(([key])=>localStorage.removeItem(key));
-    previous.forEach(([key,value])=>{if(value!==null)localStorage.setItem(key,value);});
+    applyVaultPayload(previous);
+    try{await persistLocalVault();}catch(_){/* 原保险库仍保留着导入前的最后一份成功密文 */}
+    // applyVaultPayload(previous) 已把导入前的恢复标记一并还原。
     toast('导入失败：本机存储空间不足或不可用');
     return;
   }
-
-  data=backup.data;
-  for(const {key,value} of restored){
-    if(key===CK)cats=value;
-    if(key===NSK)notes=value;
-    if(key===NSUBK)noteSubs=value;
-    if(key===PERIOD_KEY){
-      periodData=value;
-      if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
-    }
-  }
+  if(window.PV&&_pvInited){PV.init(periodData);refreshCalPeriodView();renderOvuRow();}
+  renderTrashCount();
   renderTypeSelect();
   render();
   if(sync){
@@ -14019,8 +14205,8 @@ const ICS_PALETTE=[
   {c:'#A0568C',n:'玫紫'},{c:'#A09A8E',n:'暖灰'},
 ];
 const ICS_COLOR_KEY='my_list_cal_colors_v1';
-let icsColorMap=(()=>{try{return JSON.parse(localStorage.getItem(ICS_COLOR_KEY))||{};}catch{return {};}})();
-function persistIcsColors(){try{localStorage.setItem(ICS_COLOR_KEY,JSON.stringify(icsColorMap));}catch(e){}}
+let icsColorMap={};
+function persistIcsColors(){persistLocalVault();}
 // '#FF2968' / '#FF2968FF'（Apple 带 alpha）→ '#FF2968'；认不出的返回 ''
 function icsHexNorm(v){const m=/^#?([0-9a-f]{6})/i.exec(String(v||'').trim());return m?('#'+m[1].toUpperCase()):'';}
 // 文件自带的颜色往往很艳，吸附到调色板里最近的一色，保证整体配色不跳
@@ -14759,10 +14945,13 @@ function calRelTime(dateStr){
 // 按 oninput 实时记会把每个前缀都存进去（「生」「生日」…），列表立刻就废了。
 const CAL_RECENT_KEY='my_list_cal_recent_v1', CAL_RECENT_MAX=8;
 function getCalRecent(){
-  try{const a=JSON.parse(localStorage.getItem(calStorageKey(CAL_RECENT_KEY)));
-      return Array.isArray(a)?a.filter(x=>typeof x==='string'&&x.trim()):[];}catch(e){return [];}
+  const a=calView==='food'?_calendarRecentMemory.food:_calendarRecentMemory.cal;
+  return Array.isArray(a)?a.filter(x=>typeof x==='string'&&x.trim()):[];
 }
-function saveCalRecent(list){try{localStorage.setItem(calStorageKey(CAL_RECENT_KEY),JSON.stringify(list));}catch(e){}}
+function saveCalRecent(list){
+  if(calView==='food')_calendarRecentMemory.food=list;else _calendarRecentMemory.cal=list;
+  persistLocalVault();
+}
 function pushCalRecent(raw){
   const q=(raw||'').trim(); if(!q) return;
   // 同词去重后顶到最前：重复搜的词自然浮上来，不会被一堆一次性的词挤掉
@@ -16610,8 +16799,7 @@ function migrateLegacyChapterHeadings(){
     const next=markLegacyChapterHeadings(note.body);
     if(next!==note.body){note.body=next;changedNotes=true;}
   });
-  if(changedData)localStorage.setItem(SK,JSON.stringify(data));
-  if(changedNotes)localStorage.setItem(NSK,JSON.stringify(notes));
+  if(changedData||changedNotes)persistLocalVault();
   localStorage.setItem(flag,'1');
   if(changedData||changedNotes)scheduleSyncPush();
 }
@@ -17567,12 +17755,12 @@ async function toggleNoteLocal(id){
   // 🔒 → 🔓 时打上「等待上云」标记：在云端确认收到之前，它仍然免疫拉取覆盖
   if(wasLocal)n.pendingCloud=true;
   n.updatedAt=new Date().toISOString();
-  localStorage.setItem(NSK,JSON.stringify(notes));
+  persistLocalVault();
   render();
   // 未配置同步 → 纯本地模式，不用推
   if(!getToken()){
     // 没有云端可去，别让它停在「等待上云」的假状态
-    if(wasLocal){n.localOnly=true;delete n.pendingCloud;localStorage.setItem(NSK,JSON.stringify(notes));render();toast('尚未配置云同步，已保持「仅本机」');}
+    if(wasLocal){n.localOnly=true;delete n.pendingCloud;persistLocalVault();render();toast('尚未配置云同步，已保持「仅本机」');}
     return;
   }
   // 取消防抖中的待推送（避免被旧的覆盖）
@@ -17585,7 +17773,7 @@ async function toggleNoteLocal(id){
     }catch(e){
       // 还原
       n.localOnly=false;
-      localStorage.setItem(NSK,JSON.stringify(notes));
+      persistLocalVault();
       render();
       toast('⚠️ 云端删除失败，请检查网络');
     }
@@ -17595,7 +17783,7 @@ async function toggleNoteLocal(id){
     const ok=await syncPush(false);
     if(!ok){
       n.localOnly=true;delete n.pendingCloud;
-      localStorage.setItem(NSK,JSON.stringify(notes));
+      persistLocalVault();
       render();
       toast('⚠️ 上云失败，已退回「仅本机」保护，请检查网络后重试');
     }
@@ -18191,15 +18379,22 @@ document.addEventListener('touchstart', function(){}, {passive:true});
 })();
 
 // ── Init ─────────────────────────────────────────────────────────
-boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger(); restoreLastPage();
-// 恢复完页面/视图后强制回到顶部：内容是 JS 渲染的，首帧高度还没定下来，
-// 光在 openCalendar() 里滚一次可能被随后的布局/图片撑高带偏。再补两帧兜底。
-(function(){
+// 先解锁本机保险库，再让任何正文进入页面；PIN 只留在这个页面会话的内存中。
+(async function startApp(){
+  const ready=await initializeLocalVault();
+  if(!ready)return;
+  boot(); renderTypeSelect(); applyModeUI(); render(); playCatStagger(); restoreLastPage();
+  // 恢复完页面/视图后强制回到顶部：内容是 JS 渲染的，首帧高度还没定下来，
+  // 光在 openCalendar() 里滚一次可能被随后的布局/图片撑高带偏。再补两帧兜底。
   const toTop=()=>{try{window.scrollTo(0,0);}catch(e){}};
   toTop();
   requestAnimationFrame(()=>{toTop();requestAnimationFrame(toTop);});
   window.addEventListener('load',toTop,{once:true});
-})();
+})().catch(e=>{
+  console.error('[Local vault init failed]',e);
+  document.getElementById('vaultLock').hidden=false;
+  document.getElementById('vaultLockError').textContent='无法打开本机密文：'+(e.message||String(e));
+});
 // ── 弹窗背景滚动锁（iOS/Android 通用）──────────────────────────
 // 思路：监听所有弹窗 overlay 的 open class 变化，自动锁/解锁 body
 // 锁定：记录 scrollY → body 加 position:fixed top:-scrollY → 防穿透
