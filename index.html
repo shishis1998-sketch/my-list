@@ -11183,6 +11183,7 @@ function hideDetail(){
   // 详情页隐藏后把主列表重新画一遍。这样即使浏览器连续派发返回事件，
   // 也不会留下只有“全部”标题、列表 DOM 仍为空的中间状态。
   render();
+  scrollResultsTop();
 }
 // 点详情页任意一处 → 从底部升起编辑面板，并聚焦点中的那一项。
 // 正在选文字时不触发：备注是最常想复制的一段，长按选中之后的收尾点击不该弹出编辑。
@@ -13058,6 +13059,7 @@ function toggleSidebar(open){
   const sb=document.querySelector('.sidebar');
   const ov=document.getElementById('sbOverlay');
   if(open===undefined) open=!sb.classList.contains('open');
+  const changed=sb.classList.contains('open')!==open;
   if(open && document.body.classList.contains('cal-open')) closeCalendar();  // 「设置」从日历页切走
   // 设置页整页几乎不滚，滚动监听不一定会跑，收着的底栏得在这里主动放回来，
   // 否则进了设置页底部四个 tab 全在屏幕外，切不出去。
@@ -13066,6 +13068,8 @@ function toggleSidebar(open){
   ov.classList.toggle('open',open);
   document.body.classList.toggle('sb-open',open);  // 设置页：底栏浮于其上、只留 tab（与日历一致）
   setMenuTabActive(open);                           // 高亮底部「设置」tab
+  // 手机端设置与列表共用文档滚动位置，切换视图后再归零。
+  if(changed&&isMobileLayout()) scrollResultsTop();
   // 这里原本有 document.body.style.overflow=open?'hidden':''，想锁背景滚动。
   // 实测无效（隔离测试里加不加它都照样能滚），本仓库的弹窗锁也是因此才用
   // position:fixed 而非 overflow。现在设置页激活时 .main 根本不渲染，
