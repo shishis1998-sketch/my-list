@@ -1223,8 +1223,9 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     font-family:var(--zh);white-space:nowrap;flex-shrink:0;transition:all .12s;
   }
   .catfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
-  .catfrow .nfchip-dashed{border-style:dashed;color:var(--accent-mid);}
-  .catfrow .nfsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
+  .catfrow .nfchip{padding-inline:var(--sp-8);}
+  .bb-media-sort-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;}
+  .bb-media-sort-options .bb-sortopt{justify-content:center;white-space:nowrap;}
   /* 笔记模式下隐藏分类条(此时显示 nfrow 子分类条) */
   body.notes-mode .catfrow{display:none !important;}
 
@@ -5375,13 +5376,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </button>
     </div>
     <select class="ssort" onchange="onSort(this.value)">
+      <option value="media-auto" selected>默认排序</option>
       <option value="upd-desc">最近修改</option>
       <option value="date-desc">最近添加</option>
       <option value="date-asc">最早添加</option>
       <option value="watch-desc">最近看完</option>
       <option value="watch-asc">最早看完</option>
       <option value="start-desc">最近开始</option>
-      <option value="in-progress" selected>在看</option>
       <option value="name-asc">名称 A→Z</option>
       <option value="score-desc">评分最高</option>
       <option value="year-desc">年份最新</option>
@@ -5392,17 +5393,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </button>
   </div>
 
-  <!-- 分类筛选条（仅手机端媒体模式显示；桌面端用左侧栏）-->
+  <!-- 手机端书影状态筛选条 -->
   <div class="catfrow" id="catfrow"></div>
 
-  <!-- FILTER ROW -->
+  <!-- 桌面端书影筛选条 -->
   <div class="frow" id="frow">
     <span class="flbl">状态</span>
-    <span class="fchip on" onclick="setStatus('all',this)">全部</span>
-    <span class="fchip" onclick="setStatus('completed',this)">已完成</span>
-    <span class="fchip" onclick="setStatus('in-progress',this)">在看</span>
-    <span class="fchip" onclick="setStatus('want',this)">待看/读</span>
-    <span class="fchip" onclick="setStatus('dropped',this)">放弃</span>
+    <div id="desktopMediaStatuses" style="display:contents"></div>
     <div class="fsep"></div>
     <span class="flbl">评分</span>
     <span class="fchip on" onclick="setScore('all',this)">全部</span>
@@ -8988,7 +8985,7 @@ const OVU_KEY='my_list_ovu_cfg_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:all', curSearch='', curSort='in-progress', curStatus='all', curScore='all';
+let curCat='notes:all', curSearch='', curSort='media-auto', curStatus='in-progress', curScore='all';
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
 let curNoteSub='all'; // 笔记子分类筛选
@@ -10624,10 +10621,8 @@ function cmpDateField(a,b,key,desc){
 function filtered(){
   let L=[...data];
   if(curCat!=='all') L=L.filter(d=>d.type===curCat);
-  if(curSort==='in-progress') L=L.filter(d=>!!String(d.startDate||'').trim()&&!String(d.watchDate||'').trim());
-  if(curStatus!=='all') L=L.filter(d=>curStatus==='in-progress'
-    ? !!String(d.startDate||'').trim()&&!String(d.watchDate||'').trim()
-    : d.status===curStatus);
+  if(curStatus!=='all') L=L.filter(d=>mediaStatusOf(d)===curStatus);
+  const sort=mediaSort();
   if(curScore!=='all'){
     if(curScore==='12') L=L.filter(d=>!d.score||d.score<=2);
     else{const m=parseInt(curScore)-.5; L=L.filter(d=>d.score&&d.score>m);}
@@ -10639,15 +10634,15 @@ function filtered(){
     (d.tags||[]).some(t=>t.toLowerCase().includes(q)));
   }
   L.sort((a,b)=>{
-    if(curSort==='upd-desc')  return updatedAtOf(b)-updatedAtOf(a);
-    if(curSort==='date-desc') return (b.id||'')>(a.id||'')?1:-1;
-    if(curSort==='date-asc')  return (a.id||'')>(b.id||'')?1:-1;
-    if(curSort==='watch-desc')return cmpDateField(a,b,'watchDate',true);
-    if(curSort==='watch-asc') return cmpDateField(a,b,'watchDate',false);
-    if(curSort==='start-desc'||curSort==='in-progress')return cmpDateField(a,b,'startDate',true);
-    if(curSort==='name-asc')  return a.name.localeCompare(b.name,'zh');
-    if(curSort==='score-desc')return (b.score||0)-(a.score||0);
-    if(curSort==='year-desc') return (b.year||0)-(a.year||0);
+    if(sort==='upd-desc')  return updatedAtOf(b)-updatedAtOf(a);
+    if(sort==='date-desc') return (b.id||'')>(a.id||'')?1:-1;
+    if(sort==='date-asc')  return (a.id||'')>(b.id||'')?1:-1;
+    if(sort==='watch-desc')return cmpDateField(a,b,'watchDate',true);
+    if(sort==='watch-asc') return cmpDateField(a,b,'watchDate',false);
+    if(sort==='start-desc')return cmpDateField(a,b,'startDate',true);
+    if(sort==='name-asc')  return a.name.localeCompare(b.name,'zh');
+    if(sort==='score-desc')return (b.score||0)-(a.score||0);
+    if(sort==='year-desc') return (b.year||0)-(a.year||0);
     return 0;
   });
   return L;
@@ -10676,23 +10671,33 @@ function renderSidebar(){
     </button>`).join('');
   // 手机端设置页:分类管理列表(点=打开分类管理弹窗编辑)
   renderMobileCatMgr();
-  // 手机端媒体主页顶部:分类筛选条
-  renderCatFilterRow();
+  renderMediaStatusFilters();
   // 笔记侧边栏
   renderNotesSidebar();
 }
 
-// 手机端媒体主页顶部的分类筛选条(纯文字 chips,规范同笔记子分类条)
-function renderCatFilterRow(){
-  const box=document.getElementById('catfrow');
-  if(!box) return;
-  const chips=[`<span class="nfchip ${curCat==='all'?'on':''}" onclick="filterCat('all')">全部</span>`];
-  cats.forEach(c=>{
-    chips.push(`<span class="nfchip ${curCat===c.id?'on':''}" onclick="filterCat('${c.id}')">${esc(c.name)}</span>`);
+const MEDIA_STATUSES=[
+  ['all','全部'],['in-progress','在看'],['completed','已看完'],['want','未开始'],['dropped','已放弃']
+];
+function mediaStatusOf(item){
+  if(item.status==='dropped') return 'dropped';
+  if(item.status==='in-progress') return 'in-progress';
+  // 兼容旧记录：只填了开始日期也会出现在「在看」。
+  if(String(item.startDate||'').trim()&&!String(item.watchDate||'').trim()) return 'in-progress';
+  return item.status||(item.watchDate?'completed':'want');
+}
+function mediaSort(){
+  if(curSort!=='media-auto') return curSort;
+  if(curStatus==='in-progress') return 'start-desc';
+  if(curStatus==='completed') return 'watch-desc';
+  return 'upd-desc';
+}
+function renderMediaStatusFilters(){
+  [['catfrow','nfchip'],['desktopMediaStatuses','fchip']].forEach(([id,cls])=>{
+    document.getElementById(id).innerHTML=MEDIA_STATUSES.map(([value,label])=>
+      `<button type="button" class="${cls}${value===curStatus?' on':''}" aria-pressed="${value===curStatus}" onclick="pickStatus('${value}')">${label}</button>`
+    ).join('');
   });
-  chips.push('<div class="nfsep"></div>');
-  chips.push('<span class="nfchip nfchip-dashed" onclick="openCatMgr()">＋ 管理分类</span>');
-  box.innerHTML=chips.join('');
 }
 
 // 手机端整屏「设置」页的分类管理列表:每行点击=编辑,底部一行=新增
@@ -10735,7 +10740,7 @@ function renderTypeSelect(){
 
 // 日期排序时按对应年月分组；无日期的记录始终放在最后。
 function mediaMonthGroups(items,sort){
-  const field={'watch-desc':'watchDate','watch-asc':'watchDate','start-desc':'startDate','in-progress':'startDate'}[sort];
+  const field={'watch-desc':'watchDate','watch-asc':'watchDate','start-desc':'startDate'}[sort];
   const byUpdated=sort==='upd-desc';
   const byCreated=sort==='date-desc'||sort==='date-asc';
   if(!field&&!byUpdated&&!byCreated)return null;
@@ -10799,7 +10804,7 @@ function render(){
       <span class="mrow-arr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
     </div>`;
   };
-  const monthGroups=mediaMonthGroups(L,curSort);
+  const monthGroups=mediaMonthGroups(L,mediaSort());
   document.getElementById('twrap').classList.toggle('media-monthly',!!monthGroups&&L.length>0);
   list.innerHTML=monthGroups?monthGroups.map(group=>
     '<section class="media-month-group"><h2 class="media-month-title">'+esc(group.label)+'</h2>'+
@@ -13228,7 +13233,7 @@ function applyModeUI(){
   }else{
     if(ssort.dataset.noteMode){
       ssort.innerHTML=ssort.dataset.mediaHTML;
-      ssort.value=ssort.dataset.mediaVal||'in-progress';
+      ssort.value=ssort.dataset.mediaVal||'media-auto';
       curSort=ssort.value;
       delete ssort.dataset.noteMode;
     }
@@ -13335,12 +13340,13 @@ function syncBottomTabs(){
 }
 
 // ── 底部栏排序小卡片 ──────────────────────────────────────────────
-// 媒体排序按日期和其它方式分组，仅用分隔线区分；笔记排序不分组。
-const SORT_GROUPS_MEDIA=[
-  ['时间',[['upd-desc','最近修改'],['date-desc','最近添加'],['date-asc','最早添加'],
-           ['watch-desc','最近看完'],['watch-asc','最早看完'],['start-desc','最近开始'],['in-progress','在看']]],
-  ['其他',[['name-asc','名称 A→Z'],['score-desc','评分最高'],['year-desc','年份最新']]]
+// 「添加」和「看完」共用方向选项。
+const MEDIA_SORTS=[
+  ['media-auto','默认'],['upd-desc','修改'],['date-desc','添加'],
+  ['start-desc','开始'],['watch-desc','看完'],['name-asc','名称'],
+  ['score-desc','评分'],['year-desc','年份']
 ];
+const MEDIA_ASC_SORTS={'date-desc':'date-asc','watch-desc':'watch-asc'};
 const SORT_GROUPS_NOTE=[
   ['',[['n-updated','最近修改'],['n-created','最新创建'],['n-title-asc','标题 A→Z'],['n-title-desc','标题 Z→A']]]
 ];
@@ -13359,14 +13365,19 @@ function placeTagPanel(){ placeBBPanel('bbTagPanel',document.getElementById('bbT
 function openSortSheet(){
   const sheet=document.getElementById('bbSortSheet');
   const panel=document.getElementById('bbSortPanel');
-  const groups=isNoteMode()?SORT_GROUPS_NOTE:SORT_GROUPS_MEDIA;
+  const notes=isNoteMode();
+  const groups=SORT_GROUPS_NOTE;
   // 当前项不打勾，只用绿底+绿字标出来：省下一个勾的宽度，卡片能再窄一截
-  panel.innerHTML=groups.map(([g,opts],gi)=>
+  panel.innerHTML=notes?groups.map(([g,opts],gi)=>
     (gi?'<div class="bb-sortsep" role="separator"></div>':'')+
     opts.map(([v,lbl])=>
       `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">${lbl}</button>`
     ).join('')
-  ).join('');
+  ).join(''):[['all','全部分类'],...cats.map(c=>[c.id,c.name])].map(([id,label],index)=>
+    `<button type="button" class="bb-sortopt${id===curCat?' on':''}" onclick="pickMediaCategory(${index})">${esc(label)}</button>`
+  ).join('')+'<div class="bb-sortsep" role="separator"></div>'+
+    '<button type="button" class="bb-sortopt" onclick="closeSortSheet();openCatMgr()">管理分类</button>';
+  panel.scrollTop=0;
   sheet.classList.add('open');
   placeSortPanel();
   window.addEventListener('resize',placeSortPanel);
@@ -13383,12 +13394,14 @@ function pickSort(v){
   render();
   closeSortSheet();
 }
-function setStatus(v,el){
-  curStatus=v;
-  document.querySelectorAll('.frow .fchip').forEach(c=>{
-    if(['全部','已完成','在看','待看/读','放弃'].includes(c.textContent.trim())) c.classList.remove('on');
-  });
-  el.classList.add('on'); render();
+function pickMediaCategory(index){
+  closeSortSheet();
+  filterCat(index===0?'all':cats[index-1].id);
+}
+function pickMediaSort(value){
+  onSort(value);
+  document.querySelector('.ssort').value=value;
+  refreshFilterSheet();
 }
 function setScore(v,el){
   curScore=v;
@@ -13423,17 +13436,16 @@ function syncListControlBtn(id,label,description){
   btn.setAttribute('aria-label',description);
 }
 function syncFilterBtn(){
-  const groups=isNoteMode()?SORT_GROUPS_NOTE:SORT_GROUPS_MEDIA;
-  const sort=groups.flatMap(([,opts])=>opts).find(([value])=>value===curSort);
-  syncListControlBtn('bbSortBtn',sort?sort[1]:'',sort?'排序：'+sort[1]:'排序');
+  if(isNoteMode()){
+    const sort=SORT_GROUPS_NOTE[0][1].find(([value])=>value===curSort);
+    syncListControlBtn('bbSortBtn',sort?sort[1]:'',sort?'排序：'+sort[1]:'排序');
+  }else{
+    const category=cats.find(c=>c.id===curCat);
+    syncListControlBtn('bbSortBtn',category?.name||'分类',category?'分类：'+category.name:'分类：全部分类');
+  }
   const filters=[];
   const descriptions=[];
   if(!isNoteMode()){
-    if(curStatus!=='all'){
-      const status=SMAP[curStatus]?.lbl||curStatus;
-      filters.push(status);
-      descriptions.push('状态：'+status);
-    }
     const scores={'5':'5/5','4':'≥4/5','3':'≥3/5','12':'≤2/5'};
     if(curScore!=='all'){
       const score=scores[curScore]||curScore;
@@ -13483,9 +13495,18 @@ function buildFilterSheetHTML(){
   const opt=(on,lbl,fn)=>`<button type="button" class="bb-sortopt${on?' on':''}" onclick="${fn}">${esc(lbl)}</button>`;
   let html='';
   if(!notes){
-    html+='<div class="bb-filter-glbl">状态</div>';
-    [['all','全部'],['completed','已完成'],['in-progress','在看'],['want','待看/读'],['dropped','放弃']]
-      .forEach(([v,lbl])=>{html+=opt(curStatus===v,lbl,`pickStatus('${v}')`);});
+    const selected=Object.keys(MEDIA_ASC_SORTS).find(value=>MEDIA_ASC_SORTS[value]===curSort)||curSort;
+    html+='<div class="bb-filter-glbl">排序</div><div class="bb-media-sort-options">';
+    MEDIA_SORTS.forEach(([value,label])=>{
+      html+=opt(selected===value,label,`pickMediaSort('${value===selected?curSort:value}')`);
+    });
+    html+='</div>';
+    const ascending=MEDIA_ASC_SORTS[selected];
+    if(ascending){
+      html+='<div class="bb-media-sort-options">'+
+        opt(curSort===selected,'最新',`pickMediaSort('${selected}')`)+
+        opt(curSort===ascending,'最早',`pickMediaSort('${ascending}')`)+'</div>';
+    }
     html+='<div class="bb-filter-glbl">评分</div>';
     [['all','全部'],['5','5/5'],['4','≥4/5'],['3','≥3/5'],['12','≤2/5']]
       .forEach(([v,lbl])=>{html+=opt(curScore===v,lbl,`pickScore('${v}')`);});
@@ -13524,7 +13545,7 @@ function closeTagSheet(){
   window.removeEventListener('resize',placeTagPanel);
   document.getElementById('bbTagSheet').classList.remove('open');
 }
-function pickStatus(v){ curStatus=v; render(); refreshFilterSheet(); }
+function pickStatus(v){ curStatus=v; render(); scrollResultsTop(); }
 function pickScore(v){ curScore=v; render(); refreshFilterSheet(); }
 function pickTag(v){
   toggleFilterTag(v);
