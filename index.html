@@ -4974,17 +4974,20 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-heading-picker{position:relative;display:inline-flex;}
 .chapter-heading-menu{
   position:absolute;left:0;bottom:calc(100% + 6px);z-index:6;display:none;align-items:center;
-  padding:0;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);
+  padding:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
   box-shadow:none;white-space:nowrap;overflow:hidden;
 }
 .chapter-heading-picker.open .chapter-heading-menu{display:flex;}
 .chapter-heading-option{
-  border:0;
+  position:relative;border:0;
   background:transparent;color:var(--text-primary);font-family:var(--zh);
   font-size:var(--fs-headline);cursor:pointer;
 }
 .chapter-heading-option:active{background:var(--press);}
-.chapter-heading-option+.chapter-heading-option{border-left:1px solid color-mix(in srgb,var(--text-secondary) 45%,var(--border));}
+.chapter-heading-option+.chapter-heading-option::before{
+  content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;
+  background:color-mix(in srgb,var(--text-secondary) 65%,var(--border));pointer-events:none;
+}
 .chapter-heading-option.chapter-heading-picked{background:var(--accent-light);color:var(--accent);}
 .chapter-heading-option sub{font-size:.65em;vertical-align:-.25em;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
@@ -5184,7 +5187,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 :is(.bb-sortpanel,.people-more-menu,.cal-filterpop,.chapter-action-panel,
     #diaryActionMenu .chapter-action-panel,#calViewPeriod .home-filter-menu,
-    #calViewHeat .hm-filter-menu,.rg-filter,.chapter-heading-menu){
+    #calViewHeat .hm-filter-menu,.rg-filter){
   padding:6px;
   border:1px solid var(--border);
   border-radius:var(--menu-radius);
@@ -5194,7 +5197,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .pv-sym-popover{box-shadow:none;}
 :is(.bb-sortopt,.people-more-item,.cal-filter-row,.chapter-action-item,
     #diaryActionMenu .chapter-action-item,#calViewPeriod .home-filter-item,
-    #calViewHeat .hm-filter-item,.chapter-heading-option){
+    #calViewHeat .hm-filter-item){
   box-sizing:border-box;
   min-height:var(--menu-item-height);
   padding:8px 12px;
@@ -5204,16 +5207,18 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   font-weight:400;
   line-height:1.5;
 }
-.chapter-heading-menu{padding:0;overflow:hidden;}
-.chapter-format .fmt-btn,.chapter-heading-option{
+.chapter-heading-menu{
+  width:calc(3 * var(--chapter-format-btn-w));height:var(--chapter-format-btn-h);
+  align-items:stretch;
+}
+.chapter-format .fmt-btn{
   width:var(--chapter-format-btn-w);min-width:var(--chapter-format-btn-w);
   height:var(--chapter-format-btn-h);min-height:var(--chapter-format-btn-h);
 }
-.chapter-heading-option{padding:0;border-radius:0;}
+.chapter-heading-option{flex:1;min-width:0;padding:0;border-radius:0;}
 @media(max-width:1024px), (pointer:coarse){
   .chapter-format{--chapter-format-btn-h:34px;--chapter-format-btn-w:36px;}
 }
-#tlSheet.chapter-keyboard .chapter-format{--chapter-format-btn-h:32px;}
 :is(.bb-sortgrp,.bb-filter-glbl,.cal-filterpop-hd){
   font-family:var(--zh);
   font-size:var(--menu-label-size);
@@ -17047,6 +17052,13 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
     e.preventDefault();e.stopPropagation();
     const open=headingPicker.classList.toggle('open');
     headingTrigger.setAttribute('aria-expanded',String(open));
+    if(open){
+      const start=ta.selectionStart;
+      const lineStart=ta.value.slice(0,start).lastIndexOf('\n')+1;
+      const prefix=/^(#{1,2})[^\S\n]+/.exec(ta.value.slice(lineStart));
+      const format=prefix?'h'+prefix[1].length:'t';
+      headingOptions.forEach(option=>option.classList.toggle('chapter-heading-picked',option.dataset.fmt===format));
+    }
   });
   body.querySelectorAll('[data-fmt]').forEach(btn=>btn.addEventListener('pointerdown',e=>{
     e.preventDefault();e.stopPropagation();noteFmt(btn.dataset.fmt,ta);
