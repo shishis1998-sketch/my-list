@@ -2907,7 +2907,6 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   .fg textarea.note-body{min-height:200px;font-size:var(--fs-input);}
   .fg textarea.note-body.is-book{min-height:40vh;height:40vh;max-height:40vh;resize:none;}
   .fmt-btn{height:34px;min-width:36px;font-size:14px;}
-  .chapter-heading-option{height:34px;}
   /* 备忘卡片字段行（手机端 34px 锁死）*/
   .memo-field{padding:0 var(--sp-12);height:34px;}
   .memo-field-label{font-size:var(--fs-caption);}
@@ -4969,7 +4968,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #tlSheet:has(#tlSheetBody.chapter-editing) .tlsheet-head{background:var(--bg);}
 #tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg);}
 .chapter-title-input{flex-shrink:0;width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;font:inherit;font-size:var(--fs-input);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
-.chapter-format{--chapter-format-btn-h:30px;flex-shrink:0;margin:0;}
+.chapter-format{--chapter-format-btn-h:30px;--chapter-format-btn-w:32px;flex-shrink:0;margin:0;}
 .chapter-format .fmt-btn{background:var(--surface);}
 /* 章节标题级别：H 打开 H1 / H2 / T 菜单；菜单向上展开，不挤压正文。 */
 .chapter-heading-picker{position:relative;display:inline-flex;}
@@ -4980,12 +4979,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 .chapter-heading-picker.open .chapter-heading-menu{display:flex;}
 .chapter-heading-option{
-  min-width:44px;height:30px;padding:0 var(--sp-10);border:0;border-radius:calc(var(--r) - 2px);
+  border:0;
   background:transparent;color:var(--text-primary);font-family:var(--zh);
   font-size:var(--fs-headline);cursor:pointer;
 }
 .chapter-heading-option:active{background:var(--press);}
-.chapter-heading-option+.chapter-heading-option{border-left:1px solid var(--border);}
+.chapter-heading-option+.chapter-heading-option{border-left:1px solid color-mix(in srgb,var(--text-secondary) 45%,var(--border));}
 .chapter-heading-option.chapter-heading-picked{background:var(--accent-light);color:var(--accent);}
 .chapter-heading-option sub{font-size:.65em;vertical-align:-.25em;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
@@ -5206,14 +5205,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   line-height:1.5;
 }
 .chapter-heading-menu{padding:0;overflow:hidden;}
-.chapter-heading-option{
-  height:calc(var(--chapter-format-btn-h) - 2px);
-  min-height:calc(var(--chapter-format-btn-h) - 2px);
-  padding:0 12px;border-radius:0;
+.chapter-format .fmt-btn,.chapter-heading-option{
+  width:var(--chapter-format-btn-w);min-width:var(--chapter-format-btn-w);
+  height:var(--chapter-format-btn-h);min-height:var(--chapter-format-btn-h);
 }
+.chapter-heading-option{padding:0;border-radius:0;}
 @media(max-width:1024px), (pointer:coarse){
-  #tlSheet:not(.chapter-keyboard) .chapter-format{--chapter-format-btn-h:34px;}
+  .chapter-format{--chapter-format-btn-h:34px;--chapter-format-btn-w:36px;}
 }
+#tlSheet.chapter-keyboard .chapter-format{--chapter-format-btn-h:32px;}
 :is(.bb-sortgrp,.bb-filter-glbl,.cal-filterpop-hd){
   font-family:var(--zh);
   font-size:var(--menu-label-size);
