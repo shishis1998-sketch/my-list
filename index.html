@@ -11755,7 +11755,6 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       <div class="dt-card dt-hd">
         <div class="dt-hdrow">
           <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
-          ${item.score?`<span class="dt-side" data-edit="f-score">${starsHtml(item.score)}</span>`:''}
           <div class="dt-global-actions people-head-actions">
         <details class="people-more">
           <summary aria-label="更多操作" title="更多" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
@@ -11773,7 +11772,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       </div>
         </div>
         <div class="dt-hdrow dt-hdrow2">
-          <div class="dt-au" data-edit="f-creator">${au}</div>
+          <div class="dt-au" data-edit="f-creator">${au}${item.score?`${au?' · ':''}<span data-edit="f-score" style="white-space:nowrap" aria-label="评分 ${esc(item.score)}/5">★ ${esc(item.score)}</span>`:''}</div>
           <span class="dt-side cstatus" data-edit="f-status" style="--c:${st.c};--cd:${st.cd||st.c}">${st.lbl}</span>
         </div>
       </div>
