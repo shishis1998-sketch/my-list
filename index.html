@@ -11352,6 +11352,7 @@ let peopleSearchOpen=false, peopleSearchQuery='';
 let timelineSearchOpen=false, timelineSearchQuery='';
 const timelineChapterCollapsed=new Map();
 function timelineChapterStateKey(title){return JSON.stringify([detailId,title]);}
+function isTimelineChapterCollapsed(title){return timelineChapterCollapsed.get(timelineChapterStateKey(title))??true;}
 function syncDetailChapterToggle(){
   const cards=[...document.querySelectorAll('#detailBookNoteCard .tl-chapter-group')];
   const button=document.querySelector('[data-timeline-toggle-all]');
@@ -11920,7 +11921,7 @@ function renderDetailTL(item){
   const np=groups.filter(g=>g.part).length;
   const displayCount=timelineDisplayCount(groups);
   const chapterGroups=groups.flatMap(g=>groupTimelineChapters(g.chs)).filter(g=>g.type==='chapter');
-  const allCollapsed=chapterGroups.length&&chapterGroups.every(g=>timelineChapterCollapsed.get(timelineChapterStateKey(g.title)));
+  const allCollapsed=chapterGroups.length&&chapterGroups.every(g=>isTimelineChapterCollapsed(g.title));
   // 章节内点正文编辑整章；右下角新增，全文编辑保留在更多菜单。
   // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
   return `<div class="dt-sec">
@@ -16624,7 +16625,7 @@ function renderTimelineChapterCards(chs,openFn){
         <div class="tl-head"><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`;
     }
-    const collapsed=openFn==='openDetailChapter'&&!!timelineChapterCollapsed.get(timelineChapterStateKey(entry.title));
+    const collapsed=openFn==='openDetailChapter'&&isTimelineChapterCollapsed(entry.title);
     return `<div class="tl-chapter-group${collapsed?' collapsed':''}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
       <button type="button" class="tl-chapter-group-head" aria-expanded="${!collapsed}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
