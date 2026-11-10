@@ -4988,7 +4988,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;
   background:color-mix(in srgb,var(--text-secondary) 65%,var(--border));pointer-events:none;
 }
-.chapter-heading-option.chapter-heading-picked{background:var(--accent-light);color:var(--accent);}
+.chapter-heading-option.chapter-heading-picked{color:var(--accent);}
+.chapter-heading-option.chapter-heading-picked::after{
+  content:"";position:absolute;inset:2px;border:1px solid var(--accent);
+  border-radius:4px;pointer-events:none;
+}
 .chapter-heading-option sub{font-size:.65em;vertical-align:-.25em;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
 .chapter-whole-text:focus,.chapter-title-input:focus{outline:1px solid var(--accent);}
