@@ -4968,7 +4968,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #tlSheet:has(#tlSheetBody.chapter-editing) .tlsheet-head{background:var(--bg);}
 #tlSheetBody.chapter-editing{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg);}
 .chapter-title-input{flex-shrink:0;width:100%;box-sizing:border-box;min-height:48px;padding:10px 12px;font:inherit;font-size:var(--fs-input);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
-.chapter-format{--chapter-format-btn-h:30px;--chapter-format-btn-w:32px;flex-shrink:0;margin:0;}
+.chapter-format{--chapter-format-btn-h:30px;--chapter-format-btn-w:32px;--chapter-format-btn-font:var(--fs-caption);flex-shrink:0;margin:0;}
 .chapter-format .fmt-btn{background:var(--surface);}
 /* 章节标题级别：H 打开 H1 / H2 / T 菜单；菜单向上展开，不挤压正文。 */
 .chapter-heading-picker{position:relative;display:inline-flex;}
@@ -4981,14 +4981,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-heading-option{
   position:relative;border:0;
   background:transparent;color:var(--text-primary);font-family:var(--zh);
-  font-size:var(--fs-headline);cursor:pointer;
+  font-size:var(--chapter-format-btn-font);cursor:pointer;
 }
 .chapter-heading-option:active{background:var(--press);}
-.chapter-heading-option+.chapter-heading-option::before{
-  content:"";position:absolute;left:0;top:6px;bottom:6px;width:1px;
-  background:color-mix(in srgb,var(--text-secondary) 65%,var(--border));pointer-events:none;
-}
-.chapter-heading-option.chapter-heading-picked{color:var(--accent);}
+.chapter-heading-option.chapter-heading-picked{color:var(--accent);font-weight:700;}
 .chapter-heading-option.chapter-heading-picked::after{
   content:"";position:absolute;inset:2px;border:1px solid var(--accent);
   border-radius:4px;pointer-events:none;
@@ -5218,10 +5214,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-format .fmt-btn{
   width:var(--chapter-format-btn-w);min-width:var(--chapter-format-btn-w);
   height:var(--chapter-format-btn-h);min-height:var(--chapter-format-btn-h);
+  font-size:var(--chapter-format-btn-font);
 }
 .chapter-heading-option{flex:1;min-width:0;padding:0;border-radius:0;}
 @media(max-width:1024px), (pointer:coarse){
-  .chapter-format{--chapter-format-btn-h:34px;--chapter-format-btn-w:36px;}
+  .chapter-format{--chapter-format-btn-h:34px;--chapter-format-btn-w:36px;--chapter-format-btn-font:14px;}
 }
 :is(.bb-sortgrp,.bb-filter-glbl,.cal-filterpop-hd){
   font-family:var(--zh);
