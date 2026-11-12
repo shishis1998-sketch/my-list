@@ -1465,6 +1465,9 @@ body.cal-open.cal-searching .cal-scroll{flex:0 0 auto;border-top:1px solid var(-
 /* —— 分类筛选：收进头部按钮 → 弹出小面板 —— */
 .cal-filterbtn{color:var(--accent);position:relative;}
 .cal-filterbtn.on{background:var(--accent-light);}
+.cal-todaybtn{display:none;font-weight:600;}
+.cal-view-food .cal-filterbtn{display:none;}
+.cal-view-food .cal-todaybtn{display:inline-flex;}
 .cal-filter-ind{display:none;position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--surface);}
 .cal-filter-scrim{display:none;position:absolute;inset:0;z-index:8;}
 .cal-filter-scrim.open{display:block;}
@@ -5539,6 +5542,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="17" x2="14" y2="17"/></svg>
             <span class="cal-filter-ind" id="calFilterInd"></span>
           </button>
+          <button type="button" class="cal-navbtn cal-todaybtn" onclick="calJumpToToday()" aria-label="回到今天" title="回到今天">今</button>
           <button class="cal-navbtn cal-searchbtn" id="calSearchBtn" onclick="toggleCalSearch()" aria-label="搜索">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
           </button>
@@ -14676,6 +14680,11 @@ function calWeekStep(dir){
   calYear=d.getFullYear(); calMonth=d.getMonth();   // renderCal 会照这两个数重写顶上的「N 年 N 月」
   openCalDay(calFmtDate(d));
 }
+function calJumpToToday(){
+  const today=new Date();
+  calYear=today.getFullYear();calMonth=today.getMonth();
+  openCalDay(calFmtDate(today));
+}
 function openCalDay(dateStr){
   calSelDate=dateStr;
   const clip=document.getElementById('calGridClip');
@@ -14829,7 +14838,7 @@ function calRecCat(r){
   if(s==='日历')return 'calendar';
   return 'note';
 }
-function calCatVisible(cat){return !calHiddenCats.has(cat);}
+function calCatVisible(cat){return calView==='food'||!calHiddenCats.has(cat);}
 function calRecVisible(r){return calCatVisible(calRecCat(r));}
 function toggleCalCat(key){
   if(calHiddenCats.has(key))calHiddenCats.delete(key);else calHiddenCats.add(key);
