@@ -5039,8 +5039,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 概览编辑抽屉：背景与编辑经期一致（--bg 灰底），表单控件继续保持白色 surface。 */
 :is(#modal,#timeModal,#recordTagsModal) .tlsheet-head{background:var(--bg);}
 /* 记录表单：每行左侧标签、右侧输入区，日期和长文本也保留可用宽度。 */
-#modal .frow2{display:block;}
-#modal .fg,#timeModal .time-edit-row,#noteModal .fg{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
+#modal .frow2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-12);}
+#modal .fg{display:grid;gap:var(--sp-4);min-width:0;}
+#timeModal .time-edit-row,#noteModal .fg{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:var(--sp-12);}
 #modal .fg>label,#timeModal .time-edit-row>label,#noteModal .fg>label{margin:0;letter-spacing:0;line-height:var(--lh-normal);font-size:var(--fs-input);font-weight:600;color:var(--text-secondary);}
 #modal .fg>input,#modal .fg>select,#timeModal .time-edit-row>input,#noteModal .fg>input,#noteModal .fg>select,#noteModal .fg>textarea{min-width:0;width:100%;box-sizing:border-box;}
 #recordTagsModal .mbox{height:auto;max-height:min(70vh,100%);}
@@ -5883,24 +5884,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="frow2">
       <div class="fg">
-        <label>作品年份</label>
-        <input type="number" id="f-year" placeholder="2000" min="1900" max="2099">
+        <label>作者</label>
+        <input type="text" id="f-creator" placeholder="例: 李安">
       </div>
       <div class="fg">
-        <label>评分</label>
-        <select id="f-score">
-        <option value="">未评分</option>
-        <option value="0.5">0.5/5</option>
-        <option value="1">1/5</option>
-        <option value="1.5">1.5/5</option>
-        <option value="2">2/5</option>
-        <option value="2.5">2.5/5</option>
-        <option value="3">3/5</option>
-        <option value="3.5">3.5/5</option>
-        <option value="4">4/5</option>
-        <option value="4.5">4.5/5</option>
-        <option value="5">5/5</option>
-        </select>
+        <label>作品年份</label>
+        <input type="number" id="f-year" placeholder="2000" min="1900" max="2099">
       </div>
     </div>
     <!-- 观看/阅读时间拆成开始 + 结束两格。结束时间仍是原来那个 watchDate 字段——
@@ -5916,8 +5905,20 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </div>
     </div>
     <div class="fg">
-      <label>作者</label>
-      <input type="text" id="f-creator" placeholder="例: 李安">
+      <label>评分</label>
+      <select id="f-score">
+      <option value="">未评分</option>
+      <option value="0.5">0.5/5</option>
+      <option value="1">1/5</option>
+      <option value="1.5">1.5/5</option>
+      <option value="2">2/5</option>
+      <option value="2.5">2.5/5</option>
+      <option value="3">3/5</option>
+      <option value="3.5">3.5/5</option>
+      <option value="4">4/5</option>
+      <option value="4.5">4.5/5</option>
+      <option value="5">5/5</option>
+      </select>
     </div>
     </div><!-- /mbody -->
   </div>
