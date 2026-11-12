@@ -5073,9 +5073,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal .fg .created-val{font-size:var(--fs-input);}
 #noteModal .note-tags-manage{justify-self:end;margin:0;}
 #noteModal #memo-local-group>.local-toggle{grid-column:1 / -1;}
-#noteModal.memo-editor .mbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--sp-12);align-content:start;}
-#noteModal.memo-editor .mbody>*{grid-column:1 / -1;min-width:0;}
-#noteModal.memo-editor .mbody>:is(#nf-title-group,#nf-sub-group){grid-column:auto;}
 #noteModal.memo-editor .fg{grid-template-columns:minmax(0,1fr);gap:var(--sp-4);}
 #noteModal.memo-editor .fg>:not(label){grid-column:1;}
 #noteModal.memo-editor #nf-created-row{grid-template-columns:auto minmax(0,1fr);}
@@ -6143,7 +6140,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <label>备注</label>
         <textarea id="mf-note" rows="3" placeholder="网址、说明、安全提醒等"></textarea>
       </div>
-      <div class="fg">
+      <div class="fg" id="memo-custom-group">
         <label>＋字段</label>
         <div id="mf-custom-list"></div>
         <button type="button" class="add-field-btn" onclick="addMemoCustomField()">＋ 添加字段</button>
@@ -17667,6 +17664,9 @@ function applyMemoEditorMode(){
   const isMemo=(sub==='备忘');
   const isBook=(sub==='读书笔记');
   document.getElementById('noteModal').classList.toggle('memo-editor',isMemo);
+  const subGroup=document.getElementById('nf-sub-group');
+  const nextGroup=document.getElementById(isMemo?'memo-custom-group':'nf-body-group');
+  if(subGroup.nextElementSibling!==nextGroup)nextGroup.before(subGroup);
   applyNoteTitleMode();
   document.getElementById('nf-body-group').style.display=isMemo?'none':'';
   document.getElementById('memo-fields-group').style.display=isMemo?'':'none';
