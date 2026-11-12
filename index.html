@@ -722,7 +722,7 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .fg input::placeholder,.fg textarea::placeholder{color:var(--text-muted);}
 /* select 关掉默认外观后,补一个墨绿 SVG 下拉箭头 */
 .fg select{padding-right:34px;cursor:pointer;}
-.fg select,#modal .fg select{
+.fg select,#modal .fg select,#noteModal.memo-editor #nf-sub{
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='none' stroke='%232B4D3F' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/></svg>");
   background-repeat:no-repeat;background-position:right 12px center;}
 /* iOS 日期输入框:文字垂直居中且靠左 */
@@ -5073,6 +5073,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal .fg .created-val{font-size:var(--fs-input);}
 #noteModal .note-tags-manage{justify-self:end;margin:0;}
 #noteModal #memo-local-group>.local-toggle{grid-column:1 / -1;}
+#noteModal.memo-editor .mbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--sp-12);align-content:start;}
+#noteModal.memo-editor .mbody>*{grid-column:1 / -1;min-width:0;}
+#noteModal.memo-editor .mbody>:is(#nf-title-group,#nf-sub-group){grid-column:auto;}
+#noteModal.memo-editor .fg{grid-template-columns:minmax(0,1fr);gap:var(--sp-4);}
+#noteModal.memo-editor .fg>:not(label){grid-column:1;}
+#noteModal.memo-editor #nf-created-row{grid-template-columns:auto minmax(0,1fr);}
+#noteModal.memo-editor #nf-created{grid-column:2;justify-self:end;}
+
 
 /* 单字段编辑沿用记录编辑的两列、字号和表单留白。 */
 #mfSheet{padding:0;box-shadow:none;}
@@ -6102,7 +6110,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <label>标题</label>
       <input type="text" id="nf-title" placeholder="可留空">
     </div>
-    <div class="fg">
+    <div class="fg" id="nf-sub-group">
       <label>子分类</label>
       <select id="nf-sub" onchange="applyMemoEditorMode()"></select>
     </div>
@@ -17658,6 +17666,7 @@ function applyMemoEditorMode(){
   const sub=document.getElementById('nf-sub').value;
   const isMemo=(sub==='备忘');
   const isBook=(sub==='读书笔记');
+  document.getElementById('noteModal').classList.toggle('memo-editor',isMemo);
   applyNoteTitleMode();
   document.getElementById('nf-body-group').style.display=isMemo?'none':'';
   document.getElementById('memo-fields-group').style.display=isMemo?'':'none';
