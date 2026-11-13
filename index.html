@@ -3148,9 +3148,9 @@ mark.shl{
   .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard .tl{grid-template-columns:minmax(0,1fr);}
   .desktop-chapter-layout [aria-current="true"]{background:var(--accent-light);color:var(--accent);border-radius:var(--r);}
   .desktop-chapter-reader{overflow-wrap:anywhere;}
-  .desktop-chapter-reader .chapter-reader-head{
-    display:flex;justify-content:flex-end;margin-bottom:var(--sp-12);
-  }
+  .desktop-chapter-reader{position:relative;}
+  .desktop-chapter-edit{position:absolute;top:var(--sp-12);right:var(--sp-12);z-index:2;}
+  .desktop-chapter-reader .tl-para:first-child{padding-right:28px;}
   .dt-body{width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
   .dt-card{box-shadow:var(--pop-sm);}
 }
@@ -12091,8 +12091,8 @@ function desktopChapterSegments(chapter){
 }
 function desktopChapterHtml(chapter,idx){
   if(!chapter)return '';
-  return `<div class="chapter-reader-head">
-    <button type="button" class="fchip" onclick="editDesktopChapter(${idx})">编辑</button></div>
+  return `<button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑章节" title="编辑章节" onclick="editDesktopChapter(${idx})">
+    <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <div class="tl-pts">${chapterReadRows(desktopChapterSegments(chapter)).join('')}</div>`;
 }
 function syncDesktopChapterSelection(){
