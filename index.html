@@ -5062,16 +5062,43 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #recordTagsModal .tadd-btn svg{display:block;flex-shrink:0;}
 /* 笔记编辑抽屉：灰色面板 + 白色输入区，与其他编辑弹窗统一。 */
 #noteModal .mbox,#noteModal .mhdr,#noteModal .mbody{background:var(--bg);}
-#noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea,
-#noteModal .tiwrap{background-color:var(--surface);}
+#noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea{background-color:var(--surface);}
 
 /* 笔记表单共用记录编辑的标签列；多行内容的工具和辅助项留在输入列。 */
 #noteModal .fg>:not(label){grid-column:2;min-width:0;}
 #noteModal .nf-body-wrap textarea{width:100%;box-sizing:border-box;font-size:var(--fs-input);}
 #noteModal #nf-body-group>label,#noteModal #memo-fields-group .fg:has(textarea)>label,#noteModal #memo-fields-group .fg:has(#mf-custom-list)>label{align-self:start;padding-top:var(--sp-12);}
-#noteModal .fg .fmt-bar,#noteModal .fg .tsugg-wrap{margin-top:0;}
+#noteModal .fg .fmt-bar{margin-top:0;}
 #noteModal .fg .created-val{font-size:var(--fs-input);}
+#noteModal .note-tags-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-8);}
 #noteModal .note-tags-manage{justify-self:end;margin:0;}
+.note-tags-add{min-height:32px;padding:0 var(--sp-12);border:1px solid var(--border);border-radius:999px;
+  background:var(--surface);color:var(--accent);font:inherit;font-size:var(--fs-caption);cursor:pointer;}
+#noteTagPicker.moverlay{z-index:125;align-items:flex-end;justify-content:center;padding:0;background:rgba(10,8,6,.34);}
+#noteTagPicker.moverlay.open .mbox{animation:noteTagSheetUp var(--nav-dur) var(--nav-ease);}
+@keyframes noteTagSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+#noteTagPicker .mbox{height:70vh;max-height:100%;border:1px solid var(--border);border-bottom:0;
+  border-radius:var(--rxl) var(--rxl) 0 0;background:var(--bg);box-shadow:none;}
+#noteTagPicker .tlsheet-head{flex:none;touch-action:none;padding:7px var(--sp-16) var(--sp-12);border-bottom:1px solid var(--border-soft);}
+#noteTagPicker .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;border-radius:999px;background:rgba(86,86,90,.34);}
+#noteTagPicker .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
+#noteTagPicker .mtitle{text-align:center;}
+#noteTagPicker .mbody{min-height:0;padding:var(--sp-16) var(--sp-16) calc(24px + env(safe-area-inset-bottom,0px));}
+.note-tag-picker-label{display:block;margin:0 0 var(--sp-8);font-size:var(--fs-caption);color:var(--text-secondary);}
+#noteTagPicker .tiwrap{flex-wrap:nowrap;min-height:44px;background:var(--surface);border:1px solid var(--border);margin-bottom:var(--sp-20);}
+#noteTagPicker .tiwrap:focus-within{border-color:var(--accent-mid);}
+.note-tag-prefix{padding-left:var(--sp-4);color:var(--text-muted);font-size:var(--fs-input);}
+#noteTagPicker .tinput{min-width:0;font-size:var(--fs-input);}
+#noteTagPicker .tadd-btn{width:36px;height:36px;background:transparent;color:var(--accent);}
+.note-tag-options{overflow:hidden;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
+.note-tag-option{display:flex;align-items:center;gap:var(--sp-12);width:100%;min-height:44px;
+  padding:var(--sp-8) var(--sp-12);border:0;background:transparent;color:var(--text-primary);
+  text-align:left;font:inherit;font-size:var(--fs-body);cursor:pointer;}
+.note-tag-option+.note-tag-option{border-top:1px solid var(--border-soft);}
+.note-tag-option span:first-child{flex:1;min-width:0;overflow-wrap:anywhere;}
+.note-tag-option span:last-child{color:var(--accent);}
+.note-tag-option:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+.note-tag-empty{padding:var(--sp-12);color:var(--text-muted);font-size:var(--fs-caption);}
 #noteModal #memo-local-group>.local-toggle{grid-column:1 / -1;}
 #noteModal.memo-editor .fg{grid-template-columns:minmax(0,1fr);gap:var(--sp-4);}
 #noteModal.memo-editor .fg>:not(label){grid-column:1;}
@@ -6148,16 +6175,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="fg">
       <label>标签</label>
-      <div class="tiwrap" onclick="if(event.target===this)document.getElementById('ntinput').focus()">
+      <div class="note-tags-row">
         <div id="ntchips" style="display:contents"></div>
-        <input type="text" class="tinput" id="ntinput" placeholder="输入后按回车或点 +">
-        <button type="button" class="tadd-btn" id="ntaddBtn" title="添加标签" onclick="addNoteTagFromInput()">+</button>
+        <button type="button" class="note-tags-add" id="noteTagsAdd" aria-haspopup="dialog" onclick="openNoteTagPicker()">＋ 添加标签</button>
       </div>
       <button type="button" class="tmgr-link note-tags-manage" onclick="openTagMgr('note')">⚙ 管理标签</button>
-      <div class="tsugg-wrap" id="ntsuggWrap" style="display:none">
-        <div class="tsugg-lbl">笔记常用标签</div>
-        <div class="tsugg-list" id="ntsuggList"></div>
-      </div>
     </div>
     <div class="fg fg-created" id="nf-created-row" style="display:none">
       <label>首次添加</label>
@@ -6273,6 +6295,29 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="mftr">
       <button class="btn btn-g" onclick="closeNoteSubMgr()">取消</button>
       <button class="btn btn-p" onclick="saveNoteSubs()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="moverlay" id="noteTagPicker" onclick="if(event.target===this)closeNoteTagPicker()">
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="noteTagPickerTitle">
+    <div class="tlsheet-head">
+      <div class="tlsheet-grip" aria-hidden="true"></div>
+      <div class="tlsheet-headrow">
+        <button type="button" class="tlsheet-action" onclick="closeNoteTagPicker()">取消</button>
+        <div class="mtitle" id="noteTagPickerTitle">所有标签</div>
+        <button type="button" class="tlsheet-action" onclick="saveNoteTagPicker()">完成</button>
+      </div>
+    </div>
+    <div class="mbody">
+      <label class="note-tag-picker-label" for="ntinput">新建标签</label>
+      <div class="tiwrap">
+        <span class="note-tag-prefix" aria-hidden="true">#</span>
+        <input type="text" class="tinput" id="ntinput" placeholder="标签名称" autocomplete="off">
+        <button type="button" class="tadd-btn" aria-label="新建标签" onclick="addNoteTagFromInput()">+</button>
+      </div>
+      <div class="note-tag-picker-label">已有标签</div>
+      <div class="note-tag-options" id="noteTagOptions"></div>
     </div>
   </div>
 </div>
@@ -10870,6 +10915,7 @@ const BACK_LAYERS=[
   {id:'icsColorModal',      cls:'open', close:()=>closeIcsColor()},
   {id:'icsDelModal',        cls:'open', close:()=>closeIcsDel()},
   {id:'noteModal',          cls:'open', close:()=>closeNoteModal()},
+  {id:'noteTagPicker',      cls:'open', close:()=>closeNoteTagPicker()},
   {id:'nsubModal',          cls:'open', close:()=>closeNoteSubMgr()},
   {id:'tlModal',            cls:'open', close:()=>closeTimeline()},
   {id:'tlEditModal',        cls:'open', close:()=>closeTlEdit()},
@@ -17867,7 +17913,6 @@ function openNoteEdit(id){
   document.getElementById('nf-body').value=n.body||'';
   renderNoteSubSelect(n.subCat);
   document.getElementById('nf-sub').value=n.subCat||noteSubs[0]||'灵感';
-  document.getElementById('ntinput').value='';
   // 备忘字段加载
   const f=n.fields||{};
   document.getElementById('mf-username').value=f.username||'';
@@ -17895,7 +17940,6 @@ function openNoteNew(){
   document.getElementById('nf-body').value='';
   renderNoteSubSelect();
   document.getElementById('nf-sub').value=(curNoteSub!=='all'&&noteSubs.includes(curNoteSub))?curNoteSub:(noteSubs[0]||'灵感');
-  document.getElementById('ntinput').value='';
   // 备忘字段清空
   document.getElementById('mf-username').value='';
   document.getElementById('mf-password').value='';
@@ -18100,44 +18144,76 @@ function renderNoteChips2(){
   document.getElementById('ntchips').innerHTML=curNoteTags.map((t,i)=>
     `<span class="tchip">${esc(t)}<button onclick="rmNoteTag(${i})" type="button">×</button></span>`
   ).join('');
-  renderNoteTsugg();
 }
 function rmNoteTag(i){curNoteTags.splice(i,1);renderNoteChips2();}
+
+const noteTagPicker=document.getElementById('noteTagPicker');
+const noteTagInput=document.getElementById('ntinput');
+const noteTagOptions=document.getElementById('noteTagOptions');
+let noteTagChoices=[], noteTagSelection=new Set();
+function openNoteTagPicker(){
+  noteTagSelection=new Set(curNoteTags);
+  noteTagChoices=[...new Set([...curNoteTags,...userNotes().flatMap(n=>n.tags||[])])];
+  noteTagInput.value='';
+  renderNoteTagOptions();
+  noteTagPicker.classList.add('open');
+  noteTagPicker.querySelector('.mbody').scrollTop=0;
+  document.getElementById('noteModal').inert=true;
+  bindSheetDrag(noteTagPicker.querySelector('.mbox'),noteTagPicker.querySelector('.tlsheet-head'),closeNoteTagPicker);
+  backLayerOpenedNow('noteTagPicker');
+  noteTagPicker.querySelector('.tlsheet-action').focus({preventScroll:true});
+}
+function closeNoteTagPicker(){
+  noteTagPicker.classList.remove('open');
+  document.getElementById('noteModal').inert=false;
+  document.getElementById('noteTagsAdd').focus({preventScroll:true});
+}
+function saveNoteTagPicker(){
+  selectTypedNoteTag();
+  curNoteTags=[...noteTagSelection];
+  renderNoteChips2();
+  closeNoteTagPicker();
+}
+function renderNoteTagOptions(){
+  noteTagOptions.innerHTML=noteTagChoices.length?noteTagChoices.map((tag,i)=>
+    `<button type="button" class="note-tag-option" aria-pressed="${noteTagSelection.has(tag)}" data-index="${i}">
+      <span>${esc(tag)}</span><span aria-hidden="true">${noteTagSelection.has(tag)?'✓':''}</span>
+    </button>`
+  ).join(''):'<div class="note-tag-empty">暂无标签</div>';
+}
+function selectTypedNoteTag(){
+  const tag=noteTagInput.value.trim().replace(/,$/,'').trim();
+  if(!tag)return;
+  if(!noteTagChoices.includes(tag))noteTagChoices.unshift(tag);
+  noteTagSelection.add(tag);
+  noteTagInput.value='';
+}
 function addNoteTagFromInput(){
-  const inp=document.getElementById('ntinput');
-  const v=inp.value.trim().replace(/,$/,'');
-  if(v&&!curNoteTags.includes(v)){curNoteTags.push(v);renderNoteChips2();}
-  inp.value='';
-  inp.focus();
+  selectTypedNoteTag();
+  renderNoteTagOptions();
+  noteTagInput.focus();
 }
-function pickNoteSuggTag(t){
-  if(!curNoteTags.includes(t)){curNoteTags.push(t);renderNoteChips2();}
-}
-function getNoteSuggTags(){
-  const cnt={};
-  userNotes().forEach(n=>{
-    if(editNoteId&&n.id===editNoteId)return;
-    (n.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;});
-  });
-  return Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
-}
-let ntsuggExpanded=false;
-function renderNoteTsugg(){
-  const wrap=document.getElementById('ntsuggWrap');
-  const all=getNoteSuggTags();
-  const avail=all.filter(t=>!curNoteTags.includes(t));
-  if(!avail.length){wrap.style.display='none';return;}
-  wrap.style.display='';
-  const LIMIT=6;
-  const shown=ntsuggExpanded?avail:avail.slice(0,LIMIT);
-  let html=shown.map(t=>`<button type="button" class="tsugg" onclick="pickNoteSuggTag('${esc(t).replace(/'/g,"\\'")}')">${esc(t)}</button>`).join('');
-  if(!ntsuggExpanded&&avail.length>LIMIT){
-    html+=`<button type="button" class="tsugg-more" onclick="ntsuggExpanded=true;renderNoteTsugg();">展开（共 ${avail.length} 个）</button>`;
-  }else if(ntsuggExpanded&&avail.length>LIMIT){
-    html+=`<button type="button" class="tsugg-more" onclick="ntsuggExpanded=false;renderNoteTsugg();">收起</button>`;
+noteTagOptions.addEventListener('click',event=>{
+  const button=event.target.closest('.note-tag-option');
+  if(!button)return;
+  const tag=noteTagChoices[Number(button.dataset.index)];
+  const selected=!noteTagSelection.delete(tag);
+  if(selected)noteTagSelection.add(tag);
+  button.setAttribute('aria-pressed',selected);
+  button.lastElementChild.textContent=selected?'✓':'';
+});
+noteTagPicker.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&!event.isComposing){
+    event.preventDefault();
+    closeNoteTagPicker();
   }
-  document.getElementById('ntsuggList').innerHTML=html;
-}
+});
+noteTagInput.addEventListener('keydown',event=>{
+  if(event.key==='Enter'&&!event.isComposing&&event.keyCode!==229){
+    event.preventDefault();
+    addNoteTagFromInput();
+  }
+});
 
 // 笔记子分类管理弹窗
 function openNoteSubMgr(){
@@ -18184,18 +18260,6 @@ function saveNoteSubs(){
   render();
   toast('子分类已更新');
 }
-
-// 笔记标签输入 keydown 监听
-document.getElementById('ntinput').addEventListener('keydown',function(e){
-  if(e.key==='Enter'||e.key===','){
-    e.preventDefault();
-    addNoteTagFromInput();
-  }else if(e.key==='Backspace'&&!this.value&&curNoteTags.length){
-    curNoteTags.pop();
-    renderNoteChips2();
-  }
-});
-
 
 // ── 键盘适配（手机端）：先判断浏览器行为，再决定底栏怎么贴键盘 ──
 // 两类浏览器行为：
