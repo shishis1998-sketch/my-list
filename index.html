@@ -3101,15 +3101,21 @@ mark.shl{
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
   body.detail-open .main{
     display:grid;grid-template-columns:clamp(240px, 22vw, 340px) minmax(0, 1fr);
-    grid-template-rows:auto minmax(0, 1fr);height:100dvh;
+    grid-template-rows:auto auto minmax(0, 1fr);height:100dvh;
   }
   body.detail-open .main>.topbar{
     display:flex!important;grid-area:1 / 1;padding-inline:var(--sp-14);
     border-right:1px solid var(--border);
   }
   body.detail-open .topbar :is(.ssort,.addbtn){display:none;}
+  body.detail-open .main>.frow{
+    display:flex!important;grid-area:2 / 1;padding-inline:var(--sp-14);
+    gap:var(--sp-4);border-right:1px solid var(--border);
+  }
+  body.detail-open .frow>:not(#desktopMediaStatuses){display:none!important;}
+  body.detail-open #desktopMediaStatuses .fchip{padding-inline:var(--sp-8);}
   body.detail-open .main>.content{
-    display:block!important;grid-area:2 / 1;min-width:0;overflow-y:auto;
+    display:block!important;grid-area:3 / 1;min-width:0;overflow-y:auto;
     padding:var(--sp-14);background:var(--surface);border-right:1px solid var(--border);
   }
   body.detail-open .content>.sbar{display:none;}
@@ -3117,7 +3123,7 @@ mark.shl{
   body.detail-open .content .media-month-title{font-size:var(--fs-caption);}
   body.detail-open .content .mrow[aria-current="true"]{background:var(--accent-light);}
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
-  .detail-view.open{grid-area:1 / 2 / 3 / 3;min-width:0;overflow-y:auto;}
+  .detail-view.open{grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;}
   .dt-body{max-width:1000px;width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
   .dt-card{box-shadow:var(--pop-sm);}
 }
