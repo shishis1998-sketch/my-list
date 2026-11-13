@@ -3124,6 +3124,19 @@ mark.shl{
   body.detail-open .content .mrow[aria-current="true"]{background:var(--accent-light);}
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
   .detail-view.open{grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;}
+  .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])){
+    display:grid;grid-template-columns:minmax(0, min(31%, 240px)) minmax(0, 1fr);
+    gap:var(--sp-12);align-items:start;
+  }
+  .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard,
+  .desktop-chapter-reader{max-height:calc(100dvh - 190px);overflow:auto;overscroll-behavior:contain;}
+  .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard .tl{grid-template-columns:minmax(0,1fr);}
+  .desktop-chapter-layout [aria-current="true"]{background:var(--accent-light);color:var(--accent);}
+  .desktop-chapter-reader{overflow-wrap:anywhere;}
+  .desktop-chapter-reader .chapter-reader-head{
+    display:flex;align-items:center;justify-content:space-between;gap:var(--sp-8);
+    margin-bottom:var(--sp-12);font-weight:700;
+  }
   .dt-body{max-width:1000px;width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
   .dt-card{box-shadow:var(--pop-sm);}
 }
@@ -11248,6 +11261,7 @@ function syncDetailListSelection(){
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item||detailId===id) return;
   ensurePeopleIds(item,true);
+  desktopChapterIndex=null;
   detailId=id; dtTab='info'; peopleSearchOpen=false; peopleSearchQuery='';
   timelineSearchOpen=false; timelineSearchQuery='';
   // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
@@ -11552,24 +11566,28 @@ function markChapterSearchOccurrence(root,query,ordinal){
 }
 function openTimelineSearchHit(event,chapterIdx,query,ordinal){
   event.preventDefault();event.stopPropagation();
-  tlHostMedia=detailId;tlCurId=null;
-  openChapterSheet(chapterIdx);
-  if(tlSheetIdx!==chapterIdx)return;
+  openDetailChapter(chapterIdx);
+  const reader=desktopChapterLayout.matches&&document.querySelector('#dtBody .desktop-chapter-reader:not([hidden])');
+  if(!reader&&tlSheetIdx!==chapterIdx)return;
+  const segments=reader
+    ?desktopChapterSegments(parseChapters(data.find(d=>d.id===detailId)?.bookNote||'')[chapterIdx])
+    :tlSheetSegs;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const body=reader||document.getElementById('tlSheetBody');
     let remaining=ordinal,target=null,localOrdinal=0;
-    for(let i=0;i<tlSheetSegs.length;i++){
-      const text=String(tlSheetSegs[i].text||'').toLocaleLowerCase();
+    for(let i=0;i<segments.length;i++){
+      const text=String(segments[i].text||'').toLocaleLowerCase();
       let count=0,pos=0;
       while((pos=text.indexOf(query,pos))>=0){count++;pos+=Math.max(query.length,1);}
-      if(remaining<count){target=document.querySelector(`#tlSheetBody .tlseg-tap[data-tap="${i}"]`);localOrdinal=remaining;break;}
+      if(remaining<count){target=body.querySelector(`.tlseg-tap[data-tap="${i}"]`);localOrdinal=remaining;break;}
       remaining-=count;
     }
     if(!target)return;
     const para=target.closest('.tl-para');
     para?.classList.add('timeline-jump-target');
     markChapterSearchOccurrence(target,query,localOrdinal);
-    const body=document.getElementById('tlSheetBody');
-    body.scrollTo({top:Math.max(0,(para?.offsetTop||target.offsetTop)-body.clientHeight/3),behavior:'smooth'});
+    const offset=(para||target).getBoundingClientRect().top-body.getBoundingClientRect().top;
+    body.scrollTo({top:Math.max(0,body.scrollTop+offset-body.clientHeight/3),behavior:'smooth'});
   }));
 }
 function filterTimelineList(value){
@@ -11946,7 +11964,10 @@ function renderDetail(previewBox=null, viewTab=dtTab){
 
   if(previewBox)return;
   if(viewTab==='people'&&peopleSearchOpen)filterPeopleList(peopleSearchQuery);
-  if(viewTab==='tl'&&timelineSearchOpen)filterTimelineList(timelineSearchQuery);
+  if(viewTab==='tl'){
+    if(timelineSearchOpen)filterTimelineList(timelineSearchQuery);
+    syncDesktopChapterSelection();
+  }
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
   // 只作用于正文，不动顶部标题/分段控件，也不影响进入详情页本身的动画设置。
@@ -11997,6 +12018,12 @@ const ICON_ADD_PERSON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 // 画法跟全站其它图标同一套（24 视框、描边 2、圆头收尾）
 const ICON_EDIT_DOC=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H6a2 2 0 00-2 2v14a2 2 0 002 2h6"/><path d="M8 8h6M8 12h4"/><path d="M18.4 12.6a1.9 1.9 0 012.7 2.7L16.5 20l-3.2.7.7-3.2 4.4-4.9z"/></svg>`;
 
+const desktopChapterLayout=window.matchMedia('(min-width: 1025px) and (pointer: fine)');
+let desktopChapterIndex=null;
+desktopChapterLayout.addEventListener('change',()=>{
+  if(detailId&&dtTab==='tl') renderDetail();
+});
+
 function renderDetailTL(item){
   const body=(item.bookNote||'').trim();
   const lbl=bookNoteLbl(item);
@@ -12024,17 +12051,54 @@ function renderDetailTL(item){
   // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
   return `<div class="dt-sec">
   ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
-  <div class="dt-card" id="detailBookNoteCard" style="cursor:default">
+  <div class="desktop-chapter-layout"><div class="dt-card" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
     ${timelineSearchOpen?'<div id="timelineSearchEmpty" class="people-search-empty" hidden>没有找到匹配的章节</div>':''}
-  </div></div>
+  </div>
+  <section class="dt-card desktop-chapter-reader" style="cursor:default"
+    ${!desktopChapterLayout.matches||!chs[desktopChapterIndex]?'hidden':''} aria-label="章节正文">
+    ${desktopChapterLayout.matches?desktopChapterHtml(chs[desktopChapterIndex],desktopChapterIndex):''}
+  </section></div></div>
   <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
     onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 
 // 点章节 → 复用笔记那套章节抽屉，只是宿主换成这条媒体记录（见 tlHostMedia）
+function desktopChapterSegments(chapter){
+  const raw=chapter?.raw.trimStart()||'';
+  return parseChapterSegs(raw.split('\n').slice(1).join('\n'));
+}
+function desktopChapterHtml(chapter,idx){
+  if(!chapter)return '';
+  return `<div class="chapter-reader-head"><span>${esc(chapter.title||'本章')}</span>
+    <button type="button" class="fchip" onclick="editDesktopChapter(${idx})">编辑</button></div>
+    <div class="tl-pts">${chapterReadRows(desktopChapterSegments(chapter)).join('')}</div>`;
+}
+function syncDesktopChapterSelection(){
+  document.querySelectorAll('#detailBookNoteCard [data-idx]').forEach(row=>{
+    if(desktopChapterLayout.matches&&Number(row.dataset.idx)===desktopChapterIndex)row.setAttribute('aria-current','true');
+    else row.removeAttribute('aria-current');
+  });
+}
+function editDesktopChapter(idx){
+  tlHostMedia=detailId; tlCurId=null;
+  openChapterSheet(idx);
+  if(tlSheetIdx===idx)enterWholeChapterEdit();
+}
 function openDetailChapter(idx){
+  const reader=document.querySelector('#dtBody .desktop-chapter-reader');
+  if(desktopChapterLayout.matches&&reader){
+    const item=data.find(d=>d.id===detailId);
+    const chapter=item&&parseChapters(item.bookNote||'')[idx];
+    if(!chapter)return;
+    desktopChapterIndex=idx;
+    reader.innerHTML=desktopChapterHtml(chapter,idx);
+    reader.hidden=false;
+    reader.scrollTop=0;
+    syncDesktopChapterSelection();
+    return;
+  }
   tlHostMedia=detailId; tlCurId=null;
   openChapterSheet(idx);
 }
@@ -17069,11 +17133,9 @@ function chapterSourceOffsetFromVisible(source,visibleOffset){
 }
 
 // 渲染分段卡片；tlSheetEdit 段渲染为输入框
-function renderChapterSheet(){
-  const seq=++tlRenderSeq;
-  const body=document.getElementById('tlSheetBody');
+function chapterReadRows(segments){
   let num=0;
-  const rows=tlSheetSegs.map((seg,i)=>{
+  return segments.map((seg,i)=>{
     const line=seg.text;
     const type=tlSegType(line);
     if(type==='num') num++;
@@ -17090,6 +17152,12 @@ function renderChapterSheet(){
     return `<div class="tl-para"><div class="tl-pdot"></div>`+
       `<div class="tl-pcol"><div class="tl-pbody has-rt tlseg-tap" data-tap="${i}">${renderRich(line)}</div></div></div>`;
   });
+}
+
+function renderChapterSheet(){
+  const seq=++tlRenderSeq;
+  const body=document.getElementById('tlSheetBody');
+  const rows=chapterReadRows(tlSheetSegs);
   // 「加一段」搬进格式条了（点某段 → ＋ 添加，就地插在它后面）。
   // 只有章里一段都没有时才留一颗兜底的：那会儿没框可点，格式条也就无从出现
   const add=tlSheetSegs.length?'':`<div class="tl-para tl-addrow"><div class="tl-pdot"></div>`+
@@ -17251,7 +17319,7 @@ function finishChapterSheet(){
   if(!tlWholeEditing){enterWholeChapterEdit();return;}
   const wasNew=tlChapterNew, scroll=tlChapterReadScroll;
   if(!commitChapterSheet())return;
-  if(wasNew){closeChapterSheet();return;}
+  if(wasNew||(tlHostMedia===detailId&&tlHostMedia&&desktopChapterLayout.matches&&desktopChapterIndex===tlSheetIdx)){closeChapterSheet();return;}
   openChapterSheet(tlSheetIdx);
   document.getElementById('tlSheetBody').scrollTop=scroll;
 }
@@ -17259,6 +17327,7 @@ function cancelChapterSheet(){
   if(tlSheetIdx==null)return;
   if(tlWholeEditing&&!tlChapterNew){
     tlWholeEditing=false;
+    if(tlHostMedia===detailId&&tlHostMedia&&desktopChapterLayout.matches&&desktopChapterIndex===tlSheetIdx){closeChapterSheet();return;}
     const scroll=tlChapterReadScroll;openChapterSheet(tlSheetIdx);
     document.getElementById('tlSheetBody').scrollTop=scroll;
     return;
