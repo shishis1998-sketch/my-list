@@ -5077,8 +5077,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal .note-edit-tag{gap:var(--sp-4);}
 #noteModal .note-edit-tag button{border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:0;}
 #noteModal .note-tags-manage{flex:none;margin:0;white-space:nowrap;}
-.note-tags-add{min-height:32px;padding:0 var(--sp-12);border:1px solid var(--border);border-radius:999px;
-  background:var(--surface);color:var(--accent);font:inherit;font-size:var(--fs-caption);cursor:pointer;}
+#noteModal :is(.note-edit-tag,.note-tags-add){height:auto;min-height:32px;padding:0 var(--sp-12);
+  font-size:var(--fs-caption);line-height:var(--lh-normal);}
+.note-tags-add{border:1px solid var(--border);border-radius:999px;
+  background:var(--surface);color:var(--accent);font:inherit;cursor:pointer;}
 #noteTagPicker.moverlay{z-index:125;align-items:flex-end;justify-content:center;padding:0;background:rgba(10,8,6,.34);}
 #noteTagPicker.moverlay.open .mbox{animation:noteTagSheetUp var(--nav-dur) var(--nav-ease);}
 @keyframes noteTagSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
