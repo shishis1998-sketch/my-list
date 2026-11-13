@@ -5064,6 +5064,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #recordTagsModal .tadd-btn svg{display:block;flex-shrink:0;}
 /* 笔记编辑抽屉：灰色面板 + 白色输入区，与其他编辑弹窗统一。 */
 :is(#noteModal,#noteTagPicker) :is(.mbox,.mhdr,.mbody){background:var(--bg);}
+/* Keep the form centered when desktop scrollbars would otherwise reserve space on the right. */
+#noteModal .mbody{scrollbar-width:none;}
+#noteModal .mbody::-webkit-scrollbar{display:none;}
 #noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea{background-color:var(--surface);}
 
 /* 笔记表单共用记录编辑的标签列；多行内容的工具和辅助项留在输入列。 */
