@@ -1970,7 +1970,8 @@ body.cal-searching .cw-card{display:none;}
 .note-foot{display:flex;align-items:center;gap:var(--sp-6);flex-wrap:wrap;}
 /* 笔记分类与自定义标签共用胶囊尺寸，宽度随文字自然伸展。 */
 .note-subcat,
-.note-foot .ctag{
+.note-foot .ctag,
+.note-edit-tag.ctag{
   font-size:var(--fs-foot);height:22px;padding:0 var(--sp-10);line-height:1;
   border:1px solid transparent;border-radius:999px;
   display:inline-flex;align-items:center;justify-content:center;
@@ -1980,7 +1981,8 @@ body.cal-searching .cw-card{display:none;}
   background:var(--accent-light);color:var(--accent);font-weight:700;
 }
 /* 自定义标签以中性灰区分，尺寸与分类胶囊一致。 */
-.note-foot .ctag{
+.note-foot .ctag,
+.note-edit-tag.ctag{
   background:var(--surface-2);color:var(--text-secondary);font-weight:600;
 }
 .note-act{
@@ -5072,6 +5074,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteModal .fg .created-val{font-size:var(--fs-input);}
 #noteModal .note-tags-row{display:flex;align-items:center;gap:var(--sp-8);}
 #noteModal .note-tags-selection{display:flex;flex:1;min-width:0;flex-wrap:wrap;align-items:center;gap:var(--sp-8);}
+#noteModal .note-edit-tag{gap:var(--sp-4);}
+#noteModal .note-edit-tag button{border:0;background:none;color:inherit;font:inherit;cursor:pointer;padding:0;}
 #noteModal .note-tags-manage{flex:none;margin:0;white-space:nowrap;}
 .note-tags-add{min-height:32px;padding:0 var(--sp-12);border:1px solid var(--border);border-radius:999px;
   background:var(--surface);color:var(--accent);font:inherit;font-size:var(--fs-caption);cursor:pointer;}
@@ -18140,7 +18144,7 @@ function noteFmt(kind,el){
 // 笔记标签
 function renderNoteChips2(){
   document.getElementById('ntchips').innerHTML=curNoteTags.map((t,i)=>
-    `<span class="tchip">${esc(t)}<button onclick="rmNoteTag(${i})" type="button">×</button></span>`
+    `<span class="ctag note-edit-tag">${esc(t)}<button onclick="rmNoteTag(${i})" type="button" aria-label="移除此标签">×</button></span>`
   ).join('');
 }
 function rmNoteTag(i){curNoteTags.splice(i,1);renderNoteChips2();}
