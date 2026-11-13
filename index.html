@@ -697,16 +697,16 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .mclose:hover{background:var(--border);}
 /* 编辑笔记抽屉：标题栏使用「取消 / 标题 / 完成」。
    取消丢弃本次表单改动，完成保存；下拉/系统返回等其它关闭手势仍自动保存。 */
-#noteModal .mhdr{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:8px;align-items:center;}
-#noteModal .mtitle{text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#noteModal .note-modal-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
+:is(#noteModal,#noteTagPicker) .mhdr{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:8px;align-items:center;}
+:is(#noteModal,#noteTagPicker) .mtitle{text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+:is(#noteModal,#noteTagPicker) .note-modal-action{height:36px;padding:0 14px;border:0;border-radius:18px;background:rgba(118,118,128,.08);
   color:var(--text-primary);font:inherit;font-size:15px;font-weight:600;cursor:pointer;
   display:inline-flex;align-items:center;justify-content:center;transition:background .12s,transform .12s;}
-#noteModal .note-modal-action:first-child{justify-self:start;}
-#noteModal .note-modal-action:last-child{justify-self:end;}
-#noteModal .note-modal-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
-#noteModal .note-modal-done{color:var(--accent);}
-#noteModal .mbody{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
+:is(#noteModal,#noteTagPicker) .note-modal-action:first-child{justify-self:start;}
+:is(#noteModal,#noteTagPicker) .note-modal-action:last-child{justify-self:end;}
+:is(#noteModal,#noteTagPicker) .note-modal-action:active{background:rgba(118,118,128,.16);transform:scale(.97);}
+:is(#noteModal,#noteTagPicker) .note-modal-done{color:var(--accent);}
+:is(#noteModal,#noteTagPicker) .mbody{padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom));}
 
 .fg{margin-bottom:var(--sp-14);}
 .fg label{display:block;font-size:var(--fs-foot);font-weight:600;color:var(--text-secondary);letter-spacing:.04em;margin-bottom:var(--sp-6);}
@@ -1113,10 +1113,10 @@ html.scrolling ::-webkit-scrollbar-thumb{background:var(--text-muted);background
     transform:translateZ(0);
   }
   /* 抽屉顶部小抓手 */
-  #noteModal .mhdr{position:relative;padding-top:var(--sp-20);
+  :is(#noteModal,#noteTagPicker) .mhdr{position:relative;padding-top:var(--sp-20);
     touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab;}
-  #noteModal .mhdr:active{cursor:grabbing;}
-  #noteModal .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:rgba(60,60,67,.28);}
+  :is(#noteModal,#noteTagPicker) .mhdr:active{cursor:grabbing;}
+  :is(#noteModal,#noteTagPicker) .mhdr::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;border-radius:2px;background:rgba(60,60,67,.28);}
   /* 读书时间线（章节列表）弹窗：铺满到屏幕底边，不在下方留出导航条空档（否则会露出被压暗的底栏，看着像空了一块）。
      底部内容加上安全区内边距，最后一章不被手势条压住。 */
   #tlModal.moverlay{padding-bottom:0;}
@@ -5061,7 +5061,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #recordTagsModal .tadd-btn{display:flex;align-items:center;justify-content:center;align-self:center;width:32px;height:32px;padding:0;margin:0;box-sizing:border-box;}
 #recordTagsModal .tadd-btn svg{display:block;flex-shrink:0;}
 /* 笔记编辑抽屉：灰色面板 + 白色输入区，与其他编辑弹窗统一。 */
-#noteModal .mbox,#noteModal .mhdr,#noteModal .mbody{background:var(--bg);}
+:is(#noteModal,#noteTagPicker) :is(.mbox,.mhdr,.mbody){background:var(--bg);}
 #noteModal .fg input:not(.tinput),#noteModal .fg select,#noteModal .fg textarea{background-color:var(--surface);}
 
 /* 笔记表单共用记录编辑的标签列；多行内容的工具和辅助项留在输入列。 */
@@ -5079,11 +5079,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 @keyframes noteTagSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 #noteTagPicker .mbox{height:70vh;max-height:100%;border:1px solid var(--border);border-bottom:0;
   border-radius:var(--rxl) var(--rxl) 0 0;background:var(--bg);box-shadow:none;}
-#noteTagPicker .tlsheet-head{flex:none;touch-action:none;padding:7px var(--sp-16) var(--sp-12);border-bottom:1px solid var(--border-soft);}
-#noteTagPicker .tlsheet-grip{width:36px;height:4px;margin:0 auto 8px;border-radius:999px;background:rgba(86,86,90,.34);}
-#noteTagPicker .tlsheet-headrow{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;gap:8px;}
-#noteTagPicker .mtitle{text-align:center;}
-#noteTagPicker .mbody{min-height:0;padding:var(--sp-16) var(--sp-16) calc(24px + env(safe-area-inset-bottom,0px));}
+#noteTagPicker .mhdr{touch-action:none;cursor:grab;}
+#noteTagPicker .mhdr:active{cursor:grabbing;}
+#noteTagPicker .mbody{min-height:0;}
 .note-tag-picker-label{display:block;margin:0 0 var(--sp-8);font-size:var(--fs-caption);color:var(--text-secondary);}
 #noteTagPicker .tiwrap{flex-wrap:nowrap;min-height:44px;background:var(--surface);border:1px solid var(--border);margin-bottom:var(--sp-20);}
 #noteTagPicker .tiwrap:focus-within{border-color:var(--accent-mid);}
@@ -6301,13 +6299,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 <div class="moverlay" id="noteTagPicker" onclick="if(event.target===this)closeNoteTagPicker()">
   <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="noteTagPickerTitle">
-    <div class="tlsheet-head">
-      <div class="tlsheet-grip" aria-hidden="true"></div>
-      <div class="tlsheet-headrow">
-        <button type="button" class="tlsheet-action" onclick="closeNoteTagPicker()">取消</button>
-        <div class="mtitle" id="noteTagPickerTitle">所有标签</div>
-        <button type="button" class="tlsheet-action" onclick="saveNoteTagPicker()">完成</button>
-      </div>
+    <div class="mhdr">
+      <button type="button" class="note-modal-action" onclick="closeNoteTagPicker()">取消</button>
+      <div class="mtitle" id="noteTagPickerTitle">所有标签</div>
+      <button type="button" class="note-modal-action note-modal-done" onclick="saveNoteTagPicker()">完成</button>
     </div>
     <div class="mbody">
       <label class="note-tag-picker-label" for="ntinput">新建标签</label>
@@ -18159,9 +18154,9 @@ function openNoteTagPicker(){
   noteTagPicker.classList.add('open');
   noteTagPicker.querySelector('.mbody').scrollTop=0;
   document.getElementById('noteModal').inert=true;
-  bindSheetDrag(noteTagPicker.querySelector('.mbox'),noteTagPicker.querySelector('.tlsheet-head'),closeNoteTagPicker);
+  bindSheetDrag(noteTagPicker.querySelector('.mbox'),noteTagPicker.querySelector('.mhdr'),closeNoteTagPicker);
   backLayerOpenedNow('noteTagPicker');
-  noteTagPicker.querySelector('.tlsheet-action').focus({preventScroll:true});
+  noteTagPicker.querySelector('.note-modal-action').focus({preventScroll:true});
 }
 function closeNoteTagPicker(){
   noteTagPicker.classList.remove('open');
