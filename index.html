@@ -5077,7 +5077,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #noteTagPicker.moverlay{z-index:125;align-items:flex-end;justify-content:center;padding:0;background:rgba(10,8,6,.34);}
 #noteTagPicker.moverlay.open .mbox{animation:noteTagSheetUp var(--nav-dur) var(--nav-ease);}
 @keyframes noteTagSheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
-#noteTagPicker .mbox{height:70vh;max-height:100%;border:1px solid var(--border);border-bottom:0;
+#noteTagPicker .mbox{height:calc(70vh - 76px);max-height:100%;border:1px solid var(--border);border-bottom:0;
   border-radius:var(--rxl) var(--rxl) 0 0;background:var(--bg);box-shadow:none;}
 #noteTagPicker .mhdr{touch-action:none;cursor:grab;}
 #noteTagPicker .mhdr:active{cursor:grabbing;}
