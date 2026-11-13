@@ -3149,6 +3149,9 @@ mark.shl{
   .desktop-chapter-layout [aria-current="true"]{background:var(--accent-light);color:var(--accent);border-radius:var(--r);}
   .desktop-chapter-reader{overflow-wrap:anywhere;}
   .desktop-chapter-reader{position:relative;}
+  .desktop-chapter-form{display:flex;flex-direction:column;gap:var(--sp-12);}
+  .desktop-chapter-actions{display:flex;justify-content:space-between;}
+  .desktop-chapter-form .chapter-whole-text{height:clamp(180px, 54dvh, 700px);min-height:0;flex:none;}
   .desktop-chapter-edit{position:absolute;top:var(--sp-12);right:var(--sp-12);z-index:2;}
   .desktop-chapter-reader .tl-para:first-child{padding-right:28px;}
   .dt-body{width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
@@ -11281,7 +11284,7 @@ function syncDetailListSelection(){
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item||detailId===id) return;
   ensurePeopleIds(item,true);
-  desktopChapterIndex=null;
+  desktopChapterIndex=null;desktopChapterForm=null;
   detailId=id; dtTab='info'; peopleSearchOpen=false; peopleSearchQuery='';
   timelineSearchOpen=false; timelineSearchQuery='';
   // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
@@ -11310,7 +11313,7 @@ function hideDetail(){
   if(noteSheetId!=null) closeNoteSheet();   // 详情页收起前先落盘备注
   if(tlSheetIdx!=null) closeChapterSheet();  // 章节弹窗还开着就一并收掉（同样先落盘）
   closeTimeEditor();
-  detailId=null;
+  detailId=null;desktopChapterForm=null;
   document.getElementById('detailRoot').classList.remove('open');
   document.body.classList.remove('detail-open');
   // 详情页隐藏后把主列表重新画一遍。这样即使浏览器连续派发返回事件，
@@ -11987,6 +11990,9 @@ function renderDetail(previewBox=null, viewTab=dtTab){
   if(viewTab==='tl'){
     if(timelineSearchOpen)filterTimelineList(timelineSearchQuery);
     syncDesktopChapterSelection();
+    if(desktopChapterLayout.matches&&desktopChapterForm){
+      box.querySelector('.desktop-chapter-reader:not([hidden])')?.replaceChildren(desktopChapterForm);
+    }
   }
 
   // 栏目切换后的轻量过渡：新内容从切换方向的右/左侧短距离滑入。
@@ -12039,7 +12045,7 @@ const ICON_ADD_PERSON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const ICON_EDIT_DOC=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3H6a2 2 0 00-2 2v14a2 2 0 002 2h6"/><path d="M8 8h6M8 12h4"/><path d="M18.4 12.6a1.9 1.9 0 012.7 2.7L16.5 20l-3.2.7.7-3.2 4.4-4.9z"/></svg>`;
 
 const desktopChapterLayout=window.matchMedia('(min-width: 1025px) and (pointer: fine)');
-let desktopChapterIndex=null;
+let desktopChapterIndex=null, desktopChapterForm=null;
 desktopChapterLayout.addEventListener('change',()=>{
   if(detailId&&dtTab==='tl') renderDetail();
 });
@@ -12102,9 +12108,37 @@ function syncDesktopChapterSelection(){
   });
 }
 function editDesktopChapter(idx){
-  tlHostMedia=detailId; tlCurId=null;
-  openChapterSheet(idx);
-  if(tlSheetIdx===idx)enterWholeChapterEdit();
+  const reader=document.querySelector('#dtBody .desktop-chapter-reader');
+  const item=data.find(d=>d.id===detailId);
+  const chapter=item&&parseChapters(item.bookNote||'')[idx];
+  if(!reader||!chapter)return;
+  const raw=chapter.raw.trimStart(), nl=raw.indexOf('\n');
+  const title=(nl<0?raw:raw.slice(0,nl)).replace(/^####[ \t]+/,'');
+  const content=nl<0?'':raw.slice(nl+1);
+  const form=document.createElement('form');
+  form.className='desktop-chapter-form';
+  form.innerHTML=`<div class="desktop-chapter-actions">
+    <button type="button" class="tlsheet-action">取消</button>
+    <button type="submit" class="tlsheet-action">完成</button>
+  </div>${chapterEditorFields(title,content)}`;
+  desktopChapterForm=form;
+  reader.replaceChildren(form);
+  reader.scrollTop=0;
+  const ta=bindChapterFormatting(form);
+  const titleInput=form.querySelector('.chapter-title-input');
+  form.hasChanges=()=>titleInput.value!==title||ta.value!==content;
+  form.querySelector('button').onclick=()=>{
+    desktopChapterForm=null;
+    openDetailChapter(idx);
+  };
+  form.addEventListener('submit',event=>{
+    event.preventDefault();
+    tlHostMedia=item.id;tlCurId=null;
+    if(!saveChapterDraft(titleInput.value,ta.value,idx,chapter.raw,chapter.raw.slice(0,chapter.raw.length-raw.length)))return;
+    desktopChapterForm=null;
+    renderDetail();
+  });
+  ta.focus({preventScroll:true});
 }
 function openDetailChapter(idx){
   const reader=document.querySelector('#dtBody .desktop-chapter-reader');
@@ -12112,6 +12146,11 @@ function openDetailChapter(idx){
     const item=data.find(d=>d.id===detailId);
     const chapter=item&&parseChapters(item.bookNote||'')[idx];
     if(!chapter)return;
+    if(desktopChapterForm){
+      if(idx===desktopChapterIndex)return;
+      if(desktopChapterForm.hasChanges()&&!confirm('放弃本章尚未保存的修改？'))return;
+      desktopChapterForm=null;
+    }
     desktopChapterIndex=idx;
     reader.innerHTML=desktopChapterHtml(chapter,idx);
     reader.hidden=false;
@@ -17209,15 +17248,8 @@ function renderChapterSheet(){
 }
 
 let tlWholeEditing=false, tlChapterNew=false, tlChapterDraft='', tlChapterSource='', tlChapterReadScroll=0;
-function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
-  tlChapterReadScroll=document.getElementById('tlSheetBody').scrollTop;
-  tlWholeEditing=true;
-  const raw=tlChapterDraft, nl=raw.indexOf('\n');
-  const title=(nl<0?raw:raw.slice(0,nl)).replace(/^####[ \t]+/,''), content=nl<0?'':raw.slice(nl+1);
-  const body=document.getElementById('tlSheetBody');
-  body.classList.add('chapter-editing');
-  syncChapterKeyboardLayout();
-  body.innerHTML=`<input aria-label="章节标题" id="chapterTitleInput" class="chapter-title-input" value="${esc(title)}" placeholder="章节标题，如：末章 祈福">
+function chapterEditorFields(title,content){
+  return `<input aria-label="章节标题" class="chapter-title-input" value="${esc(title)}" placeholder="章节标题，如：末章 祈福">
     <div class="fmt-bar chapter-format">
       <div class="chapter-heading-picker">
         <button type="button" class="fmt-btn" data-heading-menu aria-label="标题样式" aria-expanded="false">H</button>
@@ -17229,11 +17261,10 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
       </div>
       <button type="button" class="fmt-btn" data-fmt="b"><b>B</b></button><button type="button" class="fmt-btn" data-fmt="i"><i>I</i></button><button type="button" class="fmt-btn" data-fmt="u"><u>U</u></button><button type="button" class="fmt-btn" data-fmt="li">•</button>
     </div>
-    <textarea id="chapterWholeText" class="chapter-whole-text" aria-label="本章正文" placeholder="写下这一章的笔记…">${esc(content)}</textarea>`;
-  document.getElementById('tlSheetTitle').textContent=tlChapterNew?'新增章节':'编辑本章';
-  document.getElementById('tlSheetCancel').textContent='取消';
-  document.getElementById('tlSheetDone').textContent='完成';
-  const ta=document.getElementById('chapterWholeText');
+    <textarea class="chapter-whole-text" aria-label="本章正文" placeholder="写下这一章的笔记…">${esc(content)}</textarea>`;
+}
+function bindChapterFormatting(body){
+  const ta=body.querySelector('.chapter-whole-text');
   const headingPicker=body.querySelector('.chapter-heading-picker');
   const headingTrigger=body.querySelector('[data-heading-menu]');
   const headingOptions=[...body.querySelectorAll('.chapter-heading-option')];
@@ -17264,6 +17295,21 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
     }else closeHeadingPicker();
   }));
   ta.addEventListener('pointerdown',closeHeadingPicker);
+  return ta;
+}
+function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
+  tlChapterReadScroll=document.getElementById('tlSheetBody').scrollTop;
+  tlWholeEditing=true;
+  const raw=tlChapterDraft, nl=raw.indexOf('\n');
+  const title=(nl<0?raw:raw.slice(0,nl)).replace(/^####[ \t]+/,''), content=nl<0?'':raw.slice(nl+1);
+  const body=document.getElementById('tlSheetBody');
+  body.classList.add('chapter-editing');
+  syncChapterKeyboardLayout();
+  body.innerHTML=chapterEditorFields(title,content);
+  document.getElementById('tlSheetTitle').textContent=tlChapterNew?'新增章节':'编辑本章';
+  document.getElementById('tlSheetCancel').textContent='取消';
+  document.getElementById('tlSheetDone').textContent='完成';
+  const ta=bindChapterFormatting(body);
   body.scrollTop=0;
   const target=tlSheetSegs[segIndex];
   let offset=0;
@@ -17274,7 +17320,7 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
     offset=block?.index||0;
     if(block&&visibleOffset!=null)offset+=chapterSourceOffsetFromVisible(block[0],visibleOffset);
   }
-  if(tlChapterNew){const input=document.getElementById('chapterTitleInput');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+  if(tlChapterNew){const input=body.querySelector('.chapter-title-input');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
   else {
     // iOS Safari 默认会为 textarea 光标滚动整个布局视口；章节抽屉随后又按
     // visualViewport 定位，就会发生双重位移并在键盘上方留下大块遮罩空白。
@@ -17323,23 +17369,29 @@ function openNewDetailChapter(initialHeading){
 }
 
 // 把本章的改动落盘（关闭、换章前都要先走一遍），不动抽屉的显示状态
-function commitChapterSheet(){
-  if(!tlWholeEditing) return true;
-  const title=document.getElementById('chapterTitleInput').value.trim();
-  const content=document.getElementById('chapterWholeText').value;
+function saveChapterDraft(title,content,idx,source,lead,isNew=false){
+  title=title.trim();
   if(!title){toast('请填写章节标题');return false;}
   const recognized=parseChapters(title).some(c=>c.chStart===0&&c.raw.trim()===title);
   const raw=(recognized?title:'#### '+title)+'\n'+content;
   if(parseChapters(raw).length!==1 || partMarks(content).length){toast('这里只编辑一章，新增章节请使用右下角＋');return false;}
-  if(tlChapterNew&&!content.trim()){toast('请填写本章正文');return false;}
+  if(isNew&&!content.trim()){toast('请填写本章正文');return false;}
   const body=tlHostBody();if(body==null)return false;
-  if(!tlChapterNew&&parseChapters(body)[tlSheetIdx]?.raw!==tlChapterSource){toast('本章内容已更新，请取消后重新打开');return false;}
-  const next=tlChapterNew?body.replace(/\s+$/,'')+(body.trim()?'\n\n':'')+raw:replaceChapterInBody(body,tlSheetIdx,tlSheetLead+raw);
+  if(!isNew&&parseChapters(body)[idx]?.raw!==source){toast('本章内容已更新，请取消后重新打开');return false;}
+  const next=isNew?body.replace(/\s+$/,'')+(body.trim()?'\n\n':'')+raw:replaceChapterInBody(body,idx,lead+raw);
   if(next!==body&&!tlHostSave(next))return false;
-  if(tlChapterNew)tlSheetIdx=parseChapters(next).length-1;
+  if(next!==body)toast('已保存');
+  return {index:isNew?parseChapters(next).length-1:idx};
+}
+function commitChapterSheet(){
+  if(!tlWholeEditing)return true;
+  const editor=document.getElementById('tlSheetBody');
+  const saved=saveChapterDraft(editor.querySelector('.chapter-title-input').value,
+    editor.querySelector('.chapter-whole-text').value,tlSheetIdx,tlChapterSource,tlSheetLead,tlChapterNew);
+  if(!saved)return false;
+  tlSheetIdx=saved.index;
   tlChapterNew=false;tlWholeEditing=false;
   tlHostRerender();
-  if(next!==body)toast('已保存');
   return true;
 }
 function finishChapterSheet(){
