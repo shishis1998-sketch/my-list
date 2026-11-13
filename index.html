@@ -198,6 +198,24 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* ===== LAYOUT ===== */
 .app{display:flex;min-height:100vh;}
 
+.desktop-sidebar-toggle{display:none;}
+@media(min-width:1025px) and (pointer:fine){
+  .app{--desktop-sidebar-width:220px;}
+  .app>.sidebar{width:var(--desktop-sidebar-width);min-width:var(--desktop-sidebar-width);}
+  .app>.sidebar>.logo{padding-right:44px;}
+  .desktop-sidebar-toggle{
+    display:grid;place-items:center;position:fixed;top:var(--sp-16);
+    left:calc(var(--desktop-sidebar-width) - 40px);z-index:21;
+    width:32px;height:32px;padding:0;border:1px solid var(--border);
+    border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;
+  }
+  .desktop-sidebar-toggle:hover{color:var(--accent);border-color:var(--accent-mid);}
+  .app.desktop-sidebar-collapsed{padding-left:44px;}
+  .app.desktop-sidebar-collapsed>.sidebar{display:none;}
+  .desktop-sidebar-collapsed>.desktop-sidebar-toggle{left:6px;}
+  .desktop-sidebar-collapsed>.desktop-sidebar-toggle svg{transform:scaleX(-1);}
+}
+
 /* ===== SIDEBAR ===== */
 .sidebar{
   width:220px;min-width:220px;flex-shrink:0;
@@ -5358,7 +5376,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <div class="sb-overlay" id="sbOverlay" onclick="toggleSidebar(false)"></div>
 
 <!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
+<button type="button" class="desktop-sidebar-toggle" aria-controls="appSidebar" aria-expanded="true"
+  aria-label="收起侧栏" title="收起侧栏" onclick="toggleDesktopSidebar(this)">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 4v16m12-14-6 6 6 6"/>
+  </svg>
+</button>
+<aside class="sidebar" id="appSidebar">
   <div class="logo">
     <h1>我的清单</h1>
     <p>Personal Collection</p>
@@ -13215,6 +13239,14 @@ function renderStats(){
     <div class="scard"><div class="snum">${data.length}</div><div class="slbl">总计</div></div>
     ${cats.slice(0,4).map(c=>`<div class="scard"><div class="snum">${cnt[c.id]||0}</div><div class="slbl">${esc(c.name)}</div></div>`).join('')}
     <div class="scard"><div class="snum">${avg}</div><div class="slbl">平均分</div></div>`;
+}
+
+function toggleDesktopSidebar(button){
+  const collapsed=button.parentElement.classList.toggle('desktop-sidebar-collapsed');
+  const label=collapsed?'展开侧栏':'收起侧栏';
+  button.setAttribute('aria-expanded',String(!collapsed));
+  button.setAttribute('aria-label',label);
+  button.title=label;
 }
 
 // ── Mobile sidebar toggle ─────────────────────────────────────────
