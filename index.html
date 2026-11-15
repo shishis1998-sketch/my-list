@@ -1245,8 +1245,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   .catfrow .nfchip{padding-inline:var(--sp-8);}
   .bb-media-sort-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;}
   .bb-media-sort-options .bb-sortopt{justify-content:center;white-space:nowrap;}
-  /* 笔记模式下隐藏分类条(此时显示 nfrow 子分类条) */
-  body.notes-mode .catfrow{display:none !important;}
+  /* 手机端的笔记分类放在底部菜单。 */
+  body.notes-mode .catfrow,body.notes-mode .nfrow{display:none !important;}
 
   /* 手机端弹窗一律铺到屏幕下沿。
      以前这里无条件给底栏留 64px + 安全区，本意是「导航条依旧可见可点」——可在列表页
@@ -1423,6 +1423,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     text-align:left;padding:var(--sp-8) var(--sp-10);border-radius:9px;
     font-size:14.5px;font-family:var(--zh);color:var(--text-primary);cursor:pointer;}
   .bb-sortopt.on{color:var(--accent);font-weight:700;background:var(--accent-light);}
+  #bbSortPanel .bb-sortopt[aria-pressed="true"] span:last-child:not(:first-child){margin-left:auto;}
+  body.notes-mode #bbSortBtn .bb-sorticon,
+  body:not(.notes-mode) #bbSortBtn .bb-note-chevron{display:none;}
+  body.notes-mode #bbSortBtn .bb-note-chevron{order:1;}
   /* 组标题：排序的「时间 / 其他」、筛选的「状态 / 评分 / 标签」 */
   .bb-sortgrp,.bb-filter-glbl{font-size:11px;font-family:var(--en);font-weight:600;letter-spacing:.08em;
     text-transform:uppercase;color:var(--text-muted);padding:var(--sp-8) var(--sp-10) var(--sp-4);}
@@ -5870,7 +5874,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </button>
     </div>
     <button class="bb-sortbtn" id="bbSortBtn" type="button" onclick="openSortSheet()" title="排序" aria-label="排序">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+      <svg class="bb-sorticon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+      <svg class="bb-note-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       <span class="bb-sortlabel" id="bbSortBtnLabel" hidden></span>
     </button>
     <button class="bb-sortbtn" id="bbTagBtn" type="button" onclick="openTagSheet()" title="筛选" aria-label="筛选">
@@ -13459,7 +13464,7 @@ function syncAddBtn(){
 // 切换主区域 UI（媒体模式 vs 笔记模式）
 function applyModeUI(){
   const notes=isNoteMode();
-  // 手机端:notes-mode 下隐藏分类条,显示笔记子分类条(catfrow/nfrow 靠此 class 切换)
+  // 手机端笔记分类由底部菜单提供，电脑端保留顶部分类条。
   document.body.classList.toggle('notes-mode', notes);
   document.getElementById('frow').style.display=notes?'none':'';
   document.getElementById('nfrow').style.display=notes?'':'none';
@@ -13470,17 +13475,12 @@ function applyModeUI(){
   // 排序下拉切换
   const ssort=document.querySelector('.ssort');
   if(notes){
-    // 切换成笔记的四种排序。日记标题是记录日期，默认按标题倒序，
-    // 这样编辑旧日记不会把它顶到最新日期前面；其它笔记仍默认按最近修改。
     if(!ssort.dataset.noteMode){
       ssort.dataset.mediaHTML=ssort.innerHTML;
       ssort.dataset.mediaVal=ssort.value;
-      ssort.innerHTML='<option value="n-updated">最近修改</option><option value="n-created">最新创建</option><option value="n-title-asc">标题 A→Z</option><option value="n-title-desc">标题 Z→A</option>';
       ssort.dataset.noteMode='1';
     }
-    const defaultNoteSort=curNoteSub==='日记'?'n-title-desc':'n-updated';
-    ssort.value=defaultNoteSort;
-    curSort=defaultNoteSort;
+    syncNoteSortSelect();
   }else{
     if(ssort.dataset.noteMode){
       ssort.innerHTML=ssort.dataset.mediaHTML;
@@ -13598,9 +13598,36 @@ const MEDIA_SORTS=[
   ['score-desc','评分'],['year-desc','年份']
 ];
 const MEDIA_ASC_SORTS={'date-desc':'date-asc','watch-desc':'watch-asc'};
-const SORT_GROUPS_NOTE=[
-  ['',[['n-updated','最近修改'],['n-created','最新创建'],['n-title-asc','标题 A→Z'],['n-title-desc','标题 Z→A']]]
-];
+function noteUsesRecordDates(sub){
+  return sub==='日记'||sub==='收集';
+}
+function noteSortOptions(sub){
+  if(noteUsesRecordDates(sub))return [['n-date-desc','从新到旧'],['n-date-asc','从旧到新']];
+  if(sub==='备忘')return [['n-updated','最近修改'],['n-title-asc','按标题']];
+  return [['n-updated','最近修改'],['n-created','最新创建'],['n-title-asc','标题 A→Z'],['n-title-desc','标题 Z→A']];
+}
+function syncNoteSortSelect(){
+  const select=document.querySelector('.ssort');
+  const options=noteSortOptions(curNoteSub);
+  if(!options.some(([value])=>value===curSort))curSort=options[0][0];
+  const html=options.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+  if(select.innerHTML!==html)select.innerHTML=html;
+  select.value=curSort;
+}
+function renderNoteControlMenu(){
+  const option=(label,selected,action,data='')=>
+    `<button type="button" class="bb-sortopt${selected?' on':''}" aria-pressed="${selected}" ${data} onclick="${action}"><span>${esc(label)}</span>${selected?'<span aria-hidden="true">✓</span>':''}</button>`;
+  const categories=['all',...noteSubs].map(sub=>
+    option(sub==='all'?'全部笔记':sub,sub===curNoteSub,'pickNoteCategory(this.dataset.noteSub)',`data-note-sub="${esc(sub)}"`)
+  ).join('');
+  const sorts=noteSortOptions(curNoteSub).map(([value,label])=>
+    option(label,value===curSort,`pickSort('${value}')`)
+  ).join('');
+  const separator='<div class="bb-sortsep" role="separator"></div>';
+  return '<div class="bb-sortgrp">分类</div>'+categories+separator+
+    '<div class="bb-sortgrp">排序</div>'+sorts+separator+
+    '<button type="button" class="bb-sortopt" onclick="closeSortSheet();openNoteSubMgr()">管理子分类</button>';
+}
 // 小卡片贴着底栏对应按钮的上方弹出：右边缘和按钮对齐。位置得实时量——
 // 底栏在键盘跟随（body.vv-track）和 tab 收起时高度会变，写死 bottom 会错位。
 function placeBBPanel(panelId,btn){
@@ -13616,15 +13643,7 @@ function placeTagPanel(){ placeBBPanel('bbTagPanel',document.getElementById('bbT
 function openSortSheet(){
   const sheet=document.getElementById('bbSortSheet');
   const panel=document.getElementById('bbSortPanel');
-  const notes=isNoteMode();
-  const groups=SORT_GROUPS_NOTE;
-  // 当前项不打勾，只用绿底+绿字标出来：省下一个勾的宽度，卡片能再窄一截
-  panel.innerHTML=notes?groups.map(([g,opts],gi)=>
-    (gi?'<div class="bb-sortsep" role="separator"></div>':'')+
-    opts.map(([v,lbl])=>
-      `<button type="button" class="bb-sortopt${v===curSort?' on':''}" onclick="pickSort('${v}')">${lbl}</button>`
-    ).join('')
-  ).join(''):[['all','全部分类'],...cats.map(c=>[c.id,c.name])].map(([id,label],index)=>
+  panel.innerHTML=isNoteMode()?renderNoteControlMenu():[['all','全部分类'],...cats.map(c=>[c.id,c.name])].map(([id,label],index)=>
     `<button type="button" class="bb-sortopt${id===curCat?' on':''}" onclick="pickMediaCategory(${index})">${esc(label)}</button>`
   ).join('')+'<div class="bb-sortsep" role="separator"></div>'+
     '<button type="button" class="bb-sortopt" onclick="closeSortSheet();openCatMgr()">管理分类</button>';
@@ -13644,6 +13663,10 @@ function pickSort(v){
   if(ssort){ for(const o of ssort.options){ if(o.value===v){ ssort.value=v; break; } } }
   render();
   closeSortSheet();
+}
+function pickNoteCategory(sub){
+  closeSortSheet();
+  if(sub!==curNoteSub)filterCat('notes:'+sub);
 }
 function pickMediaCategory(index){
   closeSortSheet();
@@ -13688,8 +13711,9 @@ function syncListControlBtn(id,label,description){
 }
 function syncFilterBtn(){
   if(isNoteMode()){
-    const sort=SORT_GROUPS_NOTE[0][1].find(([value])=>value===curSort);
-    syncListControlBtn('bbSortBtn',sort?sort[1]:'',sort?'排序：'+sort[1]:'排序');
+    const sort=noteSortOptions(curNoteSub).find(([value])=>value===curSort);
+    const category=curNoteSub==='all'?'全部笔记':curNoteSub;
+    syncListControlBtn('bbSortBtn',curNoteSub==='all'?'全部':category,category+' · '+(sort?.[1]||'分类和排序'));
   }else{
     const category=cats.find(c=>c.id===curCat);
     syncListControlBtn('bbSortBtn',category?.name||'分类',category?'分类：'+category.name:'分类：全部分类');
@@ -16290,7 +16314,17 @@ function filteredNotes(){
     return ap&&bp?bp-ap:0;
   };
   const sortNotes=cmp=>L.sort((a,b)=>pinCmp(a,b)||cmp(a,b));
-  if(curSort==='n-updated') sortNotes((a,b)=>b.updatedAt-a.updatedAt);
+  if(noteUsesRecordDates(curNoteSub)){
+    const dates=new Map(L.map(n=>[n,recordNoteDate(n).getTime()]));
+    const direction=curSort==='n-date-asc'?1:-1;
+    sortNotes((a,b)=>{
+      const first=dates.get(a),second=dates.get(b);
+      if(!Number.isFinite(first))return Number.isFinite(second)?1:0;
+      if(!Number.isFinite(second))return -1;
+      return direction*(first-second);
+    });
+  }
+  else if(curSort==='n-updated') sortNotes((a,b)=>b.updatedAt-a.updatedAt);
   else if(curSort==='n-created') sortNotes((a,b)=>b.createdAt-a.createdAt);
   else if(curSort==='n-title-asc') sortNotes((a,b)=>(a.title||'').localeCompare(b.title||'','zh'));
   else if(curSort==='n-title-desc') sortNotes((a,b)=>(b.title||'').localeCompare(a.title||'','zh'));
@@ -16346,9 +16380,14 @@ function noteMonthKey(n){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
 
-function renderNoteDateLabel(value, createdAt){
-  // 按本地日历解析标题日期，避免 ISO 日期转换为 UTC 后产生跨日偏差。
-  const date=value?new Date(value+'T00:00:00'):new Date(createdAt||NaN);
+function recordNoteDate(n, value=noteDateInputValue(n.title)){
+  // 显示与排序共用本地日期；旧记录按创建日兜底。
+  const date=value?new Date(value+'T00:00:00'):new Date(n.createdAt||NaN);
+  date.setHours(0,0,0,0);
+  return date;
+}
+function renderNoteDateLabel(value, n){
+  const date=recordNoteDate(n,value);
   if(!Number.isFinite(date.getTime()))return '<div aria-hidden="true"></div>';
   const day=String(date.getDate()).padStart(2,'0');
   const weekday='周'+'日一二三四五六'[date.getDay()];
@@ -16419,7 +16458,7 @@ function closeNoteMonth(button){
 function renderNoteMonthOverview(L){
   const groups={};
   L.forEach(n=>{const key=noteMonthKey(n);if(key)(groups[key]||(groups[key]=[])).push(n);});
-  const keys=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  const keys=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
   const cal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>';
   return '<div class="note-month-card" role="list">'+keys.map(key=>
     `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}',this)">`+
@@ -16438,7 +16477,7 @@ function renderNotes(){
   const subName=curNoteSub==='all'?'全部笔记':curNoteSub;
   document.getElementById('vtitle').textContent=subName;
   let L=filteredNotes();
-  const monthMode=curNoteSub==='收集'||curNoteSub==='日记';
+  const monthMode=noteUsesRecordDates(curNoteSub);
   // 数据变化后若当前月份已经没有记录，自动退回月份总览。
   if(monthMode&&curNoteMonth&&!L.some(n=>noteMonthKey(n)===curNoteMonth)) curNoteMonth='';
   if(monthMode&&curNoteMonth) L=L.filter(n=>noteMonthKey(n)===curNoteMonth);
@@ -16486,7 +16525,7 @@ function renderNotes(){
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
         <div class="note-foot">${foot}</div>
       </div>`;
-      return monthMode?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n.createdAt)}${card}</div>`:card;
+      return monthMode?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n)}${card}</div>`:card;
     }
     // 读书笔记用按段落分行的预览；其他笔记走原版
     const isBook=isBookNote(n);
@@ -18471,7 +18510,8 @@ function saveNoteSubs(){
   notes.forEach(n=>{if(n.calendarId!=='food'&&!isCalEvent(n)&&!valid.has(n.subCat))n.subCat=noteSubs[0];});
   persistNotes();
   // 若当前筛选的子分类被删,回到全部
-  if(curNoteSub!=='all'&&!valid.has(curNoteSub)){curNoteSub='all';curCat='notes:all';}
+  if(curNoteSub!=='all'&&!valid.has(curNoteSub)){curNoteSub='all';curCat='notes:all';curNoteMonth='';}
+  if(isNoteMode())syncNoteSortSelect();
   closeNoteSubMgr();
   render();
   toast('子分类已更新');
