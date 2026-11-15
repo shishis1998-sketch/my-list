@@ -3271,6 +3271,21 @@ mark.shl{
   min-height:32px;padding:0;border:0;border-radius:var(--r);
   background:transparent;color:var(--text-secondary);font:inherit;cursor:pointer;
 }
+.note-month-picker:not([hidden]){display:inline-flex;align-items:center;gap:var(--sp-4);vertical-align:baseline;}
+.note-month-picker svg{width:12px;height:12px;}
+#noteMonthSheet.open{display:block;position:fixed;inset:0;z-index:120;background:rgba(10,8,6,.16);}
+#noteMonthPanel{
+  position:absolute;right:auto;min-width:118px;max-width:calc(100vw - 16px);
+  overflow-y:auto;overscroll-behavior:contain;transform-origin:top left;
+}
+#noteMonthPanel .bb-sortopt{
+  display:flex;align-items:center;gap:var(--sp-8);width:100%;border:0;
+  text-align:left;background:transparent;color:var(--text-primary);cursor:pointer;white-space:nowrap;
+}
+#noteMonthPanel .bb-sortopt svg{width:16px;height:16px;flex:none;color:var(--text-muted);}
+#noteMonthPanel .bb-sortopt.on{color:var(--accent);background:var(--accent-light);}
+#noteMonthPanel .bb-sortopt.on svg{color:var(--accent);}
+#noteMonthPanel .bb-sortopt:is(:hover,:focus-visible){background:var(--accent-light);}
 .note-dated-day{font-size:var(--fs-title);font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;}
 .note-dated-weekday{font-size:var(--fs-caption);color:var(--text-muted);}
 .note-dated-row .note-card.collect .note-foot{margin-top:var(--sp-8);}
@@ -5588,7 +5603,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="vhdr">
       <div class="vtitle" id="vtitle">全部</div>
       <div class="vcnt">
-        <select id="noteMonthPicker" class="note-month-picker" aria-label="选择月份" onchange="openNoteMonth(this.value)" hidden></select>
+        <button type="button" id="noteMonthPicker" class="note-month-picker" aria-controls="noteMonthPanel" aria-expanded="false" onclick="openNoteMonthSheet()" hidden>
+          <span id="noteMonthPickerLabel"></span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+        </button>
         <span id="vcnt"></span>
       </div>
       <span id="noteMonthState" hidden></span>
@@ -5963,6 +5981,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <!-- 笔记分类：对齐底栏的笔记 tab -->
 <div class="bb-sortsheet" id="noteViewSheet" onclick="if(event.target===this)closeNoteViewSheet()">
   <div class="bb-sortpanel cal-viewpanel" id="noteViewPanel"></div>
+</div>
+<div class="bb-sortsheet" id="noteMonthSheet" onclick="if(event.target===this)closeNoteMonthSheet(true)">
+  <div class="bb-sortpanel" id="noteMonthPanel" role="group" aria-label="选择月份"
+       onkeydown="if(event.key==='Escape'){event.preventDefault();closeNoteMonthSheet(true)}"></div>
 </div>
 
 <!-- 独立时间编辑：取消不保存，用时由起止日期自动计算。 -->
@@ -11005,6 +11027,7 @@ function render(){
 
   renderStats(); renderSidebar(); renderTagFilterRow();
   document.getElementById('vtitle').textContent=curCat==='all'?'全部':getCat(curCat).name;
+  closeNoteMonthSheet();
   document.getElementById('noteMonthPicker').hidden=true;
   document.getElementById('vcnt').textContent=L.length+' 条记录';
 }
@@ -11036,6 +11059,7 @@ const BACK_LAYERS=[
   {id:'bbTagSheet',         cls:'open', close:()=>closeTagSheet()},
   {id:'calViewSheet',       cls:'open', close:()=>closeCalViewSheet()},
   {id:'noteViewSheet',      cls:'open', close:()=>closeNoteViewSheet()},
+  {id:'noteMonthSheet',     cls:'open', close:()=>closeNoteMonthSheet(true)},
   {id:'cfdlg',              cls:'open', close:()=>closeCf()},
   {id:'trashModal',         cls:'open', close:()=>closeTrash()},
   {id:'tagMgrModal',        cls:'open', close:()=>closeTagMgr()},
@@ -16547,6 +16571,53 @@ function closeNoteMonth(button){
   });
 }
 
+function placeNoteMonthPanel(){
+  const picker=document.getElementById('noteMonthPicker');
+  const panel=document.getElementById('noteMonthPanel');
+  const rect=picker.getBoundingClientRect();
+  const below=window.innerHeight-rect.bottom-16;
+  const above=rect.top-16;
+  const openAbove=below<Math.min(panel.scrollHeight,240)&&above>below;
+  panel.style.maxHeight=Math.max(0,Math.min(460,openAbove?above:below))+'px';
+  panel.style.top=openAbove?'auto':(rect.bottom+8)+'px';
+  panel.style.bottom=openAbove?(window.innerHeight-rect.top+8)+'px':'auto';
+  panel.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-panel.offsetWidth-8))+'px';
+}
+
+function openNoteMonthSheet(){
+  const sheet=document.getElementById('noteMonthSheet');
+  const picker=document.getElementById('noteMonthPicker');
+  if(picker.hidden||sheet.classList.contains('open'))return;
+  sheet.classList.add('open');
+  picker.setAttribute('aria-expanded','true');
+  placeNoteMonthPanel();
+  window.addEventListener('resize',placeNoteMonthPanel);
+  const panel=document.getElementById('noteMonthPanel');
+  const selected=panel.querySelector('.on');
+  if(selected){
+    panel.scrollTop=selected.offsetTop;
+    selected.focus({preventScroll:true});
+  }
+  haptic('tap');
+}
+
+function closeNoteMonthSheet(restoreFocus=false){
+  const sheet=document.getElementById('noteMonthSheet');
+  if(!sheet.classList.contains('open'))return;
+  sheet.classList.remove('open');
+  window.removeEventListener('resize',placeNoteMonthPanel);
+  const picker=document.getElementById('noteMonthPicker');
+  picker.setAttribute('aria-expanded','false');
+  if(restoreFocus&&!picker.hidden)picker.focus({preventScroll:true});
+}
+
+function pickNoteMonth(key){
+  closeNoteMonthSheet(true);
+  if(key!==curNoteMonth)openNoteMonth(key);
+}
+
+const NOTE_MONTH_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>';
+
 function groupNotesByMonth(list){
   const groups={};
   list.forEach(note=>{
@@ -16557,10 +16628,9 @@ function groupNotesByMonth(list){
 }
 
 function renderNoteMonthOverview(groups, keys){
-  const cal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>';
   return '<div class="note-month-card" role="list">'+keys.map(key=>
     `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}',this)">`+
-      `<span class="note-month-ico">${cal}</span>`+
+      `<span class="note-month-ico">${NOTE_MONTH_ICON}</span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
     `</button>`
@@ -16583,9 +16653,13 @@ function renderNotes(){
   const selectedMonth=monthMode?curNoteMonth:'';
   if(selectedMonth) L=groups[selectedMonth];
   const picker=document.getElementById('noteMonthPicker');
+  closeNoteMonthSheet();
   picker.hidden=!selectedMonth;
-  picker.replaceChildren(...(selectedMonth?months.map(key=>new Option(noteMonthLabel(key),key)):[]));
-  if(selectedMonth) picker.value=selectedMonth;
+  document.getElementById('noteMonthPickerLabel').textContent=selectedMonth?noteMonthLabel(selectedMonth):'';
+  document.getElementById('noteMonthPanel').innerHTML=selectedMonth?months.map(key=>{
+    const on=key===selectedMonth;
+    return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" aria-pressed="${on}" onclick="pickNoteMonth('${key}')">${NOTE_MONTH_ICON}<span>${noteMonthLabel(key)}</span></button>`;
+  }).join(''):'';
   document.getElementById('vcnt').textContent=(selectedMonth?' · ':'')+L.length+' 条笔记';
   // 月份明细没有可见返回键；用隐藏状态节点接入系统返回手势/后退键。
   document.getElementById('noteMonthState')?.classList.toggle('open',!!(monthMode&&curNoteMonth));
