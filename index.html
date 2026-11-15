@@ -1010,7 +1010,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
 
   /* 内容区不再自己滚动,跟随 body 滚动 */
   .content{--content-gutter:var(--sp-14);padding:var(--content-gutter);overflow:visible;flex:none;}
-  body.notes-mode .content{--note-card-inset:var(--sp-14);padding-top:0;}
+  body.notes-mode .content{
+    --note-card-inset:var(--sp-14);
+    --note-date-column:calc(var(--note-month-text-inset) - var(--sp-10) - var(--note-card-inset) - var(--bd));
+    padding-top:0;
+  }
   body.notes-mode .content>.vhdr{
     box-sizing:border-box;
     min-height:58px;
@@ -1023,11 +1027,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     padding-inline-start:calc(var(--content-gutter) + var(--note-card-inset) + var(--bd));
     background:#fff;
   }
-  body.notes-mode .content:has(#noteMonthState.open)>.vhdr{
-    padding-inline-start:calc(var(--content-gutter) + var(--note-date-column) + var(--sp-10) + var(--note-card-inset) + var(--bd));
-  }
-  body.notes-mode .content:has(.note-month-card)>.vhdr{
-    padding-inline-start:calc(var(--content-gutter) + 1px + var(--sp-16) + 30px + var(--sp-12));
+  body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{
+    padding-inline-start:calc(var(--content-gutter) + var(--note-month-text-inset));
   }
   body.notes-mode .content>.vhdr .vtitle{font-size:var(--fs-heading);}
 
@@ -1979,14 +1980,14 @@ body.cal-searching .cw-card{display:none;}
   overflow:hidden;
 }
 .note-month-row{
-  width:100%;min-height:60px;padding:0 var(--sp-16);display:flex;align-items:center;gap:var(--sp-12);
+  width:100%;min-height:60px;padding:0 var(--note-month-padding);display:flex;align-items:center;gap:var(--note-month-gap);
   border:0;border-bottom:1px solid var(--border-soft);background:transparent;color:var(--text-primary);
   cursor:pointer;font-family:var(--zh);text-align:left;
 }
 .note-month-row:last-child{border-bottom:0;}
 @media (hover:hover){.note-month-row:hover{background:var(--bg);}}
 .note-month-ico{
-  width:30px;height:30px;flex:none;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
+  width:var(--note-month-icon);height:var(--note-month-icon);flex:none;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
   color:var(--accent);background:var(--accent-light);
 }
 .note-month-ico svg{width:17px;height:17px;display:block;}
@@ -3250,7 +3251,13 @@ mark.shl{
   background:var(--surface);box-shadow:none;
 }
 .note-card:hover{border-color:var(--ink);background:var(--surface);}
-.content{--note-date-column:calc(3 * var(--fs-sub));}
+.content{
+  --note-date-column:calc(3 * var(--fs-sub));
+  --note-month-padding:var(--sp-16);
+  --note-month-icon:30px;
+  --note-month-gap:var(--sp-12);
+  --note-month-text-inset:calc(1px + var(--note-month-padding) + var(--note-month-icon) + var(--note-month-gap));
+}
 .note-dated-row{
   display:grid;grid-template-columns:var(--note-date-column) minmax(0,1fr);gap:var(--sp-10);
   align-items:start;font-size:var(--fs-sub);
@@ -16565,6 +16572,7 @@ function renderNotes(){
   const sb=document.getElementById('sbar'); sb.style.display='none'; sb.innerHTML='';
   // 渲染列表
   const list=document.getElementById('nlist');
+  list.toggleAttribute('data-month-view',monthMode);
   if(list._monthTransition){list._monthTransition.cancel();list._monthTransition=null;}
   const empty=document.getElementById('nempty');
   if(!L.length){
