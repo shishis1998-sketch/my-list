@@ -3298,9 +3298,9 @@ mark.shl{
 .note-list[data-month-view]:has(> .note-dated-row){gap:var(--sp-12);}
 .note-dated-row .note-card.collect{padding-bottom:var(--sp-14);}
 .note-dated-row .note-card.collect .note-foot{margin-top:var(--sp-14);}
-.note-card.collect .note-updated{max-width:100%;margin-left:auto;text-align:right;overflow-wrap:anywhere;flex-shrink:1;}
+.note-card.collect .note-created{max-width:100%;margin-left:auto;text-align:right;overflow-wrap:anywhere;flex-shrink:1;}
 @media (hover:none){
-  .note-dated-row .note-foot:not(:has(.ctag,.note-updated)){display:none;}
+  .note-dated-row .note-foot:not(:has(.ctag,.note-created)){display:none;}
 }
 @media (hover:hover){
   .note-dated-row .note-foot .note-edit{margin-left:auto;}
@@ -16469,14 +16469,14 @@ function bookNotePreview(body){
   }).join('');
 }
 
-function renderNoteUpdatedAt(ts){
+function renderNoteCreatedAt(ts){
   if(!ts)return '';
   const date=new Date(ts);
   if(!Number.isFinite(date.getTime()))return '';
   const pad=value=>String(value).padStart(2,'0');
   const day=[date.getFullYear(),pad(date.getMonth()+1),pad(date.getDate())].join('-');
   const time=[pad(date.getHours()),pad(date.getMinutes())].join(':');
-  return `<time class="note-date note-updated" datetime="${date.toISOString()}" title="最后修改" aria-label="最后修改：${day} ${time}">${day} ${time}</time>`;
+  return `<time class="note-date note-created" datetime="${date.toISOString()}" title="添加时间" aria-label="添加时间：${day} ${time}">${day} ${time}</time>`;
 }
 
 function fmtNoteDate(ts){
@@ -16711,7 +16711,7 @@ function renderNotes(){
       const card=`<div class="note-card collect expanded" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
         ${head}
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
-        <div class="note-foot">${foot}${renderNoteUpdatedAt(n.updatedAt)}</div>
+        <div class="note-foot">${foot}${renderNoteCreatedAt(n.createdAt)}</div>
       </div>`;
       return monthMode?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n)}${card}</div>`:card;
     }
