@@ -3295,7 +3295,9 @@ mark.shl{
 #noteMonthPanel .bb-sortopt:is(:hover,:focus-visible){background:var(--accent-light);}
 .note-dated-day{font-size:var(--fs-title);font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;}
 .note-dated-weekday{font-size:var(--fs-caption);color:var(--text-muted);}
-.note-dated-row .note-card.collect .note-foot{margin-top:var(--sp-8);}
+.note-list[data-month-view]:has(> .note-dated-row){gap:var(--sp-12);}
+.note-dated-row .note-card.collect{padding-bottom:var(--sp-14);}
+.note-dated-row .note-card.collect .note-foot{margin-top:var(--sp-14);}
 .note-card.collect .note-updated{max-width:100%;margin-left:auto;text-align:right;overflow-wrap:anywhere;flex-shrink:1;}
 @media (hover:none){
   .note-dated-row .note-foot:not(:has(.ctag,.note-updated)){display:none;}
