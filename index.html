@@ -1027,6 +1027,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     padding-inline-start:calc(var(--content-gutter) + var(--note-card-inset) + var(--bd));
     background:#fff;
   }
+  body.notes-mode .note-dated-label{margin-inline-start:calc(-1 * var(--content-gutter));}
   body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{
     padding-inline-start:calc(var(--content-gutter) + var(--note-month-text-inset));
   }
@@ -3262,8 +3263,13 @@ mark.shl{
   align-items:start;font-size:var(--fs-sub);
 }
 .note-dated-label{
-  display:flex;flex-direction:column;align-items:flex-start;gap:var(--sp-4);
+  display:flex;flex-direction:column;align-items:center;gap:var(--sp-4);
+  margin-inline-end:calc(-1 * var(--sp-10));
   padding-top:var(--sp-14);line-height:var(--lh-tight);
+}
+.note-month-picker{
+  min-height:32px;padding:0;border:0;border-radius:var(--r);
+  background:transparent;color:var(--text-secondary);font:inherit;cursor:pointer;
 }
 .note-dated-day{font-size:var(--fs-title);font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;}
 .note-dated-weekday{font-size:var(--fs-caption);color:var(--text-muted);}
@@ -5581,7 +5587,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <div class="sbar" id="sbar"></div>
     <div class="vhdr">
       <div class="vtitle" id="vtitle">全部</div>
-      <div class="vcnt" id="vcnt"></div>
+      <div class="vcnt">
+        <select id="noteMonthPicker" class="note-month-picker" aria-label="选择月份" onchange="openNoteMonth(this.value)" hidden></select>
+        <span id="vcnt"></span>
+      </div>
       <span id="noteMonthState" hidden></span>
     </div>
     <div class="twrap" id="twrap">
@@ -10996,6 +11005,7 @@ function render(){
 
   renderStats(); renderSidebar(); renderTagFilterRow();
   document.getElementById('vtitle').textContent=curCat==='all'?'全部':getCat(curCat).name;
+  document.getElementById('noteMonthPicker').hidden=true;
   document.getElementById('vcnt').textContent=L.length+' 条记录';
 }
 
@@ -16537,10 +16547,16 @@ function closeNoteMonth(button){
   });
 }
 
-function renderNoteMonthOverview(L){
+function groupNotesByMonth(list){
   const groups={};
-  L.forEach(n=>{const key=noteMonthKey(n);if(key)(groups[key]||(groups[key]=[])).push(n);});
-  const keys=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
+  list.forEach(note=>{
+    const key=noteMonthKey(note);
+    if(key)(groups[key]||(groups[key]=[])).push(note);
+  });
+  return groups;
+}
+
+function renderNoteMonthOverview(groups, keys){
   const cal='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>';
   return '<div class="note-month-card" role="list">'+keys.map(key=>
     `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}',this)">`+
@@ -16560,10 +16576,17 @@ function renderNotes(){
   document.getElementById('vtitle').textContent=subName;
   let L=filteredNotes();
   const monthMode=noteUsesRecordDates(curNoteSub);
+  const groups=monthMode?groupNotesByMonth(L):{};
+  const months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
   // 数据变化后若当前月份已经没有记录，自动退回月份总览。
-  if(monthMode&&curNoteMonth&&!L.some(n=>noteMonthKey(n)===curNoteMonth)) curNoteMonth='';
-  if(monthMode&&curNoteMonth) L=L.filter(n=>noteMonthKey(n)===curNoteMonth);
-  document.getElementById('vcnt').textContent=(monthMode&&curNoteMonth?noteMonthLabel(curNoteMonth)+' · ':'')+L.length+' 条笔记';
+  if(monthMode&&curNoteMonth&&!groups[curNoteMonth]) curNoteMonth='';
+  const selectedMonth=monthMode?curNoteMonth:'';
+  if(selectedMonth) L=groups[selectedMonth];
+  const picker=document.getElementById('noteMonthPicker');
+  picker.hidden=!selectedMonth;
+  picker.replaceChildren(...(selectedMonth?months.map(key=>new Option(noteMonthLabel(key),key)):[]));
+  if(selectedMonth) picker.value=selectedMonth;
+  document.getElementById('vcnt').textContent=(selectedMonth?' · ':'')+L.length+' 条笔记';
   // 月份明细没有可见返回键；用隐藏状态节点接入系统返回手势/后退键。
   document.getElementById('noteMonthState')?.classList.toggle('open',!!(monthMode&&curNoteMonth));
   syncSearchNoResult(L.length);
@@ -16582,7 +16605,7 @@ function renderNotes(){
   list.style.display='';
   empty.style.display='none';
   if(monthMode&&!curNoteMonth){
-    list.innerHTML=renderNoteMonthOverview(L);
+    list.innerHTML=renderNoteMonthOverview(groups,months);
     return;
   }
   list.innerHTML=L.map(n=>{
