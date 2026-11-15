@@ -1012,9 +1012,14 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   .content{--content-gutter:var(--sp-14);padding:var(--content-gutter);overflow:visible;flex:none;}
   body.notes-mode .content{padding-top:0;}
   body.notes-mode .content>.vhdr{
+    box-sizing:border-box;
+    min-height:58px;
+    flex-wrap:wrap;
+    align-content:center;
+    row-gap:0;
     margin-inline:calc(-1 * var(--content-gutter));
     margin-bottom:var(--sp-16);
-    padding:var(--sp-16) var(--sp-24);
+    padding:var(--sp-8) var(--content-gutter);
     background:#fff;
   }
 
