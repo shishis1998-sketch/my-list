@@ -1009,7 +1009,14 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   .main{width:100%;overflow:visible;height:auto;min-height:100vh;}
 
   /* 内容区不再自己滚动,跟随 body 滚动 */
-  .content{padding:var(--sp-14);overflow:visible;flex:none;}
+  .content{--content-gutter:var(--sp-14);padding:var(--content-gutter);overflow:visible;flex:none;}
+  body.notes-mode .content{padding-top:0;}
+  body.notes-mode .content>.vhdr{
+    margin-inline:calc(-1 * var(--content-gutter));
+    margin-bottom:var(--sp-16);
+    padding:var(--sp-16) var(--sp-24);
+    background:#fff;
+  }
 
   /* 顶栏 - 固定吸顶 */
   .topbar{
@@ -1912,7 +1919,7 @@ body.cal-searching .cw-card{display:none;}
 @media (max-width: 380px){
   .sbar{grid-template-columns:repeat(2,1fr);}
   .topbar{padding:var(--sp-8) var(--sp-10);}
-  .content{padding:var(--sp-10);}
+  .content{--content-gutter:var(--sp-10);}
   .ssort{font-size:var(--fs-caption);}
 }
 
