@@ -16667,7 +16667,7 @@ function renderNotes(){
     const on=key===selectedMonth;
     return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" aria-pressed="${on}" onclick="pickNoteMonth('${key}')">${NOTE_MONTH_ICON}<span>${noteMonthLabel(key)}</span></button>`;
   }).join(''):'';
-  document.getElementById('vcnt').textContent=(selectedMonth?' · ':'')+L.length+' 条笔记';
+  document.getElementById('vcnt').textContent=selectedMonth?'':L.length+' 条笔记';
   // 月份明细没有可见返回键；用隐藏状态节点接入系统返回手势/后退键。
   document.getElementById('noteMonthState')?.classList.toggle('open',!!(monthMode&&curNoteMonth));
   syncSearchNoResult(L.length);
