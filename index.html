@@ -1421,6 +1421,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
      手指看得见自己刚点的那个 tab，小三角也才有个不发暗的落点。卡片本身贴在底栏
      上沿之上，不与它重叠，压低层级不影响显示。 */
   #calViewSheet{z-index:112;}
+  #noteViewSheet{clip-path:inset(0 0 var(--note-tab-height,0px) 0);}
+  #noteViewPanel{overflow-y:auto;}
+  #noteViewPanel::after{content:none;}
+  #noteViewPanel .cal-viewopt span{overflow-wrap:anywhere;}
   .cal-viewpanel{min-width:96px;transform-origin:bottom center;overflow:visible;}
   /* 小三角横向位置由 JS 按 tab 中心实测写入 --arrow-x：卡片碰到屏幕边会被夹住，
      那时卡片中心已经不是 tab 中心，写死 50% 就会指偏。 */
@@ -1436,9 +1440,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     font-size:14.5px;font-family:var(--zh);color:var(--text-primary);cursor:pointer;}
   .bb-sortopt.on{color:var(--accent);font-weight:700;background:var(--accent-light);}
   #bbSortPanel .bb-sortopt[aria-pressed="true"] span:last-child:not(:first-child){margin-left:auto;}
-  body.notes-mode #bbSortBtn .bb-sorticon,
-  body:not(.notes-mode) #bbSortBtn .bb-note-chevron{display:none;}
-  body.notes-mode #bbSortBtn .bb-note-chevron{order:1;}
   /* 组标题：排序的「时间 / 其他」、筛选的「状态 / 评分 / 标签」 */
   .bb-sortgrp,.bb-filter-glbl{font-size:11px;font-family:var(--en);font-weight:600;letter-spacing:.08em;
     text-transform:uppercase;color:var(--text-muted);padding:var(--sp-8) var(--sp-10) var(--sp-4);}
@@ -5887,7 +5888,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <button class="bb-sortbtn" id="bbSortBtn" type="button" onclick="openSortSheet()" title="排序" aria-label="排序">
       <svg class="bb-sorticon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-      <svg class="bb-note-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       <span class="bb-sortlabel" id="bbSortBtnLabel" hidden></span>
     </button>
     <button class="bb-sortbtn" id="bbTagBtn" type="button" onclick="openTagSheet()" title="筛选" aria-label="筛选">
@@ -5905,9 +5905,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       全部
     </button>
-    <button class="bb-tab" id="bbtab-notes" type="button" onclick="filterCat('notes:all')">
+    <button class="bb-tab" id="bbtab-notes" type="button" onclick="onNoteTabTap()" aria-controls="noteViewSheet" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h13l3 3v13a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
-      笔记
+      <span id="bbtabNoteLbl">笔记</span>
     </button>
     <button class="bb-tab" id="bbtab-cal" type="button" onclick="onCalTabTap()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -5933,6 +5933,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <!-- 日历视图切换：贴着底栏「日历」tab 上方弹出，替代原顶部四段胶囊条 -->
 <div class="bb-sortsheet" id="calViewSheet" onclick="if(event.target===this)closeCalViewSheet()">
   <div class="bb-sortpanel cal-viewpanel" id="calViewPanel"></div>
+</div>
+
+<!-- 笔记分类：对齐底栏的笔记 tab -->
+<div class="bb-sortsheet" id="noteViewSheet" onclick="if(event.target===this)closeNoteViewSheet()">
+  <div class="bb-sortpanel cal-viewpanel" id="noteViewPanel"></div>
 </div>
 
 <!-- 独立时间编辑：取消不保存，用时由起止日期自动计算。 -->
@@ -9115,9 +9120,10 @@ function closeCalViewSheet(){
 }
 // 对准 tab 居中，不是像排序那样右对齐：日历 tab 在中间，右对齐会整张卡歪到左边。
 // 碰到屏幕边就夹住，此时卡片中心≠tab 中心，小三角的位置另外算。
-function placeCalViewPanel(){
-  const panel=document.getElementById('calViewPanel');
-  const btn=document.getElementById('bbtab-cal');
+function placeCalViewPanel(){placeTabPanel('calViewPanel','bbtab-cal');}
+function placeTabPanel(panelId,btnId){
+  const panel=document.getElementById(panelId);
+  const btn=document.getElementById(btnId);
   if(!panel||!btn)return;
   const r=btn.getBoundingClientRect();
   if(!r.width)return;                       // 底栏没显示（桌面用顶部四段条）
@@ -11003,6 +11009,7 @@ const BACK_LAYERS=[
   {id:'bbSortSheet',        cls:'open', close:()=>closeSortSheet()},
   {id:'bbTagSheet',         cls:'open', close:()=>closeTagSheet()},
   {id:'calViewSheet',       cls:'open', close:()=>closeCalViewSheet()},
+  {id:'noteViewSheet',      cls:'open', close:()=>closeNoteViewSheet()},
   {id:'cfdlg',              cls:'open', close:()=>closeCf()},
   {id:'trashModal',         cls:'open', close:()=>closeTrash()},
   {id:'tagMgrModal',        cls:'open', close:()=>closeTagMgr()},
@@ -13320,6 +13327,7 @@ function toggleDesktopSidebar(button){
 
 // ── Mobile sidebar toggle ─────────────────────────────────────────
 function toggleSidebar(open){
+  closeNoteViewSheet();
   const sb=document.querySelector('.sidebar');
   const ov=document.getElementById('sbOverlay');
   if(open===undefined) open=!sb.classList.contains('open');
@@ -13344,7 +13352,7 @@ function toggleSidebar(open){
 function setMenuTabActive(on){
   const menu=document.getElementById('bbtab-menu');
   if(menu)menu.classList.toggle('on',on);
-  if(on){['bbtab-all','bbtab-notes','bbtab-cal'].forEach(id=>{const t=document.getElementById(id);t&&t.classList.remove('on');});}
+  if(on){document.getElementById('bbtabNoteLbl').textContent='笔记';['bbtab-all','bbtab-notes','bbtab-cal'].forEach(id=>{const t=document.getElementById(id);t&&t.classList.remove('on');});}
   else{syncBottomTabs();}
 }
 
@@ -13362,6 +13370,7 @@ function scheduleCatRender(){
   _catRenderRAF=requestAnimationFrame(()=>{ _catRenderRAF=0; render(); playCatStagger(); });
 }
 function filterCat(cat){
+  closeNoteViewSheet();
   cancelNoteMonthTap();
   const previousCat=curCat;
   const leavingSettings=isMobileLayout()&&document.body.classList.contains('sb-open');
@@ -13581,6 +13590,8 @@ function syncBottomTabs(){
   const notes=document.getElementById('bbtab-notes');
   const menu=document.getElementById('bbtab-menu');
   if(!all||!notes) return;
+  const notesActive=isNoteMode()&&!document.body.classList.contains('cal-open')&&!document.body.classList.contains('sb-open');
+  document.getElementById('bbtabNoteLbl').textContent=notesActive&&curNoteSub!=='all'?curNoteSub:'笔记';
   // 日历页打开时，高亮独占「日历」tab；即便底层是笔记模式也不要再点亮「笔记」
   if(document.body.classList.contains('cal-open')){
     all.classList.remove('on');
@@ -13626,19 +13637,48 @@ function syncNoteSortSelect(){
   if(select.innerHTML!==html)select.innerHTML=html;
   select.value=curSort;
 }
-function renderNoteControlMenu(){
-  const option=(label,selected,action,data='')=>
-    `<button type="button" class="bb-sortopt${selected?' on':''}" aria-pressed="${selected}" ${data} onclick="${action}"><span>${esc(label)}</span>${selected?'<span aria-hidden="true">✓</span>':''}</button>`;
-  const categories=['all',...noteSubs].map(sub=>
-    option(sub==='all'?'全部笔记':sub,sub===curNoteSub,'pickNoteCategory(this.dataset.noteSub)',`data-note-sub="${esc(sub)}"`)
-  ).join('');
-  const sorts=noteSortOptions(curNoteSub).map(([value,label])=>
-    option(label,value===curSort,`pickSort('${value}')`)
-  ).join('');
-  const separator='<div class="bb-sortsep" role="separator"></div>';
-  return '<div class="bb-sortgrp">分类</div>'+categories+separator+
-    '<div class="bb-sortgrp">排序</div>'+sorts+separator+
-    '<button type="button" class="bb-sortopt" onclick="closeSortSheet();openNoteSubMgr()">管理子分类</button>';
+function renderNoteSortMenu(){
+  return noteSortOptions(curNoteSub).map(([value,label])=>{
+    const selected=value===curSort;
+    return `<button type="button" class="bb-sortopt${selected?' on':''}" aria-pressed="${selected}" onclick="pickSort('${value}')"><span>${label}</span>${selected?'<span aria-hidden="true">✓</span>':''}</button>`;
+  }).join('');
+}
+function onNoteTabTap(){
+  const sheet=document.getElementById('noteViewSheet');
+  if(!document.getElementById('bbtab-notes').classList.contains('on')){
+    filterCat(isNoteMode()?curCat:'notes:all');
+    return;
+  }
+  if(sheet.classList.contains('open')){closeNoteViewSheet();return;}
+
+  const icons=new Map([
+    ['收集','<path d="M4 7h16v13H4zM3 4h18v3H3zM10 11h4"/>'],
+    ['备忘','<path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/>'],
+    ['日记','<path d="M4 4h7l1 2 1-2h7v15h-7l-1 2-1-2H4zM12 6v15"/>']
+  ]);
+  const panel=document.getElementById('noteViewPanel');
+  panel.innerHTML=['all',...noteSubs].map(sub=>{
+    const on=sub===curNoteSub;
+    const icon=icons.get(sub)||'<path d="M4 5h16M4 12h16M4 19h16"/>';
+    return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" data-note-sub="${esc(sub)}" aria-pressed="${on}" onclick="pickNoteCategory(this.dataset.noteSub)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg><span>${sub==='all'?'全部笔记':esc(sub)}</span></button>`;
+  }).join('')+'<div class="bb-sortsep" role="separator"></div><button type="button" class="bb-sortopt" onclick="closeNoteViewSheet();openNoteSubMgr()">管理子分类</button>';
+  panel.scrollTop=0;
+  sheet.classList.add('open');
+  document.getElementById('bbtab-notes').setAttribute('aria-expanded','true');
+  placeNoteViewPanel();
+  window.addEventListener('resize',placeNoteViewPanel);
+  haptic('tap');
+}
+function placeNoteViewPanel(){
+  const tab=document.getElementById('bbtab-notes');
+  const tabHeight=Math.max(0,window.innerHeight-tab.getBoundingClientRect().top);
+  document.getElementById('noteViewSheet').style.setProperty('--note-tab-height',tabHeight+'px');
+  placeTabPanel('noteViewPanel','bbtab-notes');
+}
+function closeNoteViewSheet(){
+  window.removeEventListener('resize',placeNoteViewPanel);
+  document.getElementById('noteViewSheet').classList.remove('open');
+  document.getElementById('bbtab-notes').setAttribute('aria-expanded','false');
 }
 // 小卡片贴着底栏对应按钮的上方弹出：右边缘和按钮对齐。位置得实时量——
 // 底栏在键盘跟随（body.vv-track）和 tab 收起时高度会变，写死 bottom 会错位。
@@ -13655,7 +13695,7 @@ function placeTagPanel(){ placeBBPanel('bbTagPanel',document.getElementById('bbT
 function openSortSheet(){
   const sheet=document.getElementById('bbSortSheet');
   const panel=document.getElementById('bbSortPanel');
-  panel.innerHTML=isNoteMode()?renderNoteControlMenu():[['all','全部分类'],...cats.map(c=>[c.id,c.name])].map(([id,label],index)=>
+  panel.innerHTML=isNoteMode()?renderNoteSortMenu():[['all','全部分类'],...cats.map(c=>[c.id,c.name])].map(([id,label],index)=>
     `<button type="button" class="bb-sortopt${id===curCat?' on':''}" onclick="pickMediaCategory(${index})">${esc(label)}</button>`
   ).join('')+'<div class="bb-sortsep" role="separator"></div>'+
     '<button type="button" class="bb-sortopt" onclick="closeSortSheet();openCatMgr()">管理分类</button>';
@@ -13677,7 +13717,7 @@ function pickSort(v){
   closeSortSheet();
 }
 function pickNoteCategory(sub){
-  closeSortSheet();
+  closeNoteViewSheet();
   if(sub!==curNoteSub)filterCat('notes:'+sub);
 }
 function pickMediaCategory(index){
@@ -13724,8 +13764,7 @@ function syncListControlBtn(id,label,description){
 function syncFilterBtn(){
   if(isNoteMode()){
     const sort=noteSortOptions(curNoteSub).find(([value])=>value===curSort);
-    const category=curNoteSub==='all'?'全部笔记':curNoteSub;
-    syncListControlBtn('bbSortBtn',curNoteSub==='all'?'全部':category,category+' · '+(sort?.[1]||'分类和排序'));
+    syncListControlBtn('bbSortBtn','',sort?'排序：'+sort[1]:'排序');
   }else{
     const category=cats.find(c=>c.id===curCat);
     syncListControlBtn('bbSortBtn',category?.name||'分类',category?'分类：'+category.name:'分类：全部分类');
@@ -14857,6 +14896,7 @@ let calSearchReturn=null;          // 离开日历时暂存搜索词；null 表�
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
 function openCalendar(){
+  closeNoteViewSheet();
   // 从其它底部页面回来时恢复刚才的搜索。空字符串也有意义：它代表搜索页里的「最近搜索」。
   const returnSearch=calSearchReturn;
   calSearchReturn=null;
@@ -14918,7 +14958,11 @@ function setCalTabActive(on){
   const all=document.getElementById('bbtab-all');
   const notes=document.getElementById('bbtab-notes');
   if(cal)cal.classList.toggle('on',on);
-  if(on){all&&all.classList.remove('on');notes&&notes.classList.remove('on');}
+  if(on){
+    all&&all.classList.remove('on');
+    notes&&notes.classList.remove('on');
+    document.getElementById('bbtabNoteLbl').textContent='笔记';
+  }
   else{syncBottomTabs();}
 }
 // 量底部导航栏高度写入 --calbbh，日历页据此给内容/抽屉留白（桌面端底栏隐藏 → 0）
