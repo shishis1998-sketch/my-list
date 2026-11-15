@@ -1010,7 +1010,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
 
   /* 内容区不再自己滚动,跟随 body 滚动 */
   .content{--content-gutter:var(--sp-14);padding:var(--content-gutter);overflow:visible;flex:none;}
-  body.notes-mode .content{padding-top:0;}
+  body.notes-mode .content{--note-card-inset:var(--sp-14);padding-top:0;}
   body.notes-mode .content>.vhdr{
     box-sizing:border-box;
     min-height:58px;
@@ -1020,8 +1020,16 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     margin-inline:calc(-1 * var(--content-gutter));
     margin-bottom:var(--sp-16);
     padding:var(--sp-8) var(--content-gutter);
+    padding-inline-start:calc(var(--content-gutter) + var(--note-card-inset) + var(--bd));
     background:#fff;
   }
+  body.notes-mode .content:has(#noteMonthState.open)>.vhdr{
+    padding-inline-start:calc(var(--content-gutter) + var(--note-date-column) + var(--sp-10) + var(--note-card-inset) + var(--bd));
+  }
+  body.notes-mode .content:has(.note-month-card)>.vhdr{
+    padding-inline-start:calc(var(--content-gutter) + 1px + var(--sp-16) + 30px + var(--sp-12));
+  }
+  body.notes-mode .content>.vhdr .vtitle{font-size:var(--fs-heading);}
 
   /* 顶栏 - 固定吸顶 */
   .topbar{
@@ -2940,7 +2948,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   /* 与媒体“全部”页顶部分类使用相同的内边距和行高，不额外放大 */
   .nfrow .nfchip{padding:var(--sp-6) var(--sp-14);font-size:var(--fs-caption);line-height:var(--lh-loose);}
   .nfrow .flbl{font-size:var(--fs-foot);}
-  .note-card{padding:var(--sp-12) var(--sp-14);}
+  .note-card{padding:var(--sp-12) var(--note-card-inset,var(--sp-14));}
   .note-title{font-size:var(--fs-body);}
   .fg textarea.note-body{min-height:200px;font-size:var(--fs-input);}
   .fg textarea.note-body.is-book{min-height:40vh;height:40vh;max-height:40vh;resize:none;}
@@ -3242,8 +3250,9 @@ mark.shl{
   background:var(--surface);box-shadow:none;
 }
 .note-card:hover{border-color:var(--ink);background:var(--surface);}
+.content{--note-date-column:calc(3 * var(--fs-sub));}
 .note-dated-row{
-  display:grid;grid-template-columns:3em minmax(0,1fr);gap:var(--sp-10);
+  display:grid;grid-template-columns:var(--note-date-column) minmax(0,1fr);gap:var(--sp-10);
   align-items:start;font-size:var(--fs-sub);
 }
 .note-dated-label{
