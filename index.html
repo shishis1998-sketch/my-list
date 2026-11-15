@@ -9780,7 +9780,6 @@ function migrateDiary(){
   pending.forEach(n=>{
     n.subCat='日记';
     n.tags=n.tags.filter(t=>t!=='随笔');
-    n.updatedAt=Date.now();
   });
   persistLocalVault();
   scheduleSyncPush();
@@ -18431,7 +18430,7 @@ function cancelNoteModal(){
 }
 function completeNoteModal(){
   // 校验不通过时留在编辑窗口；保存成功才关闭。
-  if(saveNote()===false) return;
+  if((!editNoteId||noteFormSnap()!==nmOpenSnap)&&saveNote()===false) return;
   nmOpenSnap='';
   document.getElementById('noteModal').classList.remove('open');
 }
