@@ -3166,7 +3166,10 @@ mark.shl{
   body.detail-open .content>.sbar{display:none;}
   body.detail-open .main>.content>.vhdr{display:flex;flex-wrap:wrap;}
   body.detail-open .content .media-month-title{font-size:var(--fs-caption);}
-  body.detail-open .content .mrow[aria-current="true"]{background:var(--accent-light);}
+  body.detail-open .content .mrow[aria-current="true"]{
+    background:var(--accent-light);border-radius:var(--rlg);
+    outline:1px solid rgba(var(--accent-rgb),.25);outline-offset:-1px;
+  }
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
   .detail-view.open{grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;}
   .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])){
