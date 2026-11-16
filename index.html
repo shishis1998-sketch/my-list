@@ -561,8 +561,8 @@ body.detail-open .content{display:none!important;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
 @media (min-width:1025px) and (pointer:fine){
-  .dt-intro{display:flex;flex-direction:column;gap:var(--sp-12);}
-  .dt-intro-break{display:none;}
+  .dt-paragraphs{display:flex;flex-direction:column;gap:var(--sp-12);}
+  .dt-paragraph-break{display:none;}
 }
 /* 备注 / 人物：标题挪到卡外面当小节名。卡里只剩正文，
    一张卡就是一段内容，标题不再占掉卡内顶上那一行 */
@@ -12143,6 +12143,13 @@ function daysBetween(a,b){
 }
 
 let dtRenderAt=0;      // 详情页最近一次重画的时刻，见 syncDetailFab
+function renderDetailParagraphs(text){
+  return esc(text).split(/(?<=[^\r\n])(\r?\n(?:[^\S\r\n]*\r?\n)+)(?=[^\r\n])/)
+    .map((part,index)=>index%2
+      ? `<span class="dt-paragraph-break">${part}</span>`
+      : `<span>${part}</span>`).join('');
+}
+
 function renderDetail(previewBox=null, viewTab=dtTab){
   const item=data.find(d=>d.id===detailId);
   const box=previewBox||document.getElementById('dtBody');
@@ -12150,10 +12157,6 @@ function renderDetail(previewBox=null, viewTab=dtTab){
   const st=SMAP[item.status]||SMAP.completed;
   const days=daysBetween(item.startDate,item.watchDate);
   const au=[item.creator,item.year].filter(Boolean).map(esc).join(' · ');
-  const introHtml=esc(item.intro).split(/(?<=[^\r\n])(\r?\n(?:[^\S\r\n]*\r?\n)+)(?=[^\r\n])/)
-    .map((part,index)=>index%2
-      ? `<span class="dt-intro-break">${part}</span>`
-      : `<span>${part}</span>`).join('');
   const tagsH=(item.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
   const created=fmtCreated(createdAtOf(item));
   // 末次编辑：updatedAtOf 已经处理了老数据没有 updatedAt 的回退（退到 date，再退到
@@ -12216,7 +12219,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       <div class="dt-sec">
         <div class="dt-seclbl dt-overview-label">简介</div>
       <div class="dt-card" role="button" tabindex="0" aria-label="编辑简介" onclick="tapNoteCard(event,'intro')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tapNoteCard(event,'intro')}">
-        ${item.intro?`<div class="dt-note dt-intro">${introHtml}</div>`:'<div class="dt-tl-empty">点击添加简介</div>'}
+        ${item.intro?`<div class="dt-note dt-paragraphs">${renderDetailParagraphs(item.intro)}</div>`:'<div class="dt-tl-empty">点击添加简介</div>'}
       </div>
       </div>
       <div class="dt-sec">
@@ -12231,7 +12234,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       <div class="dt-sec">
         <div class="dt-seclbl">备注</div>
         <div class="dt-card" onclick="tapNoteCard(event,'note')">
-          ${item.note?`<div class="dt-note">${esc(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
+          ${item.note?`<div class="dt-note dt-paragraphs">${renderDetailParagraphs(item.note)}</div>`:'<div class="dt-tl-empty">还没有备注，点这里写一段</div>'}
         </div>
       </div>`:''}
 
