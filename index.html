@@ -3141,7 +3141,8 @@ mark.shl{
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
   body.detail-open .main{
     /* 书影列表列宽跟随五个状态胶囊的文字大小。 */
-    display:grid;grid-template-columns:calc(136px + 12 * var(--fs-caption)) minmax(0, 1fr);
+    --desktop-media-list-width:calc(136px + 12 * var(--fs-caption));
+    display:grid;grid-template-columns:var(--desktop-media-list-width) minmax(0, 1fr);
     grid-template-rows:auto auto minmax(0, 1fr);height:100dvh;
   }
   body.detail-open .main>:is(.topbar,.frow,.content){
@@ -3157,7 +3158,7 @@ mark.shl{
     gap:var(--sp-4);
   }
   body.detail-open .frow>:not(#desktopMediaStatuses){display:none!important;}
-  body.detail-open #desktopMediaStatuses .fchip{padding-inline:var(--sp-8);}
+  body.detail-open #desktopMediaStatuses .fchip{padding-inline:var(--desktop-media-chip-inset,var(--sp-8));}
   body.detail-open .main>.content{
     display:block!important;grid-area:3 / 1;min-width:0;overflow-y:auto;
     padding:var(--sp-14);
@@ -3185,6 +3186,35 @@ mark.shl{
   .desktop-chapter-reader .tl-para:first-child{padding-right:28px;}
   .dt-body{width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
   .dt-card{box-shadow:var(--pop-sm);}
+}
+
+/* 电脑端打开详情时，列表列宽和状态胶囊同步收紧。 */
+@property --desktop-media-chip-inset{
+  syntax:"<length>";inherits:true;initial-value:8px;
+}
+@media(min-width:1025px) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+  body.detail-open .main{
+    --desktop-media-open-duration:200ms;
+    animation:desktopMediaColumnTighten var(--desktop-media-open-duration) var(--nav-ease);
+  }
+  body.detail-open .main>.frow{
+    animation:desktopMediaStatusRowTighten var(--desktop-media-open-duration) var(--nav-ease);
+  }
+  @keyframes desktopMediaColumnTighten{
+    /* 入口留出标题位移、五个胶囊的内边距和四个间隙，避免动画起点换行。 */
+    from{
+      grid-template-columns:calc(var(--desktop-media-list-width) + 96px) minmax(0, 1fr);
+      --desktop-media-chip-inset:var(--sp-12);
+    }
+    to{
+      grid-template-columns:var(--desktop-media-list-width) minmax(0, 1fr);
+      --desktop-media-chip-inset:var(--sp-8);
+    }
+  }
+  @keyframes desktopMediaStatusRowTighten{
+    from{padding-inline-start:calc(var(--sp-14) + 40px);gap:var(--sp-8);}
+    to{padding-inline-start:var(--sp-14);gap:var(--sp-4);}
+  }
 }
 
 /* —— 标签胶囊：圆 + 无描边 —— */
