@@ -5584,14 +5584,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <!-- 桌面端:分类筛选导航(手机端隐藏,筛选已挪到主页顶部) -->
     <div class="ncard ncard-cats-desktop">
       <button class="nitem" onclick="filterCat('all')" id="nav-all">
-        <span class="dot" style="background:#888"></span>全部
+        全部
       </button>
       <div id="cat-nav"></div>
     </div>
     <div class="ncard ncard-cats-desktop ncard-notes">
       <button class="nitem" id="nav-notes" type="button" aria-expanded="false" aria-controls="nsub"
         onclick="filterCat('notes:all')">
-        <span class="dot" style="background:var(--accent)"></span>笔记
+        笔记
         <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <div class="nsub" id="nsub"></div>
@@ -11008,7 +11008,7 @@ function renderSidebar(){
   document.getElementById('nav-all').classList.toggle('on', curCat==='all');
   document.getElementById('cat-nav').innerHTML=cats.map(c=>`
     <button class="nitem ${curCat===c.id?'on':''}" onclick="filterCat('${c.id}')">
-      <span class="dot" style="background:${c.color}"></span>${esc(c.name)}
+      ${esc(c.name)}
     </button>`).join('');
   // 手机端设置页:分类管理列表(点=打开分类管理弹窗编辑)
   renderMobileCatMgr();
@@ -11062,11 +11062,11 @@ function renderNotesSidebar(){
   noteSubs.forEach(s=>subCnt[s]=0);
   userNotes().forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
   const items=[`<button class="nitem ${curCat==='notes:all'?'on':''}" onclick="filterCat('notes:all')">
-      <span class="dot" style="background:var(--accent-mid)"></span>全部
+      全部
     </button>`];
   noteSubs.forEach(s=>{
     items.push(`<button class="nitem ${curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
-      <span class="dot" style="background:var(--border)"></span>${esc(s)}
+      ${esc(s)}
     </button>`);
   });
   document.getElementById('nsub').innerHTML=items.join('');
