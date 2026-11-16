@@ -3143,20 +3143,23 @@ mark.shl{
     display:grid;grid-template-columns:clamp(240px, 22vw, 340px) minmax(0, 1fr);
     grid-template-rows:auto auto minmax(0, 1fr);height:100dvh;
   }
+  body.detail-open .main>:is(.topbar,.frow,.content){
+    background:var(--bg);border-right:1px solid var(--border);
+  }
+  body.detail-open .main>:is(.topbar,.frow){border-bottom:0;}
   body.detail-open .main>.topbar{
     display:flex!important;grid-area:1 / 1;padding-inline:var(--sp-14);
-    border-right:1px solid var(--border);
   }
   body.detail-open .topbar :is(.ssort,.addbtn){display:none;}
   body.detail-open .main>.frow{
     display:flex!important;grid-area:2 / 1;padding-inline:var(--sp-14);
-    gap:var(--sp-4);border-right:1px solid var(--border);
+    gap:var(--sp-4);
   }
   body.detail-open .frow>:not(#desktopMediaStatuses){display:none!important;}
   body.detail-open #desktopMediaStatuses .fchip{padding-inline:var(--sp-8);}
   body.detail-open .main>.content{
     display:block!important;grid-area:3 / 1;min-width:0;overflow-y:auto;
-    padding:var(--sp-14);background:var(--surface);border-right:1px solid var(--border);
+    padding:var(--sp-14);
   }
   body.detail-open .content>.sbar{display:none;}
   body.detail-open .main>.content>.vhdr{display:flex;flex-wrap:wrap;}
