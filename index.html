@@ -5504,7 +5504,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border-color:rgba(var(--accent-rgb),.25);background:var(--accent-light);
   }
   #appSidebar .ncard-notes>#nav-notes{
-    min-height:28px;padding:var(--sp-4) 5px;border:1px solid transparent;
+    min-height:28px;padding:var(--sp-4) 5px;
   }
   #appSidebar .ncard-notes #nav-notes .sidebar-chevron{color:var(--text-primary);}
   #appSidebar button:focus-visible{
@@ -11061,9 +11061,7 @@ function renderNotesSidebar(){
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
   userNotes().forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
-  const items=[`<button class="nitem ${curCat==='notes:all'?'on':''}" onclick="filterCat('notes:all')">
-      全部
-    </button>`];
+  const items=[];
   noteSubs.forEach(s=>{
     items.push(`<button class="nitem ${curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
       ${esc(s)}
@@ -13719,8 +13717,9 @@ function applyModeUI(){
   const navN=document.getElementById('nav-notes');
   const nsub=document.getElementById('nsub');
   navN.setAttribute('aria-expanded',String(notes));
-  navN.classList.toggle('parent-on',notes);
-  if(notes)navN.classList.remove('on');
+  const allNotes=notes&&curCat==='notes:all';
+  navN.classList.toggle('on',allNotes);
+  navN.classList.toggle('parent-on',notes&&!allNotes);
   nsub.classList.toggle('open',notes);
 }
 // 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
