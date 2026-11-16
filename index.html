@@ -3140,7 +3140,8 @@ mark.shl{
 @media(min-width:1025px) and (pointer:fine){
   .twrap{border:none;border-radius:var(--rlg);box-shadow:var(--pop-sm);background:var(--surface);}
   body.detail-open .main{
-    display:grid;grid-template-columns:clamp(240px, 22vw, 340px) minmax(0, 1fr);
+    /* 书影列表列宽跟随五个状态胶囊的文字大小。 */
+    display:grid;grid-template-columns:calc(136px + 12 * var(--fs-caption)) minmax(0, 1fr);
     grid-template-rows:auto auto minmax(0, 1fr);height:100dvh;
   }
   body.detail-open .main>:is(.topbar,.frow,.content){
@@ -5432,7 +5433,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar>.logo{
     flex-shrink:0;display:flex;align-items:center;min-height:var(--sidebar-header-height);
     padding:0 46px 0 var(--sp-16);margin:0;
-    background:var(--surface);border-color:var(--border);
+    background:var(--bg);border-color:var(--border);
   }
   #appSidebar .logo h1{font-size:var(--fs-title);line-height:var(--lh-tight);}
   #appSidebar .sidebar-scroll{
