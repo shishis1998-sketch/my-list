@@ -250,7 +250,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 }
 .nitem.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
 .nitem.parent-on{color:var(--accent);font-weight:700;}
-.nitem.parent-on .chev{color:var(--accent);}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 /* 设置 › 外观：卡片第一行「主题」，右侧圆形图标按钮。白天=太阳，夜间=月亮。
    整行都是点击区（触摸好点），状态只由这个圆钮表达，整行不染底——否则会和
@@ -1945,9 +1944,6 @@ body.cal-searching .cw-card{display:none;}
 
 /* ===== NOTES (笔记功能) ===== */
 /* 侧边栏「笔记」入口的展开/收起 chevron */
-.nitem .chev{margin-left:auto;font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block;line-height:1;}
-.nitem.expanded .chev{transform:rotate(90deg);}
-.nitem.on .chev{color:var(--accent);}
 /* 笔记子分类容器（侧边栏） */
 .nsub{display:flex;flex-direction:column;gap:var(--sp-2);padding-left:var(--sp-16);margin-top:var(--sp-2);overflow:hidden;max-height:0;transition:max-height .25s ease-out;}
 .nsub.open{max-height:400px;}
@@ -5470,12 +5466,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     cursor:pointer;text-align:left;
   }
   #appSidebar .sidebar-disclosure:hover{border-color:var(--accent-mid);color:var(--accent);}
-  #appSidebar .sidebar-disclosure svg{flex:none;}
+  #appSidebar .sidebar-chevron{flex:none;margin-inline-start:auto;}
+  #appSidebar button[aria-expanded="true"]>.sidebar-chevron{transform:rotate(180deg);}
   #appSidebar .sidebar-disclosure[aria-expanded="false"]+.ncard{display:none;}
   #appSidebar .sidebar-disclosure[aria-expanded="true"]{
     border-end-start-radius:0;border-end-end-radius:0;
   }
-  #appSidebar .sidebar-disclosure[aria-expanded="true"] svg{transform:rotate(180deg);}
   #appSidebar .sidebar-disclosure+.ncard{
     border-top:0;border-start-start-radius:0;border-start-end-radius:0;
   }
@@ -5507,8 +5503,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .ncard-cats-desktop .nitem.on{
     border-color:rgba(var(--accent-rgb),.25);background:var(--accent-light);
   }
-  #appSidebar .nitem .chev{font-size:16px;color:var(--text-secondary);}
-  #appSidebar .nitem.on .chev,#appSidebar .nitem.parent-on .chev{color:var(--accent);}
+  #appSidebar .ncard-notes>#nav-notes{
+    min-height:28px;padding:var(--sp-4) 5px;border:1px solid transparent;
+  }
+  #appSidebar .ncard-notes #nav-notes .sidebar-chevron{color:var(--text-primary);}
   #appSidebar button:focus-visible{
     outline:2px solid var(--accent);outline-offset:1px;
   }
@@ -5589,10 +5587,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <span class="dot" style="background:#888"></span>全部
       </button>
       <div id="cat-nav"></div>
-      <!-- 笔记入口（一直显示） -->
-      <button class="nitem" id="nav-notes" onclick="filterCat('notes:all')">
+    </div>
+    <div class="ncard ncard-cats-desktop ncard-notes">
+      <button class="nitem" id="nav-notes" type="button" aria-expanded="false" aria-controls="nsub"
+        onclick="filterCat('notes:all')">
         <span class="dot" style="background:var(--accent)"></span>笔记
-        <span class="chev">›</span>
+        <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <div class="nsub" id="nsub"></div>
     </div>
@@ -5604,7 +5604,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="themeRow"
       onclick="toggleSidebarSection(this)">
       外观
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="ncard" id="themeRow" aria-label="外观"></div>
   </div>
@@ -5613,7 +5613,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="ovuRow"
       onclick="toggleSidebarSection(this)">
       经期
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="ncard" id="ovuRow" aria-label="排卵期推算"></div>
   </div>
@@ -13718,8 +13718,10 @@ function applyModeUI(){
   // 侧边栏笔记入口展开/收起
   const navN=document.getElementById('nav-notes');
   const nsub=document.getElementById('nsub');
-  if(notes){navN.classList.add('expanded','parent-on');navN.classList.remove('on');nsub.classList.add('open');}
-  else{navN.classList.remove('expanded','parent-on');nsub.classList.remove('open');}
+  navN.setAttribute('aria-expanded',String(notes));
+  navN.classList.toggle('parent-on',notes);
+  if(notes)navN.classList.remove('on');
+  nsub.classList.toggle('open',notes);
 }
 // 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
 let _wasNoResult=false;
