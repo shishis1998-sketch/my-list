@@ -2214,6 +2214,11 @@ body.cal-searching .cw-card{display:none;}
 .tl-section-btn:active{background:var(--surface-2);}
 /* 搜正文时卡片临时改成单列，并在章名下面露出命中上下文；退出搜索后恢复原布局。 */
 #detailBookNoteCard.timeline-searching .tl{grid-template-columns:minmax(0,1fr);}
+.tl-column{display:flex;flex-direction:column;gap:var(--sp-10);min-width:0;}
+#detailBookNoteCard.timeline-searching .tl-column,
+.desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard .tl-column{display:contents;}
+#detailBookNoteCard .tl-column > *{order:var(--tl-order);}
+
 .tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px 10px 30px;
   display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:5px;
   text-align:left;white-space:normal;}
@@ -17341,15 +17346,18 @@ function toggleTimelineChapterGroup(btn){
   }
 }
 function renderTimelineChapterCards(chs,openFn){
-  return groupTimelineChapters(sortTimelineChapters(chs)).map(entry=>{
+  const detail=openFn==='openDetailChapter';
+  const cards=groupTimelineChapters(sortTimelineChapters(chs)).map((entry,index)=>{
+    const order=detail?` style="--tl-order:${index}"`:'';
+
     if(entry.type==='single'){
       const x=entry.item;
-      return `<div class="tl-item tl-chapter-single has-paras" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
+      return `<div class="tl-item tl-chapter-single has-paras"${order} data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
         <div class="tl-head"><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`;
     }
     const collapsed=openFn==='openDetailChapter'&&isTimelineChapterCollapsed(entry.title);
-    return `<div class="tl-chapter-group${collapsed?' collapsed':''}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
+    return `<div class="tl-chapter-group${collapsed?' collapsed':''}"${order} ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
       <button type="button" class="tl-chapter-group-head" aria-expanded="${!collapsed}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
@@ -17358,7 +17366,9 @@ function renderTimelineChapterCards(chs,openFn){
         ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}"><span class="tl-section-name">${esc(x.section)}</span></button>`).join('')}
       </div>
     </div>`;
-  }).join('');
+  });
+  if(!detail||!cards.length)return cards.join('');
+  return [0,1].map(column=>`<div class="tl-column">${cards.filter((_,index)=>index%2===column).join('')}</div>`).join('');
 }
 
 // 段落正则：行首「数字+点」算编号段落（章内连续编号）
