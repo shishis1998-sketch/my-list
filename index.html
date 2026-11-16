@@ -209,7 +209,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
     width:32px;height:32px;padding:0;border:1px solid var(--border);
     border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;
   }
-  .desktop-sidebar-toggle:hover{color:var(--accent);border-color:var(--accent-mid);}
   .app.desktop-sidebar-collapsed{padding-left:44px;}
   .app.desktop-sidebar-collapsed>.sidebar{display:none;}
   .desktop-sidebar-collapsed>.desktop-sidebar-toggle{left:6px;}
@@ -238,15 +237,10 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   font-family:var(--en);display:flex;align-items:center;justify-content:space-between;
 }
 .nlbl-btn{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:var(--sp-4);border-radius:var(--r);display:flex;transition:color .1s;}
-.nlbl-btn:hover{color:var(--accent);background:var(--accent-light);}
 .nitem{
   display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-8) var(--sp-10);border-radius:var(--r);
   cursor:pointer;color:var(--text-secondary);font-size:var(--fs-caption);font-weight:500;
   transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:var(--zh);
-}
-/* 仅鼠标设备启用悬停反馈，避免触屏留下灰底；字号容器本身不可点击。 */
-@media (hover:hover) and (pointer:fine){
-  .nitem:not(.nitem-fs):hover{background:var(--bg);color:var(--text-primary);}
 }
 .nitem.on{background:var(--accent-light);color:var(--accent);font-weight:700;}
 .nitem.parent-on{color:var(--accent);font-weight:700;}
@@ -398,7 +392,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   transition:transform .1s,color .12s;
 }
 .sclear:active{transform:translateY(-50%) scale(.9);color:var(--accent);}
-@media (hover:hover){.sclear:hover{color:var(--accent);}}
 /* sort */
 .ssort{
   flex:0 0 auto;
@@ -416,7 +409,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   cursor:pointer;transition:background .15s;
   white-space:nowrap;
 }
-.addbtn:hover{background:var(--accent-dark);}
 
 /* 分类筛选条：桌面端隐藏（桌面用左侧栏），手机端 @media 里开启 */
 .catfrow{display:none;}
@@ -437,7 +429,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);
   font-family:var(--zh);transition:all .12s;white-space:nowrap;
 }
-.fchip:hover{border-color:var(--accent-mid);color:var(--accent);}
 .fchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .fsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
 
@@ -472,7 +463,6 @@ body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{
 .mrow::after{content:'';position:absolute;left:var(--row-inset);right:0;bottom:0;height:1px;background:var(--border-soft);pointer-events:none;}
 #mlist>.mrow:last-child{border-bottom:none;}
 #mlist>.mrow:last-child::after{display:none;}
-@media (hover:hover){.mrow:hover{background:var(--bg);}}
 .mrow-main{flex:1;min-width:0;}
 /* 书名和「年份 · 作者」都只占一行，长了截断——列表要的是能扫，
    完整标题在详情页里有整屏宽度可以铺开 */
@@ -546,7 +536,6 @@ body.detail-open .content{display:none!important;}
   padding:var(--dt-padt) var(--dt-padx) var(--sp-10);}
 .dt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
   padding:var(--sp-14) var(--sp-16);cursor:pointer;transition:border-color .12s;}
-@media (hover:hover){.dt-card:hover{border-color:var(--accent-mid);}}
 /* 头部卡：书名要有喘气的地方，上下比其余卡各多 2 */
 .dt-hd{padding:var(--sp-16);}
 /* 头部两行两列：左边书名 / 作者，右边评分 / 状态。
@@ -646,7 +635,6 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .dt-meta-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-12);}
 .dt-meta-label{flex-shrink:0;}
 .dt-meta-value{min-width:0;text-align:right;font-family:var(--en);font-variant-numeric:tabular-nums;color:var(--accent);}
-@media (hover:hover){.dt-card.dt-meta:hover{border-color:var(--border);}}
 
 
 /* 日期排序：每月一张白卡，月份标题放在灰色背景上。 */
@@ -713,7 +701,6 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .mbody{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--sp-20) var(--sp-24);}
 .mtitle{font-size:var(--fs-headline);font-weight:700;color:var(--text-primary);}
 .mclose{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:var(--sp-6) var(--sp-10);cursor:pointer;color:var(--text-secondary);font-size:15px;line-height:1;transition:all .1s;}
-.mclose:hover{background:var(--border);}
 /* 编辑笔记抽屉：标题栏使用「取消 / 标题 / 完成」。
    取消丢弃本次表单改动，完成保存；下拉/系统返回等其它关闭手势仍自动保存。 */
 :is(#noteModal,#noteTagPicker) .mhdr{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:8px;align-items:center;}
@@ -760,7 +747,6 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .tchip button{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:var(--fs-caption);padding:0;line-height:1;}
 .tinput{-webkit-appearance:none;appearance:none;border:none;outline:none;background:none;font-size:var(--fs-caption);font-family:var(--zh);color:var(--text-primary);flex:1;min-width:70px;padding:var(--sp-2) var(--sp-4);height:28px;}
 .tadd-btn{background:var(--accent-light);color:var(--accent);border:none;border-radius:var(--rchip);width:28px;height:28px;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;font-weight:700;font-family:var(--en);}
-.tadd-btn:hover{background:var(--accent);color:var(--on-accent);}
 .tadd-btn:active{transform:scale(.95);}
 /* 常用标签区 */
 .tsugg-wrap{margin-top:var(--sp-8);}
@@ -769,15 +755,11 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .tsugg-list{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .tsugg{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);border-radius:var(--rchip);padding:var(--sp-4) var(--sp-10);font-size:var(--fs-caption);font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--zh);}
 .tsugg::before{content:'+';color:var(--text-muted);font-weight:700;margin-right:var(--sp-2);}
-.tsugg:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent-light);}
-.tsugg:hover::before{color:var(--accent-mid);}
 .tsugg:active{transform:scale(.95);}
 .tsugg-more{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:var(--fs-foot);font-family:var(--zh);font-weight:600;padding:var(--sp-4) var(--sp-6);}
-.tsugg-more:hover{text-decoration:underline;}
 /* 标签管理入口 + 列表 */
 .fg label.tlbl-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-8);}
 .tmgr-link{background:none;border:none;cursor:pointer;color:var(--accent-mid);font-size:var(--fs-foot);font-weight:600;font-family:var(--zh);padding:0;letter-spacing:0;display:inline-flex;align-items:center;gap:var(--sp-4);}
-.tmgr-link:hover{text-decoration:underline;}
 .tmgr-count{font-size:var(--fs-foot);color:var(--text-muted);min-width:18px;text-align:center;flex-shrink:0;}
 .cmi.tmgr-del{opacity:.5;}
 .cmi.tmgr-del .cminput{text-decoration:line-through;}
@@ -785,25 +767,19 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .mftr{display:flex;justify-content:flex-end;gap:var(--sp-8);padding:var(--sp-14) var(--sp-24) var(--sp-24);border-top:1px solid var(--border-soft);flex:0 0 auto;}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-6);padding:var(--sp-8) var(--sp-16);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
 .btn-p{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
-.btn-p:hover{background:var(--accent-dark);}
 .btn-g{background:var(--bg);border-color:var(--border);color:var(--text-secondary);}
-.btn-g:hover{border-color:var(--text-muted);color:var(--text-primary);}
 .btn-d{background:var(--danger-bg);color:var(--danger);}
-.btn-d:hover{background:var(--danger-bg-hover);}
 
 /* cat manager */
 .cml{display:flex;flex-direction:column;gap:var(--sp-6);margin-bottom:var(--sp-14);}
 .cmi{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-8) var(--sp-10);background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
 .cm-emoji-btn{width:32px;height:32px;font-size:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;padding:0;}
-.cm-emoji-btn:hover{border-color:var(--accent-mid);background:var(--accent-light);}
 .cminput{flex:1;background:none;border:none;outline:none;font-size:var(--fs-body);font-family:var(--zh);color:var(--text-primary);padding:0;}.cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:var(--sp-4) var(--sp-10);border-radius:var(--r);display:flex;transition:all .1s;font-size:var(--fs-caption);font-family:var(--zh);}
-.cmdel:hover{background:var(--danger-bg);color:var(--danger);}
 /* Emoji 选择面板 */
 .emoji-panel{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);box-shadow:0 4px 20px rgba(0,0,0,.1);padding:var(--sp-10);display:none;z-index:120;width:280px;}
 .emoji-panel.open{display:block;}
 .emoji-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--sp-4);}
 .emoji-cell{width:34px;height:34px;font-size:20px;background:none;border:none;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .1s;padding:0;}
-.emoji-cell:hover{background:var(--accent-light);}
 .addcatrow{display:flex;gap:var(--sp-8);align-items:center;}
 
 /* confirm */
@@ -867,7 +843,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   padding:var(--sp-6);border-radius:var(--r);color:var(--text-primary);
   align-items:center;justify-content:center;flex-shrink:0;
 }
-.menubtn:hover{background:var(--bg);}
 .sb-overlay{
   display:none;position:fixed;inset:0;background:rgba(10,8,6,.45);z-index:92;
 }
@@ -1498,9 +1473,7 @@ body.cal-open .content{display:none!important;}
 .cal-nav{display:flex;gap:var(--sp-6);align-items:center;margin-right:calc((100% - 12px) / 14 - 16px);}
 .cal-navbtn{width:32px;height:32px;border:none;background:transparent;border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--accent);transition:background .15s;display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1;}
 .nav-chevron{display:block;width:16px;height:16px;flex-shrink:0;}
-@media (hover:hover){.cal-navbtn:hover{background:var(--accent-light);}}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
-@media (hover:hover){.cal-closebtn:hover{color:var(--accent);}}
 /* contain:layout paint —— 日历卡收起时高度在变，没有这条的话整屏(390×844)会跟着重绘一遍，
    有了它重排重绘都关在这张卡里。卡里没有需要溢出显示的东西(筛选/搜索浮层都是它的兄弟)。 */
 .cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout;}
@@ -1526,7 +1499,6 @@ body.cal-open.cal-searching .cal-scroll{flex:0 0 auto;border-top:1px solid var(-
 .cal-filterpop-hd{font-size:var(--fs-foot);color:var(--text-muted);letter-spacing:.06em;padding:var(--sp-6) var(--sp-8) var(--sp-8);}
 .cal-filter-row{display:flex;align-items:center;gap:var(--sp-10);width:100%;border:none;background:transparent;cursor:pointer;
   font-family:var(--zh);font-size:var(--fs-sub);color:var(--text-primary);padding:var(--sp-8);border-radius:var(--r);transition:opacity .15s,background .15s;}
-@media (hover:hover){.cal-filter-row:hover{background:var(--accent-light);}}
 .cal-filter-row.off{opacity:.42;}
 .cal-filter-name{flex:1;text-align:left;}
 .cal-filter-chk{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2.4;flex-shrink:0;}
@@ -1573,7 +1545,6 @@ body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!i
   transition:background .15s,border-color .15s,color .15s;}
 .cal-recent-chip>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cal-recent-chip:active{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);}
-@media (hover:hover){.cal-recent-chip:hover{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);}}
 .cal-sfield input{flex:1;border:none;background:transparent;outline:none;font-family:var(--zh);font-size:var(--fs-body);color:var(--text-primary);padding:0;}
 /* 退出搜索：原来是输入框右边的「取消」二字，现在收进框内做成一枚 ✕。
    圆钮画 26——它正是撑起输入框高度的那个元素（26 + 上下内边距 6 + 描边 2 = 40，
@@ -1585,7 +1556,6 @@ body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!i
 .cal-scancel::after{content:'';position:absolute;inset:-6px;}
 .cal-scancel svg{display:block;}
 .cal-scancel:active{background:var(--border);color:var(--text-secondary);}
-@media (hover:hover){.cal-scancel:hover{background:var(--border);color:var(--text-secondary);}}
 .cal-searchresults{display:none;flex-direction:column;}
 body.cal-searching .cal-searchresults{display:flex;}
 /* 搜索结果按年份分组。年份独立放在卡片上方，下面是一张白色清单卡；
@@ -1620,7 +1590,6 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-sr+.cal-sr{border-top:1px solid var(--border-soft);}
 .cal-sr:last-child{border-bottom:1px solid var(--border);border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r);}
 .cal-sr-mark{width:4px;height:20px;flex:0 0 4px;border-radius:var(--rchip);}
-@media (hover:hover){.cal-sr:hover{background:var(--bg);}}
 /* 日期固定为 MM-DD 五个字符，用等宽数字保证纵向整齐。 */
 .cal-sr-date{width:44px;flex-shrink:0;text-align:left;font-size:var(--fs-caption);color:var(--text-secondary);
   white-space:nowrap;font-family:var(--en);font-variant-numeric:tabular-nums;letter-spacing:.02em;}
@@ -1665,16 +1634,11 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-grabrow:focus-visible{outline:2px solid var(--accent-mid);outline-offset:-2px;border-radius:var(--r);}
 .cal-grab-bar{width:36px;height:5px;border-radius:3px;background:var(--border);transition:background .15s,width .15s;}
 .cal-grabrow.cal-grab-on .cal-grab-bar{background:var(--accent-mid);}   /* 收起状态：把手变墨绿，作状态提示 */
-@media (hover:hover){.cal-grabrow:hover .cal-grab-bar{background:var(--accent-mid);width:44px;}}
 @media (prefers-reduced-motion:reduce){.cal-gridclip.cal-animating{transition:none;}}
 .cal-day{background:transparent;min-height:42px;padding:var(--sp-6) var(--sp-2) var(--sp-4);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s,box-shadow .15s;}
-/* hover 一律关在 @media (hover:hover) 里：手机上点一下 :hover 会一直粘着不掉，
-   日期格又是整块底色，看起来就像这天被莫名其妙标记了 */
-@media (hover:hover){.cal-day:hover{background:var(--accent-light);}}
 .cal-day.cal-other{color:var(--text-muted);}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
 .cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
-@media (hover:hover){.cal-day.cal-other:hover{background:var(--bg);}}
 .cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}                    /* 今天：墨绿加粗数字，不加圆圈 */
 .cal-day.cal-selected{background:transparent;}
 .cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;border-radius:50%;box-shadow:0 0 0 1px var(--accent-mid);}   /* 选中：数字外一圈 26px、1px 墨绿正圆（单层描边） */
@@ -1722,7 +1686,6 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-tl-row:first-child::before{top:calc(var(--sp-8) + 10px);}                     /* 首行：从第一行圆点处向下 */
 .cal-tl-row:last-child::before{bottom:auto;height:calc(var(--sp-8) + 10px);}       /* 末行：从顶到第一行圆点处 */
 .cal-tl-row:only-child::before{display:none;}
-@media (hover:hover){.cal-tl-row:hover{background:var(--bg);}}
 .cal-tl-dot{position:absolute;left:0;top:calc(var(--sp-8) + 10px);transform:translateY(-50%);width:12px;height:12px;border-radius:50%;box-sizing:border-box;
   background:var(--surface);border:2px solid var(--accent-mid);z-index:1;}
 .food-drag-handle{touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
@@ -1838,7 +1801,6 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-nav{flex-shrink:0;width:26px;height:26px;padding:0;border:0;background:none;
   border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;
   font-size:16px;line-height:1;color:var(--accent);cursor:pointer;transition:background .15s;}
-@media (hover:hover){.cw-nav:hover{background:var(--accent-light);}}
 .cw-nav:active{background:var(--accent-light);}
 /* 展开箭头也裹进一颗 26 见方的按钮里（原先是条上的裸图标），右边负 5 是把它退回原位：
    图标 16 居中在 26 里会往左缩 5，而「当天」卡的箭头还在老地方，差这 5px 两张卡就错开了 */
@@ -1965,13 +1927,11 @@ body.cal-searching .cw-card{display:none;}
   font-family:var(--zh);transition:all .12s;white-space:nowrap;flex-shrink:0;
   touch-action:manipulation;-webkit-appearance:none;appearance:none;
 }
-@media (hover:hover) and (pointer:fine){.nfrow .nfchip:hover{border-color:var(--accent-mid);color:var(--accent);}}
 .nfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .nfrow .nfchip-cnt{font-size:var(--fs-foot);opacity:.7;margin-left:var(--sp-4);font-family:var(--en);}
 .nfrow .nfchip.on .nfchip-cnt{opacity:.85;}
 .nfrow .nfsep{width:1px;height:14px;background:var(--border);margin:0 var(--sp-4);flex-shrink:0;}
 .nfrow .nfchip-dashed{border-style:dashed;color:var(--accent-mid);}
-.nfrow .nfchip-dashed:hover{border-style:solid;background:var(--accent-light);}
 
 
 /* 笔记卡片列表 */
@@ -1986,7 +1946,6 @@ body.cal-searching .cw-card{display:none;}
   cursor:pointer;font-family:var(--zh);text-align:left;
 }
 .note-month-row:last-child{border-bottom:0;}
-@media (hover:hover){.note-month-row:hover{background:var(--bg);}}
 .note-month-ico{
   width:var(--note-month-icon);height:var(--note-month-icon);flex:none;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
   color:var(--accent);background:var(--accent-light);
@@ -2003,7 +1962,6 @@ body.cal-searching .cw-card{display:none;}
   padding:var(--sp-14) var(--sp-16);cursor:pointer;box-shadow:var(--shadow);
   transition:border-color .15s, background .15s;
 }
-.note-card:hover{border-color:var(--accent-mid);background:var(--surface);}
 .note-head{display:flex;align-items:center;gap:var(--sp-10);margin-bottom:var(--sp-6);}
 .note-title{flex:1;font-size:var(--fs-sub);font-weight:700;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:var(--lh-tight);}
 .note-title.empty{color:var(--text-muted);font-weight:500;font-style:italic;}
@@ -2035,7 +1993,6 @@ body.cal-searching .cw-card{display:none;}
   color:var(--text-muted);transition:all .1s;display:inline-flex;align-items:center;
   margin-left:auto;font-size:var(--fs-caption);font-family:var(--zh);
 }
-.note-act:hover{background:var(--danger-bg);color:var(--danger);}
 /* 全局统一：编辑/删除按钮内边距收窄、互相靠近(所有分类卡片) */
 .note-edit,.note-act{padding-left:var(--sp-6);padding-right:var(--sp-6);}
 .note-edit + .note-act,.note-act + .note-act{margin-left:var(--sp-2);}
@@ -2208,7 +2165,6 @@ body.cal-searching .cw-card{display:none;}
   color:var(--text-muted);transition:all .1s;display:inline-flex;align-items:center;
   font-size:var(--fs-caption);font-family:var(--zh);
 }
-.note-edit:hover{background:var(--accent-light);color:var(--accent);}
 
 /* 读书笔记时间线按钮（笔记卡片底栏） */
 .tl-btn{
@@ -2220,7 +2176,6 @@ body.cal-searching .cw-card{display:none;}
   font-family:var(--zh);box-sizing:border-box;
   transition:background .12s;
 }
-.tl-btn:hover{background:var(--surface-2);}
 .tl-btn[disabled]{opacity:.4;cursor:not-allowed;}
 
 /* 读书笔记时间线弹窗 */
@@ -2253,7 +2208,6 @@ body.cal-searching .cw-card{display:none;}
   transition:border-color .15s,background .15s;}
 .tl-section-name{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tl-section-btn:active{background:var(--surface-2);}
-@media (hover:hover){.tl-section-btn:hover{border-color:var(--accent);}}
 /* 搜正文时卡片临时改成单列，并在章名下面露出命中上下文；退出搜索后恢复原布局。 */
 #detailBookNoteCard.timeline-searching .tl{grid-template-columns:minmax(0,1fr);}
 .tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px 10px 30px;
@@ -2917,7 +2871,6 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   display:inline-flex;align-items:center;justify-content:center;
   font-family:var(--zh);transition:all .12s;
 }
-.fmt-btn:hover{border-color:var(--accent-mid);color:var(--accent);background:var(--accent-light);}
 .fmt-hint{font-size:var(--fs-foot);color:var(--text-muted);margin-left:auto;}
 
 /* 笔记正文 textarea 加高 */
@@ -2937,7 +2890,6 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .cmi-note{display:flex;align-items:center;gap:var(--sp-8);padding:var(--sp-8) var(--sp-10);background:var(--bg);border-radius:var(--r);border:1px solid var(--border);}
 .cmi-note .cminput{flex:1;background:none;border:none;outline:none;font-size:var(--fs-body);font-family:var(--zh);color:var(--text-primary);padding:0;}
 .cmi-note .cmdel{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:var(--sp-4) var(--sp-10);border-radius:var(--r);display:flex;transition:all .1s;font-size:var(--fs-caption);font-family:var(--zh);}
-.cmi-note .cmdel:hover{background:var(--danger-bg);color:var(--danger);}
 
 /* 手机端笔记适配 */
 @media (max-width: 1024px), (pointer: coarse){
@@ -2978,7 +2930,6 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-lock.local{color:var(--text-secondary);background:var(--bg);box-shadow:inset 0 0 0 1px var(--border);}
 .memo-lock.plain{color:#92400E;background:#FEF3C7;}
 .memo-lock:active{transform:scale(0.95);}
-@media (hover:hover){.memo-lock:hover{opacity:.8;}}
 .memo-lock svg{width:11px;height:11px;display:block;pointer-events:none;}
 .memo-lock-lbl{font-size:var(--fs-foot);font-weight:600;line-height:1;pointer-events:none;}
 
@@ -2995,13 +2946,11 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 
 .memo-btn{flex-shrink:0;background:none;border:none;cursor:pointer;padding:var(--sp-4);border-radius:var(--r);color:var(--text-secondary);width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;transition:background .12s,color .12s;-webkit-appearance:none;}
 /* .memo-btn:active 颜色已去除 */
-@media (hover:hover){.memo-btn:hover{background:var(--accent-light);color:var(--accent);}}
 .memo-btn svg{width:15px;height:15px;display:block;}
 .memo-btn.copied{color:var(--accent);background:var(--accent-light);}
 
 /* 备忘字段值可点：点一下从底部弹出单字段编辑面板 */
 .memo-field-value.editable{cursor:pointer;}
-@media (hover:hover){.memo-field-value.editable:hover{background:var(--accent-light);}}
 
 /* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
 .mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity var(--nav-dur) var(--nav-ease);z-index:1400;}
@@ -3038,7 +2987,6 @@ textarea.mfsheet-input{min-height:110px;resize:none;white-space:pre-wrap;}
 
 .add-field-btn{width:100%;height:40px;background:transparent;border:1px dashed rgba(var(--accent-rgb),0.18);color:var(--accent);border-radius:var(--r);font-size:var(--fs-caption);font-weight:600;font-family:var(--zh);cursor:pointer;margin-bottom:var(--sp-14);transition:background .12s,border-color .12s;-webkit-appearance:none;}
 /* .add-field-btn:active 颜色已去除 */
-@media (hover:hover){.add-field-btn:hover{background:var(--accent-light);border-color:var(--accent-mid);}}
 
 /* 仅本机开关 */
 .local-toggle{display:flex;align-items:flex-start;gap:var(--sp-12);padding:var(--sp-12) var(--sp-14);background:var(--accent-light);border-radius:var(--r);cursor:pointer;border:1px solid transparent;margin-bottom:var(--sp-4);-webkit-tap-highlight-color:transparent;}
@@ -3112,7 +3060,6 @@ mark.shl{
   border:var(--bd) solid var(--ink);background:var(--surface);color:var(--text-primary);
   box-shadow:none;
 }
-.fchip:hover{color:var(--text-primary);}
 .fchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
 .fchip:active{transform:scale(.95);}
 
@@ -3264,7 +3211,6 @@ mark.shl{
 }
 .btn:active{transform:scale(.96);}
 .btn-p{background:var(--accent);color:var(--on-accent);}
-.btn-p:hover{background:var(--ink-deep);}
 .btn-g{background:var(--surface);color:var(--text-primary);}
 
 /* —— 标签输入框 + 标签胶囊 —— */
@@ -3295,7 +3241,6 @@ mark.shl{
   border:var(--bd) solid var(--ink);border-radius:var(--rlg);
   background:var(--surface);box-shadow:none;
 }
-.note-card:hover{border-color:var(--ink);background:var(--surface);}
 .content{
   --note-date-column:calc(3 * var(--fs-sub));
   --note-month-padding:var(--sp-16);
@@ -3331,7 +3276,7 @@ mark.shl{
 #noteMonthPanel .bb-sortopt svg{width:16px;height:16px;flex:none;color:var(--text-muted);}
 #noteMonthPanel .bb-sortopt.on{color:var(--accent);background:var(--accent-light);}
 #noteMonthPanel .bb-sortopt.on svg{color:var(--accent);}
-#noteMonthPanel .bb-sortopt:is(:hover,:focus-visible){background:var(--accent-light);}
+#noteMonthPanel .bb-sortopt:focus-visible{background:var(--accent-light);}
 .note-dated-day{font-size:var(--fs-title);font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;}
 .note-dated-weekday{font-size:var(--fs-caption);color:var(--text-muted);}
 .note-list[data-month-view]:has(> .note-dated-row){gap:var(--sp-12);}
@@ -3658,7 +3603,6 @@ body.cal-view-period #calViewPeriod .home-header{
       gap: 16px; margin: 4px 0 8px;}
 #calViewPeriod .year-btn {background: none; border: none; font-size: var(--fs-subhead);
       color: var(--faint); cursor: pointer; padding: 0 4px; line-height: 1;}
-#calViewPeriod .year-btn:hover {color: var(--ink-2);}
 #calViewPeriod .year-label {font-size: var(--fs-subhead); font-weight: bold; color: var(--ink);
       min-width: 50px; text-align: center; cursor: pointer;
       text-decoration: underline dotted var(--faint);}
@@ -3672,7 +3616,6 @@ body.cal-view-period #calViewPeriod .home-header{
 #calViewPeriod .year-picker-list {max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch;}
 #calViewPeriod .year-picker-item {text-align: center; padding: 12px 0; font-size: var(--fs-subhead); color: var(--ink-2); cursor: pointer;}
 #calViewPeriod .year-picker-item.active {color: var(--brand); font-weight: bold; font-size: var(--fs-title);}
-#calViewPeriod .year-picker-item:hover {background: #f9f9f9;}
 #calViewPeriod .legend {display: flex; justify-content: center; gap: 10px;
       margin: 6px 0 10px; font-size: var(--fs-footnote); flex-wrap: nowrap;}
 #calViewPeriod .calendar-container {display: grid; grid-template-columns: repeat(2, 1fr);
@@ -3717,7 +3660,6 @@ body.cal-view-period #calViewPeriod .home-header{
       background-clip: padding-box;
       background: transparent;   
       color: var(--ink-2);}
-#calViewPeriod .day:hover {transform: scale(1.05);}
 #calViewPeriod .level-g {background-color: var(--disabled); color: var(--body); --c: var(--disabled); box-shadow: inset 0 0 0 1.5px rgba(74,81,88,.42);}
 #calViewPeriod .level-1 {background-color: var(--brand-tint); color: #640D14; --c: var(--brand-tint);}
 #calViewPeriod .level-2 {background-color: #cf4865; color: white; --c: #cf4865;}
@@ -5023,7 +4965,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 :root[data-mode="dark"] #calViewPeriod .hm-tile,
 :root[data-mode="dark"] #calViewPeriod .hm-tcard{background:var(--surface);}
 /* 剩下的零散浅色块：淡粉/淡蓝底、浅灰分隔线 */
-:root[data-mode="dark"] #calViewPeriod .year-picker-item:hover{background:var(--surface-2);}
 :root[data-mode="dark"] #calViewPeriod .act-pull{background:#152B38;}
 :root[data-mode="dark"] #calViewPeriod .me-btn.danger{background:#3A1D24;}
 :root[data-mode="dark"] #calViewPeriod .me-btn.danger:active{background:#4A252E;}
@@ -5160,9 +5101,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-heading-option:active{background:var(--press);}
 .chapter-heading-option.chapter-heading-picked{
   background:var(--accent-light);color:var(--accent);font-weight:700;
-}
-@media(hover:hover){
-  .chapter-heading-option:hover{background:var(--accent-light);color:var(--accent);}
 }
 .chapter-heading-option sub{font-size:.65em;vertical-align:-.25em;}
 .chapter-whole-text{flex:1;min-height:100px;width:100%;box-sizing:border-box;resize:none;overflow:auto;padding:12px;font-family:var(--zh);font-size:var(--fs-input);line-height:var(--lh-loose);color:var(--text-primary);background:var(--surface);border:1px solid var(--ink);border-radius:var(--r);}
@@ -5509,7 +5447,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     color:var(--text-primary);font:600 var(--fs-caption)/var(--lh-normal) var(--zh);
     cursor:pointer;text-align:left;
   }
-  #appSidebar .sidebar-disclosure:hover{border-color:var(--accent-mid);color:var(--accent);}
   #appSidebar .sidebar-chevron{flex:none;margin-inline-start:auto;}
   #appSidebar button[aria-expanded="true"]>.sidebar-chevron{transform:rotate(180deg);}
   #appSidebar .sidebar-disclosure[aria-expanded="false"]+.ncard{display:none;}
@@ -5563,7 +5500,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border:0;border-radius:var(--r);background:transparent;
     color:var(--text-primary);cursor:pointer;
   }
-  #appSidebar #nav-notes-toggle:hover{color:var(--accent);}
   #appSidebar #nav-notes-toggle .sidebar-chevron{margin:0;}
   #appSidebar .ncard-notes .nsub{margin:0 var(--sp-4);visibility:hidden;}
   #appSidebar .ncard-notes .nsub.open{margin-bottom:var(--sp-4);visibility:visible;}
@@ -5592,6 +5528,59 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .novu-opt{padding-inline:var(--sp-8);}
   #appSidebar .novu-opt-lbl,#appSidebar .novu-stepval{font-size:var(--fs-foot);}
   #appSidebar .novu-stepval{min-width:58px;white-space:nowrap;}
+}
+/* 悬停只描主题色边框，底色继续用来表达选中状态。 */
+@media (hover:hover) and (pointer:fine){
+  :is(.desktop-sidebar-toggle,.fchip,.dt-card:not(.dt-meta),.tsugg,.btn-g,
+      .cm-emoji-btn,.cal-recent-chip,.note-card,.fmt-btn,.add-field-btn):hover,
+  .nfrow .nfchip:hover{
+    border-color:var(--accent);
+  }
+  .nfrow .nfchip-dashed:hover{border-style:solid;}
+
+  /* 无完整边框的控件使用内描边，避免悬停时改变尺寸或遮住相邻行。 */
+  :is(.nitem:not(.nitem-fs,.ncard-cats-desktop .nitem),.nlbl-btn,.sclear,.mclose,.tadd-btn,.tsugg-more,
+      .tmgr-link,.btn-d,.cmdel,.emoji-cell,.menubtn,.cal-navbtn,.cal-closebtn,
+      .cal-filter-row,.cal-scancel,.cal-sr,.cal-day,.cal-tl-row,
+      .cw-nav,.note-month-row,.note-act,.note-edit,.tl-btn,.tl-section-btn,
+      .memo-lock,.memo-btn,.memo-field-value.editable,.bb-sortopt,
+      .chapter-heading-option):hover,
+  .cal-grabrow:hover .cal-grab-bar,
+  #calViewPeriod :is(.year-btn,.year-picker-item,.daywrap:not(.empty)>.day:not(.cal-otherday)):hover{
+    outline:1px solid var(--accent);
+    outline-offset:-1px;
+  }
+
+  /* 主题色实底按钮在外侧留出间隔，让同色描边可见。 */
+  :is(.addbtn,.btn-p,.fchip.on,.nfrow .nfchip.on):hover{
+    outline:1px solid var(--accent);
+    outline-offset:1px;
+  }
+
+  /* 列表单条记录用卡片原有的圆角，多条记录在行内描边。 */
+  #mlist .media-month-card:has(>.mrow:only-child:hover){border-color:var(--accent);}
+  #mlist .mrow:not([aria-current="true"],.media-month-card>.mrow:only-child):hover{
+    border-radius:calc(var(--rlg) - 1px);
+    box-shadow:inset 0 0 0 1px var(--accent);
+    content-visibility:visible;
+  }
+  #mlist .mrow:hover::after{display:none;}
+  #mlist .mrow:hover .cname{color:var(--accent);}
+}
+
+@media (min-width:1025px) and (hover:hover) and (pointer:fine){
+  #appSidebar .sidebar-disclosure:hover,
+  #appSidebar .ncard-cats-desktop .nitem:not(#nav-notes):hover{
+    border-color:var(--accent);color:var(--accent);
+  }
+  #appSidebar .sidebar-notes-header:has(button:hover)>:is(#nav-notes,#nav-notes-toggle){color:var(--accent);}
+  #appSidebar .ncard-notes:has(#nav-notes-toggle[aria-expanded="false"]):has(.sidebar-notes-header button:hover){
+    border-color:var(--accent);
+  }
+  #appSidebar .sidebar-notes-header:has(#nav-notes-toggle[aria-expanded="true"]):has(button:hover){
+    border-radius:calc(var(--rlg) - 1px) calc(var(--rlg) - 1px) 0 0;
+    box-shadow:inset 0 0 0 1px var(--accent);
+  }
 }
 </style>
 <script>
