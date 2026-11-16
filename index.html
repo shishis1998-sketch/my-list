@@ -200,7 +200,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 
 .desktop-sidebar-toggle{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  .app{--desktop-sidebar-width:220px;}
+  .app{--desktop-sidebar-width:244px;}
   .app>.sidebar{width:var(--desktop-sidebar-width);min-width:var(--desktop-sidebar-width);}
   .app>.sidebar>.logo{padding-right:44px;}
   .desktop-sidebar-toggle{
@@ -230,7 +230,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* 桌面端 .ncard 只是透明包裹，不改变原有布局 */
 .logo{padding:0 var(--sp-20) var(--sp-20);border-bottom:1px solid var(--border-soft);margin-bottom:var(--sp-12);}
 .logo h1{font-size:var(--fs-headline);font-weight:700;color:var(--accent);}
-.logo p{font-size:var(--fs-foot);color:var(--text-muted);margin-top:var(--sp-2);font-family:var(--en);}
 
 .nsec{padding:0 var(--sp-10);margin-bottom:var(--sp-16);}
 .nlbl{
@@ -5427,6 +5426,75 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #timeModal .mbody{flex:0 1 auto;min-height:0;padding-bottom:calc(var(--sp-24) + env(safe-area-inset-bottom,0px));}
 #timeModal .time-edit-row{min-height:44px;}
 #timeModal .time-edit-row output{display:flex;align-items:center;min-width:0;min-height:44px;padding:0 var(--sp-12);box-sizing:border-box;font-size:var(--fs-input);line-height:var(--lh-normal);color:var(--text-primary);font-variant-numeric:tabular-nums;}
+
+/* 桌面侧栏：分类导航与设置分组 */
+.sidebar-palette-label{display:none;}
+@media (min-width:1025px) and (pointer:fine){
+  #appSidebar{background:var(--bg);padding:0 0 var(--sp-16);overscroll-behavior-y:contain;}
+  #appSidebar>.logo{
+    position:sticky;top:0;z-index:2;flex-shrink:0;
+    display:flex;align-items:center;min-height:64px;
+    padding:0 46px 0 var(--sp-16);margin:0 0 var(--sp-14);
+    background:var(--surface);border-color:var(--border);
+  }
+  #appSidebar .logo h1{font-size:var(--fs-title);line-height:var(--lh-tight);}
+  #appSidebar>.nsec{flex-shrink:0;padding:0 var(--sp-12);margin-bottom:var(--sp-16);}
+  #appSidebar .nlbl{
+    min-height:28px;margin:0 0 var(--sp-6);padding:0 var(--sp-4);
+    font:700 var(--fs-caption)/var(--lh-tight) var(--zh);letter-spacing:normal;
+    color:var(--text-secondary);
+  }
+  #appSidebar .nlbl-mobile{display:none;}
+  #appSidebar .nlbl-btn{
+    align-items:center;gap:var(--sp-4);padding:var(--sp-4) var(--sp-6);
+    font:600 var(--fs-foot)/var(--lh-tight) var(--zh);color:var(--text-secondary);
+  }
+  #appSidebar .ncard{
+    padding:var(--sp-4);border:1px solid var(--border);
+    border-radius:var(--rlg);background:var(--surface);
+  }
+  #appSidebar .ncard+.ncard{margin-top:var(--sp-8);}
+  #appSidebar .nitem{
+    min-height:34px;padding:var(--sp-6) var(--sp-8);
+    font-size:var(--fs-caption);line-height:var(--lh-normal);
+    color:var(--text-primary);
+  }
+  #appSidebar .ncard-cats-desktop .nitem{
+    min-height:34px;border:1px solid transparent;
+  }
+  #appSidebar .ncard-cats-desktop .nitem.on,
+  #appSidebar .ncard-cats-desktop .nitem.parent-on{color:var(--accent);}
+  #appSidebar .ncard-cats-desktop .nitem.on{
+    border-color:rgba(var(--accent-rgb),.25);background:var(--accent-light);
+  }
+  #appSidebar .nitem .chev{font-size:16px;color:var(--text-secondary);}
+  #appSidebar .nitem.on .chev,#appSidebar .nitem.parent-on .chev{color:var(--accent);}
+  #appSidebar button:focus-visible{
+    outline:2px solid var(--accent);outline-offset:1px;
+  }
+  #appSidebar .nitem-mode+.nitem-fs{
+    border-top:1px solid var(--border-soft);border-radius:0;
+  }
+  #appSidebar .nfs-seg{min-width:32px;padding:var(--sp-4) var(--sp-6);}
+  #appSidebar .sidebar-palette-label{
+    display:block;padding:var(--sp-6) var(--sp-8) 0;
+    border-top:1px solid var(--border-soft);
+    font-size:var(--fs-caption);font-weight:500;color:var(--text-primary);
+  }
+  #appSidebar .theme-sws{
+    display:grid;grid-template-columns:repeat(5, minmax(0,1fr));
+    justify-items:center;gap:var(--sp-8) var(--sp-4);
+    padding:var(--sp-8) var(--sp-6);
+  }
+  #appSidebar .theme-sw{width:28px;height:28px;}
+  #appSidebar .theme-sw.on{box-shadow:none;outline:1px solid var(--sw);outline-offset:2px;}
+  #appSidebar .theme-sw:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}
+  #appSidebar .novu-body{border-top:1px solid var(--border-soft);}
+  #appSidebar .novu-body.novu-off{display:none;}
+  #appSidebar .novu-opt{padding-inline:var(--sp-8);}
+  #appSidebar .novu-opt-lbl,#appSidebar .novu-stepval{font-size:var(--fs-foot);}
+  #appSidebar .novu-stepval{min-width:58px;white-space:nowrap;}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -5464,13 +5532,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <aside class="sidebar" id="appSidebar">
   <div class="logo">
     <h1>我的清单</h1>
-    <p>Personal Collection</p>
   </div>
   <div class="nsec nsec-cats">
     <div class="nlbl nlbl-desktop">
       分类
-      <button class="nlbl-btn" onclick="openCatMgr()" title="管理分类">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <button class="nlbl-btn" onclick="openCatMgr()" title="管理分类" aria-label="管理分类">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>管理</span>
       </button>
     </div>
     <!-- 手机端整屏「设置」用的分组标题(桌面端隐藏) -->
@@ -9480,6 +9547,7 @@ function renderThemeRow(){
     ' stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+
     '<polyline points="20 6 9 17 4 12"/></svg>';
   row.innerHTML=modeRowHTML()+fontSizeRowHTML()+
+    '<div class="sidebar-palette-label" aria-hidden="true">主题色</div>'+
     '<div class="theme-sws" role="radiogroup" aria-label="主题色">'+
     THEMES.map(t=>
       `<button type="button" class="theme-sw${t.id===cur?' on':''}" data-theme-id="${t.id}"`+
