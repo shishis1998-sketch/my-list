@@ -3142,6 +3142,7 @@ mark.shl{
   .desktop-chapter-layout [aria-current="true"]{background:var(--accent-light);color:var(--accent);border-radius:var(--r);}
   .desktop-chapter-reader{overflow-wrap:anywhere;}
   .desktop-chapter-reader{position:relative;}
+  .desktop-chapter-reader:has(.desktop-chapter-form){background:var(--bg);}
   .desktop-chapter-form{display:flex;flex-direction:column;gap:var(--sp-12);}
   .desktop-chapter-actions{display:flex;justify-content:space-between;}
   .desktop-chapter-form .chapter-whole-text{height:clamp(180px, 54dvh, 700px);min-height:0;flex:none;}
@@ -12407,7 +12408,8 @@ function editDesktopChapter(idx){
   reader.scrollTop=0;
   const ta=bindChapterFormatting(form);
   const titleInput=form.querySelector('.chapter-title-input');
-  form.hasChanges=()=>titleInput.value!==title||ta.value!==content;
+  const sectionInput=form.querySelector('.chapter-section-input');
+  form.hasChanges=()=>titleInput.value!==titleInput.defaultValue||sectionInput.value!==sectionInput.defaultValue||ta.value!==content;
   form.querySelector('button').onclick=()=>{
     desktopChapterForm=null;
     openDetailChapter(idx);
@@ -12415,7 +12417,7 @@ function editDesktopChapter(idx){
   form.addEventListener('submit',event=>{
     event.preventDefault();
     tlHostMedia=item.id;tlCurId=null;
-    if(!saveChapterDraft(titleInput.value,ta.value,idx,chapter.raw,chapter.raw.slice(0,chapter.raw.length-raw.length)))return;
+    if(!saveChapterDraft(chapterEditorTitle(form),ta.value,idx,chapter.raw,chapter.raw.slice(0,chapter.raw.length-raw.length)))return;
     desktopChapterForm=null;
     renderDetail();
   });
@@ -17265,7 +17267,8 @@ function parseParts(text,chs){
 // 不回写正文，也不增字段；每个小节仍保留 parseChapters 给出的原始索引 i。
 const TL_SECTION_TITLE_RE=/^(.*?第[一二三四五六七八九十百零0-9]+章|[\p{L}]{1,20}[0-9]+)[ \t·:：—–+＋-]+(.+)$/u;
 function timelineSectionTitle(title){
-  const m=String(title||'').trim().match(TL_SECTION_TITLE_RE);
+  const text=String(title||'').trim();
+  const m=text.match(/^(.+?) · (.+)$/u)||text.match(TL_SECTION_TITLE_RE);
   return m?{chapter:m[1].trim(),section:m[2].trim()}:null;
 }
 // 时间线只在显示层按章节编号自然排序；原正文顺序和章节索引 i 保持不变。
@@ -17717,8 +17720,18 @@ function renderChapterSheet(){
 }
 
 let tlWholeEditing=false, tlChapterNew=false, tlChapterDraft='', tlChapterSource='', tlChapterReadScroll=0;
+function chapterEditorTitle(editor){
+  const chapter=editor.querySelector('.chapter-title-input');
+  const section=editor.querySelector('.chapter-section-input');
+  const title=chapter.value.trim(), subtitle=section.value.trim();
+  if(!title)return '';
+  if(title===chapter.defaultValue&&subtitle===section.defaultValue)return chapter.dataset.originalTitle;
+  return subtitle?title+' · '+subtitle:title;
+}
 function chapterEditorFields(title,content){
-  return `<input aria-label="章节标题" class="chapter-title-input" value="${esc(title)}" placeholder="章节标题，如：末章 祈福">
+  const parts=timelineSectionTitle(title);
+  return `<input aria-label="章节标题" class="chapter-title-input" value="${esc(parts?.chapter||title.trim())}" data-original-title="${esc(title.trim())}" placeholder="章节标题，如：劳拉">
+    <input aria-label="小节标题（可选）" class="chapter-title-input chapter-section-input" value="${esc(parts?.section||'')}" placeholder="小节标题（可选），如：1. 打开一扇门">
     <div class="fmt-bar chapter-format">
       <div class="chapter-heading-picker">
         <button type="button" class="fmt-btn" data-heading-menu aria-label="标题样式" aria-expanded="false">H</button>
@@ -17823,7 +17836,7 @@ function nextSectionHeading(body,chapter){
   const last=sections.at(-1)?.section||'';
   const numbered=last.match(/^(.*?)(\d+)$/u);
   const section=numbered?numbered[1]+(Number(numbered[2])+1):'';
-  return chapter+(section?' '+section:'');
+  return chapter+(section?' · '+section:'');
 }
 function openNewDetailChapter(initialHeading){
   tlHostMedia=detailId;tlCurId=null;
@@ -17855,7 +17868,7 @@ function saveChapterDraft(title,content,idx,source,lead,isNew=false){
 function commitChapterSheet(){
   if(!tlWholeEditing)return true;
   const editor=document.getElementById('tlSheetBody');
-  const saved=saveChapterDraft(editor.querySelector('.chapter-title-input').value,
+  const saved=saveChapterDraft(chapterEditorTitle(editor),
     editor.querySelector('.chapter-whole-text').value,tlSheetIdx,tlChapterSource,tlSheetLead,tlChapterNew);
   if(!saved)return false;
   tlSheetIdx=saved.index;
