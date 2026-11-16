@@ -5428,17 +5428,44 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #timeModal .time-edit-row output{display:flex;align-items:center;min-width:0;min-height:44px;padding:0 var(--sp-12);box-sizing:border-box;font-size:var(--fs-input);line-height:var(--lh-normal);color:var(--text-primary);font-variant-numeric:tabular-nums;}
 
 /* 桌面侧栏：分类导航与设置分组 */
-.sidebar-palette-label{display:none;}
+.sidebar-palette-label,.sidebar-disclosure{display:none;}
+.sidebar-scroll{display:contents;}
 @media (min-width:1025px) and (pointer:fine){
-  #appSidebar{background:var(--bg);padding:0 0 var(--sp-16);overscroll-behavior-y:contain;}
+  #appSidebar{background:var(--bg);padding:0;overflow:hidden;}
   #appSidebar>.logo{
-    position:sticky;top:0;z-index:2;flex-shrink:0;
-    display:flex;align-items:center;min-height:64px;
-    padding:0 46px 0 var(--sp-16);margin:0 0 var(--sp-14);
+    flex-shrink:0;display:flex;align-items:center;min-height:64px;
+    padding:0 46px 0 var(--sp-16);margin:0;
     background:var(--surface);border-color:var(--border);
   }
   #appSidebar .logo h1{font-size:var(--fs-title);line-height:var(--lh-tight);}
-  #appSidebar>.nsec{flex-shrink:0;padding:0 var(--sp-12);margin-bottom:var(--sp-16);}
+  #appSidebar .sidebar-scroll{
+    display:block;flex:1;min-height:0;
+    overflow-y:auto;overscroll-behavior-y:contain;
+    scrollbar-width:thin;scrollbar-gutter:stable;
+    scrollbar-color:var(--text-muted) transparent;
+    padding:var(--sp-14) var(--sp-6) var(--sp-16) 0;
+  }
+  #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sp-12);margin-bottom:var(--sp-16);}
+  #appSidebar .sidebar-scroll>.nsec:last-child{margin-bottom:0;}
+  #appSidebar .sidebar-scroll>.nsec-look{margin-bottom:var(--sp-8);}
+  #appSidebar .sidebar-disclosure-section>.nlbl{display:none;}
+  #appSidebar .sidebar-disclosure{
+    display:flex;align-items:center;justify-content:space-between;
+    width:100%;min-height:38px;padding:var(--sp-6) var(--sp-10);
+    border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);
+    color:var(--text-primary);font:600 var(--fs-caption)/var(--lh-normal) var(--zh);
+    cursor:pointer;text-align:left;
+  }
+  #appSidebar .sidebar-disclosure:hover{border-color:var(--accent-mid);color:var(--accent);}
+  #appSidebar .sidebar-disclosure svg{flex:none;}
+  #appSidebar .sidebar-disclosure[aria-expanded="false"]+.ncard{display:none;}
+  #appSidebar .sidebar-disclosure[aria-expanded="true"]{
+    border-end-start-radius:0;border-end-end-radius:0;
+  }
+  #appSidebar .sidebar-disclosure[aria-expanded="true"] svg{transform:rotate(180deg);}
+  #appSidebar .sidebar-disclosure+.ncard{
+    border-top:0;border-start-start-radius:0;border-start-end-radius:0;
+  }
   #appSidebar .nlbl{
     min-height:28px;margin:0 0 var(--sp-6);padding:0 var(--sp-4);
     font:700 var(--fs-caption)/var(--lh-tight) var(--zh);letter-spacing:normal;
@@ -5533,6 +5560,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <div class="logo">
     <h1>我的清单</h1>
   </div>
+  <div class="sidebar-scroll">
   <div class="nsec nsec-cats">
     <div class="nlbl nlbl-desktop">
       分类
@@ -5558,12 +5586,22 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <!-- 手机端:分类管理列表(点=编辑,由 JS 渲染) -->
     <div class="ncard ncard-cats-mobile" id="mcatmgr"></div>
   </div>
-  <div class="nsec nsec-look">
+  <div class="nsec nsec-look sidebar-disclosure-section">
     <div class="nlbl">外观</div>
+    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="themeRow"
+      onclick="toggleSidebarSection(this)">
+      外观
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
     <div class="ncard" id="themeRow" aria-label="外观"></div>
   </div>
-  <div class="nsec">
+  <div class="nsec sidebar-disclosure-section">
     <div class="nlbl">经期</div>
+    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="ovuRow"
+      onclick="toggleSidebarSection(this)">
+      经期
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
     <div class="ncard" id="ovuRow" aria-label="排卵期推算"></div>
   </div>
   <div class="nsec nsec-view">
@@ -5611,6 +5649,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <span class="ncnt" id="sync-badge">未配置</span>
       </button>
     </div>
+  </div>
   </div>
 </aside>
 
@@ -13443,6 +13482,10 @@ function renderStats(){
     <div class="scard"><div class="snum">${avg}</div><div class="slbl">平均分</div></div>`;
 }
 
+function toggleSidebarSection(button){
+  const expanded=button.getAttribute('aria-expanded')==='true';
+  button.setAttribute('aria-expanded',String(!expanded));
+}
 function toggleDesktopSidebar(button){
   const collapsed=button.parentElement.classList.toggle('desktop-sidebar-collapsed');
   const label=collapsed?'展开侧栏':'收起侧栏';
