@@ -5581,6 +5581,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 
 @media (min-width:1025px) and (hover:hover) and (pointer:fine){
+  #appSidebar :is(.nsec-view,.nsec-data,.nsec-sync) .ncard:has(> .nitem:only-child:hover){
+    border-color:var(--accent);
+  }
+  #appSidebar :is(.nsec-view,.nsec-data,.nsec-sync) .ncard > .nitem:hover{
+    color:var(--accent);
+  }
+  #appSidebar :is(.nsec-view,.nsec-data,.nsec-sync) .ncard > .nitem:not(:only-child):hover{
+    border-radius:calc(var(--rlg) - 1px);
+    box-shadow:inset 0 0 0 1px var(--accent);
+  }
   #appSidebar .sidebar-disclosure:hover,
   #appSidebar .ncard-cats-desktop .nitem:not(#nav-notes):hover{
     border-color:var(--accent);color:var(--accent);
