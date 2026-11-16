@@ -3076,13 +3076,11 @@ body.modal-open{
   font-variant-emoji:text;
 }
 
-/* —— 顶栏「添加」改圆胶囊 —— */
+/* —— 顶栏「添加」的描边与按压反馈 —— */
 .addbtn{
-  font-family:var(--zh);font-weight:700;
-  border:var(--bd) solid var(--ink);border-radius:var(--r);
-  box-shadow:var(--pop-sm);background:var(--ink);
+  border:var(--bd) solid transparent;
+  box-shadow:var(--pop-sm);
 }
-.addbtn:hover{background:var(--ink-deep);}
 .addbtn:active{transform:scale(.96);}
 
 /* —— 搜索框圆胶囊 + 描边 —— */
