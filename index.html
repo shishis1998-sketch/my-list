@@ -5428,12 +5428,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #timeModal .time-edit-row output{display:flex;align-items:center;min-width:0;min-height:44px;padding:0 var(--sp-12);box-sizing:border-box;font-size:var(--fs-input);line-height:var(--lh-normal);color:var(--text-primary);font-variant-numeric:tabular-nums;}
 
 /* 桌面侧栏：分类导航与设置分组 */
-.sidebar-palette-label,.sidebar-disclosure{display:none;}
+.sidebar-palette-label,.sidebar-disclosure,.sidebar-scroll-indicator{display:none;}
 .sidebar-scroll{display:contents;}
 @media (min-width:1025px) and (pointer:fine){
-  #appSidebar{background:var(--bg);padding:0;overflow:hidden;}
+  #appSidebar{--sidebar-header-height:64px;background:var(--bg);padding:0;overflow:hidden;}
   #appSidebar>.logo{
-    flex-shrink:0;display:flex;align-items:center;min-height:64px;
+    flex-shrink:0;display:flex;align-items:center;min-height:var(--sidebar-header-height);
     padding:0 46px 0 var(--sp-16);margin:0;
     background:var(--surface);border-color:var(--border);
   }
@@ -5441,9 +5441,22 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-scroll{
     display:block;flex:1;min-height:0;
     overflow-y:auto;overscroll-behavior-y:contain;
-    scrollbar-width:thin;scrollbar-gutter:stable;
-    scrollbar-color:var(--text-muted) transparent;
-    padding:var(--sp-14) var(--sp-6) var(--sp-16) 0;
+    scrollbar-width:none;
+    padding:var(--sp-14) 0 var(--sp-16);
+  }
+  #appSidebar .sidebar-scroll::-webkit-scrollbar{display:none;}
+  #appSidebar .sidebar-scroll-indicator{
+    --sidebar-thumb-height:32px;
+    display:block;position:absolute;z-index:2;
+    inset-block:calc(var(--sidebar-header-height) + var(--sp-6)) var(--sp-6);
+    inset-inline-end:var(--sp-4);width:3px;pointer-events:none;
+    opacity:0;transition:opacity 140ms ease;
+  }
+  #appSidebar .sidebar-scroll-indicator.is-visible{opacity:1;}
+  #appSidebar .sidebar-scroll-indicator::before{
+    content:"";position:absolute;inset-inline:0;
+    top:calc((100% - var(--sidebar-thumb-height)) * var(--sidebar-scroll-progress,0));
+    height:var(--sidebar-thumb-height);border-radius:var(--rsm);background:var(--text-muted);
   }
   #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sp-12);margin-bottom:var(--sp-16);}
   #appSidebar .sidebar-scroll>.nsec:last-child{margin-bottom:0;}
@@ -5651,6 +5664,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
   </div>
   </div>
+  <div class="sidebar-scroll-indicator" aria-hidden="true"></div>
 </aside>
 
 <!-- ===== MAIN ===== -->
@@ -13482,6 +13496,23 @@ function renderStats(){
     <div class="scard"><div class="snum">${avg}</div><div class="slbl">平均分</div></div>`;
 }
 
+{
+  const scroller=document.querySelector('#appSidebar .sidebar-scroll');
+  const indicator=document.querySelector('#appSidebar .sidebar-scroll-indicator');
+  let hideIndicator;
+  scroller.addEventListener('scroll',()=>{
+    clearTimeout(hideIndicator);
+    const overflow=scroller.scrollHeight-scroller.clientHeight;
+    if(overflow<=0){
+      indicator.classList.remove('is-visible');
+      return;
+    }
+    const progress=Math.max(0,Math.min(1,scroller.scrollTop/overflow));
+    indicator.style.setProperty('--sidebar-scroll-progress',progress);
+    indicator.classList.add('is-visible');
+    hideIndicator=setTimeout(()=>indicator.classList.remove('is-visible'),600);
+  },{passive:true});
+}
 function toggleSidebarSection(button){
   const expanded=button.getAttribute('aria-expanded')==='true';
   button.setAttribute('aria-expanded',String(!expanded));
