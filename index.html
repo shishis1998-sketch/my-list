@@ -3135,7 +3135,10 @@ mark.shl{
   }
   body.detail-open #mlist .mrow[aria-current="true"]::after{display:none;}
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
-  .detail-view.open{grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;}
+  .detail-view.open{
+    grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;
+    scrollbar-gutter:stable both-edges;
+  }
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
   #detailBookNoteCard.desktop-chapter-layout>.tl{
     grid-template-columns:minmax(0,1fr);margin-inline:0;
