@@ -1517,7 +1517,7 @@ body.cal-open.cal-searching .main{overflow:visible;}
 body.cal-searching .cal-searchwrap{display:flex;position:sticky;top:0;z-index:10;background:var(--bg);}
 body.cal-searching .cal-hdr{display:none;}                     /* 搜索时隐藏顶部月份/导航整行 */
 body.cal-searching #calLegend,body.cal-searching .cal-weekrow,body.cal-searching #calGrid,body.cal-searching #calGridClip,body.cal-searching #calGrabRow{display:none;}
-body.cal-searching .cal-sheet,body.cal-searching .cal-sheet-scrim{display:none!important;}  /* 搜索时彻底藏起当天抽屉 */
+body.cal-searching .cal-day-card,.cal-day-card[hidden]{display:none;}
 /* 上下内边距 8 → 6：框高 44 → 40，跟一条结果行（40.8）齐平。搜索框和结果行上下
    紧挨着，高一截会显得它比一条记录"重"；同高之后整屏是同一个行高节奏。
    高度由框内那颗 26px 的 ✕ 撑着（26 + 6×2 + 描边 2 = 40），不是写死的数值。 */
@@ -1633,7 +1633,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-fade.top{top:0;height:var(--band);}
 .cal-fade.bot{top:calc(var(--band) + var(--cellh));bottom:0;}
 .cal-grabrow{display:flex;align-items:center;justify-content:center;height:22px;margin-top:var(--sp-2);
-  cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;border-top:1px solid var(--border-soft);}
+  cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;}
 .cal-grabrow:active{cursor:grabbing;}
 .cal-grabrow:focus-visible{outline:2px solid var(--accent-mid);outline-offset:-2px;border-radius:var(--r);}
 .cal-grab-bar{width:36px;height:5px;border-radius:3px;background:var(--border);transition:background .15s,width .15s;}
@@ -1644,38 +1644,27 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
 .cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
 .cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}                    /* 今天：墨绿加粗数字，不加圆圈 */
-.cal-day.cal-selected{background:transparent;}
-.cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;border-radius:50%;box-shadow:0 0 0 1px var(--accent-mid);}   /* 选中：数字外一圈 26px、1px 墨绿正圆（单层描边） */
+.cal-day.cal-selected{background:var(--accent-light);box-shadow:inset 0 0 0 1px var(--accent-mid);}
+.cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;opacity:1;}
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent);}
 .cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
 .cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:3px;max-width:100%;}
 .cal-dot{width:5px;height:5px;border-radius:50%;flex:none;}
 .cal-count{font-size:var(--fs-foot);background:var(--accent);color:var(--on-accent);padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
 /* —— 类目圆点：当天出现过的每种类目色画一个点（去重），一眼看当天收集了哪些类型 —— */
-.cal-detail{padding:var(--sp-20) var(--sp-4) var(--sp-8);}
-.cal-detail-hdr{font-size:var(--fs-sub);font-weight:700;color:var(--accent);margin-bottom:var(--sp-10);padding-left:var(--sp-12);padding-right:var(--sp-2);display:flex;align-items:center;gap:var(--sp-8);letter-spacing:.02em;}
-.cal-detail-count{font-size:var(--fs-caption);color:var(--text-muted);font-weight:400;font-family:var(--en);}
 /* 事件白卡：单张卡内一条竖向时间线（去掉标题与颜色）*/
 .cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
   max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
-.cal-card:last-child{margin-bottom:0;}
-/* 卡片内日期标题（点某天后显示「N 月 N 日」，默认墨绿）*/
-/* 上下都是 12（原来下面只有 4，靠时间线的 6 补，合起来 10，比上面窄一截）。
-   左内边距 = 10 卡内边距 + 半列宽 - 20 行缩进，让标题左缘与下面时间线的
-   节点/竖线同一条左缘，「8」正好落在那串圆点上方；这里 100% 是 .cal-card 的
-   内容宽（330），比时间线那边多 20，所以半列宽写成 (100% - 32px)/14。
-   右内边距写同一个值，卡片两侧留白相等（标题本身左对齐，这里只为一致）。 */
-/* 左右都写死 14，和本周卡片的标题栏对齐：两张卡上下挨着，标题左缘和箭头右缘
-   各自差几像素都看得出来。原来左右共用 calc((100% - 32px)/14 - 10px)——那是让
-   「8 月」的左缘压在下面时间线第一颗圆点的左缘上，可它随卡宽变化：360 宽算出来
-   11.3、412 宽 12.9，于是两张卡的标题和箭头在窄屏上错开好几像素。
-   改成定值后「8 月」比圆点左缘再左约 2px，比起两张卡对不齐，这点更不显眼。 */
 .cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14);
   font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;
-  display:flex;align-items:center;gap:var(--sp-8);cursor:pointer;}
-.cal-card-date .cw-chev{margin-left:auto;}
-.cal-card.closed .cal-tl,.cal-card.closed .cal-empty{display:none;}
-.cal-card.closed .cw-chev{transform:rotate(-90deg);}
+  display:flex;align-items:center;gap:var(--sp-8);}
+.cal-day-card{margin:0 var(--sp-14) var(--sp-12);}
+.cal-day-filters{display:flex;gap:var(--sp-16);padding:0 var(--sp-14) var(--sp-8);}
+.cal-day-filters button{font:inherit;font-size:var(--fs-caption);color:var(--text-muted);
+  background:none;border:0;border-bottom:2px solid transparent;padding:var(--sp-4) 0;cursor:pointer;}
+.cal-day-filters button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.cal-day-filters button:focus-visible{outline:1px solid var(--accent);outline-offset:2px;}
+.cal-day-card .cal-tl{overflow:visible;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 /* 上留白归零（标题自己的 12 就是那道间距），左右 10 对齐第一张卡：
    时间线的节点/竖线落在周一那列里，右侧时间文字末端与周日那列的右缘齐平 */
@@ -1717,73 +1706,9 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}   /* 长事件名换到第二行（最多两行），不用省略号一行截断 */
 .cal-tl-tail{flex-shrink:0;align-self:flex-start;padding-top:1px;font-size:var(--fs-caption);color:var(--text-muted);font-variant-numeric:tabular-nums;}   /* 日期顶端对齐，落在名称第一行旁 */
 .cal-tl-tail .rg{color:var(--text-secondary);font-weight:600;}   /* 跨天事件起止日区间 */
-.cal-tl-empty .cal-tl-nm{color:var(--text-muted);font-weight:400;}   /* 当天无记录占位 */
 .cal-empty{text-align:center;color:var(--text-muted);padding:var(--sp-20) var(--sp-12);font-size:var(--fs-caption);}
 .cal-hint{text-align:center;color:var(--text-muted);padding:var(--sp-16) var(--sp-12);font-size:var(--fs-caption);}
 
-/* —— 点击某天从底部滑出的详情抽屉 —— */
-.cal-sheet-scrim{position:absolute;inset:0;background:rgba(10,8,6,.32);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:5;}
-.cal-sheet-scrim.open{opacity:1;pointer-events:auto;}
-/* 下半区：常驻内嵌面板（非弹窗），日历下方直接显示选中当天的记录 */
-/* flex 从 1 改成 0：本周卡片排在它后面，它一撑满剩余高度就会把本周卡片顶到
-   屏幕最底下、和当天卡之间空出一大片。改成按内容高，两张卡贴着，长了由整页滚 */
-.cal-sheet{position:relative;background:transparent;
-  display:flex;flex-direction:column;flex:0 0 auto;min-height:0;
-  padding:0 var(--sp-14) var(--sp-12);}
-.cal-sheet-scrim,.cal-sheet-grab,.cal-sheet-close{display:none;}   /* 遮罩/抓手/关闭按钮：内嵌常驻后不再需要 */
-.cal-sheet .cal-detail-hdr{display:none;}   /* 日期标题改到「当天」白卡内 */
-
-/* 日期和详情共用一个 SVG path 描边和填色，连接处也保持完整的浅主题色背景。 */
-.cal-gridclip.has-inline{height:auto!important;overflow:visible;flex-shrink:0;}
-.cal-gridclip.has-inline .cal-grid{transform:none;grid-auto-rows:auto;}
-.cal-gridclip.has-inline .cal-fade{display:none;}
-.cal-gridclip.has-inline.inline-measured{
-  height:calc(var(--inline-full) - (var(--inline-full) - var(--inline-closed)) * var(--p)) !important;
-  overflow:hidden;
-}
-.cal-gridclip.has-inline.inline-measured .cal-grid{
-  /* 留白只显示卡片背景；裁掉上一周，保留选中轮廓上方 2px 绘制余量。 */
-  clip-path:inset(calc(var(--inline-mask-top,0px) * var(--p)) 0 0);
-  transform:translateY(calc(-1 * var(--inline-shift) * var(--p)));
-}
-.cal-gridclip.has-inline.inline-measured.cal-animating,
-.cal-gridclip.has-inline.inline-measured .cal-grid.cal-animating{
-  transition:--p .3s cubic-bezier(.22,1,.36,1);
-}
-@media (prefers-reduced-motion:reduce){
-  .cal-gridclip.has-inline.inline-measured.cal-animating,
-  .cal-gridclip.has-inline.inline-measured .cal-grid.cal-animating{transition:none;}
-}
-/* 展开所在周：圆点下方留白由 4px 增至 12px，轮廓随行高自动延伸。 */
-.cal-gridclip.has-inline .cal-day.cal-focusrow{padding-bottom:var(--sp-12);}
-.cal-inline-detail{position:relative;grid-column:1 / -1!important;
-  min-height:0;margin:-2px 0 var(--sp-6);padding:0;overflow:visible;}
-.cal-inline-detail .cal-card{position:relative;z-index:1;margin:0;width:100%;box-sizing:border-box;
-  border:0;border-radius:var(--rlg);background:transparent;
-  min-height:0;max-height:none;overflow:visible;contain:none;}
-.cal-inline-detail .cal-card-date{display:none;}
-/* 中灰降低至 60% 不透明度，让连接线清楚但不抢眼。 */
-.cal-inline-detail .cal-tl-row::before{background:var(--text-muted);opacity:.6;}
-.cal-inline-detail .cal-tl{min-height:0;max-height:none;overflow:visible;
-  padding:var(--sp-8) var(--sp-10) var(--sp-10);}
-.cal-day.cal-selected{overflow:visible;z-index:1;border-radius:var(--rlg) var(--rlg) 0 0;
-  box-shadow:none;border:0;background:transparent;}
-.cal-day.cal-selected .cal-daynum{box-shadow:none;border-radius:0;
-  color:var(--accent-dark);font-weight:700;opacity:1;}
-.cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent-dark);}
-.cal-inline-detail.cal-motion .cal-card{height:100%;overflow:hidden;}
-.cal-inline-detail.cal-motion{min-height:0;}
-/* 收起背景独立遮罩，日期数字和圆点保持可见。 */
-.cal-day.cal-selected.cal-wipe-closing{background:transparent!important;}
-.cal-day.cal-wipe-closing::before{content:"";position:absolute;inset:0;border-radius:inherit;
-  background:var(--cal-wipe-bg);pointer-events:none;
-  -webkit-mask-image:var(--cal-wipe-mask);mask-image:var(--cal-wipe-mask);}
-.cal-day.cal-wipe-closing>.cal-daynum,.cal-day.cal-wipe-closing>.cal-badges{position:relative;z-index:1;}
-
-.cal-inline-outline{position:absolute;left:0;overflow:visible;pointer-events:none;
-  z-index:0;fill:var(--accent-light);stroke:var(--accent-mid);stroke-width:1;}
-/* 旧的独立「当天」第二张卡不再占位。 */
-.cal-sheet{display:none;}
 
 /* ===== 本周卡片：月历和「当天」卡之间的一张周概览 =====
    月历格子只有圆点，看得出「有事」看不出「是什么」；这张卡把选中日所在那一周铺开。
@@ -1867,7 +1792,6 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-empty{font-size:var(--fs-caption);color:var(--text-muted);padding:var(--sp-4) 0 var(--sp-2);}
 /* 搜索态整页只剩结果列表，本周卡片跟着让路（同 .cal-scroll 的处理） */
 body.cal-searching .cw-card{display:none;}
-.cal-sheet #calDetailList{flex:1;min-height:0;display:flex;flex-direction:column;}   /* 不在此滚动：改由内部 .cal-tl 滚动，卡片圆角框固定不动 */
 
 
 /* 独立页：底部导航浮在整页之上，隐藏搜索/添加行，只留 4 个 tab 便于切换页面 */
@@ -5992,20 +5916,18 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
           <div class="cal-weekcell">日</div>
         </div>
         <div class="cal-gridclip" id="calGridClip"><div class="cal-grid" id="calGrid"></div><i class="cal-fade top" id="calFadeTop"></i><i class="cal-fade bot" id="calFadeBot"></i></div>
-        <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
+        <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-expanded="true" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
         <div class="cal-searchresults" id="calSearchResults"></div>
       </div>
-      <!-- 点击某天从底部滑出的详情抽屉 -->
-      <div class="cal-sheet-scrim" id="calSheetScrim" onclick="closeCalSheet()"></div>
-      <div class="cal-sheet" id="calSheet" role="dialog" aria-label="当天记录">
-        <div class="cal-sheet-grab" id="calSheetGrab"></div>
-        <div class="cal-detail-hdr">
-          <span id="calDetailTitle">5 月 17 日</span>
-          <span class="cal-detail-count" id="calDetailCount"></span>
-          <button class="cal-sheet-close" onclick="closeCalSheet()" aria-label="关闭">✕</button>
+      <section class="cal-card cal-day-card" id="calDayCard" aria-labelledby="calDetailTitle" hidden>
+        <div class="cal-card-date" id="calDetailTitle"></div>
+        <div class="cal-day-filters" id="calDayFilters" role="group" aria-label="日期记录筛选">
+          <button type="button" data-filter="all" aria-pressed="true">全部</button>
+          <button type="button" data-filter="current" aria-pressed="false">今日</button>
+          <button type="button" data-filter="history" aria-pressed="false">那年今日</button>
         </div>
-        <div id="calDetailList"></div>
-      </div>
+        <div class="cal-tl" id="calDetailList"></div>
+      </section>
       <!-- 本周卡片：选中日所在那一周的事件概览，排在「当天」卡下面，点标题栏收起/展开 -->
       <div class="cw-card" id="calWeekCard"></div>
       </div><!-- /#calViewCalendar -->
@@ -15326,7 +15248,6 @@ function closeCalendar(){
   closeCalSearch();                // 退出日历时收起搜索
   calSearchReturn=returnSearch;     // 只收起界面，不丢掉这次搜索；回来时继续显示
   closeCalFilter();                // 退出日历时收起筛选
-  hideCalSheet();
   setCalTabActive(false);          // 恢复原本的 tab 高亮
   // 日历体系和列表/设置共用 window 滚动容器；退出年度等长页面时，
   // 目标页面必须从顶部开始，不能继承年度页的滚动高度。
@@ -15365,7 +15286,6 @@ function calReselect(){
   calSelDate=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   renderCal();renderCalDetail();renderWeekCard();
 }
-
 // —— 底部抽屉：点某天弹出 / 收起 ——
 // 周卡片上的 ‹ ›：把选中日整周挪一格，星期几不变（这周三 → 上周三），
 // 月历跟着切到新日子所在的月——和点月历里上/下月那些灰格是同一套（见 makeCalCell 的 onclick）
@@ -15384,72 +15304,15 @@ function openCalDay(dateStr){
   calSelDate=dateStr;
   const clip=document.getElementById('calGridClip');
   if(clip){
-    clip.style.setProperty('--p','0');clip.classList.add('has-inline');
+    clip.style.setProperty('--p','0');
     clip.querySelectorAll('.cal-grid,.cal-fade').forEach(el=>el.style.setProperty('--p','0'));
-    document.getElementById('calGrabRow').classList.remove('cal-grab-on');
+    const grab=document.getElementById('calGrabRow');
+    grab.classList.remove('cal-grab-on');
+    grab.setAttribute('aria-expanded','true');
   }
   renderCal();                     // 刷新选中高亮
-  renderCalDetail();               // 内嵌下半区：填入当天记录
+  renderCalDetail();               // 刷新月历下方的日期明细
   renderWeekCard();                // 点到别的周去了才重画
-  animateCalInline(true);
-}
-function hideCalSheet(){
-  const s=document.getElementById('calSheet'),sc=document.getElementById('calSheetScrim');
-  if(s){s.classList.remove('open');s.style.transform='';s.style.transition='';}
-  if(sc)sc.classList.remove('open');
-}
-function closeCalSheet(){
-  hideCalSheet();
-  calSelDate=null;
-  renderCal();                     // 清除选中高亮 + 刷新当前月
-}
-
-// 抓手下拉收起抽屉
-(function calSheetDrag(){
-  const sheet=document.getElementById('calSheet');
-  const grab=document.getElementById('calSheetGrab');
-  if(!sheet||!grab)return;
-  let startY=null;
-  const getY=e=>e.touches?e.touches[0].clientY:(e.changedTouches?e.changedTouches[0].clientY:e.clientY);
-  function onStart(e){startY=getY(e);sheet.style.transition='none';}
-  function onMove(e){
-    if(startY==null)return;
-    const dy=Math.max(0,getY(e)-startY);
-    sheet.style.transform=`translateY(${dy}px)`;
-  }
-  function onEnd(e){
-    if(startY==null)return;
-    const dy=Math.max(0,getY(e)-startY);
-    startY=null;
-    sheet.style.transition='';sheet.style.transform='';
-    if(dy>60)closeCalSheet();
-  }
-  grab.addEventListener('touchstart',onStart,{passive:true});
-  grab.addEventListener('touchmove',onMove,{passive:true});
-  grab.addEventListener('touchend',onEnd);
-  grab.addEventListener('mousedown',onStart);
-  window.addEventListener('mousemove',onMove);
-  window.addEventListener('mouseup',onEnd);
-})();
-
-function measureInlineCalCollapse(){
-  const clip=document.getElementById('calGridClip'),grid=document.getElementById('calGrid');
-  if(!clip||!grid||!clip.classList.contains('has-inline'))return;
-  const selected=grid.querySelector('.cal-selected'),detail=grid.querySelector('.cal-inline-detail');
-  if(!selected||!detail||!grid.getBoundingClientRect().height)return;
-  const cells=Array.from(grid.children).filter(el=>el.classList.contains('cal-day'));
-  const index=cells.indexOf(selected),week=cells.slice(Math.floor(index/7)*7,Math.floor(index/7)*7+7);
-  const bounds=grid.getBoundingClientRect();
-  const weekTop=Math.min(...week.map(el=>el.getBoundingClientRect().top))-bounds.top;
-  const top=Math.max(0,weekTop-10);
-  clip.style.setProperty('--inline-mask-top',Math.max(0,weekTop-2)+'px');
-  const full=bounds.height;
-  const collapsed=Math.min(full,detail.getBoundingClientRect().bottom-bounds.top-top+8);
-  clip.style.setProperty('--inline-full',full+'px');
-  clip.style.setProperty('--inline-closed',collapsed+'px');
-  clip.style.setProperty('--inline-shift',top+'px');
-  clip.classList.add('inline-measured');
-  calCollapseTravel=Math.max(1,full-collapsed);
 }
 
 // —— 拖动日历卡底部把手：整月 ⇄ 焦点周那一行 ——
@@ -15480,7 +15343,6 @@ function measureInlineCalCollapse(){
     try{haptic('tap');}catch(e){}
   }
   function down(e){
-    measureInlineCalCollapse();
     dragging=true;moved=false;startY=e.clientY;startP=curP();
     lastY=e.clientY;lastT=performance.now();vel=0;
     clip.classList.remove('cal-animating');for(const el of kids)el.classList.remove('cal-animating');
@@ -15506,7 +15368,7 @@ function measureInlineCalCollapse(){
   grab.addEventListener('pointerup',up);
   grab.addEventListener('pointercancel',up);
   grab.addEventListener('keydown',e=>{
-    if(e.key==='Enter'||e.key===' '){e.preventDefault();measureInlineCalCollapse();snap(curP()>0.5?0:1);}
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();snap(curP()>0.5?0:1);}
   });
 })();
 
@@ -15586,7 +15448,6 @@ function openCalSearch(value='',focus=true){
   closeCalFilter();                     // 打开搜索前收起筛选面板
   document.body.classList.add('cal-searching');
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.add('on');
-  hideCalSheet();                       // 收起当天抽屉
   const inp=document.getElementById('calSearchInput');
   inp.value=value;
   runCalSearch();
@@ -15959,7 +15820,6 @@ function triggerCalMonthPick(){
 }
 
 function renderCal(){
-  cancelCalInlineMotion();
   document.getElementById('calTitle').textContent=`${calYear} 年 ${calMonth+1} 月`;
   const firstDay=new Date(calYear,calMonth,1);
   const lastDay=new Date(calYear,calMonth+1,0);
@@ -15994,8 +15854,6 @@ function renderCal(){
   const now=new Date();
   const todayStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const grid=document.getElementById('calGrid');
-  const gridClip=document.getElementById('calGridClip');
-  if(gridClip)gridClip.classList.toggle('has-inline',!!calSelDate);
   grid.innerHTML='';
 
   // 整个网格（含上月/下月的灰格）都按真实日期渲染，跨月事件才能连起来
@@ -16008,22 +15866,6 @@ function renderCal(){
     const ds=fmtd(cd);
     const isOther=cd.getMonth()!==calMonth;
     grid.appendChild(makeCalCell(cd.getDate(),isOther,ds,ds===todayStr,ds===calSelDate,laneMap[ds]||null));
-  }
-  // 选中日期的详情不再放在整个月历下方：插到它所在周之后，和日期格连成一体。
-  if(calSelDate){
-    const sdt=new Date(calSelDate+'T00:00:00');
-    const idx=Math.round((sdt-gridStart)/86400000);
-    if(idx>=0&&idx<cellCount){
-      const anchor=document.createElement('div');
-      anchor.className='cal-inline-detail';
-      anchor.style.gridColumn='1 / -1';
-      anchor.dataset.date=calSelDate;
-      anchor.dataset.col=String(idx%7);
-      anchor.style.setProperty('--sel-col',idx%7);
-      const after=(Math.floor(idx/7)+1)*7-1;
-      const ref=grid.children[after];
-      if(ref&&ref.nextSibling)grid.insertBefore(anchor,ref.nextSibling);else grid.appendChild(anchor);
-    }
   }
   // 拖动收起：写入网格行数 + 焦点周下标（收起时保留「选中日 → 今天 → 第 0 行」所在的一行）
   const rows=cellCount/7;
@@ -16086,14 +15928,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
   cell.className='cal-day';
   if(isOther)cell.classList.add('cal-other');
   if(isToday)cell.classList.add('cal-today');
-  if(isSel){
-    cell.classList.add('cal-selected');
-    const colIndex=new Date(dateStr+'T00:00:00').getDay();
-    // 月历是周一开头：Sunday(0)->6，其余减 1
-    const mondayCol=(colIndex+6)%7;
-    if(mondayCol===0)cell.dataset.edge='left';
-    else if(mondayCol===6)cell.dataset.edge='right';
-  }
+  if(isSel)cell.classList.add('cal-selected');
   const num=document.createElement('div');
   num.className='cal-daynum';num.textContent=isToday?'今':day;cell.appendChild(num);
 
@@ -16115,13 +15950,9 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
   if(dateStr) cell.onclick=()=>{
     const p=dateStr.split('-');
     calYear=+p[0];calMonth=+p[1]-1;
-    // 再点一次同一天＝收起；点别的日期＝把一体式时间线切到新日期。
     if(calSelDate===dateStr){
-      if(_calMotion&&_calMotion.closing){openCalDay(dateStr);return;}
-      animateCalInline(false,()=>{
-        calSelDate=null;
-        renderCal();renderCalDetail();
-      });
+      calSelDate=null;
+      renderCal();renderCalDetail();
       return;
     }
     openCalDay(dateStr);
@@ -16167,7 +15998,7 @@ function calDayRange(dateStr,x,y){
 function openCalRec(r,point){
   if(!r)return;
   if(r._isNote){showCalNotePreview(r.id,point);return;}
-  hideCalSheet();closeCalendar();openEdit(r.id);
+  closeCalendar();openEdit(r.id);
 }
 
 function saveFoodOrder(date,ids){
@@ -16264,14 +16095,6 @@ function makeCalTlRow(r,tail,isCur){
   if(calView==='food'&&r._isNote)bindFoodDrag(div,dot,r);
   return div;
 }
-// 当天无记录时的占位节点（实心）
-function makeCalTlEmpty(text){
-  const div=document.createElement('div');
-  div.className='cal-tl-row cal-tl-cur cal-tl-empty';
-  div.innerHTML=`<span class="cal-tl-dot"></span><span class="cal-tl-nm">${text}</span>`;
-  return div;
-}
-
 // 当天记录右侧信息：笔记→跨天「第X天」(带起止日区间)；影音→分类(+评分)
 function calCurTail(r){
   if(calView==='food')return '';
@@ -16292,11 +16115,8 @@ function calCurTail(r){
 // 起点 = 它那一天的列左边，宽 = max(真实跨度, 名字撑开的宽)。名字比跨度长时块会
 // 伸出真实结束日——一周概览要的是「一眼认出是什么事」，精确到哪天点进那天看。
 const CW_OPEN_KEY='my_list_cal_week_open';
-const CD_OPEN_KEY='my_list_cal_day_open';
-// 两张卡共用这只箭头（收起时 CSS 把它转 90°）
 const CW_CHEV='<svg class="cw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"'+
   ' stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-let calDayOpen=localStorage.getItem(CD_OPEN_KEY)!=='0';
 const CW_WK=['一','二','三','四','五','六','日'];
 let calWeekOpen=localStorage.getItem(CW_OPEN_KEY)!=='0';
 let cwShownWeek='';                     // 已经画出来的那一周（周一那天），周没变就不重画
@@ -16486,14 +16306,6 @@ window.addEventListener('resize',()=>{
   clearTimeout(_cwRz);_cwRz=setTimeout(()=>layoutWeekPills(),150);
 });
 
-function toggleDayCard(){
-  const card=document.querySelector('#calDetailList .cal-card');
-  if(!card)return;
-  calDayOpen=!calDayOpen;
-  try{localStorage.setItem(CD_OPEN_KEY,calDayOpen?'1':'0');}catch(_){}
-  card.classList.toggle('closed',!calDayOpen);
-}
-
 function toggleWeekCard(){
   const card=document.getElementById('calWeekCard');
   if(!card)return;
@@ -16503,144 +16315,18 @@ function toggleWeekCard(){
   if(calWeekOpen)layoutWeekPills();           // 收起时量不到宽度，展开这一下才摆得出来
 }
 
-// 分段展开：220ms 撑开轮廓，随后各行依次淡入，总时长最多 420ms。
-// 收起统一渐隐 320ms，布局用 400ms 柔和合拢；缓存轮廓坐标。
-var _calMotion=null;
-function cancelCalInlineMotion(){
-  const motion=_calMotion;if(!motion)return;
-  _calMotion=null;cancelAnimationFrame(motion.frame);
-  motion.panel.classList.remove('cal-motion');
-  motion.panel.style.height='';motion.panel.style.marginBottom='';
-  if(motion.outline)motion.outline.style.opacity='';
-  motion.selected.classList.remove('cal-wipe-closing');
-  motion.selected.style.removeProperty('--cal-wipe-bg');
-  motion.selected.style.removeProperty('--cal-wipe-mask');
-  [motion.outline,motion.card].forEach(el=>{if(el){el.style.maskImage='';el.style.webkitMaskImage='';}});
-  motion.colorAnimations.forEach(animation=>animation.cancel());
-  motion.days.forEach(day=>{day.style.paddingBottom='';});
-  motion.rows.forEach(row=>{row.style.opacity='';row.style.transform='';});
-}
-function animateCalInline(open,done){
-  cancelCalInlineMotion();
-  const panel=document.querySelector('.cal-inline-detail');
-  if(!panel){if(done)done();return;}
-  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){if(done)done();return;}
-  const rows=Array.from(panel.querySelectorAll('.cal-tl-row,.cal-empty'));
-  const height=panel.getBoundingClientRect().height;
-  const margin=parseFloat(getComputedStyle(panel).marginBottom)||0;
-  if(!height){if(done)done();return;}
-  const selected=document.querySelector('#calGrid .cal-selected');
-  const bounds=panel.getBoundingClientRect(),tab=selected.getBoundingClientRect();
-  const radius=parseFloat(getComputedStyle(selected).borderTopLeftRadius)||10;
-  const outline=panel.querySelector('.cal-inline-outline');
-  const days=Array.from(document.querySelectorAll('#calGrid .cal-focusrow'));
-  const padding=days.map(day=>parseFloat(getComputedStyle(day).paddingBottom)||12);
-  const colorAnimations=[];
-  const fadeTiming={duration:320,easing:'ease-in-out',fill:'forwards'};
-  if(!open){
-    const number=selected.querySelector('.cal-daynum');
-    const selectedStyle=getComputedStyle(selected);
-    const numberStyle=number?getComputedStyle(number):null;
-    selected.style.setProperty('--cal-wipe-bg',selectedStyle.backgroundColor);
-    selected.classList.add('cal-wipe-closing');
-    if(number)colorAnimations.push(number.animate([
-      {color:numberStyle.color},
-      {color:selectedStyle.getPropertyValue(selected.classList.contains('cal-today')?'--accent':'--text-primary').trim()}
-    ],fadeTiming));
-  }
-  const card=panel.querySelector('.cal-card');
-  const motion={panel,rows,outline,card,selected,days,colorAnimations,closing:!open,frame:0,done};_calMotion=motion;
-  panel.classList.add('cal-motion');
-  const duration=open?420:400,start=performance.now();
-  const clamp=n=>Math.max(0,Math.min(1,n));
-  const ease=n=>1-Math.pow(1-clamp(n),3);
-  const soft=n=>{const p=clamp(n);return p*p*(3-2*p);};
-  function tick(now){
-    if(_calMotion!==motion||!panel.isConnected)return;
-    const elapsed=Math.min(duration,now-start);
-    const extent=open?ease(elapsed/220):1-soft(elapsed/400);
-    const currentHeight=Math.max(1,height*extent);
-    panel.style.height=currentHeight+'px';
-    if(!open){
-      // 24px 柔和过渡带自底部向上扫过，框线、底色和事件共用同一个位置。
-      const tabHeight=bounds.top-tab.top;
-      const edge=(tabHeight+currentHeight+24)*(1-soft(elapsed/320));
-      const mask=end=>`linear-gradient(to bottom,#000 ${end-24}px,transparent ${end}px)`;
-      const outlineMask=mask(edge);
-      if(outline){outline.style.maskImage=outlineMask;outline.style.webkitMaskImage=outlineMask;}
-      selected.style.setProperty('--cal-wipe-mask',outlineMask);
-      if(card){const contentMask=mask(edge-tabHeight);card.style.maskImage=contentMask;card.style.webkitMaskImage=contentMask;}
-    }
-    // 日期行及其 12px 留白保持原尺寸，仅事件框底边从下往上合拢。
-    panel.style.marginBottom=(margin*extent)+'px';
-    if(!open&&elapsed>=320){
-      const settle=soft((elapsed-320)/80);
-      days.forEach((day,i)=>{day.style.paddingBottom=(padding[i]+(4-padding[i])*settle)+'px';});
-    }
-    rows.forEach((row,i)=>{
-      const visible=open?clamp((elapsed-220-Math.min(i*30,60))/140):1;
-      row.style.opacity=String(visible);
-      row.style.transform=`translateY(${open?4*(1-visible):0}px)`;
-    });
-    if(open||elapsed<320)drawCalInlineOutline({bounds:{left:bounds.left,top:bounds.top,width:bounds.width,height:currentHeight},tab,radius});
-    if(elapsed<duration)motion.frame=requestAnimationFrame(tick);
-    else if(!open&&done){
-      // 保持最终的透明/收拢状态直到旧节点移除，不能先恢复颜色和自然高度。
-      _calMotion=null;
-      panel.remove();
-      done();
-      colorAnimations.forEach(animation=>animation.cancel());
-    }else{cancelCalInlineMotion();if(done)done();else drawCalInlineOutline();}
-  }
-  tick(start);
-}
-
-// 直接量日期格与详情的位置；小数像素、字号和转屏都使用同一组坐标。
-let _calOutlineObserver=null;
-function drawCalInlineOutline(geometry){
-  const panel=document.querySelector('.cal-inline-detail');
-  const day=document.querySelector('#calGrid .cal-selected');
-  if(!panel||!day)return;
-  const b=geometry?geometry.bounds:panel.getBoundingClientRect(),t=geometry?geometry.tab:day.getBoundingClientRect();
-  if(!b.width||!b.height)return;
-  // iOS Safari 会把正好贴在 SVG/网格裁切边界上的 1px 描边削掉抗锯齿外沿，
-  // 看起来只剩半条。四边向内留满 1px；普通日历与食记共用这份轮廓。
-  const inset=1;
-  const left=inset,right=b.width-inset,bottom=Math.max(inset,b.height-inset);
-  const x=t.left-b.left+inset,x2=t.right-b.left-inset,top=t.top-b.top+inset;
-  const r=Math.min((geometry?geometry.radius:parseFloat(getComputedStyle(day).borderTopLeftRadius)||10),(x2-x)/2, -top/2);
-  const bodyR=Math.min(r,Math.max(0,(bottom-inset)/2));
-  const edgeLeft=panel.dataset.col==='0',edgeRight=panel.dataset.col==='6';
-  const shoulder=Math.min(r,edgeLeft?Infinity:(x-left)/2,edgeRight?Infinity:(right-x2)/2);
-  let d=`M ${x+r} ${top} H ${x2-r} Q ${x2} ${top} ${x2} ${top+r}`;
-  d+=edgeRight?` V ${bottom-bodyR}`:
-    ` V ${inset-shoulder} Q ${x2} ${inset} ${x2+shoulder} ${inset} H ${right-bodyR} Q ${right} ${inset} ${right} ${inset+bodyR} V ${bottom-bodyR}`;
-  d+=` Q ${right} ${bottom} ${right-bodyR} ${bottom} H ${left+bodyR} Q ${left} ${bottom} ${left} ${bottom-bodyR}`;
-  d+=edgeLeft?` V ${top+r}`:
-    ` V ${inset+bodyR} Q ${left} ${inset} ${left+bodyR} ${inset} H ${x-shoulder} Q ${x} ${inset} ${x} ${inset-shoulder} V ${top+r}`;
-  d+=` Q ${x} ${top} ${x+r} ${top} Z`;
-  let svg=panel.querySelector('.cal-inline-outline');
-  if(!svg){
-    svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.classList.add('cal-inline-outline');svg.setAttribute('aria-hidden','true');
-    svg.appendChild(document.createElementNS(svg.namespaceURI,'path'));panel.appendChild(svg);
-  }
-  svg.style.top=(top-inset)+'px';svg.setAttribute('width',b.width);
-  svg.setAttribute('height',b.height-top+inset);
-  svg.setAttribute('viewBox',`0 ${top-inset} ${b.width} ${b.height-top+inset}`);
-  svg.firstChild.setAttribute('d',d);
-}
-window.addEventListener('resize',()=>{
-  const motion=_calMotion;
-  cancelCalInlineMotion();
-  if(motion&&motion.closing&&motion.done)motion.done();
-  else drawCalInlineOutline();
+let calDayFilter='all';
+document.getElementById('calDayFilters').addEventListener('click',event=>{
+  const button=event.target.closest('button[data-filter]');
+  if(!button||button.dataset.filter===calDayFilter)return;
+  calDayFilter=button.dataset.filter;
+  renderCalDetail();
 });
 
 function renderCalDetail(){
-  const oldInline=document.querySelector('.cal-inline-detail');
-  const oldList=document.getElementById('calDetailList');
-  if(!calSelDate){if(oldInline)oldInline.remove();if(oldList)oldList.innerHTML='';return;}
+  const card=document.getElementById('calDayCard');
+  card.hidden=!calSelDate;
+  if(!calSelDate)return;
   const [cy,cm,cd]=calSelDate.split('-');
   const titleDate=`${cy}/${cm}/${cd}`;
   const _nre=/^(\d{4})\/(\d{2})\/(\d{2})$/;
@@ -16672,52 +16358,28 @@ function renderCalDetail(){
     if((da>0)!==(db>0)) return da>0?1:-1;         // 过去那一段整体排在未来前面
     return Math.abs(da)-Math.abs(db);             // 段内按距离由近到远
   });
-  const otherTotal=otherYears.reduce((a,y)=>a+otherByYear[y].length,0);
-
-  document.getElementById('calDetailTitle').textContent=`${parseInt(cm)} 月 ${parseInt(cd)} 日`;
-  document.getElementById('calDetailCount').textContent='';   // 本年计数去掉，只保留「往年今日」的计数
-
-  // 优先渲染到选中日期所在周正下方的一体式区域；旧的下方详情容器只作兼容。
-  const listEl=document.querySelector('.cal-inline-detail')||document.getElementById('calDetailList');
-  const legacy=document.getElementById('calDetailList');
-  if(legacy&&legacy!==listEl)legacy.innerHTML='';
-  listEl.innerHTML='';
-
-  // 事件时间线（单张白卡）：当天记录（墨绿实心节点）→ 往年记录（空心节点），每条一个节点、时间在右
-  const card=document.createElement('div');card.className='cal-card'+(listEl.classList.contains('cal-inline-detail')||calDayOpen?'':' closed');
-  // 卡片顶部日期标题：「N 月 N 日」，默认墨绿。整条是收起/展开的开关（同本周卡片）
-  const dhd=document.createElement('div');dhd.className='cal-card-date';
-  dhd.innerHTML=`<span>${parseInt(cm)} 月 ${parseInt(cd)} 日</span>`+CW_CHEV;
-  dhd.onclick=toggleDayCard;
-  card.appendChild(dhd);
-  if(!recs.length && !otherTotal){
-    const e=document.createElement('div');e.className='cal-empty';
-    e.textContent='这一天没有记录';
-    card.appendChild(e);
-  }else{
-    const tl=document.createElement('div');tl.className='cal-tl';
-    if(recs.length){
-      recs.forEach(r=>tl.appendChild(makeCalTlRow(r,calCurTail(r),true)));
-    }else{
-      tl.appendChild(makeCalTlEmpty('这天还没有新记录'));   // 当天无记录时的占位节点
-    }
-    otherYears.forEach(y=>{
-      const ago=parseInt(cy)-parseInt(y);
-      const agoTxt=ago>0?`${ago} 年前`:(ago<0?`${-ago} 年后`:'今天');
-      otherByYear[y].forEach(r=>tl.appendChild(makeCalTlRow(r,agoTxt,false)));
-    });
-    card.appendChild(tl);
+  document.getElementById('calDetailTitle').textContent=`${Number(cm)} 月 ${Number(cd)} 日`;
+  document.querySelectorAll('#calDayFilters button').forEach(button=>{
+    button.setAttribute('aria-pressed',String(button.dataset.filter===calDayFilter));
+  });
+  const list=document.getElementById('calDetailList');
+  list.replaceChildren();
+  if(calDayFilter!=='history'){
+    recs.forEach(r=>list.appendChild(makeCalTlRow(r,calCurTail(r),true)));
   }
-  listEl.appendChild(card);
-  if(listEl.classList.contains('cal-inline-detail')){
-    if(_calOutlineObserver)_calOutlineObserver.disconnect();
-    drawCalInlineOutline();
-    measureInlineCalCollapse();
-    if(typeof ResizeObserver!=='undefined'){
-      _calOutlineObserver=new ResizeObserver(()=>{if(!_calMotion){drawCalInlineOutline();measureInlineCalCollapse();}});
-      _calOutlineObserver.observe(listEl);
-      _calOutlineObserver.observe(document.getElementById('calGrid'));
-    }
+  if(calDayFilter!=='current'){
+    otherYears.forEach(year=>{
+      const ago=Number(cy)-Number(year);
+      if(calDayFilter==='history'&&ago<0)return;
+      const tail=ago>0?`${ago} 年前`:`${-ago} 年后`;
+      otherByYear[year].forEach(r=>list.appendChild(makeCalTlRow(r,tail,false)));
+    });
+  }
+  if(!list.children.length){
+    const empty=document.createElement('div');
+    empty.className='cal-empty';
+    empty.textContent=calDayFilter==='history'?'往年这一天没有记录':'这一天没有记录';
+    list.appendChild(empty);
   }
 }
 
