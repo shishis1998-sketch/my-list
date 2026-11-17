@@ -3303,13 +3303,15 @@ mark.shl{
    排在前面的 @media 会被后面的基础规则盖掉。 */
 @media (max-width:1024px), (pointer: coarse){
   .cal-viewbar{display:none;}
-  /* 切换条收起后，这张卡就是首屏第一行。顶部安全区 + 14 的呼吸位必须走 margin：
-     写进卡片自己的 padding 只是把卡撑高，卡片上沿还贴在 6px 处，状态栏会压在白卡上。
-     14 与搜索行 .cal-searchwrap、经期视图 .home-header 的顶距一致——搜索时这两行
-     互相替换，顶距不一样会跳。 */
-  .cal-hdr{margin-top:calc(var(--sp-14) + env(safe-area-inset-top));}
-  body:not(.cal-searching) #calViewCalendar > :is(.cal-hdr,.cal-scroll,.cal-day-card){
+  body:not(.cal-searching) #calViewCalendar > :is(.cal-hdr,.cal-scroll,.cal-day-card,.cw-card){
     margin-inline:0;
+  }
+  /* 白底覆盖顶部安全区，月份按钮仍在安全区下方。 */
+  #calViewCalendar > .cal-hdr{
+    margin-top:0;
+    padding-top:calc(var(--sp-8) + var(--sp-14) + env(safe-area-inset-top));
+    border-top:0;
+    border-radius:0;
   }
 }
 /* 经期视图：整块 modal 一起滚动（月份导航 .home-sticky 仍 sticky 吸顶，
