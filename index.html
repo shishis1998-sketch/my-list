@@ -5617,6 +5617,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 @media (min-width:1025px) and (hover:hover) and (pointer:fine){
   #detailBookNoteCard .tl-section-btn:hover{border-radius:var(--r);}
+  .desktop-chapter-controls>.nlbl-btn:hover:not(:focus-visible){outline:none;}
+  .desktop-chapter-controls>:is(.desktop-chapter-edit,.desktop-chapter-cancel):hover{color:var(--accent);}
+  .desktop-chapter-controls>.nlbl-btn:hover svg{stroke-width:3;}
   #appSidebar .sidebar-disclosure:hover{border-color:var(--accent);color:var(--accent);}
 
   /* 侧栏悬停统一描在当前行，笔记标题和展开箭头共用一圈。 */
