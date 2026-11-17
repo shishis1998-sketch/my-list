@@ -3146,6 +3146,7 @@ mark.shl{
     --timeline-corner-stops:transparent calc(var(--rlg) - var(--bd) - .5px),
       var(--ink) calc(var(--rlg) - var(--bd)),var(--ink) calc(var(--rlg) - .5px),var(--bg) var(--rlg);
     background:
+      linear-gradient(var(--ink),var(--ink)) center top / calc(100% - 2 * var(--rlg)) var(--bd) no-repeat,
       radial-gradient(circle at bottom right,var(--timeline-corner-stops)) left top / var(--rlg) 100% no-repeat,
       radial-gradient(circle at bottom left,var(--timeline-corner-stops)) right top / var(--rlg) 100% no-repeat;
   }
