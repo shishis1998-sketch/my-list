@@ -3307,6 +3307,9 @@ mark.shl{
      14 与搜索行 .cal-searchwrap、经期视图 .home-header 的顶距一致——搜索时这两行
      互相替换，顶距不一样会跳。 */
   .cal-hdr{margin-top:calc(var(--sp-14) + env(safe-area-inset-top));}
+  body:not(.cal-searching) #calViewCalendar > :is(.cal-hdr,.cal-scroll,.cal-day-card){
+    margin-inline:0;
+  }
 }
 /* 经期视图：整块 modal 一起滚动（月份导航 .home-sticky 仍 sticky 吸顶，
    滚动时可继续翻月）。日历视图不受影响。 */
