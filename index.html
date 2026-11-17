@@ -1655,11 +1655,12 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 /* 事件白卡：单张卡内一条竖向时间线（去掉标题与颜色）*/
 .cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
   max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
-.cal-card-date{flex-shrink:0;padding:var(--sp-12) var(--sp-14);
-  font-size:var(--fs-headline);font-weight:700;color:var(--accent);letter-spacing:.02em;
-  display:flex;align-items:center;gap:var(--sp-8);}
+.cal-day-card-header{display:flex;align-items:center;justify-content:space-between;
+  gap:var(--sp-8);padding:var(--sp-12) var(--sp-14);}
+.cal-card-date{font-size:var(--fs-headline);font-weight:700;color:var(--accent);
+  letter-spacing:.02em;white-space:nowrap;}
 .cal-day-card{margin:0 var(--sp-14) var(--sp-12);}
-.cal-day-filters{display:flex;gap:var(--sp-16);padding:0 var(--sp-14) var(--sp-8);}
+.cal-day-filters{display:flex;justify-content:flex-end;gap:clamp(var(--sp-6),3vw,var(--sp-16));white-space:nowrap;}
 .cal-day-filters button{font:inherit;font-size:var(--fs-caption);color:var(--text-muted);
   background:none;border:0;border-bottom:2px solid transparent;padding:var(--sp-4) 0;cursor:pointer;}
 .cal-day-filters button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
@@ -5923,12 +5924,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <div class="cal-searchresults" id="calSearchResults"></div>
       </div>
       <section class="cal-card cal-day-card" id="calDayCard" aria-labelledby="calDetailTitle" hidden>
-        <div class="cal-card-date" id="calDetailTitle"></div>
-        <div class="cal-day-filters" id="calDayFilters" role="group" aria-label="日期记录筛选">
-          <button type="button" data-filter="all" aria-pressed="true">全部</button>
-          <button type="button" data-filter="current" aria-pressed="false">今日</button>
-          <button type="button" data-filter="history" aria-pressed="false">那年今日</button>
-        </div>
+        <header class="cal-day-card-header">
+          <div class="cal-card-date" id="calDetailTitle"></div>
+          <div class="cal-day-filters" id="calDayFilters" role="group" aria-label="日期记录筛选">
+            <button type="button" data-filter="all" aria-pressed="true">全部</button>
+            <button type="button" data-filter="current" aria-pressed="false">今日</button>
+            <button type="button" data-filter="history" aria-pressed="false">那年今日</button>
+          </div>
+        </header>
         <div class="cal-tl" id="calDetailList"></div>
       </section>
       <!-- 本周卡片：选中日所在那一周的事件概览，排在「当天」卡下面，点标题栏收起/展开 -->
