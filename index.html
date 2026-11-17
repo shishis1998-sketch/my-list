@@ -5586,28 +5586,22 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 
 @media (min-width:1025px) and (hover:hover) and (pointer:fine){
-  #appSidebar :is(.nsec-view,.nsec-data,.nsec-sync) .ncard:has(> .nitem:only-child:hover){
-    border-color:var(--accent);
-  }
-  #appSidebar :is(.nsec-view,.nsec-data,.nsec-sync) .ncard > .nitem:hover{
+  #detailBookNoteCard .tl-section-btn:hover{border-radius:var(--r);}
+  #appSidebar .sidebar-disclosure:hover{border-color:var(--accent);color:var(--accent);}
+
+  /* 侧栏悬停统一描在当前行，笔记标题和展开箭头共用一圈。 */
+  #appSidebar .ncard .nitem:not(.nitem-fs,#nav-notes):hover,
+  #appSidebar .sidebar-notes-header:has(>button:hover){
+    border-radius:calc(var(--rlg) - 1px);
     color:var(--accent);
   }
-  #appSidebar :is(.nsec-view,.nsec-data,.nsec-sync) .ncard > .nitem:not(:only-child):hover{
-    border-radius:calc(var(--rlg) - 1px);
-    box-shadow:inset 0 0 0 1px var(--accent);
+  #appSidebar .ncard .nitem:not(.nitem-fs,#nav-notes):hover:not(:focus-visible),
+  #appSidebar .sidebar-notes-header:has(>button:hover):not(:has(>button:focus-visible)){
+    outline:1px solid var(--accent);
+    outline-offset:-1px;
   }
-  #detailBookNoteCard .tl-section-btn:hover{border-radius:var(--r);}
-  #appSidebar .sidebar-disclosure:hover,
-  #appSidebar .ncard-cats-desktop .nitem:not(#nav-notes):hover{
-    border-color:var(--accent);color:var(--accent);
-  }
-  #appSidebar .sidebar-notes-header:has(button:hover)>:is(#nav-notes,#nav-notes-toggle){color:var(--accent);}
-  #appSidebar .ncard-notes:has(#nav-notes-toggle[aria-expanded="false"]):has(.sidebar-notes-header button:hover){
-    border-color:var(--accent);
-  }
-  #appSidebar .sidebar-notes-header:has(#nav-notes-toggle[aria-expanded="true"]):has(button:hover){
-    border-radius:calc(var(--rlg) - 1px) calc(var(--rlg) - 1px) 0 0;
-    box-shadow:inset 0 0 0 1px var(--accent);
+  #appSidebar .sidebar-notes-header:has(>button:hover)>:is(#nav-notes,#nav-notes-toggle){
+    color:var(--accent);
   }
 }
 </style>
