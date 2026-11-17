@@ -1639,15 +1639,15 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-grab-bar{width:36px;height:5px;border-radius:3px;background:var(--border);transition:background .15s,width .15s;}
 .cal-grabrow.cal-grab-on .cal-grab-bar{background:var(--accent-mid);}   /* 收起状态：把手变墨绿，作状态提示 */
 @media (prefers-reduced-motion:reduce){.cal-gridclip.cal-animating{transition:none;}}
-.cal-day{background:transparent;min-height:42px;padding:var(--sp-6) var(--sp-2) var(--sp-4);cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s,box-shadow .15s;}
+.cal-day{background:transparent;min-height:42px;padding:3px var(--sp-2) 1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;border-radius:var(--r);transition:background .15s,box-shadow .15s;}
 .cal-day.cal-other{color:var(--text-muted);}
 .cal-day.cal-other .cal-daynum{color:var(--text-muted);opacity:.5;}
 .cal-day.cal-other .cal-badges{opacity:.45;}   /* 上/下月的类目点淡化 */
-.cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);}                    /* 今天：墨绿加粗数字，不加圆圈 */
-.cal-day.cal-selected{background:var(--accent-light);box-shadow:inset 0 0 0 1px var(--accent-mid);}
-.cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;opacity:1;}
+.cal-day.cal-today .cal-daynum{font-weight:700;color:var(--accent);background:var(--accent-light);box-shadow:inset 0 0 0 1px var(--accent-mid);}
+.cal-day.cal-selected{background:transparent;box-shadow:none;}
+.cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;opacity:1;background:var(--accent-light);box-shadow:inset 0 0 0 1px var(--accent-mid);}
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent);}
-.cal-daynum{font-size:var(--fs-caption);width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
+.cal-daynum{font-size:var(--fs-caption);width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
 .cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:3px;max-width:100%;}
 .cal-dot{width:5px;height:5px;border-radius:50%;flex:none;}
 .cal-count{font-size:var(--fs-foot);background:var(--accent);color:var(--on-accent);padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
@@ -1750,13 +1750,13 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-cols{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);}
 .cw-gh{text-align:center;padding:0 0 var(--sp-8);}
 /* 星期和日期之间留 6：两行本来只靠行高那点余量隔着（量下来 4.5），挤成一坨；
-   「今天」那天的日期是个 22 见方的实心圆，圆边比字更往上顶，贴得尤其明显 */
+   「今天」那天的日期是个 30 见方的实心圆，圆边比字更往上顶，贴得尤其明显 */
 .cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;
   margin-bottom:var(--sp-6);}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
 .cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
-  width:22px;height:22px;line-height:22px;text-align:center;margin:0 auto;}
+  width:30px;height:30px;line-height:30px;text-align:center;margin:0 auto;}
 /* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
 .cw-pills{position:relative;}
 /* 高度不写死：一行 16（2 上下内边距 + 12 行高），放不下的名字换第二行、块自己长到 28。
@@ -3316,7 +3316,7 @@ mark.shl{
     top:0;
     z-index:10;
     margin-top:0;
-    padding-top:calc(var(--sp-8) + var(--sp-14) + env(safe-area-inset-top));
+    padding-top:calc(var(--sp-14) + env(safe-area-inset-top));
     border-top:0;
   }
   #calViewCalendar .cal-filterpop{top:100%;}
