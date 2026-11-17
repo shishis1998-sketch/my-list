@@ -12396,12 +12396,12 @@ function renderDetailTL(item){
   // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
   return `<div class="dt-sec">
   ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
-  ${desktopChapterLayout.matches?'<div class="desktop-chapter-add"><button type="button" class="nlbl-btn" aria-label="写笔记" title="写笔记" onclick="openNewDetailChapter()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>':''}
   <div class="dt-card${desktopChapterLayout.matches?' desktop-chapter-layout':''}" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
     ${timelineSearchOpen?'<div id="timelineSearchEmpty" class="people-search-empty" hidden>没有找到匹配的章节</div>':''}
   </div>
+  ${desktopChapterLayout.matches?'<div class="desktop-chapter-add"><button type="button" class="btn btn-g" onclick="openNewDetailChapter()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>添加章节</button></div>':''}
   </div>
   <button type="button" class="dt-fab" ${desktopChapterLayout.matches?'hidden style="display:none"':''} aria-label="新增章节" title="新增章节"
     onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
