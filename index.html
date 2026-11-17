@@ -3305,13 +3305,13 @@ mark.shl{
   .cal-viewbar{display:none;}
   body:not(.cal-searching) #calViewCalendar > :is(.cal-hdr,.cal-scroll,.cal-day-card,.cw-card){
     margin-inline:0;
+    border-radius:0;
   }
   /* 白底覆盖顶部安全区，月份按钮仍在安全区下方。 */
   #calViewCalendar > .cal-hdr{
     margin-top:0;
     padding-top:calc(var(--sp-8) + var(--sp-14) + env(safe-area-inset-top));
     border-top:0;
-    border-radius:0;
   }
 }
 /* 经期视图：整块 modal 一起滚动（月份导航 .home-sticky 仍 sticky 吸顶，
