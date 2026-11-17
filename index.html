@@ -3167,6 +3167,8 @@ mark.shl{
   .desktop-chapter-add{display:flex;justify-content:flex-end;}
   .desktop-chapter-reader{padding:var(--sp-8) var(--sp-12);overflow-wrap:anywhere;}
   .desktop-chapter-section>.desktop-chapter-reader{padding-block-start:var(--sp-12);}
+  .desktop-section-footer{display:flex;justify-content:flex-end;margin-top:var(--sp-8);}
+  .desktop-section-collapse:hover{color:var(--accent);}
   .desktop-chapter-section,
   .desktop-chapter-reader:has(>.tl-pts>:first-child){border-block-start:1px solid var(--border-soft);}
   .desktop-chapter-single>.desktop-chapter-reader{margin-inline:var(--sp-12);padding-inline:0;}
@@ -12436,8 +12438,19 @@ function desktopChapterSegments(chapter){
   const raw=chapter?.raw.trimStart()||'';
   return parseChapterSegs(raw.split('\n').slice(1).join('\n'));
 }
-function desktopChapterHtml(chapter){
-  return chapter?`<div class="tl-pts">${chapterReadRows(desktopChapterSegments(chapter)).join('')}</div>`:'';
+function desktopChapterHtml(chapter,section=false){
+  if(!chapter)return '';
+  const footer=section?`<div class="desktop-section-footer">
+    <button type="button" class="nlbl-btn desktop-section-collapse" aria-label="收起小节" title="收起小节" onclick="collapseDesktopSection(this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+    </button>
+  </div>`:'';
+  return `<div class="tl-pts">${chapterReadRows(desktopChapterSegments(chapter)).join('')}</div>${footer}`;
+}
+function collapseDesktopSection(footerButton){
+  const heading=footerButton.closest('.desktop-chapter-section').querySelector('.tl-section-btn');
+  setDesktopSectionExpanded(heading,false);
+  heading.focus();
 }
 function desktopChapterEditButton(idx){
   return `<span class="desktop-chapter-controls"><button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑当前章节或小节" title="编辑当前章节或小节" onclick="event.preventDefault();event.stopPropagation();editDesktopChapter(${idx})">
@@ -12491,7 +12504,7 @@ function editDesktopChapter(idx){
     event.preventDefault();
     event.stopPropagation();
     desktopChapterForm=null;
-    reader.innerHTML=desktopChapterHtml(chapter);
+    reader.innerHTML=desktopChapterHtml(chapter,!!reader.closest('.desktop-chapter-section'));
     controls.querySelector('.desktop-chapter-edit').focus({preventScroll:true});
   };
   controls.querySelector('.desktop-chapter-save').onclick=event=>{
@@ -12517,7 +12530,7 @@ function openDetailChapter(idx){
       if(desktopChapterForm.hasChanges()&&!confirm('放弃本章尚未保存的修改？'))return false;
       const prev=desktopChapterReader(desktopChapterIndex);
       const item=data.find(d=>d.id===detailId);
-      if(prev)prev.innerHTML=desktopChapterHtml(parseChapters(item?.bookNote||'')[desktopChapterIndex]);
+      if(prev)prev.innerHTML=desktopChapterHtml(parseChapters(item?.bookNote||'')[desktopChapterIndex],!!prev.closest('.desktop-chapter-section'));
       desktopChapterForm=null;
     }
     desktopChapterIndex=idx;
@@ -17442,7 +17455,7 @@ function renderTimelineChapterCards(chs,openFn){
           const arrow=inline?'<svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>':'';
           const row=`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${toggle} ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${action}" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}">${arrow}<span class="tl-section-name">${esc(x.section)}</span></button>`;
           return inline?`<section class="desktop-chapter-section"><div class="desktop-chapter-heading">${row}${desktopChapterEditButton(x.i)}</div>
-            <div class="desktop-chapter-reader" id="desktop-chapter-${x.i}" data-desktop-chapter="${x.i}" ${expanded?'':'hidden'}>${desktopChapterHtml(x.c)}</div></section>`:row;
+            <div class="desktop-chapter-reader" id="desktop-chapter-${x.i}" data-desktop-chapter="${x.i}" ${expanded?'':'hidden'}>${desktopChapterHtml(x.c,true)}</div></section>`:row;
         }).join('')}
       </div>
     </div>`;
