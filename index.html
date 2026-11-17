@@ -3175,8 +3175,10 @@ mark.shl{
     padding:var(--sp-14);background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);
   }
   .desktop-chapter-actions{display:flex;align-items:center;justify-content:space-between;}
-  .desktop-chapter-actions strong{margin-inline-end:auto;}
-  .desktop-chapter-actions button+button{margin-inline-start:var(--sp-8);}
+  .desktop-chapter-controls{display:flex;align-items:center;gap:var(--sp-4);flex-shrink:0;}
+  .desktop-chapter-controls .desktop-chapter-commit{display:none;}
+  :is(.desktop-chapter-section,.tl-chapter-single):has(>.desktop-chapter-reader>.desktop-chapter-form) > :is(.desktop-chapter-heading,.tl-head) .desktop-chapter-commit{display:flex;}
+  .desktop-chapter-controls .desktop-chapter-save{background:var(--accent);color:var(--on-accent);}
   .desktop-chapter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-12);}
   .desktop-chapter-fields>label{display:grid;gap:var(--sp-4);font-size:var(--fs-caption);}
   .desktop-chapter-fields>label>input{
@@ -12436,8 +12438,10 @@ function desktopChapterHtml(chapter){
   return chapter?`<div class="tl-pts">${chapterReadRows(desktopChapterSegments(chapter)).join('')}</div>`:'';
 }
 function desktopChapterEditButton(idx){
-  return `<button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑当前章节或小节" title="编辑当前章节或小节" onclick="event.preventDefault();event.stopPropagation();editDesktopChapter(${idx})">
-  <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+  return `<span class="desktop-chapter-controls"><button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑当前章节或小节" title="编辑当前章节或小节" onclick="event.preventDefault();event.stopPropagation();editDesktopChapter(${idx})">
+  <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+  <button type="button" class="nlbl-btn desktop-chapter-commit desktop-chapter-cancel" aria-label="取消" title="取消"><svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  <button type="button" class="nlbl-btn desktop-chapter-commit desktop-chapter-save" aria-label="保存" title="保存"><svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></button></span>`;
 }
 function desktopChapterReader(idx){
   return document.querySelector(`#dtBody [data-desktop-chapter="${idx}"]`);
@@ -12467,8 +12471,6 @@ function editDesktopChapter(idx){
   form.className='desktop-chapter-form';
   form.innerHTML=`<div class="desktop-chapter-actions">
     <strong>编辑笔记</strong>
-    <button type="button" class="tlsheet-action">取消</button>
-    <button type="submit" class="tlsheet-action">保存</button>
   </div><div class="desktop-chapter-fields">${chapterEditorFields(title,content)}</div>`;
   const inputs=[...form.querySelectorAll('.chapter-title-input')];
   inputs.forEach((input,i)=>{
@@ -12484,9 +12486,18 @@ function editDesktopChapter(idx){
   const titleInput=form.querySelector('.chapter-title-input');
   const sectionInput=form.querySelector('.chapter-section-input');
   form.hasChanges=()=>titleInput.value!==titleInput.defaultValue||sectionInput.value!==sectionInput.defaultValue||ta.value!==content;
-  form.querySelector('button').onclick=()=>{
+  const controls=reader.previousElementSibling.querySelector('.desktop-chapter-controls');
+  controls.querySelector('.desktop-chapter-cancel').onclick=event=>{
+    event.preventDefault();
+    event.stopPropagation();
     desktopChapterForm=null;
     reader.innerHTML=desktopChapterHtml(chapter);
+    controls.querySelector('.desktop-chapter-edit').focus({preventScroll:true});
+  };
+  controls.querySelector('.desktop-chapter-save').onclick=event=>{
+    event.preventDefault();
+    event.stopPropagation();
+    form.requestSubmit();
   };
   form.addEventListener('submit',event=>{
     event.preventDefault();
@@ -12803,7 +12814,7 @@ function deleteChapterAction(){
   toast('已删除，可在设置 › 回收站找回','delete');
 }
 document.addEventListener('pointerdown',e=>{
-  if(e.target.closest?.('.desktop-chapter-edit'))return;
+  if(e.target.closest?.('.desktop-chapter-controls'))return;
   const el=e.target.closest?.('#detailBookNoteCard [data-graph-longpress]');
   if(!el||e.button!==0)return;
   if(chapterPress)clearTimeout(chapterPress.timer);
@@ -12829,7 +12840,7 @@ document.addEventListener('click',e=>{
   }
 },true);
 document.addEventListener('contextmenu',e=>{
-  if(e.target.closest?.('.desktop-chapter-edit'))return;
+  if(e.target.closest?.('.desktop-chapter-controls'))return;
   const el=e.target.closest?.('#detailBookNoteCard [data-graph-longpress]');
   if(!el)return;e.preventDefault();
   if(chapterPress){clearTimeout(chapterPress.timer);chapterPress=null;}
