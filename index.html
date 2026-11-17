@@ -5667,7 +5667,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="ncard ncard-cats-desktop ncard-notes">
       <div class="sidebar-notes-header">
-        <button class="nitem" id="nav-notes" type="button" onclick="filterCat('notes:all')">笔记</button>
+        <button class="nitem" id="nav-notes" type="button" onclick="filterCat('notes:'+preferredNoteSub())">笔记</button>
         <button id="nav-notes-toggle" type="button" aria-label="展开笔记子分类" aria-expanded="false"
           aria-controls="nsub" onclick="setSidebarNotesExpanded(this.getAttribute('aria-expanded')!=='true')">
           <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -9405,10 +9405,10 @@ const OVU_KEY='my_list_ovu_cfg_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:all', curSearch='', curSort='media-auto', curStatus='in-progress', curScore='all';
+let curCat='notes:', curSearch='', curSort='media-auto', curStatus='in-progress', curScore='all';
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
-let curNoteSub='all'; // 笔记子分类筛选
+let curNoteSub=''; // 笔记子分类筛选
 let curNoteMonth='';  // 收集/日记的月份明细；空值=月份总览
 let editId=null, curTags=[], delId=null, editCats=[];
 let editNoteId=null, curNoteTags=[], editNoteSubs=[];
@@ -11188,6 +11188,17 @@ function mediaMonthGroups(items,sort){
 }
 
 function render(){
+  const noteSub=preferredNoteSub();
+  if(noteSub!==curNoteSub){
+    curNoteSub=noteSub;
+    if(isNoteMode()){
+      curCat='notes:'+curNoteSub;
+      curNoteMonth='';
+      curFilterTags=[];
+      syncNoteSortSelect();
+    }
+    saveLastView();
+  }
   syncAddBtn();
   syncBottomTabs();
   // 笔记模式分流
@@ -13676,8 +13687,7 @@ function filterCat(cat){
   // 解析笔记模式的子分类
   if(isNoteMode()){
     setSidebarNotesExpanded(true);
-    const parts=cat.split(':');
-    curNoteSub=parts[1]||'all';
+    curNoteSub=cat.slice(6);
     // 列表渲染可能较重，先立刻点亮已选胶囊，让单次触摸马上有反馈。
     document.querySelectorAll('#nfchips .nfchip[data-note-sub]').forEach(el=>{
       el.classList.toggle('on',el.dataset.noteSub===curNoteSub);
@@ -13695,7 +13705,7 @@ function filterCat(cat){
 }
 
 // ── 记住上次停留的页面 ──────────────────────────────────────────
-// 存两样：当前在哪一页，以及列表页停在哪个分类。
+// 记住当前页面、列表分类和最后查看的笔记子分类。
 // 「在哪一页」是从真实状态推出来的，不是各处分别写死——openCalendar 与
 // toggleSidebar 互相调用（开设置会先关日历、开日历会先收侧栏），各写各的
 // 很容易后一次调用把前一次的正确值覆盖成错的。
@@ -13707,29 +13717,30 @@ function currentView(){
   return 'list';
 }
 function saveLastView(){
-  try{localStorage.setItem(VIEW_KEY,JSON.stringify({page:currentView(),cat:curCat}));}catch(e){}
+  try{localStorage.setItem(VIEW_KEY,JSON.stringify({page:currentView(),cat:curCat,noteSub:curNoteSub}));}catch(e){}
 }
 function readLastView(){
   try{const v=JSON.parse(localStorage.getItem(VIEW_KEY));return v&&typeof v==='object'?v:null;}catch(e){return null;}
 }
-// 存下来的分类可能已经被删掉/改名（换台设备同步下来也一样），认不出就退回默认
+function preferredNoteSub(sub=curNoteSub){
+  return noteSubs?.includes(sub)?sub:(noteSubs?.[0]||'');
+}
+// 存下来的分类可能已经被删掉或改名。
 function validCat(c){
   if(typeof c!=='string'||!c) return null;
   if(c==='all') return c;
   if(c.startsWith('notes:')){
     const sub=c.slice(6);
-    return (sub==='all'||(noteSubs||[]).includes(sub))?c:'notes:all';
+    return 'notes:'+(sub!=='all'&&noteSubs.includes(sub)?sub:preferredNoteSub());
   }
   return (cats||[]).some(x=>x.id===c)?c:null;
 }
 // 分类要赶在首次 render 之前定下来，所以在 boot() 里调
 function restoreLastCat(){
   const v=readLastView();
-  const c=v&&validCat(v.cat);
-  if(c){
-    curCat=c;
-    curNoteSub=c.startsWith('notes:')?c.slice(6):'all';
-  }
+  curNoteSub=preferredNoteSub(v?.noteSub);
+  curCat=validCat(v?.cat)||'notes:'+curNoteSub;
+  if(isNoteMode())curNoteSub=curCat.slice(6);
 }
 // 页面本身等首次 render 之后再切：日历/设置都要在列表渲染好之后才叠上去
 function restoreLastPage(){
@@ -13803,9 +13814,7 @@ function applyModeUI(){
   if(bbinp) bbinp.placeholder='搜索笔记...';
   // 侧边栏只更新笔记选中样式，展开状态由箭头独立控制。
   const navN=document.getElementById('nav-notes');
-  const allNotes=notes&&curCat==='notes:all';
-  navN.classList.toggle('on',allNotes);
-  navN.classList.toggle('parent-on',notes&&!allNotes);
+  navN.classList.toggle('parent-on',notes);
 }
 function setSidebarNotesExpanded(expanded){
   const toggle=document.getElementById('nav-notes-toggle');
@@ -13858,7 +13867,7 @@ function onSearchBB(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render(
 // 不用 scrollTo(0)——后者在键盘弹起时会把内容顶到状态栏下被裁切）
 function scrollResultsTop(){
   // 手机端整页滚动（.content 不滚），桌面端是 .content 滚动，两边都要归零，
-  // 否则搜索后结果保留旧滚动位置，第一条和「全部笔记 N 条」标题被顶到屏幕外
+  // 否则搜索后结果保留旧滚动位置，第一条和列表标题被顶到屏幕外
   const c=document.querySelector('.content');
   if(c) c.scrollTop=0;
   if(isMobileLayout()){
@@ -13883,7 +13892,7 @@ function syncBottomTabs(){
   const menu=document.getElementById('bbtab-menu');
   if(!all||!notes) return;
   const notesActive=isNoteMode()&&!document.body.classList.contains('cal-open')&&!document.body.classList.contains('sb-open');
-  document.getElementById('bbtabNoteLbl').textContent=notesActive&&curNoteSub!=='all'?curNoteSub:'笔记';
+  document.getElementById('bbtabNoteLbl').textContent=notesActive?curNoteSub:'笔记';
   // 日历页打开时，高亮独占「日历」tab；即便底层是笔记模式也不要再点亮「笔记」
   if(document.body.classList.contains('cal-open')){
     all.classList.remove('on');
@@ -13938,7 +13947,7 @@ function renderNoteSortMenu(){
 function onNoteTabTap(){
   const sheet=document.getElementById('noteViewSheet');
   if(!document.getElementById('bbtab-notes').classList.contains('on')){
-    filterCat(isNoteMode()?curCat:'notes:all');
+    filterCat('notes:'+preferredNoteSub());
     return;
   }
   if(sheet.classList.contains('open')){closeNoteViewSheet();return;}
@@ -13949,10 +13958,10 @@ function onNoteTabTap(){
     ['日记','<path d="M4 4h7l1 2 1-2h7v15h-7l-1 2-1-2H4zM12 6v15"/>']
   ]);
   const panel=document.getElementById('noteViewPanel');
-  panel.innerHTML=['all',...noteSubs].map(sub=>{
+  panel.innerHTML=noteSubs.map(sub=>{
     const on=sub===curNoteSub;
     const icon=icons.get(sub)||'<path d="M4 5h16M4 12h16M4 19h16"/>';
-    return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" data-note-sub="${esc(sub)}" aria-pressed="${on}" onclick="pickNoteCategory(this.dataset.noteSub)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg><span>${sub==='all'?'全部笔记':esc(sub)}</span></button>`;
+    return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" data-note-sub="${esc(sub)}" aria-pressed="${on}" onclick="pickNoteCategory(this.dataset.noteSub)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg><span>${esc(sub)}</span></button>`;
   }).join('')+'<div class="bb-sortsep" role="separator"></div><button type="button" class="bb-sortopt" onclick="closeNoteViewSheet();openNoteSubMgr()">管理子分类</button>';
   panel.scrollTop=0;
   sheet.classList.add('open');
@@ -14032,7 +14041,7 @@ function getAllCurrentTags(){
   let L;
   if(isNoteMode()){
     L=userNotes();
-    if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
+    L=L.filter(n=>n.subCat===curNoteSub);
   } else {
     L=[...data];
     if(curCat!=='all') L=L.filter(d=>d.type===curCat);
@@ -16637,7 +16646,7 @@ function nuid(){return 'n_'+Date.now().toString(36)+Math.random().toString(36).s
 
 function filteredNotes(){
   let L=userNotes();
-  if(curNoteSub!=='all') L=L.filter(n=>n.subCat===curNoteSub);
+  L=L.filter(n=>n.subCat===curNoteSub);
   if(curFilterTags.length) L=L.filter(n=>{const tg=n.tags||[];return curFilterTags.every(t=>tg.includes(t));});
   if(curSearch){
     const q=curSearch.toLowerCase();
@@ -16884,8 +16893,7 @@ function renderNotes(){
   // 顶部子分类胶囊条
   renderNoteChips();
   // 标题
-  const subName=curNoteSub==='all'?'全部笔记':curNoteSub;
-  document.getElementById('vtitle').textContent=subName;
+  document.getElementById('vtitle').textContent=curNoteSub;
   let L=filteredNotes();
   const monthMode=noteUsesRecordDates(curNoteSub);
   const groups=monthMode?groupNotesByMonth(L):{};
@@ -18579,11 +18587,10 @@ async function toggleNoteLocal(id){
 // 分类按钮只使用原生 click：不拦截 pointerup，也不吞掉浏览器合成的点击。
 // 分类未变时保留按钮节点；选中样式单独更新，避免按下后目标被重建。
 function renderNoteChips(){
-  const chips=[`<button type="button" class="nfchip" data-note-sub="all" onclick="filterCat('notes:'+this.dataset.noteSub)">全部</button>`];
-  noteSubs.forEach(s=>{
-    chips.push(`<button type="button" class="nfchip" data-note-sub="${esc(s)}" onclick="filterCat('notes:'+this.dataset.noteSub)">${esc(s)}</button>`);
-  });
-  const box=document.getElementById('nfchips'),html=chips.join('');
+  const html=noteSubs.map(s=>
+    `<button type="button" class="nfchip" data-note-sub="${esc(s)}" onclick="filterCat('notes:'+this.dataset.noteSub)">${esc(s)}</button>`
+  ).join('');
+  const box=document.getElementById('nfchips');
   if(box._noteChipsHTML!==html){box.innerHTML=html;box._noteChipsHTML=html;}
   box.querySelectorAll('[data-note-sub]').forEach(chip=>{
     const on=chip.dataset.noteSub===curNoteSub;
@@ -18632,7 +18639,7 @@ function openNoteNew(){
   document.getElementById('nf-title').value='';
   document.getElementById('nf-body').value='';
   renderNoteSubSelect();
-  document.getElementById('nf-sub').value=(curNoteSub!=='all'&&noteSubs.includes(curNoteSub))?curNoteSub:(noteSubs[0]||'灵感');
+  document.getElementById('nf-sub').value=preferredNoteSub()||'灵感';
   // 备忘字段清空
   document.getElementById('mf-username').value='';
   document.getElementById('mf-password').value='';
@@ -18947,9 +18954,6 @@ function saveNoteSubs(){
   const valid=new Set(noteSubs);
   notes.forEach(n=>{if(n.calendarId!=='food'&&!isCalEvent(n)&&!valid.has(n.subCat))n.subCat=noteSubs[0];});
   persistNotes();
-  // 若当前筛选的子分类被删,回到全部
-  if(curNoteSub!=='all'&&!valid.has(curNoteSub)){curNoteSub='all';curCat='notes:all';curNoteMonth='';}
-  if(isNoteMode())syncNoteSortSelect();
   closeNoteSubMgr();
   render();
   toast('子分类已更新');
