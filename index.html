@@ -1466,7 +1466,7 @@ body.cal-open .content{display:none!important;}
 /* 左右内边距都是 10：与下方网格卡 .cal-scroll 的 10px 对齐，两者内容区同宽（310），
    下面 .cal-nav 的半列偏移才能直接用百分比算。上下各 8 → 行高 8+32+8+1描边 = 49 */
 .cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-8) var(--sp-10);flex-shrink:0;
-  background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:1px solid var(--border);border-bottom:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
+  background:var(--surface);margin:var(--sp-6) var(--sp-14) 0;border:none;border-radius:var(--rxl) var(--rxl) 0 0;}   /* 上 margin 6px + 视图切换条底部 6px = 与卡片间距 12px 一致 */
 .cal-title{font-size:var(--fs-title);font-weight:700;color:var(--accent);letter-spacing:.03em;padding:0 var(--sp-2);}
 /* 左移半列减半个箭头按钮：‹ 的图标中心落在第一列（周一）日期的中心线上，
    与右侧筛选/搜索对齐末列是同一套算法（见下面 .cal-nav） */
@@ -1480,7 +1480,7 @@ body.cal-open .content{display:none!important;}
 .cal-closebtn{width:32px;height:32px;border:none;background:transparent;cursor:pointer;font-size:22px;color:var(--text-muted);margin-left:var(--sp-4);}
 /* contain:layout paint —— 日历卡收起时高度在变，没有这条的话整屏(390×844)会跟着重绘一遍，
    有了它重排重绘都关在这张卡里。卡里没有需要溢出显示的东西(筛选/搜索浮层都是它的兄弟)。 */
-.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout;}
+.cal-scroll{overflow-y:auto;flex:0 0 auto;background:var(--surface);border:none;border-radius:0 0 var(--rxl) var(--rxl);margin:0 var(--sp-14) var(--sp-12);padding:var(--sp-2) var(--sp-10) var(--sp-10);contain:layout;}
 /* 搜索时标题栏隐藏，日历卡恢复完整边框圆角（否则顶部会缺一截）*/
 /* 搜索态的结果卡：flex:0 0 auto —— 高度只跟着内容走。
    原来是 flex:1 1 auto，白卡会一路撑满整屏剩余高度，还没输关键词时就是一大片空白。
@@ -1647,13 +1647,13 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day.cal-selected{background:transparent;box-shadow:none;}
 .cal-day.cal-selected .cal-daynum{color:var(--accent);font-weight:700;opacity:1;background:var(--accent-light);box-shadow:inset 0 0 0 1px var(--accent-mid);}
 .cal-day.cal-selected.cal-today .cal-daynum{color:var(--accent);}
-.cal-daynum{font-size:var(--fs-caption);width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
+.cal-daynum{font-size:var(--fs-caption);width:18px;height:18px;margin:6px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-primary);line-height:1;font-family:var(--en);}
 .cal-badges{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px;margin-top:3px;max-width:100%;}
 .cal-dot{width:5px;height:5px;border-radius:50%;flex:none;}
 .cal-count{font-size:var(--fs-foot);background:var(--accent);color:var(--on-accent);padding:var(--sp-2) var(--sp-6);border-radius:var(--rchip);line-height:var(--lh-tight);font-weight:600;font-family:var(--en);}
 /* —— 类目圆点：当天出现过的每种类目色画一个点（去重），一眼看当天收集了哪些类型 —— */
 /* 事件白卡：单张卡内一条竖向时间线（去掉标题与颜色）*/
-.cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
+.cal-card{background:var(--surface);border:none;border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
   max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
 .cal-day-card-header{display:flex;align-items:center;justify-content:space-between;
   gap:var(--sp-8);padding:var(--sp-12) var(--cal-day-inset);}
@@ -1718,7 +1718,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
    月历格子只有圆点，看得出「有事」看不出「是什么」；这张卡把选中日所在那一周铺开。
    一件事一个色块，块按名字长短撑开、起点贴着它那一天；一行塞得下就接着塞，塞不下才换行
    （一事一行会排成一道楼梯，七天各占一行，反而看不出「一周」）。 */
-.cw-card{flex:0 0 auto;background:var(--surface);border:1px solid var(--border);
+.cw-card{flex:0 0 auto;background:var(--surface);border:none;
   border-radius:var(--rxl);margin:0 var(--sp-14) var(--sp-12);overflow:hidden;}
 /* 标题栏：整条不再是一颗大按钮了——右端要放 ‹ › 切周，按钮不能套按钮。
    现在是一行 flex：标题（占满剩余宽，点它收起/展开）+ ‹ + › + 展开箭头。
@@ -1750,13 +1750,13 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-cols{display:grid;grid-template-columns:repeat(7,1fr);column-gap:var(--sp-2);}
 .cw-gh{text-align:center;padding:0 0 var(--sp-8);}
 /* 星期和日期之间留 6：两行本来只靠行高那点余量隔着（量下来 4.5），挤成一坨；
-   「今天」那天的日期是个 30 见方的实心圆，圆边比字更往上顶，贴得尤其明显 */
+   「今天」那天的日期是个 18 见方的实心圆，圆边比字更往上顶，贴得尤其明显 */
 .cw-gh .w{display:block;font-size:var(--fs-foot);color:var(--text-muted);line-height:1.5;
   margin-bottom:var(--sp-6);}
 .cw-gh .d{display:block;font-size:var(--fs-caption);font-weight:700;color:var(--text-primary);font-family:var(--en);}
 .cw-gh.today .w{color:var(--accent);font-weight:700;}
 .cw-gh.today .d{color:var(--on-accent);background:var(--accent);border-radius:999px;
-  width:30px;height:30px;line-height:30px;text-align:center;margin:0 auto;}
+  width:18px;height:18px;line-height:18px;text-align:center;margin:6px auto;}
 /* 色块按算好的像素位置绝对定位：位置要精确到「第几天」，交给 flex/grid 排不出来 */
 .cw-pills{position:relative;}
 /* 高度不写死：一行 16（2 上下内边距 + 12 行高），放不下的名字换第二行、块自己长到 28。
