@@ -1659,8 +1659,8 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
   gap:var(--sp-8);padding:var(--sp-12) var(--cal-day-inset);}
 .cal-card-date{font-size:var(--fs-headline);font-weight:700;color:var(--accent);
   letter-spacing:.02em;white-space:nowrap;}
-/* 与月历首末列的中心对齐：网格两侧各 10px，七列之间有六个 2px 间距。 */
-.cal-day-card{--cal-day-inset:calc(var(--sp-10) + (100% - 2 * var(--sp-10) - 6 * var(--sp-2)) / 14);
+/* 日期、筛选和时间线共用卡片的左右留白。 */
+.cal-day-card{--cal-day-inset:22px;
   margin:0 var(--sp-14) var(--sp-12);}
 .cal-day-filters{display:flex;justify-content:flex-end;gap:clamp(var(--sp-6),3vw,var(--sp-16));white-space:nowrap;}
 .cal-day-filters button{font:inherit;font-size:var(--fs-caption);color:var(--text-muted);
@@ -1668,9 +1668,7 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-day-filters button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
 .cal-day-filters button:focus-visible{outline:1px solid var(--accent);outline-offset:2px;}
 .cal-day-card .cal-tl{overflow:visible;padding-inline:var(--cal-day-inset);}
-.cal-day-card .cal-tl-row{margin-inline:0;padding-left:0;}
-.cal-day-card .cal-tl-dot{left:calc(-1 * var(--sp-20));}
-.cal-day-card .cal-tl-row::before{left:calc(5px - var(--sp-20));}
+.cal-day-card .cal-tl-row{margin-inline:0;}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 /* 上留白归零（标题自己的 12 就是那道间距），左右 10 对齐第一张卡：
    时间线的节点/竖线落在周一那列里，右侧时间文字末端与周日那列的右缘齐平 */
