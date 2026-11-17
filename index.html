@@ -5545,7 +5545,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-notes-header>#nav-notes{
     min-height:calc(var(--sidebar-row-height) - 2px);
     padding:var(--sp-6) 38px var(--sp-6) var(--sp-10);
-    border-radius:calc(var(--rlg) - 1px);
+    border-radius:var(--r);
     font-weight:600;
   }
   #appSidebar .sidebar-notes-header>#nav-notes.on,
@@ -5635,7 +5635,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   /* 侧栏悬停统一描在当前行，笔记标题和展开箭头共用一圈。 */
   #appSidebar .ncard .nitem:not(.nitem-fs,#nav-notes):hover,
   #appSidebar .sidebar-notes-header:has(>button:hover){
-    border-radius:var(--rchip);
+    border-radius:var(--r);
     color:var(--accent);
   }
   #appSidebar .ncard .nitem:not(.nitem-fs,#nav-notes):hover:not(:focus-visible),
