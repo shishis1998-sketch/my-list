@@ -3148,13 +3148,21 @@ mark.shl{
   .desktop-chapter-layout .tl-chapter-single .tl-main{padding-left:0;}
   .desktop-chapter-layout .tl-chapter-single .tl-chapter-group-arrow{transform:rotate(-90deg);}
   .desktop-chapter-layout .tl-chapter-single[open] .tl-chapter-group-arrow{transform:none;}
-  .desktop-chapter-layout .tl-section-grid{gap:var(--sp-8);}
+  .desktop-chapter-layout .tl-chapter-group{padding-block:0;}
+  .desktop-chapter-layout :is(.tl-chapter-group-head,.tl-chapter-single>.tl-head,.desktop-chapter-heading){
+    min-height:48px;box-sizing:border-box;
+  }
+  .desktop-chapter-layout .tl-section-grid{gap:0;margin-top:0;}
   .desktop-chapter-section:has(.tl-section-btn[hidden]){display:none;}
   .desktop-chapter-heading{display:flex;align-items:center;gap:var(--sp-8);}
-  .desktop-chapter-heading>.tl-section-btn{
-    flex:1;height:auto;min-height:34px;padding:var(--sp-6) var(--sp-10);
-    background:var(--accent-light);border:0;border-radius:var(--r);
+  .desktop-chapter-heading>.tl-section-btn:not([hidden]){
+    flex:1;align-self:stretch;height:auto;padding:var(--sp-6) var(--sp-10);
+    gap:var(--sp-8);background:transparent;border:0;border-radius:var(--r);
   }
+  .desktop-chapter-heading>.tl-section-btn[aria-expanded="false"] .tl-chapter-group-arrow{
+    transform:rotate(-90deg);
+  }
+  .desktop-chapter-heading>.has-search-hit .tl-chapter-group-arrow{display:none;}
   .desktop-chapter-add{display:flex;justify-content:flex-end;}
   .desktop-chapter-reader{padding:var(--sp-8) var(--sp-12);overflow-wrap:anywhere;}
   .desktop-chapter-form{
@@ -11598,7 +11606,7 @@ function syncDetailListSelection(){
 function openDetail(id){
   const item=data.find(d=>d.id===id); if(!item||detailId===id) return;
   ensurePeopleIds(item,true);
-  desktopChapterIndex=null;desktopChapterForm=null;
+  desktopChapterIndex=null;desktopChapterForm=null;desktopOpenSections.clear();
   detailId=id; dtTab='info'; peopleSearchOpen=false; peopleSearchQuery='';
   timelineSearchOpen=false; timelineSearchQuery='';
   // 进详情页这一帧禁用 FAB 自身 transition：renderDetail 会清掉 fab-hidden，
@@ -12368,6 +12376,7 @@ const ICON_EDIT_DOC=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 
 const desktopChapterLayout=window.matchMedia('(min-width: 1025px) and (pointer: fine)');
 let desktopChapterIndex=null, desktopChapterForm=null;
+const desktopOpenSections=new Set();
 desktopChapterLayout.addEventListener('change',()=>{
   if(detailId&&dtTab==='tl') renderDetail();
 });
@@ -12424,6 +12433,13 @@ function desktopChapterEditButton(idx){
 }
 function desktopChapterReader(idx){
   return document.querySelector(`#dtBody [data-desktop-chapter="${idx}"]`);
+}
+function setDesktopSectionExpanded(button,expanded){
+  const idx=Number(button.dataset.idx);
+  if(expanded)desktopOpenSections.add(idx);
+  else desktopOpenSections.delete(idx);
+  button.setAttribute('aria-expanded',String(expanded));
+  desktopChapterReader(idx).hidden=!expanded;
 }
 function syncDesktopChapterSelection(){
   document.querySelectorAll('#detailBookNoteCard [data-idx]').forEach(row=>{
@@ -12488,6 +12504,8 @@ function openDetailChapter(idx){
     desktopChapterIndex=idx;
     const single=reader.closest('details');
     if(single)single.open=true;
+    const section=reader.closest('.desktop-chapter-section');
+    if(section)setDesktopSectionExpanded(section.querySelector('.tl-section-btn'),true);
     const group=reader.closest('.tl-chapter-group.collapsed');
     if(group)toggleTimelineChapterGroup(group.querySelector('.tl-chapter-group-head'));
     syncDesktopChapterSelection();
@@ -17398,9 +17416,14 @@ function renderTimelineChapterCards(chs,openFn){
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
       </button>
       <div class="tl-section-grid">
-        ${entry.items.map(x=>{const row=`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}"><span class="tl-section-name">${esc(x.section)}</span></button>`;
+        ${entry.items.map(x=>{
+          const expanded=inline&&desktopOpenSections.has(x.i);
+          const toggle=inline?`aria-expanded="${expanded}" aria-controls="desktop-chapter-${x.i}"`:'';
+          const action=inline?"setDesktopSectionExpanded(this,this.getAttribute('aria-expanded')!=='true')":`${openFn}(${x.i})`;
+          const arrow=inline?'<svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>':'';
+          const row=`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${toggle} ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${action}" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}">${arrow}<span class="tl-section-name">${esc(x.section)}</span></button>`;
           return inline?`<section class="desktop-chapter-section"><div class="desktop-chapter-heading">${row}${desktopChapterEditButton(x.i)}</div>
-            <div class="desktop-chapter-reader" data-desktop-chapter="${x.i}">${desktopChapterHtml(x.c)}</div></section>`:row;
+            <div class="desktop-chapter-reader" id="desktop-chapter-${x.i}" data-desktop-chapter="${x.i}" ${expanded?'':'hidden'}>${desktopChapterHtml(x.c)}</div></section>`:row;
         }).join('')}
       </div>
     </div>`;
