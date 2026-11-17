@@ -3139,6 +3139,14 @@ mark.shl{
     grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;
     scrollbar-gutter:stable both-edges;
   }
+  /* 正文滑到固定导航下方时，遮住卡片顶部两角。 */
+  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top::after{
+    content:"";position:absolute;inset:100% var(--dt-padx) auto;
+    height:var(--rlg);pointer-events:none;
+    background:
+      radial-gradient(circle at bottom right,transparent calc(var(--rlg) - .5px),var(--bg) var(--rlg)) left top / var(--rlg) 100% no-repeat,
+      radial-gradient(circle at bottom left,transparent calc(var(--rlg) - .5px),var(--bg) var(--rlg)) right top / var(--rlg) 100% no-repeat;
+  }
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
   #detailBookNoteCard.desktop-chapter-layout>.tl{
     grid-template-columns:minmax(0,1fr);margin-inline:0;
