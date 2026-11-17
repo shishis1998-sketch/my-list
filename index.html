@@ -3174,7 +3174,6 @@ mark.shl{
     display:flex;flex-direction:column;gap:var(--sp-12);
     padding:var(--sp-14);background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);
   }
-  .desktop-chapter-actions{display:flex;align-items:center;justify-content:space-between;}
   .desktop-chapter-controls{display:flex;align-items:center;gap:var(--sp-8);flex-shrink:0;}
   .desktop-chapter-controls .desktop-chapter-commit{display:none;}
   :is(.desktop-chapter-section,.tl-chapter-single):has(>.desktop-chapter-reader>.desktop-chapter-form) > :is(.desktop-chapter-heading,.tl-head) .desktop-chapter-commit{display:flex;}
@@ -12472,9 +12471,7 @@ function editDesktopChapter(idx){
   const content=nl<0?'':raw.slice(nl+1);
   const form=document.createElement('form');
   form.className='desktop-chapter-form';
-  form.innerHTML=`<div class="desktop-chapter-actions">
-    <strong>编辑笔记</strong>
-  </div><div class="desktop-chapter-fields">${chapterEditorFields(title,content)}</div>`;
+  form.innerHTML=`<div class="desktop-chapter-fields">${chapterEditorFields(title,content)}</div>`;
   const inputs=[...form.querySelectorAll('.chapter-title-input')];
   inputs.forEach((input,i)=>{
     const label=document.createElement('label');
