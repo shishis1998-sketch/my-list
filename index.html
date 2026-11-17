@@ -3143,9 +3143,11 @@ mark.shl{
   .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top::after{
     content:"";position:absolute;inset:100% var(--dt-padx) auto;
     height:var(--rlg);pointer-events:none;
+    --timeline-corner-stops:transparent calc(var(--rlg) - var(--bd) - .5px),
+      var(--ink) calc(var(--rlg) - var(--bd)),var(--ink) calc(var(--rlg) - .5px),var(--bg) var(--rlg);
     background:
-      radial-gradient(circle at bottom right,transparent calc(var(--rlg) - .5px),var(--bg) var(--rlg)) left top / var(--rlg) 100% no-repeat,
-      radial-gradient(circle at bottom left,transparent calc(var(--rlg) - .5px),var(--bg) var(--rlg)) right top / var(--rlg) 100% no-repeat;
+      radial-gradient(circle at bottom right,var(--timeline-corner-stops)) left top / var(--rlg) 100% no-repeat,
+      radial-gradient(circle at bottom left,var(--timeline-corner-stops)) right top / var(--rlg) 100% no-repeat;
   }
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
   #detailBookNoteCard.desktop-chapter-layout>.tl{
