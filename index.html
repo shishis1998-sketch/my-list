@@ -3137,7 +3137,9 @@ mark.shl{
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
   .detail-view.open{grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;}
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
-  .desktop-chapter-layout .tl{grid-template-columns:minmax(0,1fr);}
+  #detailBookNoteCard.desktop-chapter-layout>.tl{
+    grid-template-columns:minmax(0,1fr);margin-inline:0;
+  }
   .desktop-chapter-layout .tl-chapter-single{cursor:default;}
   .desktop-chapter-layout .tl-chapter-single>.tl-head{align-items:center;gap:var(--sp-8);}
   .desktop-chapter-layout .tl-chapter-single .tl-main{padding-left:0;}
@@ -12394,7 +12396,7 @@ function renderDetailTL(item){
   // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
   return `<div class="dt-sec">
   ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
-  ${desktopChapterLayout.matches?'<div class="desktop-chapter-add"><button type="button" class="btn-p" onclick="openNewDetailChapter()">＋ 写笔记</button></div>':''}
+  ${desktopChapterLayout.matches?'<div class="desktop-chapter-add"><button type="button" class="nlbl-btn" aria-label="写笔记" title="写笔记" onclick="openNewDetailChapter()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>':''}
   <div class="dt-card${desktopChapterLayout.matches?' desktop-chapter-layout':''}" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
