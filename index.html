@@ -1656,16 +1656,21 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);overflow:hidden;margin-bottom:var(--sp-12);
   max-height:100%;display:flex;flex-direction:column;contain:layout paint;}   /* 卡片作固定圆角框，内容多时由内部时间线滚动（下），四角圆角始终保留；contain 隔离回流，收起时更顺 */
 .cal-day-card-header{display:flex;align-items:center;justify-content:space-between;
-  gap:var(--sp-8);padding:var(--sp-12) var(--sp-14);}
+  gap:var(--sp-8);padding:var(--sp-12) var(--cal-day-inset);}
 .cal-card-date{font-size:var(--fs-headline);font-weight:700;color:var(--accent);
   letter-spacing:.02em;white-space:nowrap;}
-.cal-day-card{margin:0 var(--sp-14) var(--sp-12);}
+/* 与月历首末列的中心对齐：网格两侧各 10px，七列之间有六个 2px 间距。 */
+.cal-day-card{--cal-day-inset:calc(var(--sp-10) + (100% - 2 * var(--sp-10) - 6 * var(--sp-2)) / 14);
+  margin:0 var(--sp-14) var(--sp-12);}
 .cal-day-filters{display:flex;justify-content:flex-end;gap:clamp(var(--sp-6),3vw,var(--sp-16));white-space:nowrap;}
 .cal-day-filters button{font:inherit;font-size:var(--fs-caption);color:var(--text-muted);
   background:none;border:0;border-bottom:2px solid transparent;padding:var(--sp-4) 0;cursor:pointer;}
 .cal-day-filters button[aria-pressed="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
 .cal-day-filters button:focus-visible{outline:1px solid var(--accent);outline-offset:2px;}
-.cal-day-card .cal-tl{overflow:visible;}
+.cal-day-card .cal-tl{overflow:visible;padding-inline:var(--cal-day-inset);}
+.cal-day-card .cal-tl-row{margin-inline:0;padding-left:0;}
+.cal-day-card .cal-tl-dot{left:calc(-1 * var(--sp-20));}
+.cal-day-card .cal-tl-row::before{left:calc(5px - var(--sp-20));}
 /* 时间线：每条记录一个节点，时间在右；当天节点墨绿实心、往年空心 */
 /* 上留白归零（标题自己的 12 就是那道间距），左右 10 对齐第一张卡：
    时间线的节点/竖线落在周一那列里，右侧时间文字末端与周日那列的右缘齐平 */
@@ -16330,14 +16335,22 @@ function toggleWeekCard(){
 }
 
 let calDayFilter='all';
+let calDetailResize=null;
 document.getElementById('calDayFilters').addEventListener('click',event=>{
   const button=event.target.closest('button[data-filter]');
   if(!button||button.dataset.filter===calDayFilter)return;
   calDayFilter=button.dataset.filter;
-  renderCalDetail();
+  renderCalDetail(true);
 });
 
-function renderCalDetail(){
+function renderCalDetail(animate=false){
+  const list=document.getElementById('calDetailList');
+  const play=animate&&typeof list.animate==='function'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const previousHeight=play?list.getBoundingClientRect().height:0;
+  if(calDetailResize){
+    calDetailResize.cancel();
+    calDetailResize=null;
+  }
   const card=document.getElementById('calDayCard');
   card.hidden=!calSelDate;
   if(!calSelDate)return;
@@ -16376,7 +16389,6 @@ function renderCalDetail(){
   document.querySelectorAll('#calDayFilters button').forEach(button=>{
     button.setAttribute('aria-pressed',String(button.dataset.filter===calDayFilter));
   });
-  const list=document.getElementById('calDetailList');
   list.replaceChildren();
   if(calDayFilter!=='history'){
     recs.forEach(r=>list.appendChild(makeCalTlRow(r,calCurTail(r),true)));
@@ -16394,6 +16406,24 @@ function renderCalDetail(){
     empty.className='cal-empty';
     empty.textContent=calDayFilter==='history'?'往年这一天没有记录':'这一天没有记录';
     list.appendChild(empty);
+  }
+  if(play){
+    const height=list.getBoundingClientRect().height;
+    // 沿用旧版日期切换的节奏：先撑开列表，再让记录依次淡入。
+    const expandDuration=220;
+    const resizing=Math.abs(height-previousHeight)>0.5;
+    if(resizing){
+      calDetailResize=list.animate([
+        {height:previousHeight+'px',overflow:'hidden'},
+        {height:height+'px',overflow:'hidden'}
+      ],{duration:expandDuration,easing:'cubic-bezier(.22,.61,.36,1)'});
+    }
+    Array.from(list.children).forEach((row,index)=>{
+      row.animate([
+        {opacity:0,transform:'translateY(4px)'},
+        {opacity:1,transform:'translateY(0)'}
+      ],{duration:140,delay:(resizing?expandDuration:0)+Math.min(index*30,60),fill:'backwards'});
+    });
   }
 }
 
