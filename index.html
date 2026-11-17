@@ -3309,10 +3309,15 @@ mark.shl{
   }
   /* 白底覆盖顶部安全区，月份按钮仍在安全区下方。 */
   #calViewCalendar > .cal-hdr{
+    position:sticky;
+    top:0;
+    z-index:10;
     margin-top:0;
     padding-top:calc(var(--sp-8) + var(--sp-14) + env(safe-area-inset-top));
     border-top:0;
   }
+  #calViewCalendar .cal-filterpop{top:100%;}
+  #calViewCalendar > .cal-filter-scrim{position:fixed;}
 }
 /* 经期视图：整块 modal 一起滚动（月份导航 .home-sticky 仍 sticky 吸顶，
    滚动时可继续翻月）。日历视图不受影响。 */
@@ -5894,6 +5899,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
           </button>
         </div>
+        <div class="cal-filterpop" id="calFilterPop">
+          <div class="cal-filterpop-hd">显示分类</div>
+          <div id="calLegend"></div>
+        </div>
       </div>
       <div class="cal-searchwrap" id="calSearchWrap">
         <div class="cal-sfield" id="calSearchField">
@@ -5907,10 +5916,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         </div>
       </div>
       <div class="cal-filter-scrim" id="calFilterScrim" onclick="closeCalFilter()"></div>
-      <div class="cal-filterpop" id="calFilterPop">
-        <div class="cal-filterpop-hd">显示分类</div>
-        <div id="calLegend"></div>
-      </div>
       <div class="cal-scroll">
         <div class="cal-weekrow">
           <div class="cal-weekcell">一</div>
@@ -15459,6 +15464,7 @@ function openCalSearch(value='',focus=true){
   const inp=document.getElementById('calSearchInput');
   inp.value=value;
   runCalSearch();
+  scrollResultsTop();
   if(focus)setTimeout(()=>inp.focus(),60);
 }
 // 手指在结果区一滑就把输入框的焦点撤掉（顺带收起键盘）。
