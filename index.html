@@ -3179,7 +3179,9 @@ mark.shl{
   .desktop-chapter-actions button+button{margin-inline-start:var(--sp-8);}
   .desktop-chapter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-12);}
   .desktop-chapter-fields>label{display:grid;gap:var(--sp-4);font-size:var(--fs-caption);}
-  .desktop-chapter-fields>label>input{min-width:0;width:100%;font-size:var(--fs-sub);}
+  .desktop-chapter-fields>label>input{
+    min-width:0;width:100%;min-height:42px;padding-block:7px;font-size:var(--fs-sub);
+  }
   .desktop-chapter-fields>:is(.chapter-format,.chapter-whole-text){grid-column:1 / -1;}
   .desktop-chapter-form .chapter-whole-text{
     height:clamp(150px,42dvh,600px);min-height:0;overflow:auto;
