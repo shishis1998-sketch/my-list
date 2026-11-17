@@ -2215,8 +2215,7 @@ body.cal-searching .cw-card{display:none;}
 /* 搜正文时卡片临时改成单列，并在章名下面露出命中上下文；退出搜索后恢复原布局。 */
 #detailBookNoteCard.timeline-searching .tl{grid-template-columns:minmax(0,1fr);}
 .tl-column{display:flex;flex-direction:column;gap:var(--sp-10);min-width:0;}
-#detailBookNoteCard.timeline-searching .tl-column,
-.desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard .tl-column{display:contents;}
+#detailBookNoteCard.timeline-searching .tl-column{display:contents;}
 #detailBookNoteCard .tl-column > *{order:var(--tl-order);}
 
 .tl-section-btn.has-search-hit{height:auto;min-height:64px;padding:10px 12px 10px 30px;
@@ -3137,39 +3136,36 @@ mark.shl{
   body.detail-open #mlist .mrow[aria-current="true"]::after{display:none;}
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
   .detail-view.open{grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;}
-  .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])){
-    display:grid;grid-template-columns:minmax(0, min(31%, 240px)) minmax(0, 1fr);
-    gap:var(--sp-12);align-items:start;
+  #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
+  .desktop-chapter-layout .tl{grid-template-columns:minmax(0,1fr);}
+  .desktop-chapter-layout .tl-chapter-single{cursor:default;}
+  .desktop-chapter-layout .tl-chapter-single>.tl-head{align-items:center;gap:var(--sp-8);}
+  .desktop-chapter-layout .tl-chapter-single .tl-main{padding-left:0;}
+  .desktop-chapter-layout .tl-chapter-single .tl-chapter-group-arrow{transform:rotate(-90deg);}
+  .desktop-chapter-layout .tl-chapter-single[open] .tl-chapter-group-arrow{transform:none;}
+  .desktop-chapter-layout .tl-section-grid{gap:var(--sp-8);}
+  .desktop-chapter-section:has(.tl-section-btn[hidden]){display:none;}
+  .desktop-chapter-heading{display:flex;align-items:center;gap:var(--sp-8);}
+  .desktop-chapter-heading>.tl-section-btn{
+    flex:1;height:auto;min-height:34px;padding:var(--sp-6) var(--sp-10);
+    background:var(--accent-light);border:0;border-radius:var(--r);
   }
-  .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard,
-  .desktop-chapter-reader{max-height:calc(100dvh - 190px);overflow:auto;overscroll-behavior:contain;}
-  .desktop-chapter-layout:has(.desktop-chapter-reader:not([hidden])) #detailBookNoteCard .tl{grid-template-columns:minmax(0,1fr);}
-  .desktop-chapter-layout [aria-current="true"]{background:var(--accent-light);color:var(--accent);border-radius:var(--r);}
-  .desktop-chapter-reader{overflow-wrap:anywhere;}
-  .desktop-chapter-reader:has(.desktop-chapter-form){
-    padding:0;overflow:hidden;background:var(--bg);
-  }
+  .desktop-chapter-add{display:flex;justify-content:flex-end;}
+  .desktop-chapter-reader{padding:var(--sp-8) var(--sp-12);overflow-wrap:anywhere;}
   .desktop-chapter-form{
-    display:grid;grid-template-rows:auto minmax(0,1fr);max-height:inherit;
-  }
-  .desktop-chapter-actions{
-    display:flex;justify-content:space-between;
-    padding:var(--sp-14);background:var(--bg);
-  }
-  .desktop-chapter-fields{
     display:flex;flex-direction:column;gap:var(--sp-12);
-    overflow:auto;overscroll-behavior:contain;
-    padding:0 var(--sp-14) var(--sp-14);
+    padding:var(--sp-14);background:var(--bg);border:1px solid var(--border);border-radius:var(--rlg);
   }
-  .desktop-chapter-fields>*{flex-shrink:0;}
-  .desktop-chapter-form .chapter-whole-text{height:clamp(180px, 54dvh, 700px);min-height:0;flex:none;}
-  .desktop-chapter-heading{display:flex;align-items:center;min-width:0;}
-  .desktop-chapter-heading>.tl-chapter-group-head{flex:1;min-width:0;}
-  .desktop-chapter-edit{display:none;flex:none;align-self:center;margin-inline-start:var(--sp-4);}
-  .desktop-chapter-layout:not(:has(.desktop-chapter-form)) :is(
-    .tl-chapter-single[aria-current="true"]>.tl-head,
-    .tl-chapter-group:has(.tl-section-btn[aria-current="true"])>.desktop-chapter-heading
-  )>.desktop-chapter-edit{display:flex;}
+  .desktop-chapter-actions{display:flex;align-items:center;justify-content:space-between;}
+  .desktop-chapter-actions strong{margin-inline-end:auto;}
+  .desktop-chapter-actions button+button{margin-inline-start:var(--sp-8);}
+  .desktop-chapter-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-12);}
+  .desktop-chapter-fields>label{display:grid;gap:var(--sp-4);font-size:var(--fs-caption);}
+  .desktop-chapter-fields>label>input{min-width:0;width:100%;}
+  .desktop-chapter-fields>:is(.chapter-format,.chapter-whole-text){grid-column:1 / -1;}
+  .desktop-chapter-form .chapter-whole-text{
+    height:clamp(150px,42dvh,600px);min-height:0;overflow:auto;
+  }
   .dt-body{width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
   .dt-card{box-shadow:var(--pop-sm);}
 }
@@ -11902,8 +11898,8 @@ function markChapterSearchOccurrence(root,query,ordinal){
 }
 function openTimelineSearchHit(event,chapterIdx,query,ordinal){
   event.preventDefault();event.stopPropagation();
-  openDetailChapter(chapterIdx);
-  const reader=desktopChapterLayout.matches&&document.querySelector('#dtBody .desktop-chapter-reader:not([hidden])');
+  if(openDetailChapter(chapterIdx)===false)return;
+  const reader=desktopChapterLayout.matches&&desktopChapterReader(chapterIdx);
   if(!reader&&tlSheetIdx!==chapterIdx)return;
   const segments=reader
     ?desktopChapterSegments(parseChapters(data.find(d=>d.id===detailId)?.bookNote||'')[chapterIdx])
@@ -11922,6 +11918,7 @@ function openTimelineSearchHit(event,chapterIdx,query,ordinal){
     const para=target.closest('.tl-para');
     para?.classList.add('timeline-jump-target');
     markChapterSearchOccurrence(target,query,localOrdinal);
+    if(reader){(para||target).scrollIntoView({block:'center',behavior:'smooth'});return;}
     const offset=(para||target).getBoundingClientRect().top-body.getBoundingClientRect().top;
     body.scrollTo({top:Math.max(0,body.scrollTop+offset-body.clientHeight/3),behavior:'smooth'});
   }));
@@ -12311,7 +12308,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
     if(timelineSearchOpen)filterTimelineList(timelineSearchQuery);
     syncDesktopChapterSelection();
     if(desktopChapterLayout.matches&&desktopChapterForm){
-      box.querySelector('.desktop-chapter-reader:not([hidden])')?.replaceChildren(desktopChapterForm);
+      desktopChapterReader(desktopChapterIndex)?.replaceChildren(desktopChapterForm);
     }
   }
 
@@ -12397,16 +12394,14 @@ function renderDetailTL(item){
   // 标题行和章节区也放进 dt-sec：与人物页共用同一组纵向间距，首张卡片从同一高度开始。
   return `<div class="dt-sec">
   ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
-  <div class="desktop-chapter-layout"><div class="dt-card" id="detailBookNoteCard" style="cursor:default">
+  ${desktopChapterLayout.matches?'<div class="desktop-chapter-add"><button type="button" class="btn-p" onclick="openNewDetailChapter()">＋ 写笔记</button></div>':''}
+  <div class="dt-card${desktopChapterLayout.matches?' desktop-chapter-layout':''}" id="detailBookNoteCard" style="cursor:default">
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
     ${timelineSearchOpen?'<div id="timelineSearchEmpty" class="people-search-empty" hidden>没有找到匹配的章节</div>':''}
   </div>
-  <section class="dt-card desktop-chapter-reader" style="cursor:default"
-    ${!desktopChapterLayout.matches||!chs[desktopChapterIndex]?'hidden':''} aria-label="章节正文">
-    ${desktopChapterLayout.matches?desktopChapterHtml(chs[desktopChapterIndex]):''}
-  </section></div></div>
-  <button type="button" class="dt-fab" aria-label="新增章节" title="新增章节"
+  </div>
+  <button type="button" class="dt-fab" ${desktopChapterLayout.matches?'hidden style="display:none"':''} aria-label="新增章节" title="新增章节"
     onclick="openNewDetailChapter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
 }
 
@@ -12418,8 +12413,13 @@ function desktopChapterSegments(chapter){
 function desktopChapterHtml(chapter){
   return chapter?`<div class="tl-pts">${chapterReadRows(desktopChapterSegments(chapter)).join('')}</div>`:'';
 }
-const DESKTOP_CHAPTER_EDIT_BUTTON=`<button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑当前章节或小节" title="编辑当前章节或小节" onclick="event.stopPropagation();editDesktopChapter(desktopChapterIndex)">
+function desktopChapterEditButton(idx){
+  return `<button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑当前章节或小节" title="编辑当前章节或小节" onclick="event.preventDefault();event.stopPropagation();editDesktopChapter(${idx})">
   <svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+}
+function desktopChapterReader(idx){
+  return document.querySelector(`#dtBody [data-desktop-chapter="${idx}"]`);
+}
 function syncDesktopChapterSelection(){
   document.querySelectorAll('#detailBookNoteCard [data-idx]').forEach(row=>{
     if(desktopChapterLayout.matches&&Number(row.dataset.idx)===desktopChapterIndex)row.setAttribute('aria-current','true');
@@ -12427,19 +12427,27 @@ function syncDesktopChapterSelection(){
   });
 }
 function editDesktopChapter(idx){
-  const reader=document.querySelector('#dtBody .desktop-chapter-reader');
+  const reader=desktopChapterReader(idx);
   const item=data.find(d=>d.id===detailId);
   const chapter=item&&parseChapters(item.bookNote||'')[idx];
-  if(!reader||!chapter||desktopChapterForm)return;
+  if(!reader||!chapter||openDetailChapter(idx)===false||desktopChapterForm)return;
   const raw=chapter.raw.trimStart(), nl=raw.indexOf('\n');
   const title=(nl<0?raw:raw.slice(0,nl)).replace(/^####[ \t]+/,'');
   const content=nl<0?'':raw.slice(nl+1);
   const form=document.createElement('form');
   form.className='desktop-chapter-form';
   form.innerHTML=`<div class="desktop-chapter-actions">
+    <strong>编辑笔记</strong>
     <button type="button" class="tlsheet-action">取消</button>
-    <button type="submit" class="tlsheet-action">完成</button>
+    <button type="submit" class="tlsheet-action">保存</button>
   </div><div class="desktop-chapter-fields">${chapterEditorFields(title,content)}</div>`;
+  const inputs=[...form.querySelectorAll('.chapter-title-input')];
+  inputs.forEach((input,i)=>{
+    const label=document.createElement('label');
+    label.textContent=i?'小节标题':'章节标题';
+    input.before(label);
+    label.append(input);
+  });
   desktopChapterForm=form;
   reader.replaceChildren(form);
   reader.scrollTop=0;
@@ -12449,7 +12457,7 @@ function editDesktopChapter(idx){
   form.hasChanges=()=>titleInput.value!==titleInput.defaultValue||sectionInput.value!==sectionInput.defaultValue||ta.value!==content;
   form.querySelector('button').onclick=()=>{
     desktopChapterForm=null;
-    openDetailChapter(idx);
+    reader.innerHTML=desktopChapterHtml(chapter);
   };
   form.addEventListener('submit',event=>{
     event.preventDefault();
@@ -12457,24 +12465,26 @@ function editDesktopChapter(idx){
     if(!saveChapterDraft(chapterEditorTitle(form),ta.value,idx,chapter.raw,chapter.raw.slice(0,chapter.raw.length-raw.length)))return;
     desktopChapterForm=null;
     renderDetail();
+    openDetailChapter(idx);
   });
   ta.focus({preventScroll:true});
 }
 function openDetailChapter(idx){
-  const reader=document.querySelector('#dtBody .desktop-chapter-reader');
-  if(desktopChapterLayout.matches&&reader){
-    const item=data.find(d=>d.id===detailId);
-    const chapter=item&&parseChapters(item.bookNote||'')[idx];
-    if(!chapter)return;
+  const reader=desktopChapterLayout.matches&&desktopChapterReader(idx);
+  if(reader){
     if(desktopChapterForm){
-      if(idx===desktopChapterIndex)return;
-      if(desktopChapterForm.hasChanges()&&!confirm('放弃本章尚未保存的修改？'))return;
+      if(idx===desktopChapterIndex)return false;
+      if(desktopChapterForm.hasChanges()&&!confirm('放弃本章尚未保存的修改？'))return false;
+      const prev=desktopChapterReader(desktopChapterIndex);
+      const item=data.find(d=>d.id===detailId);
+      if(prev)prev.innerHTML=desktopChapterHtml(parseChapters(item?.bookNote||'')[desktopChapterIndex]);
       desktopChapterForm=null;
     }
     desktopChapterIndex=idx;
-    reader.innerHTML=desktopChapterHtml(chapter);
-    reader.hidden=false;
-    reader.scrollTop=0;
+    const single=reader.closest('details');
+    if(single)single.open=true;
+    const group=reader.closest('.tl-chapter-group.collapsed');
+    if(group)toggleTimelineChapterGroup(group.querySelector('.tl-chapter-group-head'));
     syncDesktopChapterSelection();
     return;
   }
@@ -17361,28 +17371,36 @@ function toggleTimelineChapterGroup(btn){
 }
 function renderTimelineChapterCards(chs,openFn){
   const detail=openFn==='openDetailChapter';
-  const showDesktopEdit=detail&&desktopChapterLayout.matches;
+  const inline=detail&&desktopChapterLayout.matches;
   const cards=groupTimelineChapters(sortTimelineChapters(chs)).map((entry,index)=>{
     const order=detail?` style="--tl-order:${index}"`:'';
 
     if(entry.type==='single'){
       const x=entry.item;
+      if(inline)return `<details class="tl-item tl-chapter-single has-paras" data-idx="${x.i}" ${x.i===desktopChapterIndex?'open':''}
+        data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}">
+        <summary class="tl-head"><svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div>${desktopChapterEditButton(x.i)}</summary>
+        <div class="desktop-chapter-reader" data-desktop-chapter="${x.i}">${desktopChapterHtml(x.c)}</div>
+      </details>`;
       return `<div class="tl-item tl-chapter-single has-paras"${order} data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
-        <div class="tl-head"><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div>${showDesktopEdit?DESKTOP_CHAPTER_EDIT_BUTTON:''}</div>
+        <div class="tl-head"><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div></div>
       </div>`;
     }
     const collapsed=openFn==='openDetailChapter'&&isTimelineChapterCollapsed(entry.title);
     return `<div class="tl-chapter-group${collapsed?' collapsed':''}"${order} ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
-      ${showDesktopEdit?'<div class="desktop-chapter-heading">':''}<button type="button" class="tl-chapter-group-head" aria-expanded="${!collapsed}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
+      <button type="button" class="tl-chapter-group-head" aria-expanded="${!collapsed}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
-      </button>${showDesktopEdit?DESKTOP_CHAPTER_EDIT_BUTTON+'</div>':''}
+      </button>
       <div class="tl-section-grid">
-        ${entry.items.map(x=>`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}"><span class="tl-section-name">${esc(x.section)}</span></button>`).join('')}
+        ${entry.items.map(x=>{const row=`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}"><span class="tl-section-name">${esc(x.section)}</span></button>`;
+          return inline?`<section class="desktop-chapter-section"><div class="desktop-chapter-heading">${row}${desktopChapterEditButton(x.i)}</div>
+            <div class="desktop-chapter-reader" data-desktop-chapter="${x.i}">${desktopChapterHtml(x.c)}</div></section>`:row;
+        }).join('')}
       </div>
     </div>`;
   });
-  if(!detail||!cards.length)return cards.join('');
+  if(!detail||inline||!cards.length)return cards.join('');
   return [0,1].map(column=>`<div class="tl-column">${cards.filter((_,index)=>index%2===column).join('')}</div>`).join('');
 }
 
