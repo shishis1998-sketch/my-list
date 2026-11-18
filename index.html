@@ -12526,9 +12526,11 @@ function editDesktopChapter(idx){
   controls.querySelector('.desktop-chapter-cancel').onclick=event=>{
     event.preventDefault();
     event.stopPropagation();
+    const position=chapterReadingPosition(ta,content);
     desktopChapterForm=null;
     reader.innerHTML=desktopChapterHtml(chapter,!!reader.closest('.desktop-chapter-section'));
     controls.querySelector('.desktop-chapter-edit').focus({preventScroll:true});
+    restoreDesktopChapterPosition(reader,position);
   };
   controls.querySelector('.desktop-chapter-save').onclick=event=>{
     event.preventDefault();
@@ -12539,9 +12541,14 @@ function editDesktopChapter(idx){
     event.preventDefault();
     tlHostMedia=item.id;tlCurId=null;
     if(!saveChapterDraft(chapterEditorTitle(form),ta.value,idx,chapter.raw,chapter.raw.slice(0,chapter.raw.length-raw.length)))return;
+    const position=chapterReadingPosition(ta);
+    const savedChapter=parseChapters(item.bookNote||'')[idx];
+    const group=timelineSectionTitle(savedChapter?.title||'')?.chapter;
+    if(group)timelineChapterCollapsed.set(timelineChapterStateKey(group),false);
     desktopChapterForm=null;
     renderDetail();
     openDetailChapter(idx);
+    restoreDesktopChapterPosition(desktopChapterReader(idx),position);
   });
   ta.focus({preventScroll:true});
   if(anchor){
@@ -17629,7 +17636,7 @@ function chapterTapTextOffset(el,x,y){
   }catch(_){return null;}
 }
 // 把阅读态的可见字符位置换回 textarea 原文位置；格式标记与换行不占可见字符。
-function chapterSourceOffsetFromVisible(source,visibleOffset){
+function chapterSourceOffsetFromVisible(source,visibleOffset,sourceLimit=Infinity){
   const s=String(source||''),hidden=new Set(),hide=(start,len)=>{
     for(let i=start;i<start+len;i++)hidden.add(i);
   };
@@ -17653,11 +17660,12 @@ function chapterSourceOffsetFromVisible(source,visibleOffset){
   let seen=0,i=0;
   const wanted=Math.max(0,visibleOffset||0);
   while(i<s.length){
-    while(i<s.length&&(hidden.has(i)||s[i]==='\n'))i++;
+    while(i<s.length&&i<sourceLimit&&(hidden.has(i)||s[i]==='\n'))i++;
+    if(i>=sourceLimit)return seen;
     if(seen>=wanted)return i;
     if(i<s.length){seen++;i++;}
   }
-  return s.length;
+  return Number.isFinite(sourceLimit)?seen:s.length;
 }
 
 // 渲染分段卡片；tlSheetEdit 段渲染为输入框
@@ -17837,11 +17845,76 @@ function visibleChapterEditAnchor(body,viewTop){
   return null;
 }
 
+function chapterTextBlocks(content){
+  return [...content.matchAll(/^(?![^\S\n]*$)[^\n]+(?:\n(?![^\S\n]*(?:\n|$))[^\n]+)*/gm)];
+}
 function chapterEditOffset(content,index,visibleOffset){
-  const blocks=[...content.matchAll(/^(?![ \t]*$)[^\n]+(?:\n(?![ \t]*(?:\n|$))[^\n]+)*/gm)];
-  const block=blocks[index];
+  const block=chapterTextBlocks(content)[index];
   if(!block)return 0;
   return block.index+(visibleOffset==null?0:chapterSourceOffsetFromVisible(block[0],visibleOffset));
+}
+
+function chapterReadingPosition(ta,original=ta.value){
+  const draft=ta.value;
+  let offset=ta.selectionEnd;
+  if(draft!==original){
+    // 取消编辑时，把光标映射回未改动的正文。
+    let start=0,draftEnd=draft.length,originalEnd=original.length;
+    while(start<Math.min(draftEnd,originalEnd)&&draft[start]===original[start])start++;
+    while(draftEnd>start&&originalEnd>start&&draft[draftEnd-1]===original[originalEnd-1]){
+      draftEnd--;
+      originalEnd--;
+    }
+    if(offset>=draftEnd)offset+=originalEnd-draftEnd;
+    else if(offset>start)offset=Math.min(offset,originalEnd);
+  }
+  const blocks=chapterTextBlocks(original);
+  const index=blocks.findLastIndex(block=>block.index<=offset);
+  if(index<0)return {index:0,visibleOffset:0};
+  const block=blocks[index];
+  const visibleOffset=chapterSourceOffsetFromVisible(block[0],Infinity,offset-block.index);
+  return {index,visibleOffset};
+}
+
+function chapterReadingLineTop(reader,position){
+  const target=reader.querySelector(`.tlseg-tap[data-tap="${position.index}"]`);
+  if(!target)return null;
+  const walker=document.createTreeWalker(target,NodeFilter.SHOW_TEXT);
+  let remaining=position.visibleOffset,lastTop=target.getBoundingClientRect().top;
+  while(walker.nextNode()){
+    const node=walker.currentNode;
+    if(!node.length)continue;
+    let index=0;
+    while(index<node.length){
+      if(node.data[index]!=='\n'&&remaining--<=0)break;
+      index++;
+    }
+    const range=document.createRange();
+    range.setStart(node,Math.min(index,node.length-1));
+    range.setEnd(node,Math.min(index+1,node.length));
+    lastTop=range.getBoundingClientRect().top;
+    if(index<node.length)return lastTop;
+  }
+  return lastTop;
+}
+
+function restoreDesktopChapterPosition(reader,position){
+  if(!reader)return;
+  const targetTop=chapterReadingLineTop(reader,position);
+  if(targetTop==null)return;
+  const pane=reader.closest('.detail-view');
+  const heading=reader.previousElementSibling;
+  const top=pane.getBoundingClientRect().top+pane.clientTop;
+  const readerTop=reader.getBoundingClientRect().top;
+  const readingTop=top+heading.getBoundingClientRect().height;
+  if(position.index===0&&readerTop>=top&&targetTop<top+pane.clientHeight)return;
+  pane.scrollTop+=targetTop-readingTop-8;
+}
+
+function restoreChapterSheetPosition(position,fallback){
+  const body=document.getElementById('tlSheetBody');
+  const targetTop=chapterReadingLineTop(body,position);
+  body.scrollTop=targetTop==null?fallback:body.scrollTop+targetTop-body.getBoundingClientRect().top-8;
 }
 
 function measureChapterText(ta,start,end){
@@ -17972,18 +18045,22 @@ function finishChapterSheet(){
     return;
   }
   const wasNew=tlChapterNew, scroll=tlChapterReadScroll;
+  const position=chapterReadingPosition(document.querySelector('#tlSheetBody .chapter-whole-text'));
   if(!commitChapterSheet())return;
   if(wasNew||(tlHostMedia===detailId&&tlHostMedia&&desktopChapterLayout.matches&&desktopChapterIndex===tlSheetIdx)){closeChapterSheet();return;}
   openChapterSheet(tlSheetIdx);
-  document.getElementById('tlSheetBody').scrollTop=scroll;
+  restoreChapterSheetPosition(position,scroll);
 }
 function cancelChapterSheet(){
   if(tlSheetIdx==null)return;
   if(tlWholeEditing&&!tlChapterNew){
     tlWholeEditing=false;
     if(tlHostMedia===detailId&&tlHostMedia&&desktopChapterLayout.matches&&desktopChapterIndex===tlSheetIdx){closeChapterSheet();return;}
+    const ta=document.querySelector('#tlSheetBody .chapter-whole-text');
+    const original=tlChapterDraft.slice(tlChapterDraft.indexOf('\n')+1);
+    const position=chapterReadingPosition(ta,original);
     const scroll=tlChapterReadScroll;openChapterSheet(tlSheetIdx);
-    document.getElementById('tlSheetBody').scrollTop=scroll;
+    restoreChapterSheetPosition(position,scroll);
     return;
   }
   tlWholeEditing=false;closeChapterSheet();
