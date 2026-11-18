@@ -12489,7 +12489,12 @@ function editDesktopChapter(idx){
   const reader=desktopChapterReader(idx);
   const item=data.find(d=>d.id===detailId);
   const chapter=item&&parseChapters(item.bookNote||'')[idx];
-  if(!reader||!chapter||openDetailChapter(idx)===false||desktopChapterForm)return;
+  if(!reader||!chapter)return;
+  const pane=reader.closest('.detail-view');
+  const heading=reader.previousElementSibling;
+  const viewTop=pane.getBoundingClientRect().top+pane.clientTop;
+  const anchor=visibleChapterEditAnchor(reader,Math.max(viewTop,heading.getBoundingClientRect().bottom));
+  if(openDetailChapter(idx)===false||desktopChapterForm)return;
   const raw=chapter.raw.trimStart(), nl=raw.indexOf('\n');
   const title=(nl<0?raw:raw.slice(0,nl)).replace(/^####[ \t]+/,'');
   const content=nl<0?'':raw.slice(nl+1);
@@ -12505,7 +12510,6 @@ function editDesktopChapter(idx){
   });
   desktopChapterForm=form;
   reader.replaceChildren(form);
-  reader.scrollTop=0;
   const ta=bindChapterFormatting(form);
   const titleInput=form.querySelector('.chapter-title-input');
   const sectionInput=form.querySelector('.chapter-section-input');
@@ -12532,6 +12536,16 @@ function editDesktopChapter(idx){
     openDetailChapter(idx);
   });
   ta.focus({preventScroll:true});
+  if(anchor){
+    const offset=chapterEditOffset(ta.value,anchor.index,anchor.visibleOffset);
+    ta.setSelectionRange(offset,offset);
+    const formTop=form.getBoundingClientRect().top;
+    const editorViewTop=viewTop+heading.getBoundingClientRect().height;
+    if(formTop<editorViewTop){
+      pane.scrollTop+=formTop-editorViewTop;
+    }
+    scrollChapterEditorToCaret(ta,offset);
+  }
 }
 function openDetailChapter(idx){
   const reader=desktopChapterLayout.matches&&desktopChapterReader(idx);
@@ -17746,6 +17760,47 @@ function bindChapterFormatting(body){
   ta.addEventListener('pointerdown',closeHeadingPicker);
   return ta;
 }
+function visibleChapterEditAnchor(body,viewTop){
+  for(const paragraph of body.querySelectorAll('.tlseg-tap[data-tap]')){
+    const rect=paragraph.getBoundingClientRect();
+    if(rect.bottom<=viewTop)continue;
+    const visibleOffset=rect.top<viewTop
+      ?chapterTapTextOffset(paragraph,rect.left+1,Math.min(viewTop+2,rect.bottom-1))
+      :null;
+    return {index:Number(paragraph.dataset.tap),visibleOffset};
+  }
+  return null;
+}
+
+function chapterEditOffset(content,index,visibleOffset){
+  const blocks=[...content.matchAll(/^(?![ \t]*$)[^\n]+(?:\n(?![ \t]*(?:\n|$))[^\n]+)*/gm)];
+  const block=blocks[index];
+  if(!block)return 0;
+  return block.index+(visibleOffset==null?0:chapterSourceOffsetFromVisible(block[0],visibleOffset));
+}
+
+function scrollChapterEditorToCaret(ta,offset){
+  if(!ta.isConnected)return;
+  // 用编辑框的实际排版测量光标高度，包括屏幕宽度导致的自动折行。
+  const style=getComputedStyle(ta);
+  const mirror=document.createElement('div');
+  Object.assign(mirror.style,{
+    position:'fixed',inset:'0 auto auto 0',visibility:'hidden',pointerEvents:'none',
+    width:(ta.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight))+'px',
+    boxSizing:'content-box',font:style.font,lineHeight:style.lineHeight,
+    letterSpacing:style.letterSpacing,tabSize:style.tabSize,
+    whiteSpace:style.whiteSpace,overflowWrap:style.overflowWrap,wordBreak:style.wordBreak
+  });
+  mirror.textContent=ta.value+'\u200b';
+  document.body.append(mirror);
+  const range=document.createRange();
+  range.setStart(mirror.firstChild,offset);
+  range.setEnd(mirror.firstChild,offset+1);
+  const top=range.getBoundingClientRect().top-mirror.getBoundingClientRect().top;
+  mirror.remove();
+  ta.scrollTop=Math.max(0,top-parseFloat(style.lineHeight));
+}
+
 function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
   tlChapterReadScroll=document.getElementById('tlSheetBody').scrollTop;
   tlWholeEditing=true;
@@ -17760,15 +17815,7 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
   document.getElementById('tlSheetDone').textContent='完成';
   const ta=bindChapterFormatting(body);
   body.scrollTop=0;
-  const target=tlSheetSegs[segIndex];
-  let offset=0;
-  if(target){
-    // 先定位到被点段落；从正文点入编辑时，再精确换算到该段内的字符位置。
-    const blocks=[...content.matchAll(/[^\n]+(?:\n(?!\n)[^\n]+)*/g)];
-    const block=blocks[segIndex];
-    offset=block?.index||0;
-    if(block&&visibleOffset!=null)offset+=chapterSourceOffsetFromVisible(block[0],visibleOffset);
-  }
+  const offset=chapterEditOffset(ta.value,segIndex,visibleOffset);
   if(tlChapterNew){const input=body.querySelector('.chapter-title-input');input.focus();input.setSelectionRange(input.value.length,input.value.length);}
   else {
     // iOS Safari 默认会为 textarea 光标滚动整个布局视口；章节抽屉随后又按
@@ -17776,8 +17823,7 @@ function enterWholeChapterEdit(segIndex=0,visibleOffset=null){
     // 外层不滚，只在 textarea 内恢复到用户点入的正文位置。
     try{ta.focus({preventScroll:true});}catch(_){ta.focus();}
     ta.setSelectionRange(offset,offset);
-    const restoreCaret=()=>{ta.scrollTop=Math.max(0,content.slice(0,offset).split('\n').length*parseFloat(getComputedStyle(ta).lineHeight)-ta.clientHeight/3);};
-    requestAnimationFrame(()=>requestAnimationFrame(restoreCaret));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>scrollChapterEditorToCaret(ta,offset)));
   }
 }
 function nextChapterHeading(body){
@@ -17845,7 +17891,12 @@ function commitChapterSheet(){
 }
 function finishChapterSheet(){
   if(tlSheetIdx==null)return;
-  if(!tlWholeEditing){enterWholeChapterEdit();return;}
+  if(!tlWholeEditing){
+    const body=document.getElementById('tlSheetBody');
+    const anchor=visibleChapterEditAnchor(body,body.getBoundingClientRect().top);
+    enterWholeChapterEdit(anchor?.index,anchor?.visibleOffset);
+    return;
+  }
   const wasNew=tlChapterNew, scroll=tlChapterReadScroll;
   if(!commitChapterSheet())return;
   if(wasNew||(tlHostMedia===detailId&&tlHostMedia&&desktopChapterLayout.matches&&desktopChapterIndex===tlSheetIdx)){closeChapterSheet();return;}
