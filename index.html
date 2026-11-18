@@ -2148,7 +2148,7 @@ body.cal-searching .cw-card{display:none;}
 .tl-chapter-group.collapsed .tl-chapter-group-arrow{transform:rotate(-90deg);}
 .tl-section-grid{display:grid;grid-template-columns:minmax(0,1fr);
   gap:0;margin-top:var(--sp-8);}
-.tl-chapter-group.collapsed .tl-section-grid{display:none;}
+.tl-section-grid[hidden]{display:none;}
 .tl-section-btn{height:40px;min-width:0;border:0;border-bottom:var(--bd) solid var(--border);
   border-radius:0;background:transparent;color:var(--text-primary);
   font-family:var(--zh);font-size:var(--fs-headline);font-weight:600;cursor:pointer;
@@ -2321,6 +2321,12 @@ body.cal-searching .cw-card{display:none;}
 /* 详情页章节抽屉与顶部视图导航的上沿重合并遮住导航；独立时间线入口保留原高度。 */
 #tlSheet{height:70vh;max-height:70vh;min-height:0;border-radius:var(--rxl) var(--rxl) 0 0;}
 #tlSheet.card-aligned{top:var(--tl-card-top);height:auto;max-height:none;}
+@media(prefers-reduced-motion:no-preference){
+  #tlSheet.timeline-reading:not(.dragging){
+    transition-duration:220ms;transition-timing-function:cubic-bezier(.22,.61,.36,1);
+  }
+  #tlSheet.timeline-reading:not(.show,.dragging){transition-delay:140ms;}
+}
 
 /* ===== 备注底部弹窗：详情页点备注卡从底部滑起，只编辑备注这一栏 ===== */
 /* 复用 .tlsheet 的滑起/下拉/遮罩，只多一块铺满的输入框。
@@ -11843,12 +11849,7 @@ function syncDetailChapterToggle(){
 function toggleAllDetailChapters(){
   const cards=[...document.querySelectorAll('#detailBookNoteCard .tl-chapter-group')];
   const collapse=!cards.every(c=>c.classList.contains('collapsed'));
-  cards.forEach(card=>{
-    card.classList.toggle('collapsed',collapse);
-    card.querySelector('.tl-chapter-group-head').setAttribute('aria-expanded',String(!collapse));
-    const title=card.querySelector('.tl-chapter-group-title').textContent;
-    timelineChapterCollapsed.set(timelineChapterStateKey(title),collapse);
-  });
+  cards.forEach(card=>setTimelineChapterExpanded(card.querySelector('.tl-chapter-group-head'),!collapse));
   syncDetailChapterToggle();
 }
 function togglePeopleSearch(){
@@ -12475,7 +12476,8 @@ function setDesktopSectionExpanded(button,expanded){
   if(expanded)desktopOpenSections.add(idx);
   else desktopOpenSections.delete(idx);
   button.setAttribute('aria-expanded',String(expanded));
-  desktopChapterReader(idx).hidden=!expanded;
+  const reader=desktopChapterReader(idx);
+  animateTimelineDisclosure(reader,expanded,visible=>{reader.hidden=!visible;});
 }
 function syncDesktopChapterSelection(){
   document.querySelectorAll('#detailBookNoteCard [data-idx]').forEach(row=>{
@@ -12544,7 +12546,7 @@ function openDetailChapter(idx){
     }
     desktopChapterIndex=idx;
     const single=reader.closest('details');
-    if(single)single.open=true;
+    if(single)setTimelineSingleExpanded(single,true);
     const section=reader.closest('.desktop-chapter-section');
     if(section)setDesktopSectionExpanded(section.querySelector('.tl-section-btn'),true);
     const group=reader.closest('.tl-chapter-group.collapsed');
@@ -16480,12 +16482,7 @@ function renderCalDetail(animate=false){
         {height:height+'px',overflow:'hidden'}
       ],{duration:expandDuration,easing:'cubic-bezier(.22,.61,.36,1)'});
     }
-    Array.from(list.children).forEach((row,index)=>{
-      row.animate([
-        {opacity:0,transform:'translateY(4px)'},
-        {opacity:1,transform:'translateY(0)'}
-      ],{duration:140,delay:(resizing?expandDuration:0)+Math.min(index*30,60),fill:'backwards'});
-    });
+    animateCalendarRows(list.children,true,resizing?expandDuration:0);
   }
 }
 
@@ -17191,14 +17188,80 @@ function groupTimelineChapters(chs){
 function timelineDisplayCount(groups){
   return (groups||[]).reduce((n,g)=>n+groupTimelineChapters(g.chs).length,0);
 }
+const timelineDisclosureMotions=new WeakMap();
+
+function animateCalendarRows(rows,expanded,delay=0){
+  return Array.from(rows,(row,index)=>{
+    const frames=[{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}];
+    return row.animate(expanded?frames:frames.reverse(),{
+      duration:140,delay:delay+(expanded?Math.min(index*30,60):0),fill:expanded?'backwards':'forwards'
+    });
+  });
+}
+
+function animateTimelineDisclosure(content,expanded,setVisible){
+  const pending=timelineDisclosureMotions.get(content);
+  if(pending?.expanded===expanded)return;
+  pending?.finish();
+  if(!content.animate||matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setVisible(expanded);
+    return;
+  }
+  const before=content.getBoundingClientRect().height;
+  if(expanded)setVisible(true);
+  const height=content.getBoundingClientRect().height;
+  if(!height||(expanded&&before>0)){
+    setVisible(expanded);
+    return;
+  }
+  const duration=220;
+  const style=getComputedStyle(content);
+  const full={height:height+'px',boxSizing:'border-box',overflow:'clip',
+    paddingBlockStart:style.paddingBlockStart,paddingBlockEnd:style.paddingBlockEnd,
+    marginBlockStart:style.marginBlockStart,marginBlockEnd:style.marginBlockEnd};
+  const empty={...full,height:'0px',paddingBlockStart:'0px',paddingBlockEnd:'0px',
+    marginBlockStart:'0px',marginBlockEnd:'0px'};
+  const resize=content.animate(expanded?[empty,full]:[full,empty],{
+    duration,delay:expanded?0:140,easing:'cubic-bezier(.22,.61,.36,1)',fill:'both'
+  });
+  const rows=content.querySelector(':scope > .tl-pts')?.children||content.children;
+  const fades=animateCalendarRows(rows,expanded,expanded?duration:0);
+  const finish=()=>{
+    resize.onfinish=null;
+    resize.cancel();
+    if(!expanded){
+      setVisible(false);
+      fades.forEach(fade=>fade.cancel());
+    }
+    timelineDisclosureMotions.delete(content);
+  };
+  timelineDisclosureMotions.set(content,{expanded,finish});
+  resize.onfinish=finish;
+}
+
+function setTimelineSingleExpanded(card,expanded){
+  animateTimelineDisclosure(card.querySelector('.desktop-chapter-reader'),expanded,visible=>{card.open=visible;});
+}
+
+function toggleTimelineSingle(event,summary){
+  event.preventDefault();
+  const card=summary.parentElement;
+  const reader=card.querySelector('.desktop-chapter-reader');
+  setTimelineSingleExpanded(card,!(timelineDisclosureMotions.get(reader)?.expanded??card.open));
+}
+
 function toggleTimelineChapterGroup(btn){
+  setTimelineChapterExpanded(btn,btn.getAttribute('aria-expanded')!=='true');
+}
+function setTimelineChapterExpanded(btn,expanded){
   const card=btn.closest('.tl-chapter-group');
-  if(!card)return;
-  const collapsed=card.classList.toggle('collapsed');
-  btn.setAttribute('aria-expanded',String(!collapsed));
+  const grid=card.querySelector('.tl-section-grid');
+  card.classList.toggle('collapsed',!expanded);
+  btn.setAttribute('aria-expanded',String(expanded));
+  animateTimelineDisclosure(grid,expanded,visible=>{grid.hidden=!visible;});
   if(card.closest('#detailBookNoteCard')){
     const title=card.querySelector('.tl-chapter-group-title').textContent;
-    timelineChapterCollapsed.set(timelineChapterStateKey(title),collapsed);
+    timelineChapterCollapsed.set(timelineChapterStateKey(title),!expanded);
     syncDetailChapterToggle();
   }
 }
@@ -17212,7 +17275,7 @@ function renderTimelineChapterCards(chs,openFn){
       const x=entry.item;
       if(inline)return `<details class="tl-item tl-chapter-single has-paras" data-idx="${x.i}" ${x.i===desktopChapterIndex?'open':''}
         data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}">
-        <summary class="tl-head"><svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div>${desktopChapterEditButton(x.i)}</summary>
+        <summary class="tl-head" onclick="toggleTimelineSingle(event,this)"><svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div>${desktopChapterEditButton(x.i)}</summary>
         <div class="desktop-chapter-reader" data-desktop-chapter="${x.i}">${desktopChapterHtml(x.c)}</div>
       </details>`;
       return `<div class="tl-item tl-chapter-single has-paras"${order} data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
@@ -17225,7 +17288,7 @@ function renderTimelineChapterCards(chs,openFn){
         <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
       </button>
-      <div class="tl-section-grid">
+      <div class="tl-section-grid" ${collapsed?'hidden':''}>
         ${entry.items.map(x=>{
           const expanded=inline&&desktopOpenSections.has(x.i);
           const toggle=inline?`aria-expanded="${expanded}" aria-controls="desktop-chapter-${x.i}"`:'';
@@ -17488,7 +17551,10 @@ function openChapterSheet(idx){
   sheet.classList.remove('dragging'); sheet.style.transform='';
   alignChapterSheetToCard();
   document.getElementById('tlSheetMask').classList.add('show');
-  requestAnimationFrame(()=>sheet.classList.add('show'));
+  const play=!sheet.classList.contains('show')&&sheet.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+  sheet.classList.toggle('timeline-reading',!!play);
+  if(play)animateCalendarRows(document.querySelector('#tlSheetBody .tl-pts').children,true,220);
+  requestAnimationFrame(()=>{if(tlSheetIdx===idx)sheet.classList.add('show');});
   initTlSheetDrag();
 }
 // 顶栏按钮用 pointerdown：输入框失焦会重绘正文，若等 click，按钮可能已经移动而接不到事件。
@@ -17745,7 +17811,7 @@ function openNewDetailChapter(initialHeading){
   tlChapterNew=true;tlSheetIdx=-1;tlSheetSegs=[];tlSheetLead='';tlChapterSource='';
   tlChapterDraft=(initialHeading==null?nextChapterHeading(body):initialHeading)+' \n';
   const sheet=document.getElementById('tlSheet');
-  sheet.classList.remove('dragging');sheet.style.transform='';
+  sheet.classList.remove('dragging','timeline-reading');sheet.style.transform='';
   alignChapterSheetToCard();
   document.getElementById('tlSheetMask').classList.add('show');
   sheet.classList.add('show');initTlSheetDrag();enterWholeChapterEdit();
@@ -17802,7 +17868,16 @@ function closeChapterSheet(){
   tlWholeEditing=false;
   document.getElementById('tlSheet').classList.remove('chapter-keyboard');
   document.getElementById('tlSheetMask').classList.remove('show');
-  document.getElementById('tlSheet').classList.remove('show');
+  const sheet=document.getElementById('tlSheet');
+  const body=document.getElementById('tlSheetBody');
+  if(sheet.classList.contains('timeline-reading')&&sheet.classList.contains('show')&&
+      !sheet.classList.contains('dragging')&&!body.classList.contains('chapter-editing')){
+    const rows=body.querySelector('.tl-pts')?.children||[];
+    Array.from(rows).forEach(row=>row.getAnimations().forEach(animation=>animation.cancel()));
+    const fades=animateCalendarRows(rows,false);
+    setTimeout(()=>fades.forEach(fade=>fade.cancel()),360);
+  }else sheet.classList.remove('timeline-reading');
+  sheet.classList.remove('show');
   tlSheetIdx=null;tlSheetEdit=-1;tlChapterNew=false;
   tlTapMuteUntil=Date.now()+400;
 }
