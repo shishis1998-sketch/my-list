@@ -5458,7 +5458,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   #appSidebar .nlbl-mobile{display:none;}
   #appSidebar .nlbl-btn{
-    align-items:center;gap:var(--sp-4);padding:var(--sp-4) var(--sp-6);
+    align-items:center;gap:var(--sp-4);
+    padding:calc(var(--sp-4) - 1px) calc(var(--sp-6) - 1px);
+    border:1px solid transparent;
     font:600 var(--fs-foot)/var(--lh-tight) var(--zh);color:var(--text-secondary);
   }
   #appSidebar .ncard{
@@ -5471,9 +5473,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     font-size:var(--fs-caption);line-height:var(--lh-normal);
     color:var(--text-primary);
   }
-  #appSidebar .ncard-cats-desktop .nitem{
-    min-height:34px;border:1px solid transparent;
+  #appSidebar .nitem:not(.nitem-fs){
+    border:1px solid transparent;
+    padding:calc(var(--sp-6) - 1px) calc(var(--sp-8) - 1px);
   }
+  #appSidebar .ncard-cats-desktop .nitem{padding:var(--sp-6) var(--sp-8);}
+  #appSidebar :is(.nitem,.nlbl-btn){transition:none;}
   #appSidebar .ncard-cats-desktop .nitem.on,
   #appSidebar .ncard-cats-desktop .nitem.parent-on{color:var(--accent);}
   #appSidebar .ncard-cats-desktop .nitem.on{
@@ -5501,6 +5506,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar button:focus-visible{
     outline:2px solid var(--accent);outline-offset:1px;
   }
+  #appSidebar .nsub button:focus-visible{outline-offset:-3px;}
   #appSidebar .nitem-mode+.nitem-fs{
     border-top:1px solid var(--border-soft);border-radius:0;
   }
@@ -5534,7 +5540,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .nfrow .nfchip-dashed:hover{border-style:solid;}
 
   /* 无完整边框的控件使用内描边，避免悬停时改变尺寸或遮住相邻行。 */
-  :is(.nitem:not(.nitem-fs,.ncard-cats-desktop .nitem),.nlbl-btn,.sclear,.mclose,.tadd-btn,.tsugg-more,
+  :is(.nlbl-btn:not(:where(#appSidebar *)),.sclear,.mclose,.tadd-btn,.tsugg-more,
       .tmgr-link,.btn-d,.cmdel,.emoji-cell,.menubtn,.cal-navbtn,.cal-closebtn,
       .cal-filter-row,.cal-scancel,.cal-sr,.cal-day,.cal-tl-row,
       .cw-nav,.note-month-row,.note-act,.note-edit,.tl-btn,.tl-section-btn,
@@ -5564,27 +5570,27 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #mlist .mrow:hover .cname{color:var(--accent);}
 }
 
+@media (max-width:1024px) and (hover:hover) and (pointer:fine){
+  #appSidebar :is(.nitem:not(.nitem-fs,.ncard-cats-desktop .nitem),.nlbl-btn):hover{
+    outline:1px solid var(--accent);
+    outline-offset:-1px;
+  }
+}
 @media (min-width:1025px) and (hover:hover) and (pointer:fine){
   #detailBookNoteCard .tl-section-btn:hover{border-radius:var(--r);}
   .desktop-chapter-controls>.nlbl-btn:hover:not(:focus-visible){outline:none;}
   .desktop-chapter-controls>:is(.desktop-chapter-edit,.desktop-chapter-cancel):hover{color:var(--accent);}
   .desktop-chapter-controls>.nlbl-btn:hover svg{stroke-width:3;}
-  #appSidebar .sidebar-disclosure:hover{border-color:var(--accent);color:var(--accent);}
-
-  /* 侧栏悬停统一描在当前行，笔记标题和展开箭头共用一圈。 */
-  #appSidebar .ncard .nitem:not(.nitem-fs,#nav-notes):hover,
-  #appSidebar .sidebar-notes-header:has(>button:hover){
-    border-radius:var(--r);
+  /* 和外观、经期一样直接切换边框颜色，笔记标题与箭头共用同一条边框。 */
+  #appSidebar :is(.sidebar-disclosure,.nlbl-btn,.nitem:not(.nitem-fs,:where(#nav-notes))):hover,
+  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes{
+    border-color:var(--accent);
     color:var(--accent);
   }
-  #appSidebar .ncard .nitem:not(.nitem-fs,#nav-notes):hover:not(:focus-visible),
-  #appSidebar .sidebar-notes-header:has(>button:hover):not(:has(>button:focus-visible)){
-    outline:1px solid var(--accent);
-    outline-offset:-1px;
-  }
-  #appSidebar .sidebar-notes-header:has(>button:hover)>:is(#nav-notes,#nav-notes-toggle){
+  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes-toggle{
     color:var(--accent);
   }
+  #appSidebar .nitem:hover :is(.nmode-lbl,.novu-lbl){color:inherit;}
 }
 </style>
 <script>
