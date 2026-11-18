@@ -200,7 +200,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 
 .desktop-sidebar-toggle{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  .app{--desktop-sidebar-width:244px;}
+  .app{--desktop-sidebar-width:244px;--desktop-detail-top-inset:var(--sp-20);}
   .app>.sidebar{width:var(--desktop-sidebar-width);min-width:var(--desktop-sidebar-width);}
   .app>.sidebar>.logo{padding-right:44px;}
   .desktop-sidebar-toggle{
@@ -209,6 +209,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
     width:32px;height:32px;padding:0;border:1px solid var(--border);
     border-radius:var(--r);background:var(--surface);color:var(--text-secondary);cursor:pointer;
   }
+  body.detail-open .desktop-sidebar-toggle{top:var(--desktop-detail-top-inset);}
   .app.desktop-sidebar-collapsed{padding-left:44px;}
   .app.desktop-sidebar-collapsed>.sidebar{display:none;}
   .desktop-sidebar-collapsed>.desktop-sidebar-toggle{left:6px;}
@@ -3034,6 +3035,7 @@ mark.shl{
   body.detail-open .main>:is(.topbar,.frow){border-bottom:0;}
   body.detail-open .main>.topbar{
     display:flex!important;grid-area:1 / 1;padding-inline:var(--sp-14);
+    padding-top:var(--desktop-detail-top-inset);
   }
   body.detail-open .topbar :is(.ssort,.addbtn){display:none;}
   body.detail-open .main>.frow{
@@ -3128,7 +3130,7 @@ mark.shl{
     height:clamp(150px,42dvh,600px);min-height:0;overflow:auto;
     font-size:var(--fs-body);
   }
-  .dt-body{width:100%;--dt-padt:var(--sp-20);--dt-padx:var(--sp-24);}
+  .dt-body{width:100%;--dt-padt:var(--desktop-detail-top-inset);--dt-padx:var(--sp-24);}
   .dt-card{box-shadow:var(--pop-sm);}
 }
 
@@ -5409,6 +5411,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     flex-shrink:0;display:flex;align-items:center;min-height:var(--sidebar-header-height);
     padding:0 46px 0 var(--sp-16);margin:0;
     background:var(--bg);border-color:var(--border);
+  }
+  body.detail-open #appSidebar>.logo{
+    align-items:flex-start;padding-top:var(--desktop-detail-top-inset);
   }
   #appSidebar .logo h1{font-size:var(--fs-title);line-height:var(--lh-tight);}
   #appSidebar .sidebar-scroll{
