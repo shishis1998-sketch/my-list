@@ -527,7 +527,7 @@ body.detail-open .content{display:none!important;}
 .dt-body{display:flex;flex-direction:column;gap:var(--sp-10);overflow-x:clip;
   --dt-padx:var(--sp-16);--dt-padt:var(--sp-12);
   padding:var(--dt-padt) var(--dt-padx) var(--sp-24);}
-/* 书名卡 + 三栏切换钉在顶上，底下的内容从它下面滑过去。三个栏目都一样。
+/* 详情页标题卡和切换条默认吸顶，电脑端书籍详情随正文滚动。
    负边距把这一块撑到容器留白之外，钉住时背景才铺满整宽、上边不漏出滑过的卡；
    负的 margin-bottom 抵掉父级那道 gap，不滚的时候间距和原来一模一样 */
 .dt-top{position:sticky;top:0;z-index:5;background:var(--bg);
@@ -3067,8 +3067,9 @@ mark.shl{
     grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;
     scrollbar-gutter:stable both-edges;
   }
+  .dt-top-book{position:relative;}
   /* 正文滑到固定导航下方时，遮住卡片顶部两角。 */
-  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top::after{
+  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after{
     content:"";position:absolute;inset:100% var(--dt-padx) auto;
     height:calc(var(--rlg) + var(--bd));box-sizing:border-box;pointer-events:none;
     border:var(--bd) solid var(--ink);border-bottom:0;
@@ -12182,7 +12183,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
   const T=DT_TABS.map((t,i)=>`<button class="cvt${viewTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
   const thumbCls=['','m','y','h'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
   box.innerHTML=`
-    <div class="dt-top">
+    <div class="dt-top${item.type==='book'?' dt-top-book':''}">
       <div class="dt-card dt-hd">
         <div class="dt-hdrow">
           <h2 class="dt-name" data-edit="f-name">${esc(item.name)}</h2>
@@ -17362,13 +17363,14 @@ function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight
 function alignChapterSheetToCard(){
   const sheet=document.getElementById('tlSheet');
   const tabs=tlHostMedia&&document.querySelector('#detailRoot.open .dt-tabs');
-  if(!tabs||!tabs.getClientRects().length){
+  const rect=tabs&&tabs.getClientRects()[0];
+  if(!rect||rect.bottom<=0){
     sheet.classList.remove('card-aligned');
     sheet.style.removeProperty('--tl-card-top');
     return;
   }
-  // .dt-top 会吸顶，因此直接使用导航当前的视口位置；地址栏或窗口变化时会重新计算。
-  const top=Math.max(0,tabs.getBoundingClientRect().top);
+  // 电脑端书籍的导航滚出视口后，章节抽屉使用默认高度。
+  const top=Math.max(0,rect.top);
   sheet.style.setProperty('--tl-card-top',top+'px');
   sheet.classList.add('card-aligned');
 }
