@@ -200,7 +200,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 
 .desktop-sidebar-toggle{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  .app{--desktop-sidebar-width:244px;--desktop-detail-top-inset:var(--sp-20);--desktop-sidebar-duration:220ms;}
+  .app{--desktop-sidebar-width:244px;--sidebar-header-height:64px;--sidebar-toggle-size:32px;--sidebar-content-inset:var(--sp-12);--desktop-detail-top-inset:var(--sp-20);--desktop-sidebar-duration:220ms;}
   .app>.sidebar{
     width:var(--desktop-sidebar-width);min-width:var(--desktop-sidebar-width);
     transition:margin-left var(--desktop-sidebar-duration) ease,
@@ -208,13 +208,15 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   }
   .app>.sidebar>.logo{padding-right:44px;}
   .desktop-sidebar-toggle{
-    display:grid;place-items:center;position:fixed;top:var(--sp-16);
-    left:calc(var(--desktop-sidebar-width) - 40px);z-index:21;
-    width:32px;height:32px;padding:0;border:0;
+    display:grid;place-items:center;position:fixed;top:calc((var(--sidebar-header-height) - 1px - var(--sidebar-toggle-size)) / 2);
+    left:calc(var(--desktop-sidebar-width) - var(--sidebar-content-inset) - 23px);z-index:21;
+    width:var(--sidebar-toggle-size);height:var(--sidebar-toggle-size);padding:0;border:0;
     background:transparent;color:var(--text-secondary);cursor:pointer;
     transition:left var(--desktop-sidebar-duration) ease;
   }
-  body.detail-open .desktop-sidebar-toggle{top:var(--desktop-detail-top-inset);}
+  body.detail-open .desktop-sidebar-toggle{
+    top:calc(var(--desktop-detail-top-inset) + (var(--fs-title) * var(--lh-tight) - var(--sidebar-toggle-size)) / 2);
+  }
   .app.desktop-sidebar-collapsed>.sidebar{
     margin-left:calc(0px - var(--desktop-sidebar-width));margin-right:44px;visibility:hidden;
   }
@@ -5441,7 +5443,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .sidebar-palette-label,.sidebar-disclosure,.sidebar-scroll-indicator{display:none;}
 .sidebar-scroll{display:contents;}
 @media (min-width:1025px) and (pointer:fine){
-  #appSidebar{--sidebar-header-height:64px;--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
+  #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
   #appSidebar>.logo{
     flex-shrink:0;display:flex;align-items:center;min-height:var(--sidebar-header-height);
     padding:0 46px 0 var(--sp-16);margin:0;
@@ -5471,7 +5473,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     top:calc((100% - var(--sidebar-thumb-height)) * var(--sidebar-scroll-progress,0));
     height:var(--sidebar-thumb-height);border-radius:var(--rsm);background:var(--text-muted);
   }
-  #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sp-12);margin-bottom:var(--sp-16);}
+  #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sidebar-content-inset);margin-bottom:var(--sp-16);}
   #appSidebar .sidebar-scroll>.nsec:last-child{margin-bottom:0;}
   #appSidebar .sidebar-scroll>.nsec-look{margin-bottom:var(--sp-8);}
   #appSidebar .sidebar-disclosure-section>.nlbl{display:none;}
@@ -5663,7 +5665,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <button type="button" class="desktop-sidebar-toggle" aria-controls="appSidebar" aria-expanded="true"
   aria-label="收起侧栏" title="收起侧栏" onclick="toggleDesktopSidebar(this)">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path class="sidebar-icon-collapse" d="M4 4v16m12-14-6 6 6 6"/>
+    <path class="sidebar-icon-collapse" d="M4 4v16m16-14-6 6 6 6"/>
     <path class="sidebar-icon-menu" d="M4 6h16M4 12h16M4 18h16"/>
   </svg>
 </button>
