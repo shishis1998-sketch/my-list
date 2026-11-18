@@ -5505,6 +5505,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border:1px solid transparent;
     font:600 var(--fs-foot)/var(--lh-tight) var(--zh);color:var(--text-secondary);
   }
+  #appSidebar .nsec-cats>.nlbl-desktop{padding-right:0;}
+  #appSidebar .nsec-cats .nlbl-btn{margin-right:calc(0px - var(--sp-6));}
   #appSidebar .ncard{
     padding:var(--sp-4);border:1px solid var(--border);
     border-radius:var(--rlg);background:var(--surface);
@@ -5677,8 +5679,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <div class="nsec nsec-cats">
     <div class="nlbl nlbl-desktop">
       分类
-      <button class="nlbl-btn" onclick="openCatMgr()" title="管理分类" aria-label="管理分类">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>管理</span>
+      <button type="button" class="nlbl-btn" onclick="openCatMgr()" title="管理分类" aria-label="管理分类">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
     </div>
     <!-- 手机端整屏「设置」用的分组标题(桌面端隐藏) -->
