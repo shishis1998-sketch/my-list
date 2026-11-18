@@ -3131,6 +3131,9 @@ mark.shl{
     font-size:var(--fs-body);
   }
   .dt-body{width:100%;--dt-padt:var(--desktop-detail-top-inset);--dt-padx:var(--sp-24);}
+  /* 顶部留白放在滚动视口之外，书名卡和正文一起滚动。 */
+  .detail-view.open:has(.dt-top-book){border-block-start:var(--desktop-detail-top-inset) solid transparent;}
+  .dt-body:has(>.dt-top-book){--dt-padt:0px;}
   .dt-card{box-shadow:var(--pop-sm);}
 }
 
@@ -17373,15 +17376,17 @@ function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight
 // 让章节抽屉的上沿贴齐详情页视图导航的上沿，打开时完整遮住导航。
 function alignChapterSheetToCard(){
   const sheet=document.getElementById('tlSheet');
-  const tabs=tlHostMedia&&document.querySelector('#detailRoot.open .dt-tabs');
+  const detail=tlHostMedia&&document.querySelector('#detailRoot.open');
+  const tabs=detail&&detail.querySelector('.dt-tabs');
   const rect=tabs&&tabs.getClientRects()[0];
-  if(!rect||rect.bottom<=0){
+  const visibleTop=detail?Math.max(0,detail.getBoundingClientRect().top+detail.clientTop):0;
+  if(!rect||rect.bottom<=visibleTop){
     sheet.classList.remove('card-aligned');
     sheet.style.removeProperty('--tl-card-top');
     return;
   }
   // 电脑端书籍的导航滚出视口后，章节抽屉使用默认高度。
-  const top=Math.max(0,rect.top);
+  const top=Math.max(visibleTop,rect.top);
   sheet.style.setProperty('--tl-card-top',top+'px');
   sheet.classList.add('card-aligned');
 }
