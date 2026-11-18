@@ -568,6 +568,7 @@ body.detail-open .content{display:none!important;}
 /* 备注 / 人物：标题挪到卡外面当小节名。卡里只剩正文，
    一张卡就是一段内容，标题不再占掉卡内顶上那一行 */
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
+.desktop-timeline-top-edge{display:none;}
 .dt-seclbl{font-size:var(--fs-caption);font-weight:700;color:var(--text-secondary);
   line-height:var(--lh-tight);padding-left:var(--sp-2);}
 /* 标题那一行右边挂一颗小字按钮：人物那边是「＋ 添加」，时间线那边是「编辑全文」。
@@ -3079,18 +3080,24 @@ mark.shl{
     box-shadow:0 0 0 var(--rlg) var(--bg);
     clip-path:inset(0);
   }
-  /* 只画两侧圆角和上沿，避免整块阴影在滚动时留下横线。 */
-  .dt-top-book + .dt-sec > #detailBookNoteCard.desktop-chapter-layout::before{
+  /* 描边与章节卡片等宽，圆角遮罩只覆盖边框外侧。 */
+  #detailBookNoteCard.desktop-chapter-layout>.desktop-timeline-top-edge{
+    --edge-height:calc(var(--rlg) + var(--bd));
+    display:block;position:sticky;inset-block-start:0;z-index:4;pointer-events:none;
+    height:var(--edge-height);margin-block-end:calc(-1 * var(--edge-height));
+  }
+  .desktop-timeline-top-edge::before{
     --corner-width:calc(var(--rlg) + var(--bd));
-    --corner-inner-radius:calc(var(--rlg) - var(--bd));
-    --corner-stops:transparent var(--corner-inner-radius),var(--ink) var(--corner-inner-radius) var(--rlg),var(--bg) var(--rlg);
-    content:"";display:block;position:sticky;inset-block-start:0;z-index:4;pointer-events:none;
-    height:var(--rlg);margin-block-end:calc(-1 * var(--rlg));
-    margin-inline:calc(-1 * var(--bd));
+    --corner-stops:transparent calc(var(--rlg) - var(--bd)),var(--bg) calc(var(--rlg) - var(--bd));
+    content:"";position:absolute;inset-inline:calc(-1 * var(--bd));inset-block-start:0;height:var(--rlg);
     background:
       radial-gradient(circle at bottom right,var(--corner-stops)) top left / var(--corner-width) 100% no-repeat,
-      radial-gradient(circle at bottom left,var(--corner-stops)) top right / var(--corner-width) 100% no-repeat,
-      linear-gradient(var(--ink),var(--ink)) top center / calc(100% - 2 * var(--corner-width)) var(--bd) no-repeat;
+      radial-gradient(circle at bottom left,var(--corner-stops)) top right / var(--corner-width) 100% no-repeat;
+  }
+  .desktop-timeline-top-edge::after{
+    content:"";position:absolute;inset:0;
+    border:var(--bd) solid var(--ink);border-bottom:0;
+    border-radius:var(--rlg) var(--rlg) 0 0;
   }
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
   #detailBookNoteCard.desktop-chapter-layout>.tl{
@@ -5142,8 +5149,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #detailBookNoteCard > .dt-lbl-row{align-items:center;min-height:24px;margin-bottom:var(--sp-12);}
 #detailBookNoteCard > .dt-lbl-row > .dt-lbl{font-weight:700;margin-bottom:0;}
 #detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-16));margin-right:calc(-1 * var(--sp-16));}
-#detailBookNoteCard > .tl:first-child{margin-top:0;}
-#detailBookNoteCard > .tl-part:first-child{margin-top:0;}
+#detailBookNoteCard > :is(.tl,.tl-part):first-child,
+#detailBookNoteCard > .desktop-timeline-top-edge + :is(.tl,.tl-part){margin-top:0;}
 @media(max-width:1024px){
   #detailBookNoteCard > .tl{margin-left:calc(-1 * var(--sp-14));margin-right:calc(-1 * var(--sp-14));}
 }
@@ -12398,6 +12405,7 @@ function renderDetailTL(item){
   return `<div class="dt-sec">
   ${timelineSearchOpen?`<input id="timelineSearchInput" class="people-search-field" type="search" placeholder="搜索章节、小节或正文" aria-label="搜索时间线" value="${esc(timelineSearchQuery)}" oninput="filterTimelineList(this.value)" autocomplete="off">`:''}
   <div class="dt-card${desktopChapterLayout.matches?' desktop-chapter-layout':''}" id="detailBookNoteCard" style="cursor:default">
+    ${item.type==='book'?'<div class="desktop-timeline-top-edge" aria-hidden="true"></div>':''}
     ${groups.map(g=>(g.part?`<div class="tl-part">${esc(g.part)}</div>`:'')
       +`<div class="tl">${renderTimelineChapterCards(g.chs,'openDetailChapter')}</div>`).join('')}
     ${timelineSearchOpen?'<div id="timelineSearchEmpty" class="people-search-empty" hidden>没有找到匹配的章节</div>':''}
