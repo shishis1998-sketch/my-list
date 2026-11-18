@@ -16015,7 +16015,7 @@ function makeCalCell(day,isOther,dateStr,isToday,isSel,lanes){
 
 // 把一条笔记转成日历记录对象
 function toCalNoteRec(n){return {_isNote:true,id:n.id,title:n.title,body:n.body||'',subCat:n.subCat||'',
-  tags:n.tags||[],_ics:n._ics,_icsCal:n._icsCal,_icsColor:n._icsColor};}   // 配色字段一并带上，时间线节点要用；_ics 是周视图并块的凭据
+  tags:n.tags||[],createdAt:n.createdAt,_ics:n._ics,_icsCal:n._icsCal,_icsColor:n._icsColor};}   // 配色字段一并带上，时间线节点要用；_ics 是周视图并块的凭据
 
 // 笔记分类 → 图例色（与顶部图例一致）
 function noteDotColor(subCat){
@@ -16138,7 +16138,9 @@ function makeCalTlRow(r,tail,isCur){
     main=`<span class="cal-row-cover">${coverH}</span><span class="cal-tl-nm">${esc(r.name)}</span>`;
     div.onclick=e=>openCalRec(r,{x:e.clientX,y:e.clientY});
   }
-  div.innerHTML=`<span class="cal-tl-dot"></span>${main}<span class="cal-tl-tail">${tail||''}</span>`;
+  const created=calView==='food'&&isCur&&r._isNote?renderNoteCreatedAt(r.createdAt,true):'';
+  const details=[tail,created].filter(Boolean).join(' · ');
+  div.innerHTML=`<span class="cal-tl-dot"></span>${main}<span class="cal-tl-tail">${details}</span>`;
   // 节点用这条记录自己的颜色（和月历格子里的圆点同一套色）：
   // 当天=实心，往年今日=空心圆环，都上色
   const col=calView==='food'?'var(--accent)':(r._isNote?calNoteColor(r):getCat(r.type).color);
@@ -16532,14 +16534,15 @@ function bookNotePreview(body){
   }).join('');
 }
 
-function renderNoteCreatedAt(ts){
+function renderNoteCreatedAt(ts,timeOnly=false){
   if(!ts)return '';
   const date=new Date(ts);
   if(!Number.isFinite(date.getTime()))return '';
   const pad=value=>String(value).padStart(2,'0');
   const day=[date.getFullYear(),pad(date.getMonth()+1),pad(date.getDate())].join('-');
   const time=[pad(date.getHours()),pad(date.getMinutes())].join(':');
-  return `<time class="note-date note-created" datetime="${date.toISOString()}" title="添加时间" aria-label="添加时间：${day} ${time}">${day} ${time}</time>`;
+  const label=`添加时间：${day} ${time}`;
+  return `<time${timeOnly?'':' class="note-date note-created"'} datetime="${date.toISOString()}" title="${timeOnly?label:'添加时间'}" aria-label="${label}">${timeOnly?time:day+' '+time}</time>`;
 }
 
 function fmtNoteDate(ts){
