@@ -3071,21 +3071,26 @@ mark.shl{
   }
   .dt-top-book{position:relative;}
   /* 时间线滑出可见区时，遮住卡片的两个上角并画出上沿描边。 */
-  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after,
-  .dt-top-book + .dt-sec > #detailBookNoteCard.desktop-chapter-layout::before{
-    content:"";
+  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after{
+    content:"";position:absolute;inset:100% var(--dt-padx) auto;
     height:calc(var(--rlg) + var(--bd));box-sizing:border-box;pointer-events:none;
     border:var(--bd) solid var(--ink);border-bottom:0;
     border-radius:var(--rlg) var(--rlg) 0 0;
     box-shadow:0 0 0 var(--rlg) var(--bg);
     clip-path:inset(0);
   }
-  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after{
-    position:absolute;inset:100% var(--dt-padx) auto;
-  }
+  /* 只画两侧圆角和上沿，避免整块阴影在滚动时留下横线。 */
   .dt-top-book + .dt-sec > #detailBookNoteCard.desktop-chapter-layout::before{
-    display:block;position:sticky;inset-block-start:0;z-index:4;
-    margin-block-end:calc(-1 * (var(--rlg) + var(--bd)));
+    --corner-width:calc(var(--rlg) + var(--bd));
+    --corner-inner-radius:calc(var(--rlg) - var(--bd));
+    --corner-stops:transparent var(--corner-inner-radius),var(--ink) var(--corner-inner-radius) var(--rlg),var(--bg) var(--rlg);
+    content:"";display:block;position:sticky;inset-block-start:0;z-index:4;pointer-events:none;
+    height:var(--rlg);margin-block-end:calc(-1 * var(--rlg));
+    margin-inline:calc(-1 * var(--bd));
+    background:
+      radial-gradient(circle at bottom right,var(--corner-stops)) top left / var(--corner-width) 100% no-repeat,
+      radial-gradient(circle at bottom left,var(--corner-stops)) top right / var(--corner-width) 100% no-repeat,
+      linear-gradient(var(--ink),var(--ink)) top center / calc(100% - 2 * var(--corner-width)) var(--bd) no-repeat;
   }
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
   #detailBookNoteCard.desktop-chapter-layout>.tl{
