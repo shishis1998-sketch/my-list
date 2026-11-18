@@ -3070,14 +3070,22 @@ mark.shl{
     scrollbar-gutter:stable both-edges;
   }
   .dt-top-book{position:relative;}
-  /* 正文滑到固定导航下方时，遮住卡片顶部两角。 */
-  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after{
-    content:"";position:absolute;inset:100% var(--dt-padx) auto;
+  /* 时间线滑出可见区时，遮住卡片的两个上角并画出上沿描边。 */
+  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after,
+  .dt-top-book + .dt-sec > #detailBookNoteCard.desktop-chapter-layout::before{
+    content:"";
     height:calc(var(--rlg) + var(--bd));box-sizing:border-box;pointer-events:none;
     border:var(--bd) solid var(--ink);border-bottom:0;
     border-radius:var(--rlg) var(--rlg) 0 0;
     box-shadow:0 0 0 var(--rlg) var(--bg);
     clip-path:inset(0);
+  }
+  .dt-body:has(> .dt-sec > .desktop-chapter-layout) > .dt-top:not(.dt-top-book)::after{
+    position:absolute;inset:100% var(--dt-padx) auto;
+  }
+  .dt-top-book + .dt-sec > #detailBookNoteCard.desktop-chapter-layout::before{
+    display:block;position:sticky;inset-block-start:0;z-index:4;
+    margin-block-end:calc(-1 * (var(--rlg) + var(--bd)));
   }
   #detailBookNoteCard.desktop-chapter-layout{border:0;background:none;padding:0;box-shadow:none;}
   #detailBookNoteCard.desktop-chapter-layout>.tl{
