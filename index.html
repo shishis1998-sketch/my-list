@@ -15545,7 +15545,7 @@ function calSearchItems(){
     const dm=(n.body||'').match(/第(\d+)\/(\d+)天/);   // 跨天事件正文里的「第X/Y天」
     items.push({date:`${m[1]}-${m[2]}-${m[3]}`,uid:n._ics||'',
       title:calNoteTitle({body:n.body||'',subCat:n.subCat}),dayLabel:dm?`第${dm[1]}天`:'',
-      meta:n.subCat||'笔记',color:calNoteColor(n),createdAt:n.createdAt,
+      meta:n.subCat||'笔记',color:calNoteColor(n),
       hay:[n.body,(n.tags||[]).join(' ')].join(' ').toLowerCase()});
   });
   return items;
@@ -15648,7 +15648,7 @@ function runCalSearch(){
       row.innerHTML=`<span class="cal-sr-mark" style="background:${esc(it.color||'#9B9B9B')}"></span>`+
         `<span class="cal-sr-date">${esc(it.date.slice(5))}</span>`+   /* 年份在卡头，行内只留月-日 */
         `<div class="cal-sr-t">${esc(it.title)}${dayTag}</div>`+
-        `<span class="cal-sr-rel">${[esc(calRelTime(it.date)),calView==='food'?renderNoteCreatedAt(it.createdAt,true):''].filter(Boolean).join(' · ')}</span>`;
+        `<span class="cal-sr-rel">${esc(calRelTime(it.date))}</span>`;
       row.onclick=()=>jumpCalSearch(it.date);
       card.appendChild(row);
     });
@@ -16138,7 +16138,7 @@ function makeCalTlRow(r,tail,isCur){
     main=`<span class="cal-row-cover">${coverH}</span><span class="cal-tl-nm">${esc(r.name)}</span>`;
     div.onclick=e=>openCalRec(r,{x:e.clientX,y:e.clientY});
   }
-  const created=calView==='food'&&r._isNote?renderNoteCreatedAt(r.createdAt,true):'';
+  const created=calView==='food'&&isCur&&r._isNote?renderNoteCreatedAt(r.createdAt,true):'';
   const details=[tail,created].filter(Boolean).join(' · ');
   div.innerHTML=`<span class="cal-tl-dot"></span>${main}<span class="cal-tl-tail">${details}</span>`;
   // 节点用这条记录自己的颜色（和月历格子里的圆点同一套色）：
