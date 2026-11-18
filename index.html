@@ -3132,6 +3132,9 @@ mark.shl{
   .desktop-chapter-reader .tl-pbody{font-size:calc(15px * var(--fs-scale));}
   .desktop-chapter-section:has(.tl-section-btn[hidden]){display:none;}
   .desktop-chapter-heading{display:flex;align-items:center;gap:var(--sp-8);padding-inline-end:var(--sp-12);}
+  .dt-top-book + .dt-sec .desktop-chapter-heading:has(>.tl-section-btn[aria-expanded="true"]){
+    position:sticky;inset-block-start:var(--bd);z-index:3;background:var(--surface);
+  }
   .desktop-chapter-heading>.tl-section-btn:not([hidden]){
     flex:1;align-self:stretch;height:auto;padding:var(--sp-6) var(--sp-10);
     gap:var(--sp-8);background:transparent;border:0;border-radius:var(--r);
