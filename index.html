@@ -5698,6 +5698,26 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   #appSidebar .nitem:hover :is(.nmode-lbl,.novu-lbl){color:inherit;}
 }
+
+/* 电脑侧栏以列表分组，当前项目显示圆角底色。 */
+@media(min-width:1025px) and (pointer:fine){
+  #appSidebar .ncard{
+    background:transparent;border-color:transparent;box-shadow:none;
+  }
+  #appSidebar .sidebar-disclosure{
+    background:transparent;border-color:transparent;border-radius:8px;
+    color:var(--text-secondary);
+  }
+  #appSidebar .sidebar-disclosure[aria-expanded="true"]{
+    border-radius:8px;
+  }
+  #appSidebar .ncard-cats-desktop .nitem.on{
+    background:var(--surface);border-color:transparent;border-radius:8px;
+  }
+  #appSidebar .sidebar-notes-header>#nav-notes.parent-on{
+    background:var(--surface);border-color:transparent;border-radius:8px;
+  }
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
