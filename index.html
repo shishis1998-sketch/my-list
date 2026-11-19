@@ -1508,7 +1508,7 @@ body.cal-open.cal-searching .cal-scroll{flex:0 0 auto;border-top:1px solid var(-
 .cal-filterbtn{color:var(--accent);position:relative;}
 .cal-filterbtn.on{background:var(--accent-light);}
 
-/* 食记切月：轻微横向滑入，不影响网格内部的上下收起位移。 */
+/* 日历与食记切月：轻微横向滑入，不影响网格内部的上下收起位移。 */
 #calGridClip.cal-month-enter{animation:cal-month-enter .18s ease-out;}
 @keyframes cal-month-enter{
   from{opacity:.45;transform:translateX(var(--cal-month-enter-x,16px));}
@@ -15474,12 +15474,12 @@ function openCalDay(dateStr){
 }
 
 
-// 食记第一张卡片支持单指横滑；纵向滚动、多指和底部把手交回原来的操作。
-(function bindFoodMonthSwipe(){
+// 日历和食记第一张卡片支持单指横滑；纵向滚动、多指和底部把手交回原来的操作。
+(function bindCalendarMonthSwipe(){
   const root=document.getElementById('calViewCalendar');
   if(!root)return;
   let touch=null,suppressClickUntil=0;
-  const enabled=()=>calView==='food'&&document.body.classList.contains('cal-open')&&
+  const enabled=()=>(calView==='food'||calView==='cal')&&document.body.classList.contains('cal-open')&&
     !document.body.classList.contains('cal-searching');
   root.addEventListener('touchstart',e=>{
     touch=null;
