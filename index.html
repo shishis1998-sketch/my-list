@@ -1507,6 +1507,17 @@ body.cal-open.cal-searching .cal-scroll{flex:0 0 auto;border-top:1px solid var(-
 /* —— 分类筛选：收进头部按钮 → 弹出小面板 —— */
 .cal-filterbtn{color:var(--accent);position:relative;}
 .cal-filterbtn.on{background:var(--accent-light);}
+
+/* 食记切月：轻微横向滑入，不影响网格内部的上下收起位移。 */
+#calGridClip.cal-month-enter{animation:cal-month-enter .18s ease-out;}
+@keyframes cal-month-enter{
+  from{opacity:.45;transform:translateX(var(--cal-month-enter-x,16px));}
+  to{opacity:1;transform:translateX(0);}
+}
+@media(prefers-reduced-motion:reduce){
+  #calGridClip.cal-month-enter{animation:none;}
+}
+
 .cal-todaybtn{display:none;font-weight:600;}
 .cal-view-food .cal-filterbtn{display:none;}
 .cal-view-food .cal-todaybtn{display:inline-flex;}
@@ -15461,6 +15472,62 @@ function openCalDay(dateStr){
   renderCalDetail();               // 刷新月历下方的日期明细
   renderWeekCard();                // 点到别的周去了才重画
 }
+
+
+// 食记第一张卡片支持单指横滑；纵向滚动、多指和底部把手交回原来的操作。
+(function bindFoodMonthSwipe(){
+  const root=document.getElementById('calViewCalendar');
+  if(!root)return;
+  let touch=null,suppressClickUntil=0;
+  const enabled=()=>calView==='food'&&document.body.classList.contains('cal-open')&&
+    !document.body.classList.contains('cal-searching');
+  root.addEventListener('touchstart',e=>{
+    touch=null;
+    if(!enabled()||e.touches.length!==1)return;
+    if(!e.target.closest('.cal-hdr,.cal-scroll')||
+      e.target.closest('button,input,#calGrabRow,.cal-filterpop,.cal-searchresults'))return;
+    const t=e.touches[0];
+    // 留出系统侧边返回手势区域。
+    if(t.clientX<20||t.clientX>window.innerWidth-20)return;
+    touch={x:t.clientX,y:t.clientY,axis:null};
+  },{passive:true});
+  root.addEventListener('touchmove',e=>{
+    if(!touch)return;
+    if(!enabled()||e.touches.length!==1){touch=null;return;}
+    const t=e.touches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;
+    if(!touch.axis&&Math.max(Math.abs(dx),Math.abs(dy))>10){
+      if(Math.abs(dx)>Math.abs(dy)*1.4)touch.axis='x';
+      else{touch=null;return;}
+    }
+    if(touch.axis==='x'&&e.cancelable)e.preventDefault();
+  },{passive:false});
+  root.addEventListener('touchend',e=>{
+    const start=touch;touch=null;
+    if(!start||!enabled()||e.touches.length||e.changedTouches.length!==1)return;
+    const t=e.changedTouches[0],dx=t.clientX-start.x,dy=t.clientY-start.y;
+    if(start.axis==='x')suppressClickUntil=Date.now()+400;
+    if(Math.abs(dx)<48||Math.abs(dx)<=Math.abs(dy)*1.4)return;
+    suppressClickUntil=Date.now()+400;
+    if(e.cancelable)e.preventDefault();
+    const dir=dx<0?1:-1;
+    if(dir>0)calNext();else calPrev();
+    const clip=document.getElementById('calGridClip');
+    if(clip){
+      clip.classList.remove('cal-month-enter');
+      clip.style.setProperty('--cal-month-enter-x',dir>0?'16px':'-16px');
+      void clip.offsetWidth;
+      clip.classList.add('cal-month-enter');
+    }
+  },{passive:false});
+  root.addEventListener('touchcancel',()=>{touch=null;},{passive:true});
+  root.addEventListener('click',e=>{
+    if(Date.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation();}
+  },true);
+  const clip=document.getElementById('calGridClip');
+  if(clip)clip.addEventListener('animationend',e=>{
+    if(e.animationName==='cal-month-enter')clip.classList.remove('cal-month-enter');
+  });
+})();
 
 // —— 拖动日历卡底部把手：整月 ⇄ 焦点周那一行 ——
 (function calGridDrag(){
