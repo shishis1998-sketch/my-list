@@ -1397,15 +1397,23 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:var(--sp-2);padding:5px var(--sp-4) var(--sp-6);color:var(--text-muted);
     font-size:var(--fs-foot);font-family:var(--zh);font-weight:600;position:relative;}
-  .bb-tab svg{width:20px;height:20px;stroke-width:2;transition:transform .12s;}
+  .bb-tab svg{width:20px;height:20px;stroke-width:2;transition:transform .16s ease-out;transform-origin:center;}
   .bb-tab.on{color:var(--accent);}
-  .bb-tab.on svg{stroke-width:2.4;}
-  /* 按下态要看得见：全局关掉了系统的点击高亮，原来只有 SVG 缩到 0.9，
-     手指正好盖在图标上，等于没有反馈 */
+  .bb-tab.on svg{stroke:var(--accent);stroke-width:2.4;}
   .bb-tab:active{background:var(--bg);}
-  .bb-tab:active svg{transform:scale(.9);}
-  .bb-tab.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
-    width:26px;height:3px;border-radius:2px;background:var(--accent);}
+  .bb-tab:active svg{transform:scale(1.12);}
+  /* 松手后仍播放完整反馈，快速点击和重复点击当前页也能看见。 */
+  .bb-tab.bb-tap-feedback svg{animation:bbTabTap .32s ease-out;}
+  @keyframes bbTabTap{
+    0%{transform:scale(1);}
+    35%{transform:scale(1.2);}
+    100%{transform:scale(1);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bb-tab svg{transition:none;}
+    .bb-tab:active svg{transform:none;}
+    .bb-tab.bb-tap-feedback svg{animation:none;}
+  }
 
   /* 底栏「排序 / 筛选」的小卡片：贴着各自按钮上方弹出（位置由 placeBBPanel 实时算），
      不是整屏抽屉——遮罩只压淡淡一层，底下的列表还看得见。 */
@@ -19408,6 +19416,22 @@ document.addEventListener('touchstart', function(){}, {passive:true});
       active=null;
     },hold);
   },{capture:true,passive:true});
+})();
+
+// 底部主导航点击反馈：不依赖选中态变化，当前页重复点击也会重播。
+(function(){
+  const tabs=document.querySelector('#bottombar .bb-tabs');
+  if(!tabs)return;
+  tabs.addEventListener('click',e=>{
+    const tab=e.target.closest('.bb-tab');
+    if(!tab||!tabs.contains(tab))return;
+    tab.classList.remove('bb-tap-feedback');
+    void tab.offsetWidth;
+    tab.classList.add('bb-tap-feedback');
+  });
+  tabs.addEventListener('animationend',e=>{
+    if(e.animationName==='bbTabTap')e.target.closest('.bb-tab')?.classList.remove('bb-tap-feedback');
+  });
 })();
 
 // -- 下滑收起整条底栏,上滑恢复(仅手机端;CSS 见 body.tabs-hidden .bottombar) --
