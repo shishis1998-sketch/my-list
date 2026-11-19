@@ -17742,7 +17742,8 @@ function openChapterSheet(idx){
   tlSheetSegs=parseChapterSegs(rest);                        // 分段（每段带前置空行 gap）
   tlSheetOrigRaw=buildChapterRaw(tlSheetSegs);              // 归一化原文（保留空行），用于判断是否有改动
   tlSheetOrigSegs=tlSheetSegs.map(sg=>({text:sg.text,gap:sg.gap}));  // 原样留一份，「不保存」照它还原
-  document.getElementById('tlSheetTitle').textContent=c.title||'本章';
+  document.getElementById('tlSheetTitle').textContent=
+    (isMobileLayout()?timelineSectionTitle(c.title)?.section:null)||c.title||'本章';
   renderChapterSheet();
   const sheet=document.getElementById('tlSheet');
   sheet.classList.remove('dragging'); sheet.style.transform='';
