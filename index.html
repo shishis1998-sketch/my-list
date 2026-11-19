@@ -5160,6 +5160,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 @media (min-width:1025px) and (pointer:fine){
   .chapter-format[popover]{padding:0;gap:0;}
+  .chapter-format[popover] .chapter-heading-menu{height:calc(var(--chapter-format-btn-h) + 2px);}
   .chapter-format[popover] .fmt-btn{border-radius:0;}
   .chapter-format[popover] [data-heading-menu]{
     border-start-start-radius:calc(var(--r) - 1px);
@@ -5170,10 +5171,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border-end-end-radius:calc(var(--r) - 1px);
   }
 }
+.chapter-format[popover] .chapter-heading-menu{border-color:var(--accent);}
 .chapter-format[popover] .fmt-btn{border-color:transparent;}
 .chapter-format[popover] .fmt-btn:active{background:var(--press);}
 @media (hover:hover) and (pointer:fine){
   .chapter-format[popover] .fmt-btn:hover{background:var(--accent-light);border-color:transparent;}
+  .chapter-format[popover] .chapter-heading-option:hover{background:var(--accent-light);outline:none;}
 }
 .chapter-format[popover]:not(:popover-open){display:none;}
 .chapter-format[popover]:popover-open{display:flex;}
