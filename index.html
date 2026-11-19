@@ -1751,7 +1751,17 @@ body.cal-open.cal-searching .cal-scroll{background:transparent;border:none;borde
 .cw-nav{flex-shrink:0;width:26px;height:26px;padding:0;border:0;background:none;
   border-radius:var(--r);display:inline-flex;align-items:center;justify-content:center;
   font-size:16px;line-height:1;color:var(--accent);cursor:pointer;transition:background .15s;}
-.cw-nav:active{background:var(--accent-light);}
+.cw-nav:active,.cal-todaybtn:active{background:var(--accent-light);transform:scale(.9);}
+:is(.cw-nav,.cal-todaybtn).cal-tap-feedback{animation:cal-button-tap .22s ease-out;}
+@keyframes cal-button-tap{
+  0%,55%{background:var(--accent-light);transform:scale(.9);}
+  100%{background:transparent;transform:scale(1);}
+}
+@media(prefers-reduced-motion:reduce){
+  :is(.cw-nav,.cal-todaybtn):active{transform:none;}
+  :is(.cw-nav,.cal-todaybtn).cal-tap-feedback{animation-name:cal-button-color;}
+}
+@keyframes cal-button-color{0%,55%{background:var(--accent-light);}100%{background:transparent;}}
 /* 展开箭头也裹进一颗 26 见方的按钮里（原先是条上的裸图标），右边负 5 是把它退回原位：
    图标 16 居中在 26 里会往左缩 5，而「当天」卡的箭头还在老地方，差这 5px 两张卡就错开了 */
 .cw-hd-x{flex-shrink:0;width:26px;height:26px;margin-left:auto;margin-right:-5px;padding:0;border:0;background:none;
@@ -9353,7 +9363,12 @@ window.onPvHomeViewChange=function(v){
 function setCalView(v){
   // v: 'cal'（日历） | 'month'（经期·月） | 'year'（经期·年） | 'heat'（标签）——合并成一个四段控件
   if(v!=='cal'&&v!=='food'&&v!=='month'&&v!=='year'&&v!=='heat')v='cal';
-  const prev=calView; calView=v;
+  const prev=calView;
+  if(prev==='food'&&v!=='food')rememberFoodCalendarPosition();
+  calView=v;
+  if(v==='food'&&prev!=='food'&&calFoodPosition){
+    calYear=calFoodPosition.year;calMonth=calFoodPosition.month;calSelDate=calFoodPosition.date;
+  }
   const isP=(v==='month'||v==='year');   // 经期日历
   const isH=(v==='heat');                // 统计视图
   document.body.classList.toggle('cal-view-heat',isH);
@@ -15302,6 +15317,11 @@ function refreshFoodCalendar(){
 
 // ── Calendar ─────────────────────────────────────────────────────
 let calYear, calMonth, calSelDate=null;
+// 食记独立保留浏览日期，避免其它日历视图及重新打开页面覆盖它。
+let calFoodPosition=null;
+function rememberFoodCalendarPosition(){
+  calFoodPosition={year:calYear,month:calMonth,date:calSelDate};
+}
 let calGridRows=6;                 // 当前月网格行数（拖动收起时算全程距离用）
 let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起高），跟手距离用
 let calSearchReturn=null;          // 离开日历时暂存搜索词；null 表示当时没有打开搜索
@@ -15317,8 +15337,12 @@ function openCalendar(){
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
   document.getElementById('calRoot').classList.add('open');
   const today=new Date();
-  calYear=today.getFullYear();calMonth=today.getMonth();
-  calSelDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;  // 默认选中今天，下半区常驻显示
+  if(localStorage.getItem('my_list_cal_view')==='food'&&calFoodPosition){
+    calYear=calFoodPosition.year;calMonth=calFoodPosition.month;calSelDate=calFoodPosition.date;
+  }else{
+    calYear=today.getFullYear();calMonth=today.getMonth();
+    calSelDate=calFmtDate(today);  // 首次进入选中今天
+  }
   renderCalLegend();
   renderCal();
   const _clip=document.getElementById('calGridClip');   // 每次打开都从「整月展开」开始
@@ -15347,6 +15371,7 @@ function openCalendar(){
   saveLastView();
 }
 function closeCalendar(){
+  if(calView==='food')rememberFoodCalendarPosition();
   const inp=document.getElementById('calSearchInput');
   const returnSearch=document.body.classList.contains('cal-searching')?(inp?inp.value:''):null;
   document.getElementById('calRoot').classList.remove('open');
@@ -15398,13 +15423,26 @@ function calReselect(){
 // —— 底部抽屉：点某天弹出 / 收起 ——
 // 周卡片上的 ‹ ›：把选中日整周挪一格，星期几不变（这周三 → 上周三），
 // 月历跟着切到新日子所在的月——和点月历里上/下月那些灰格是同一套（见 makeCalCell 的 onclick）
+// 周卡会重建按钮；在新的按钮上保留短暂反馈，不延迟实际切换。
+function calButtonFeedback(button){
+  if(!button)return;
+  clearTimeout(button._calTapTimer);
+  button.classList.remove('cal-tap-feedback');
+  void button.offsetWidth;
+  button.classList.add('cal-tap-feedback');
+  button._calTapTimer=setTimeout(()=>button.classList.remove('cal-tap-feedback'),240);
+}
 function calWeekStep(dir){
+  haptic('tap');
   const d=new Date((calSelDate||calToday())+'T00:00:00');
   d.setDate(d.getDate()+7*dir);
   calYear=d.getFullYear(); calMonth=d.getMonth();   // renderCal 会照这两个数重写顶上的「N 年 N 月」
   openCalDay(calFmtDate(d));
+  calButtonFeedback(document.querySelector(dir<0?'#calWeekCard .cw-nav:first-child':'#calWeekCard .cw-nav:nth-of-type(3)'));
 }
 function calJumpToToday(){
+  haptic('tap');
+  calButtonFeedback(document.querySelector('.cal-todaybtn'));
   const today=new Date();
   calYear=today.getFullYear();calMonth=today.getMonth();
   openCalDay(calFmtDate(today));
