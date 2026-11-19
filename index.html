@@ -663,6 +663,8 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
 .media-month-group+.media-month-group{margin-top:var(--sp-20);}
 .media-month-title{font-size:var(--fs-headline);font-weight:600;color:var(--text-secondary);line-height:var(--lh-normal);padding:0 var(--sp-16);margin:0 0 var(--sp-8);}
 .media-month-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;}
+/* 单条记录由外层卡片统一绘制圆角底色和描边。 */
+.media-month-card>.mrow:only-child{background:transparent;}
 .media-month-card>.mrow:last-child{border-bottom:none;}
 .media-month-card>.mrow:last-child::after{display:none;}
 #mlist .media-month-card>.swipe-wrap-row,
@@ -3104,7 +3106,7 @@ mark.shl{
     border-color:var(--accent);background:var(--accent-light);
   }
   body.detail-open #mlist .media-month-card>.mrow:only-child[aria-current="true"]{
-    border-radius:0;box-shadow:none;
+    border-radius:0;box-shadow:none;background:transparent;
   }
   body.detail-open #mlist .mrow[aria-current="true"]::after{display:none;}
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
