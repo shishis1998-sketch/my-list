@@ -200,7 +200,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 
 .desktop-sidebar-toggle{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  .app{--desktop-sidebar-width:244px;--sidebar-header-height:64px;--sidebar-toggle-size:32px;--sidebar-content-inset:var(--sp-12);--desktop-detail-top-inset:var(--sp-20);--desktop-sidebar-duration:220ms;}
+  .app{--desktop-sidebar-width:230px;--sidebar-header-height:64px;--sidebar-toggle-size:32px;--sidebar-content-inset:var(--sp-12);--desktop-detail-top-inset:var(--sp-20);--desktop-sidebar-duration:220ms;}
   .app>.sidebar{
     width:var(--desktop-sidebar-width);min-width:var(--desktop-sidebar-width);
     transition:margin-left var(--desktop-sidebar-duration) ease,
@@ -5771,7 +5771,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 </button>
 <aside class="sidebar" id="appSidebar">
   <div class="logo">
-    <h1>我的清单</h1>
+    <h1 id="sidebarGreeting">早上好</h1>
   </div>
   <div class="sidebar-scroll">
   <div class="nsec nsec-cats">
@@ -9912,6 +9912,17 @@ function stepOvu(key,delta){
   PV.setOvuCfg({[key]:v});
   renderOvuRow();
 }
+
+function updateSidebarGreeting(){
+  const hour=new Date().getHours();
+  document.getElementById('sidebarGreeting').textContent=
+    hour<11?'早上好':hour<18?'中午好':'晚上好';
+}
+updateSidebarGreeting();
+setInterval(updateSidebarGreeting,60000);
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)updateSidebarGreeting();
+});
 
 function boot(){
   applyTheme(curTheme||getTheme(),false);
