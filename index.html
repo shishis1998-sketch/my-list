@@ -5700,6 +5700,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   body.notes-mode #nfrow{display:none !important;}
 }
 
+@media(min-width:1025px) and (pointer:fine){
+  #appSidebar :is(#nsub,#sidebarCalendarOptions,#sidebarDataOptions) .nitem>svg{display:none;}
+  #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions) .nitem:not(.nitem-fs){
+    padding-inline-start:27px;
+  }
+}
+
 /* 电脑侧栏以列表分组，当前项目显示圆角底色。 */
 @media(min-width:1025px) and (pointer:fine){
   #appSidebar :is(.nitem,.sidebar-disclosure)>svg:not(.sidebar-chevron){
