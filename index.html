@@ -5593,7 +5593,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .ncard-notes{padding:0;}
   #appSidebar .sidebar-notes-header{position:relative;}
   #appSidebar .sidebar-notes-header>#nav-notes{
-    min-height:calc(var(--sidebar-row-height) - 2px);
+    min-height:var(--sidebar-row-height);
     padding:var(--sp-6) 38px var(--sp-6) var(--sp-10);
     border-radius:var(--r);
     font-weight:600;
@@ -5715,7 +5715,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-disclosure[aria-expanded="true"]{
     border-radius:8px;
   }
-  #appSidebar .ncard-notes{padding-block:var(--sp-4);}
+  #appSidebar .ncard-notes{padding-block:0;}
+  #appSidebar .sidebar-notes-header>#nav-notes{font-weight:600;color:var(--text-secondary);}
   #appSidebar .ncard-cats-desktop .nitem.on,
   #appSidebar .sidebar-notes-header>#nav-notes.parent-on{
     background:var(--surface);border-color:var(--border);border-radius:8px;box-shadow:0 0 3px rgba(0,0,0,.05);
@@ -5787,7 +5788,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     </div>
     <div class="ncard ncard-cats-desktop ncard-notes">
       <div class="sidebar-notes-header">
-        <button class="nitem" id="nav-notes" type="button" onclick="filterCat('notes:'+preferredNoteSub())"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18H5z M8 8h8m-8 4h8m-8 4h5"/></svg>笔记</button>
+        <button class="nitem" id="nav-notes" type="button" aria-expanded="false" aria-controls="nsub" onclick="setSidebarNotesExpanded(this.getAttribute('aria-expanded')!=='true')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18H5z M8 8h8m-8 4h8m-8 4h5"/></svg>笔记</button>
         <button id="nav-notes-toggle" type="button" aria-label="展开笔记子分类" aria-expanded="false"
           aria-controls="nsub" onclick="setSidebarNotesExpanded(this.getAttribute('aria-expanded')!=='true')">
           <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -14009,10 +14010,11 @@ function applyModeUI(){
   if(bbinp) bbinp.placeholder='搜索笔记...';
   // 侧边栏只更新笔记选中样式，展开状态由箭头独立控制。
   const navN=document.getElementById('nav-notes');
-  navN.classList.toggle('parent-on',notes);
+  navN.classList.remove('parent-on');
 }
 function setSidebarNotesExpanded(expanded){
   const toggle=document.getElementById('nav-notes-toggle');
+  document.getElementById('nav-notes').setAttribute('aria-expanded',String(expanded));
   toggle.setAttribute('aria-expanded',String(expanded));
   toggle.setAttribute('aria-label',expanded?'收起笔记子分类':'展开笔记子分类');
   document.getElementById('nsub').classList.toggle('open',expanded);
