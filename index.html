@@ -2115,8 +2115,10 @@ body.cal-searching .cw-card{display:none;}
 /* 收集卡片专属字号：标题/正文 16（标题 Headline 档）/ 标签 11 */
 .note-card.collect .note-title{font-size:var(--fs-headline);}
 .note-card.collect .note-preview{font-size:var(--fs-headline);}
-/* 收集卡标签：与其它卡片统一(方案 B)，子分类=墨绿、自定义标签=中性灰，
-   尺寸/字号/内边距全部走 .note-subcat 与 .note-foot .ctag 的统一规范，此处不再单独覆盖 */
+/* 收集 / 日记卡片标签：淡主题色底色，主题色文字；尺寸沿用统一胶囊规范。 */
+.note-card.collect .note-foot .ctag{
+  background:var(--accent-light);color:var(--accent);
+}
 /* 收集卡标签区与正文拉开间距 */
 .note-card.collect .note-foot{margin-top:var(--sp-16);}
 /* 收集卡片专属段距：6px → 12px（让空行段落更宽松）*/
