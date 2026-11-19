@@ -5156,7 +5156,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-format[popover]{
   position:fixed;inset:auto;margin:0;padding:3px 5px;width:max-content;max-width:none;
   background:var(--surface);color:var(--text-primary);
-  border:1px solid var(--text-muted);border-radius:var(--r);overflow:visible;
+  border:1px solid var(--accent);border-radius:var(--r);overflow:visible;
+}
+@media (min-width:1025px) and (pointer:fine){
+  .chapter-format[popover]{padding-block:1px;}
 }
 .chapter-format[popover] .fmt-btn{border-color:transparent;}
 .chapter-format[popover] .fmt-btn:active{background:var(--press);}
