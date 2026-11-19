@@ -5711,11 +5711,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-disclosure[aria-expanded="true"]{
     border-radius:8px;
   }
-  #appSidebar .ncard-cats-desktop .nitem.on{
-    background:var(--surface);border-color:transparent;border-radius:8px;
-  }
+  #appSidebar .ncard-notes{padding:var(--sp-4);}
+  #appSidebar .ncard-cats-desktop .nitem.on,
   #appSidebar .sidebar-notes-header>#nav-notes.parent-on{
-    background:var(--surface);border-color:transparent;border-radius:8px;
+    background:var(--surface);border-color:var(--border);border-radius:8px;box-shadow:none;
+  }
+  #appSidebar .ncard-cats-desktop .nitem.on:hover,
+  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes{
+    border-color:var(--accent);
   }
 }
 </style>
