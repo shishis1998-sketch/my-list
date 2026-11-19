@@ -5687,16 +5687,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .desktop-chapter-controls>.nlbl-btn:hover:not(:focus-visible){outline:none;}
   .desktop-chapter-controls>:is(.desktop-chapter-edit,.desktop-chapter-cancel):hover{color:var(--accent);}
   .desktop-chapter-controls>.nlbl-btn:hover svg{stroke-width:3;}
-  /* 和外观、经期一样直接切换边框颜色，笔记标题与箭头共用同一条边框。 */
   #appSidebar :is(.sidebar-disclosure,.nlbl-btn,.nitem:not(.nitem-fs,:where(#nav-notes))):hover,
   #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes{
-    border-color:var(--accent);
-    color:var(--accent);
+    background:var(--surface);
+    border-color:transparent;
+    box-shadow:none;
   }
-  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes-toggle{
-    color:var(--accent);
-  }
-  #appSidebar .nitem:hover :is(.nmode-lbl,.novu-lbl){color:inherit;}
 }
 
 /* 电脑侧栏以列表分组，当前项目显示圆角底色。 */
@@ -5717,8 +5713,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     background:var(--surface);border-color:var(--border);border-radius:8px;box-shadow:none;
   }
   #appSidebar .ncard-cats-desktop .nitem.on:hover,
-  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes{
-    border-color:var(--accent);
+  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes.parent-on{
+    border-color:var(--border);
   }
 }
 </style>
