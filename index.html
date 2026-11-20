@@ -431,6 +431,31 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 .bb-sortsheet{display:none;}
 
 /* --- FILTER ROW --- */
+.desktop-filter-toggle{display:none;}
+@media(min-width:1025px) and (pointer:fine){
+  body:not(.detail-open,.notes-mode) .desktop-filter-toggle{
+    display:inline-flex;align-items:center;gap:var(--sp-6);flex-shrink:0;
+    padding:var(--sp-8) var(--sp-10);border:1px solid var(--border);border-radius:var(--r);
+    background:var(--surface);color:var(--text-secondary);
+    font:600 var(--fs-caption) var(--zh);cursor:pointer;
+  }
+  .desktop-filter-toggle:is(:hover,[aria-expanded="true"],.has-filters){
+    border-color:var(--accent);color:var(--accent);
+  }
+  body:not(.detail-open) .main>.frow{display:none;}
+  body:not(.detail-open) .main:has(.desktop-filter-toggle[aria-expanded="true"])>.frow{
+    display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;
+    flex-shrink:0;max-height:45dvh;overflow-y:auto;
+  }
+  .desktop-filter-group{
+    display:grid;grid-template-columns:3em minmax(0,1fr);align-items:start;gap:var(--sp-8);
+  }
+  .desktop-filter-group[hidden]{display:none;}
+  .desktop-filter-group>.flbl{padding-block:var(--sp-4);}
+  .desktop-filter-options,#desktopMediaStatuses{
+    display:flex;align-items:center;flex-wrap:wrap;gap:var(--sp-8);min-width:0;
+  }
+}
 .frow{
   background:var(--surface);border-bottom:1px solid var(--border-soft);
   padding:var(--sp-8) var(--sp-24);display:flex;align-items:center;gap:var(--sp-8);flex-wrap:wrap;
@@ -3099,7 +3124,10 @@ mark.shl{
     display:flex!important;grid-area:2 / 1;padding-inline:var(--sp-14);
     gap:var(--sp-4);
   }
-  body.detail-open .frow>:not(#desktopMediaStatuses){display:none!important;}
+  body.detail-open .frow>:not(.desktop-filter-status),
+  body.detail-open .desktop-filter-status>.flbl{display:none!important;}
+  body.detail-open .desktop-filter-status,
+  body.detail-open #desktopMediaStatuses{display:contents;}
   body.detail-open #desktopMediaStatuses .fchip{padding-inline:var(--desktop-media-chip-inset,var(--sp-8));}
   body.detail-open .main>.content{
     display:block!important;grid-area:3 / 1;min-width:0;overflow-y:auto;
@@ -6012,6 +6040,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
+    <button type="button" class="desktop-filter-toggle" id="desktopFilterToggle" aria-expanded="false" aria-controls="frow">
+      筛选
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
     <select class="ssort" onchange="onSort(this.value)">
       <option value="media-auto" selected>默认排序</option>
       <option value="upd-desc">最近修改</option>
@@ -6035,18 +6067,24 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
   <!-- 桌面端书影筛选条 -->
   <div class="frow" id="frow">
-    <span class="flbl">状态</span>
-    <div id="desktopMediaStatuses" style="display:contents"></div>
-    <div class="fsep"></div>
-    <span class="flbl">评分</span>
-    <span class="fchip on" onclick="setScore('all',this)">全部</span>
-    <span class="fchip" onclick="setScore('5',this)">5/5</span>
-    <span class="fchip" onclick="setScore('4',this)">≥4/5</span>
-    <span class="fchip" onclick="setScore('3',this)">≥3/5</span>
-    <span class="fchip" onclick="setScore('12',this)">≤2/5</span>
-    <div class="fsep" id="ftag-sep" style="display:none"></div>
-    <span class="flbl" id="ftag-lbl" style="display:none">标签</span>
-    <div id="ftag-chips" style="display:contents"></div>
+    <div class="desktop-filter-group desktop-filter-status" role="group" aria-label="状态">
+      <span class="flbl">状态</span>
+      <div id="desktopMediaStatuses"></div>
+    </div>
+    <div class="desktop-filter-group" role="group" aria-label="评分">
+      <span class="flbl">评分</span>
+      <div class="desktop-filter-options" id="desktopScoreFilters">
+        <button type="button" class="fchip on" onclick="setScore('all',this)">全部</button>
+        <button type="button" class="fchip" onclick="setScore('5',this)">5/5</button>
+        <button type="button" class="fchip" onclick="setScore('4',this)">≥4/5</button>
+        <button type="button" class="fchip" onclick="setScore('3',this)">≥3/5</button>
+        <button type="button" class="fchip" onclick="setScore('12',this)">≤2/5</button>
+      </div>
+    </div>
+    <div class="desktop-filter-group" id="desktopTagFilters" role="group" aria-label="标签" hidden>
+      <span class="flbl">标签</span>
+      <div class="desktop-filter-options" id="ftag-chips"></div>
+    </div>
   </div>
 
   <!-- NOTES FILTER ROW (仅笔记模式显示) -->
@@ -11874,6 +11912,7 @@ function syncDetailListSelection(){
 }
 
 function openDetail(id){
+  desktopFilterToggle.setAttribute('aria-expanded','false');
   const item=data.find(d=>d.id===id); if(!item||detailId===id) return;
   ensurePeopleIds(item,true);
   desktopChapterIndex=null;desktopChapterForm=null;desktopOpenSections.clear();
@@ -14378,9 +14417,7 @@ function pickMediaSort(value){
 }
 function setScore(v,el){
   curScore=v;
-  document.querySelectorAll('.frow .fchip').forEach(c=>{
-    if(['全部','5/5','≥4/5','≥3/5','≤2/5'].includes(c.textContent.trim())) c.classList.remove('on');
-  });
+  document.querySelectorAll('#desktopScoreFilters .fchip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on'); render();
 }
 function getAllCurrentTags(){
@@ -14432,19 +14469,33 @@ function syncFilterBtn(){
   });
   syncListControlBtn('bbTagBtn',filters.join(' · '),descriptions.length?'筛选：'+descriptions.join('；'):'筛选');
 }
+const desktopFilterToggle=document.getElementById('desktopFilterToggle');
+const desktopFilterPanel=document.getElementById('frow');
+desktopFilterToggle.addEventListener('click',()=>{
+  desktopFilterToggle.setAttribute('aria-expanded',String(desktopFilterToggle.getAttribute('aria-expanded')==='false'));
+});
+document.addEventListener('click',event=>{
+  if(!desktopFilterToggle.contains(event.target)&&!event.composedPath().includes(desktopFilterPanel)){
+    desktopFilterToggle.setAttribute('aria-expanded','false');
+  }
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&desktopFilterToggle.getAttribute('aria-expanded')==='true'){
+    desktopFilterToggle.setAttribute('aria-expanded','false');
+    if(desktopFilterPanel.contains(document.activeElement)) desktopFilterToggle.focus();
+  }
+});
 function renderTagFilterRow(){
   const tags=getAllCurrentTags();
   if(!tags.length&&curFilterTags.length) curFilterTags=[];
   syncFilterBtn();
-  const sep=document.getElementById('ftag-sep');
-  const lbl=document.getElementById('ftag-lbl');
   const chips=document.getElementById('ftag-chips');
-  if(!sep||!lbl||!chips) return;
+  document.getElementById('desktopTagFilters').hidden=!tags.length;
+  desktopFilterToggle.classList.toggle('has-filters',curScore!=='all'||curFilterTags.length>0);
   if(!tags.length){
-    sep.style.display='none'; lbl.style.display='none'; chips.innerHTML='';
+    chips.innerHTML='';
     return;
   }
-  sep.style.display=''; lbl.style.display='';
   chips.innerHTML=['all',...tags].map(t=>{
     const lbl2=t==='all'?'全部':t;
     const on = t==='all' ? curFilterTags.length===0 : curFilterTags.includes(t);
