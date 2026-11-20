@@ -214,9 +214,6 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
     background:transparent;color:var(--text-secondary);cursor:pointer;
     transition:left var(--desktop-sidebar-duration) ease;
   }
-  body.detail-open .desktop-sidebar-toggle{
-    top:calc(var(--desktop-detail-top-inset) + (var(--fs-title) * var(--lh-tight) - var(--sidebar-toggle-size)) / 2);
-  }
   .app.desktop-sidebar-collapsed>.sidebar{
     margin-left:calc(0px - var(--desktop-sidebar-width));margin-right:44px;visibility:hidden;
   }
@@ -5526,9 +5523,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     flex-shrink:0;display:flex;align-items:center;min-height:var(--sidebar-header-height);
     padding:0 46px 0 var(--sp-16);margin:0;
     background:var(--bg);border-color:var(--border);
-  }
-  body.detail-open #appSidebar>.logo{
-    align-items:flex-start;padding-top:var(--desktop-detail-top-inset);
   }
   #appSidebar .logo h1{font-size:var(--fs-title);line-height:var(--lh-tight);}
   #appSidebar .sidebar-scroll{
