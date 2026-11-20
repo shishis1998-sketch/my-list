@@ -5835,11 +5835,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     left:50%;right:auto;top:50%;bottom:auto;margin:0;
     width:min(640px,calc(100vw - 48px));max-width:640px;
     max-height:min(76vh,640px);border:1px solid var(--border);border-radius:var(--rxl);
-    box-shadow:none;opacity:0;transform:translate(-50%,calc(-50% + 12px));
+    box-shadow:none;opacity:0;pointer-events:none;transform:translate(-50%,calc(-50% + 12px));
     transition:opacity var(--nav-dur) var(--nav-ease),transform var(--nav-dur) var(--nav-ease);
   }
   :is(.tlsheet.show,.mfsheet.show,.pv-sheet.open){
-    opacity:1;transform:translate(-50%,-50%);
+    opacity:1;pointer-events:auto;transform:translate(-50%,-50%);
   }
   .tlsheet-head,.mfsheet-head,.pv-sheet>.pv-sheet-head,.pv-sheet>.pv-tag-head{
     cursor:default;touch-action:auto;
