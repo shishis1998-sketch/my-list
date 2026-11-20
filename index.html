@@ -5567,11 +5567,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     scrollbar-width:none;
     padding:var(--sp-14) 0 var(--sp-16);
   }
+  #appSidebar>.nsec-sync{
+    flex-shrink:0;padding:var(--sp-6) var(--sidebar-content-inset);margin:0;
+  }
+  #appSidebar>.nsec-sync>.nlbl{display:none;}
   #appSidebar .sidebar-scroll::-webkit-scrollbar{display:none;}
   #appSidebar .sidebar-scroll-indicator{
     --sidebar-thumb-height:32px;
     display:block;position:absolute;z-index:2;
-    inset-block:calc(var(--sidebar-header-height) + var(--sp-6)) var(--sp-6);
+    inset-block:calc(var(--sidebar-header-height) + var(--sp-6)) calc(var(--sidebar-row-height) + var(--sp-12) + var(--sp-6));
     inset-inline-end:var(--sp-4);width:3px;pointer-events:none;
     opacity:0;transition:opacity 140ms ease;
   }
@@ -6019,6 +6023,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
     <input type="file" id="icsimp" accept=".ics,text/calendar" multiple style="display:none" onchange="importICS(event)">
   </div>
+  </div>
   <div class="nsec nsec-sync">
     <div class="nlbl">同步</div>
     <div class="ncard">
@@ -6028,7 +6033,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <span class="ncnt" id="sync-badge">未配置</span>
       </button>
     </div>
-  </div>
   </div>
   <div class="sidebar-scroll-indicator" aria-hidden="true"></div>
 </aside>
