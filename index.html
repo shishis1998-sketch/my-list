@@ -18442,10 +18442,10 @@ function finishChapterSheet(){
     enterWholeChapterEdit(anchor?.index,anchor?.visibleOffset);
     return;
   }
-  const wasNew=tlChapterNew, scroll=tlChapterReadScroll;
+  const scroll=tlChapterReadScroll;
   const position=chapterReadingPosition(document.querySelector('#tlSheetBody .chapter-whole-text'));
   if(!commitChapterSheet())return;
-  if(wasNew||(tlHostMedia===detailId&&tlHostMedia&&desktopChapterLayout.matches&&desktopChapterIndex===tlSheetIdx)){closeChapterSheet();return;}
+  // 保存后继续在当前弹窗阅读；新增章节和电脑端也保持弹窗打开。
   openChapterSheet(tlSheetIdx);
   restoreChapterSheetPosition(position,scroll);
 }
