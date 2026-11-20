@@ -17984,17 +17984,19 @@ function openChapterSheet(idx){
   requestAnimationFrame(()=>{if(tlSheetIdx===idx)sheet.classList.add('show');});
   initTlSheetDrag();
 }
-// 顶栏按钮用 pointerdown：输入框失焦会重绘正文，若等 click，按钮可能已经移动而接不到事件。
-// 同时阻止冒泡，避免标题栏的下拉手势被按钮触发。
+// 按下时保留输入焦点；完整点击后才切换读态，避免键盘收起重排后点击穿透。
 (function bindTlSheetActions(){
   const cancel=document.getElementById('tlSheetCancel');
   const done=document.getElementById('tlSheetDone');
-  if(cancel) cancel.addEventListener('pointerdown',e=>{
-    e.preventDefault(); e.stopPropagation(); cancelChapterSheet();
-  });
-  if(done) done.addEventListener('pointerdown',e=>{
-    e.preventDefault(); e.stopPropagation(); finishChapterSheet();
-  });
+  for(const [button,action] of [[cancel,cancelChapterSheet],[done,finishChapterSheet]]){
+    if(!button)continue;
+    button.addEventListener('pointerdown',e=>{
+      e.preventDefault();e.stopPropagation();
+    });
+    button.addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();action();
+    });
+  }
 })();
 
 // 段内格式条：和笔记页那排是同一套标记（走 noteFmt），只少一颗 H——
