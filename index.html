@@ -5753,6 +5753,103 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border-color:var(--border);
   }
 }
+
+/* 电脑端弹窗统一为屏幕中央的横向对话框；手机和平板继续使用原有底部抽屉。 */
+.sync-desktop-head{display:none;}
+@media(min-width:1025px) and (pointer:fine){
+  @keyframes desktopModalIn{
+    from{opacity:0;transform:translateY(12px) scale(.985);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  .moverlay,
+  :is(#modal,#timeModal,#recordTagsModal,#noteModal,#noteTagPicker,#calNotePreviewModal,
+      #icsColorModal,#icsDelModal,#trashModal,#syncModal).moverlay{
+    align-items:center;justify-content:center;padding:var(--sp-24);
+  }
+  .moverlay.open .mbox,
+  :is(#modal,#timeModal,#recordTagsModal,#noteModal,#noteTagPicker,#calNotePreviewModal,
+      #icsColorModal,#icsDelModal,#trashModal,#syncModal).moverlay.open .mbox{
+    animation:desktopModalIn var(--nav-dur) var(--nav-ease);
+  }
+  .mbox{
+    box-sizing:border-box;width:min(100%,640px);max-width:640px;height:auto;
+    max-height:min(76vh,640px);border:1px solid var(--border);border-radius:var(--rxl);
+    box-shadow:none;overflow:hidden;
+  }
+  :is(#modal,#noteModal,#syncModal,#tlModal) .mbox{width:min(100%,720px);max-width:720px;}
+  :is(#catmodal,#nsubModal,#tagMgrModal,#icsColorModal,#icsDelModal,#trashModal) .mbox{
+    width:min(100%,620px);max-width:620px;
+  }
+  :is(#timeModal,#recordTagsModal,#tlEditModal) .mbox{width:min(100%,600px);max-width:600px;}
+  #calNotePreviewModal:not(.food-actions) .mbox{width:min(100%,640px);max-width:640px;}
+  #noteTagPicker .mbox{
+    width:min(100%,620px);max-width:620px;height:auto;max-height:min(68vh,560px);
+    border:1px solid var(--border);border-radius:var(--rxl);box-shadow:none;
+  }
+
+  /* 电脑端没有下拉关闭手势，去掉所有抽屉抓手。 */
+  :is(#modal,#timeModal,#recordTagsModal) .tlsheet-grip,
+  :is(#noteModal,#noteTagPicker,#calNotePreviewModal,#icsColorModal,#icsDelModal) .mhdr::before,
+  .tlsheet-grip,.mfsheet-grip,.pv-sheet-grab,#syncModal .sync-grip{display:none;}
+  :is(#modal,#timeModal,#recordTagsModal) .tlsheet-head,
+  :is(#noteModal,#noteTagPicker,#calNotePreviewModal,#icsColorModal,#icsDelModal) .mhdr{
+    cursor:default;touch-action:auto;
+  }
+
+  /* 云同步采用横向两列表单，内容多时只在弹窗内部滚动。 */
+  #syncModal .mbox{
+    width:min(100%,720px);max-width:720px;height:auto;max-height:min(76vh,620px);
+    margin:0;border:1px solid var(--border);border-radius:var(--rxl);box-shadow:none;
+  }
+  #syncModal .sync-desktop-head{
+    display:flex;align-items:center;justify-content:space-between;flex:0 0 64px;
+    padding:0 var(--sp-24);border-bottom:1px solid var(--border-soft);background:var(--bg);
+  }
+  #syncModal .sync-desktop-head strong{font-size:var(--fs-headline);color:var(--text-primary);}
+  #syncModal .sync-desktop-head button{
+    width:34px;height:34px;padding:0;border:0;border-radius:50%;background:transparent;
+    color:var(--text-muted);font:400 25px/1 var(--zh);cursor:pointer;
+  }
+  #syncModal .sync-desktop-head button:hover{background:var(--surface);color:var(--accent);}
+  #syncModal .mbody{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:start;gap:var(--sp-12) var(--sp-20);padding:var(--sp-20) var(--sp-24);
+  }
+  #syncModal :is(#sync-diff-card,#sync-uploadlocal-row,.sync-clear-card),
+  #syncModal .sync-field:has(#f-gh-pw){grid-column:1 / -1;}
+  #syncModal .sync-card{border-radius:var(--r);}
+  #syncModal .sync-cloud-card,#syncModal .sync-readonly-card{height:58px;min-height:58px;}
+  #syncModal .sync-field>input{border-radius:var(--r);}
+  #syncModal .mftr{padding:var(--sp-14) var(--sp-24);border-top:1px solid var(--border-soft);}
+
+  /* 独立底部面板也在电脑端居中；显示时只做轻微淡入上移。 */
+  :is(.tlsheet,.mfsheet,.pv-sheet){
+    left:50%;right:auto;top:50%;bottom:auto;margin:0;
+    width:min(640px,calc(100vw - 48px));max-width:640px;
+    max-height:min(76vh,640px);border:1px solid var(--border);border-radius:var(--rxl);
+    box-shadow:none;opacity:0;transform:translate(-50%,calc(-50% + 12px));
+    transition:opacity var(--nav-dur) var(--nav-ease),transform var(--nav-dur) var(--nav-ease);
+  }
+  :is(.tlsheet.show,.mfsheet.show,.pv-sheet.open){
+    opacity:1;transform:translate(-50%,-50%);
+  }
+  .tlsheet-head,.mfsheet-head,.pv-sheet>.pv-sheet-head,.pv-sheet>.pv-tag-head{
+    cursor:default;touch-action:auto;
+  }
+  .mfsheet{padding-bottom:var(--sp-16);}
+  #pvSheet{
+    width:min(680px,calc(100vw - 48px));max-width:680px;
+    height:min(70vh,620px);max-height:min(70vh,620px);padding-bottom:var(--sp-16);
+  }
+  #pvCardsSheet,#pvTagSheet{height:auto;max-height:min(70vh,580px);}
+
+  #calViewPeriod .year-picker-overlay{align-items:center;justify-content:center;padding:var(--sp-24);}
+  #calViewPeriod .year-picker-sheet{
+    width:min(480px,100%);padding:var(--sp-16) 0;border:1px solid var(--border);
+    border-radius:var(--rxl);overflow:hidden;
+  }
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -6566,6 +6663,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 <div class="moverlay" id="syncModal" role="dialog" aria-modal="true" aria-label="云同步设置" onclick="closeSyncCfg()">
   <div class="mbox" onclick="event.stopPropagation()">
     <button type="button" class="sync-grip" aria-label="下拖或点击关闭云同步设置"><span></span></button>
+    <div class="sync-desktop-head">
+      <strong>云同步</strong>
+      <button type="button" aria-label="关闭云同步设置" onclick="closeSyncCfg()">×</button>
+    </div>
     <div class="mbody">
     <div class="sync-card sync-cloud-card">
       <button type="button" class="sync-readonly" id="syncToggle" role="switch" aria-checked="false" aria-describedby="sync-status-box" onclick="toggleCloudSync()">
