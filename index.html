@@ -5799,7 +5799,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
   /* 云同步采用横向两列表单，内容多时只在弹窗内部滚动。 */
   #syncModal .mbox{
-    width:min(100%,720px);max-width:720px;height:auto;max-height:min(76vh,620px);
+    width:min(100%,720px);max-width:720px;height:auto;max-height:min(88vh,680px);
     margin:0;border:1px solid var(--border);border-radius:var(--rxl);box-shadow:none;
   }
   #syncModal .sync-desktop-head{
@@ -5814,10 +5814,17 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #syncModal .sync-desktop-head button:hover{background:var(--surface);color:var(--accent);}
   #syncModal .mbody{
     display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    grid-auto-flow:row;grid-auto-rows:max-content;
     align-items:start;gap:var(--sp-12) var(--sp-20);padding:var(--sp-20) var(--sp-24);
   }
-  #syncModal :is(#sync-diff-card,#sync-uploadlocal-row,.sync-clear-card),
-  #syncModal .sync-field:has(#f-gh-pw){grid-column:1 / -1;}
+  #syncModal .sync-cloud-card{order:1;}
+  #syncModal .sync-readonly-card{order:2;}
+  #syncModal #sync-diff-card{order:3;grid-column:1 / -1;}
+  #syncModal #sync-uploadlocal-row{order:4;grid-column:1 / -1;}
+  #syncModal .sync-field:has(#f-gh-token){order:5;}
+  #syncModal .sync-field:has(#f-gh-gist){order:6;}
+  #syncModal .sync-field:has(#f-gh-pw){order:7;grid-column:1 / -1;}
+  #syncModal .sync-clear-card{order:8;grid-column:1 / -1;}
   #syncModal .sync-card{border-radius:var(--r);}
   #syncModal .sync-cloud-card,#syncModal .sync-readonly-card{height:58px;min-height:58px;}
   #syncModal .sync-field>input{border-radius:var(--r);}
