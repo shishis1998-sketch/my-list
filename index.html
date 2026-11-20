@@ -5842,6 +5842,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   :is(.tlsheet.show,.mfsheet.show,.pv-sheet.open){
     opacity:1;pointer-events:auto;transform:translate(-50%,-50%);
   }
+  #tlSheet,#tlSheet.card-aligned{
+    top:50%;bottom:auto;height:min(70vh,620px);max-height:min(76vh,640px);
+    border-radius:var(--rxl);
+  }
   .tlsheet-head,.mfsheet-head,.pv-sheet>.pv-sheet-head,.pv-sheet>.pv-tag-head{
     cursor:default;touch-action:auto;
   }
