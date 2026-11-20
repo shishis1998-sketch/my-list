@@ -5569,13 +5569,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   #appSidebar>.nsec-sync{
     flex-shrink:0;padding:var(--sp-6) var(--sidebar-content-inset);margin:0;
+    border-top:1px solid var(--border);
   }
   #appSidebar>.nsec-sync>.nlbl{display:none;}
   #appSidebar .sidebar-scroll::-webkit-scrollbar{display:none;}
   #appSidebar .sidebar-scroll-indicator{
     --sidebar-thumb-height:32px;
     display:block;position:absolute;z-index:2;
-    inset-block:calc(var(--sidebar-header-height) + var(--sp-6)) calc(var(--sidebar-row-height) + var(--sp-12) + var(--sp-6));
+    inset-block:calc(var(--sidebar-header-height) + var(--sp-6)) calc(var(--sidebar-row-height) + var(--sp-12) + var(--sp-6) + 1px);
     inset-inline-end:var(--sp-4);width:3px;pointer-events:none;
     opacity:0;transition:opacity 140ms ease;
   }
