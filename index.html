@@ -17974,6 +17974,8 @@ function openChapterSheet(idx){
   document.getElementById('tlSheetTitle').textContent=
     (isMobileLayout()?timelineSectionTitle(c.title)?.section:null)||c.title||'本章';
   renderChapterSheet();
+  // 重新打开阅读弹窗从头开始；编辑返回时由调用方随后恢复阅读位置。
+  if(isMobileLayout())document.getElementById('tlSheetBody').scrollTop=0;
   const sheet=document.getElementById('tlSheet');
   sheet.classList.remove('dragging'); sheet.style.transform='';
   alignChapterSheetToCard();
