@@ -200,7 +200,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 
 .desktop-sidebar-toggle{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  .app{--desktop-sidebar-width:230px;--sidebar-header-height:60px;--sidebar-header-title-top:calc((var(--sidebar-header-height) - 1px - var(--fs-title) * var(--lh-tight)) / 2);--sidebar-toggle-size:32px;--sidebar-content-inset:var(--sp-12);--desktop-detail-top-inset:var(--sp-20);--desktop-sidebar-duration:220ms;}
+  .app{--desktop-sidebar-width:230px;--sidebar-header-height:60px;--desktop-header-content-top:calc((var(--sidebar-header-height) - 1px - var(--fs-title) * var(--lh-tight)) / 2 + var(--sp-4));--sidebar-toggle-size:32px;--sidebar-content-inset:var(--sp-12);--desktop-detail-top-inset:var(--desktop-header-content-top);--desktop-sidebar-duration:220ms;}
   .app>.sidebar{
     width:var(--desktop-sidebar-width);min-width:var(--desktop-sidebar-width);
     transition:margin-left var(--desktop-sidebar-duration) ease,
@@ -5552,7 +5552,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
   .app>.main>.topbar{
     height:var(--sidebar-header-height);min-height:var(--sidebar-header-height);flex-shrink:0;
-    align-items:flex-start;padding-block:var(--sidebar-header-title-top) 0;
+    align-items:flex-start;padding-block:var(--desktop-header-content-top) 0;
   }
   body:not(.notes-mode) .app>.main>.topbar{background:var(--bg);}
   #appSidebar>.logo{
