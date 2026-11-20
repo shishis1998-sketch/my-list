@@ -18213,10 +18213,12 @@ function bindChapterFormatting(body){
         const x=originX+(line.left+line.right)/2-width/2;
         const above=Math.max(visibleTop,originY+line.top)-height-6;
         const below=Math.min(bottom-height-6,originY+line.bottom+6);
-        const y=above>=top+6?above:Math.max(top+6,below);
-        toolbar.style.left=Math.max(left+6,Math.min(x,right-width-6))+'px';
+        // 手机固定在可视区域底部（键盘上方），避开系统文字选择菜单。
+        const mobile=isMobileLayout();
+        const y=mobile?Math.max(top+6,bottom-height-8):(above>=top+6?above:Math.max(top+6,below));
+        toolbar.style.left=Math.max(left+6,Math.min(mobile?left+(right-left-width)/2:x,right-width-6))+'px';
         toolbar.style.top=y+'px';
-        toolbar.classList.toggle('heading-menu-below',y-top<height+12);
+        toolbar.classList.toggle('heading-menu-below',!mobile&&y-top<height+12);
       }else if(toolbar.matches(':popover-open')){
         toolbar.hidePopover();
         closeHeadingPicker();
