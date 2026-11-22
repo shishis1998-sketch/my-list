@@ -11926,9 +11926,10 @@ function syncDetailListSelection(){
   });
 }
 
-// Mobile list-to-detail: reveal the real page and move its real title.
+// Shared entry: retain the visible list and move the card and title together.
 let detailEntryCleanup=null;
 function captureDetailEntry(id){
+  detailEntryCleanup?.();
   if(!matchMedia('(max-width:768px)').matches||
      matchMedia('(prefers-reduced-motion: reduce)').matches||!Element.prototype.animate)return null;
   const row=Array.from(document.querySelectorAll('#mlist .mrow[data-id]')).find(el=>el.dataset.id===id);
@@ -11936,41 +11937,72 @@ function captureDetailEntry(id){
   if(!row||!title)return null;
   const rect=row.getBoundingClientRect(),textRect=title.getBoundingClientRect();
   if(rect.bottom<=0||rect.top>=innerHeight||rect.width<=0)return null;
-  return {rect,textRect,fontSize:parseFloat(getComputedStyle(title).fontSize),
-    radius:getComputedStyle(row.closest('.media-month-card')||row).borderRadius};
+  const font=getComputedStyle(title),card=row.closest('.media-month-card')||row;
+  const backdrop=document.createElement('div');
+  backdrop.setAttribute('aria-hidden','true');backdrop.inert=true;
+  backdrop.className='main media-entry-snapshot';
+  Object.assign(backdrop.style,{position:'fixed',inset:'0',width:'100%',height:'100%',
+    margin:'0',padding:'0',display:'block',overflow:'hidden',pointerEvents:'none',
+    zIndex:'110',background:getComputedStyle(document.body).backgroundColor});
+  // Copy only the visible list-page regions before detail-open hides them.
+  const main=document.querySelector('.main');
+  Array.from(main.children).forEach(el=>{
+    const r=el.getBoundingClientRect(),style=getComputedStyle(el);
+    if(el.id==='detailRoot'||style.display==='none'||r.width<=0||r.height<=0||r.bottom<=0||r.top>=innerHeight)return;
+    const clone=el.cloneNode(true);
+    clone.style.setProperty('display',style.display,'important');
+    Object.assign(clone.style,{position:'absolute',left:r.left+'px',top:r.top+'px',
+      width:r.width+'px',height:r.height+'px',margin:'0',boxSizing:'border-box',transform:'none'});
+    clone.querySelectorAll('.mrow[data-id]').forEach(copy=>{
+      if(copy.dataset.id===id)copy.style.visibility='hidden';
+    });
+    backdrop.append(clone);
+  });
+  document.body.append(backdrop);
+  return {rect,textRect,text:title.textContent,font:font.font,fontSize:parseFloat(font.fontSize),
+    color:font.color,radius:getComputedStyle(card).borderRadius,backdrop};
 }
 function animateDetailEntry(source){
-  detailEntryCleanup?.();
   if(!source)return;
-  const root=document.getElementById('detailRoot'),title=root.querySelector('.dt-name');
-  if(!title)return;
-  const dest=title.getBoundingClientRect(),bounds=root.getBoundingClientRect();
-  if(!bounds.width||!bounds.height)return;
-  const inset=[Math.max(0,source.rect.top-bounds.top),
-    Math.max(0,bounds.right-source.rect.right),
-    Math.max(0,bounds.bottom-source.rect.bottom),
-    Math.max(0,source.rect.left-bounds.left)].map(n=>n+'px').join(' ');
+  const root=document.getElementById('detailRoot'),title=root.querySelector('.dt-name'),heading=root.querySelector('.dt-hd');
+  if(!title||!heading){source.backdrop.remove();return;}
+  const dest=title.getBoundingClientRect(),card=heading.getBoundingClientRect();
+  if(!card.width||!card.height){source.backdrop.remove();return;}
+  const layer=document.createElement('div'),surface=document.createElement('div'),label=document.createElement('div');
+  layer.setAttribute('aria-hidden','true');layer.inert=true;
+  Object.assign(layer.style,{position:'fixed',inset:'0',zIndex:'114',pointerEvents:'none'});
+  Object.assign(surface.style,{position:'absolute',left:card.left+'px',top:card.top+'px',
+    width:card.width+'px',height:card.height+'px',background:getComputedStyle(heading).backgroundColor,
+    borderRadius:getComputedStyle(heading).borderRadius,transformOrigin:'left top'});
+  Object.assign(label.style,{position:'absolute',left:dest.left+'px',top:dest.top+'px',
+    width:source.textRect.width+'px',font:source.font,color:source.color,margin:'0',
+    transformOrigin:'left top'});
+  label.textContent=source.text;
+  layer.append(surface,label);document.body.append(layer);
   const animations=[];
   let cleaned=false;
   const cleanup=()=>{
     if(cleaned)return;cleaned=true;
-    animations.forEach(a=>a.cancel());
+    animations.forEach(a=>a.cancel());layer.remove();source.backdrop.remove();
     if(detailEntryCleanup===cleanup)detailEntryCleanup=null;
   };
   detailEntryCleanup=cleanup;
   const opts={duration:360,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
   try{
-    // One real surface: no duplicate white card, no layout animation or final crossfade.
-    animations.push(root.animate([
-      {clipPath:'inset('+inset+' round '+source.radius+')'},
-      {clipPath:'inset(0px round 0px)'}
+    // Both move with identical timing. The white surface ends at the real title card,
+    // not a blank full-screen rectangle; the text stays at its original size while moving.
+    animations.push(surface.animate([
+      {transform:`translate(${source.rect.left-card.left}px,${source.rect.top-card.top}px) scale(${source.rect.width/card.width},${source.rect.height/card.height})`},
+      {transform:'translate(0px,0px) scale(1,1)'}
     ],opts));
-    const scale=source.fontSize/parseFloat(getComputedStyle(title).fontSize);
-    animations.push(title.animate([
-      {transform:`translate(${source.textRect.left-dest.left}px,${source.textRect.top-dest.top}px) scale(${scale})`,transformOrigin:'left top'},
-      {transform:'translate(0px,0px) scale(1)',transformOrigin:'left top'}
+    animations.push(label.animate([
+      {transform:`translate(${source.textRect.left-dest.left}px,${source.textRect.top-dest.top}px) scale(1)`},
+      {transform:`translate(0px,0px) scale(${parseFloat(getComputedStyle(title).fontSize)/source.fontSize})`}
     ],opts));
-    // Metadata and FAB are direct children too; all non-title content shares one timing.
+    animations.push(title.animate([{opacity:0},{opacity:0}],opts));
+    // List remains visible through the first half; all detail content is revealed together.
+    animations.push(source.backdrop.animate([{opacity:1},{opacity:0}],
+      {duration:160,delay:200,easing:'ease-out',fill:'both'}));
     root.querySelectorAll('.dt-hdrow2,.dt-global-actions,.dt-tabs,#dtBody > :not(.dt-top)').forEach(el=>{
       animations.push(el.animate([{opacity:0},{opacity:1}],
         {duration:160,delay:200,easing:'ease-out',fill:'both'}));
