@@ -603,10 +603,8 @@ body.detail-open .content{display:none!important;}
 .dt-v.none{color:var(--text-muted);font-weight:500;}
 /* 备注：整屏宽度直接铺开，不再折叠 */
 .dt-note{font-size:var(--fs-body);color:var(--text-secondary);line-height:var(--lh-loose);white-space:pre-wrap;}
-@media (min-width:1025px) and (pointer:fine){
-  .dt-paragraphs{display:flex;flex-direction:column;gap:var(--sp-12);}
-  .dt-paragraph-break{display:none;}
-}
+.dt-paragraphs{display:flex;flex-direction:column;gap:var(--sp-12);}
+.dt-paragraph-break{display:none;}
 /* 备注 / 人物：标题挪到卡外面当小节名。卡里只剩正文，
    一张卡就是一段内容，标题不再占掉卡内顶上那一行 */
 .dt-sec{display:flex;flex-direction:column;gap:var(--sp-6);}
