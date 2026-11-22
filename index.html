@@ -11955,16 +11955,24 @@ function animateDetailEntry(source){
   if(!title||!heading){source.backdrop.remove();return;}
   const dest=title.getBoundingClientRect(),card=heading.getBoundingClientRect();
   if(!card.width||!card.height){source.backdrop.remove();return;}
-  const layer=document.createElement('div'),surface=document.createElement('div'),label=document.createElement('div');
+  const layer=document.createElement('div'),surface=document.createElement('div'),label=title.cloneNode(true);
+  // Freeze the destination typography and box, including line height, weight and wrapping.
+  // At the final frame this copy has the same unscaled geometry as the real title.
+  const titleStyle=getComputedStyle(title);
+  for(const property of titleStyle){
+    label.style.setProperty(property,titleStyle.getPropertyValue(property));
+  }
+  label.removeAttribute('id');
   layer.setAttribute('aria-hidden','true');layer.inert=true;
   Object.assign(layer.style,{position:'fixed',inset:'0',zIndex:'114',pointerEvents:'none'});
   Object.assign(surface.style,{position:'absolute',left:card.left+'px',top:card.top+'px',
     width:card.width+'px',height:card.height+'px',background:getComputedStyle(heading).backgroundColor,
     borderRadius:getComputedStyle(heading).borderRadius,transformOrigin:'left top'});
   Object.assign(label.style,{position:'absolute',left:dest.left+'px',top:dest.top+'px',
-    width:source.textRect.width+'px',font:source.font,color:source.color,margin:'0',
-    transformOrigin:'left top'});
-  label.textContent=source.text;
+    width:dest.width+'px',height:dest.height+'px',margin:'0',flex:'none',
+    boxSizing:'border-box',transformOrigin:'left top',transform:'none',
+    transition:'none',animation:'none',opacity:'1',visibility:'visible'});
+  const startScale=source.fontSize/parseFloat(titleStyle.fontSize);
   layer.append(surface,label);document.body.append(layer);
   const animations=[];
   let cleaned=false;
@@ -11983,8 +11991,8 @@ function animateDetailEntry(source){
       {transform:'translate(0px,0px) scale(1,1)'}
     ],opts));
     animations.push(label.animate([
-      {transform:`translate(${source.textRect.left-dest.left}px,${source.textRect.top-dest.top}px) scale(1)`},
-      {transform:`translate(0px,0px) scale(${parseFloat(getComputedStyle(title).fontSize)/source.fontSize})`}
+      {transform:`translate(${source.textRect.left-dest.left}px,${source.textRect.top-dest.top}px) scale(${startScale})`},
+      {transform:'none'}
     ],opts));
     const titleHold=title.animate([{opacity:0},{opacity:0}],opts);
     animations.push(titleHold);
