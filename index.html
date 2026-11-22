@@ -11926,7 +11926,7 @@ function syncDetailListSelection(){
   });
 }
 
-// Shared entry: retain the visible list and move the card and title together.
+// Shared entry: move the card/title over a plain theme background.
 let detailEntryCleanup=null;
 function captureDetailEntry(id){
   detailEntryCleanup?.();
@@ -11940,30 +11940,11 @@ function captureDetailEntry(id){
   const font=getComputedStyle(title),card=row.closest('.media-month-card')||row;
   const backdrop=document.createElement('div');
   backdrop.setAttribute('aria-hidden','true');backdrop.inert=true;
-  backdrop.className='main media-entry-snapshot';
+  backdrop.className='media-entry-backdrop';
   Object.assign(backdrop.style,{position:'fixed',inset:'0',width:'100%',height:'100%',
     margin:'0',padding:'0',display:'block',overflow:'hidden',pointerEvents:'none',
-    zIndex:'110',background:getComputedStyle(document.body).backgroundColor});
-  // Copy only the visible list-page regions before detail-open hides them.
-  const main=document.querySelector('.main');
-  Array.from(main.children).forEach(el=>{
-    const r=el.getBoundingClientRect(),style=getComputedStyle(el);
-    if(el.id==='detailRoot'||style.display==='none'||r.width<=0||r.height<=0||r.bottom<=0||r.top>=innerHeight)return;
-    const clone=el.cloneNode(true);
-    clone.style.setProperty('display',style.display,'important');
-    Object.assign(clone.style,{position:'absolute',left:r.left+'px',top:r.top+'px',
-      width:r.width+'px',height:r.height+'px',margin:'0',boxSizing:'border-box',transform:'none'});
-    // A swipe row has edit/delete panels underneath its front card.
-    // Remove those panels from the visual snapshot before hiding the selected row.
-    clone.querySelectorAll('.swipe-edit,.swipe-del').forEach(panel=>panel.remove());
-    clone.querySelectorAll('.mrow[data-id]').forEach(copy=>{
-      if(copy.dataset.id===id){
-        const wrapper=copy.closest('.swipe-wrap-row')||copy;
-        wrapper.style.visibility='hidden';
-      }
-    });
-    backdrop.append(clone);
-  });
+    zIndex:'110',background:getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()||getComputedStyle(document.body).backgroundColor});
+  // Opaque theme background: list rows and swipe actions never enter the transition.
   document.body.append(backdrop);
   return {rect,textRect,text:title.textContent,font:font.font,fontSize:parseFloat(font.fontSize),
     color:font.color,radius:getComputedStyle(card).borderRadius,backdrop};
@@ -12005,13 +11986,18 @@ function animateDetailEntry(source){
       {transform:`translate(${source.textRect.left-dest.left}px,${source.textRect.top-dest.top}px) scale(1)`},
       {transform:`translate(0px,0px) scale(${parseFloat(getComputedStyle(title).fontSize)/source.fontSize})`}
     ],opts));
-    animations.push(title.animate([{opacity:0},{opacity:0}],opts));
-    // List remains visible through the first half; all detail content is revealed together.
-    animations.push(source.backdrop.animate([{opacity:1},{opacity:0}],
-      {duration:160,delay:200,easing:'ease-out',fill:'both'}));
+    const titleHold=title.animate([{opacity:0},{opacity:0}],opts);
+    animations.push(titleHold);
+    // The opaque card used to cover the author's fade until cleanup, causing a pop.
+    // Remove both covers as movement ends, then fade the real author/details in.
+    const movement=animations[1];
+    movement.finished.then(()=>{
+      if(cleaned)return;
+      layer.remove();source.backdrop.remove();titleHold.cancel();
+    }).catch(()=>{});
     root.querySelectorAll('.dt-hdrow2,.dt-global-actions,.dt-tabs,#dtBody > :not(.dt-top)').forEach(el=>{
       animations.push(el.animate([{opacity:0},{opacity:1}],
-        {duration:160,delay:200,easing:'ease-out',fill:'both'}));
+        {duration:180,delay:360,easing:'ease-out',fill:'both'}));
     });
     Promise.all(animations.map(a=>a.finished.catch(()=>{}))).then(cleanup);
   }catch(error){cleanup();}
