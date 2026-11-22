@@ -11926,9 +11926,75 @@ function syncDetailListSelection(){
   });
 }
 
+// Mobile list-to-detail shared card/title transition. No persistent inline styles.
+let detailEntryCleanup=null;
+function captureDetailEntry(id){
+  if(!matchMedia('(max-width:768px)').matches||
+     matchMedia('(prefers-reduced-motion: reduce)').matches||!Element.prototype.animate)return null;
+  const row=Array.from(document.querySelectorAll('#mlist .mrow[data-id]')).find(el=>el.dataset.id===id);
+  const title=row?.querySelector('.cname');
+  if(!row||!title)return null;
+  const rect=row.getBoundingClientRect(),textRect=title.getBoundingClientRect();
+  if(rect.bottom<=0||rect.top>=innerHeight||rect.width<=0)return null;
+  const style=getComputedStyle(title);
+  return {rect,textRect,text:title.textContent,font:style.font,color:style.color,
+    radius:getComputedStyle(row.closest('.media-month-card')||row).borderRadius};
+}
+function animateDetailEntry(source){
+  detailEntryCleanup?.();
+  if(!source)return;
+  const root=document.getElementById('detailRoot');
+  const title=root.querySelector('.dt-name'),heading=root.querySelector('.dt-hd');
+  if(!title||!heading)return;
+  const dest=title.getBoundingClientRect(),bounds=root.getBoundingClientRect();
+  const end={left:bounds.left,top:Math.max(0,bounds.top),width:bounds.width,
+    height:Math.min(bounds.height,innerHeight-Math.max(0,bounds.top))};
+  const surface=document.createElement('div'),label=document.createElement('div');
+  surface.setAttribute('aria-hidden','true');label.setAttribute('aria-hidden','true');
+  Object.assign(surface.style,{position:'fixed',zIndex:'114',pointerEvents:'none',
+    background:getComputedStyle(heading).backgroundColor,
+    left:source.rect.left+'px',top:source.rect.top+'px',width:source.rect.width+'px',
+    height:source.rect.height+'px',borderRadius:source.radius,overflow:'hidden'});
+  Object.assign(label.style,{position:'fixed',zIndex:'114',pointerEvents:'none',
+    left:source.textRect.left+'px',top:source.textRect.top+'px',
+    width:source.textRect.width+'px',font:source.font,color:source.color,
+    margin:'0',transformOrigin:'left top'});
+  label.textContent=source.text;
+  document.body.append(surface,label);
+  const opts={duration:360,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
+  const animations=[];
+  let cleaned=false;
+  const cleanup=()=>{
+    if(cleaned)return;cleaned=true;
+    animations.forEach(a=>a.cancel());surface.remove();label.remove();
+    if(detailEntryCleanup===cleanup)detailEntryCleanup=null;
+  };
+  detailEntryCleanup=cleanup;
+  try{
+    animations.push(surface.animate([
+      {left:source.rect.left+'px',top:source.rect.top+'px',width:source.rect.width+'px',height:source.rect.height+'px',borderRadius:source.radius,opacity:1},
+      {left:end.left+'px',top:end.top+'px',width:end.width+'px',height:end.height+'px',borderRadius:'0px',opacity:1,offset:.78},
+      {left:end.left+'px',top:end.top+'px',width:end.width+'px',height:end.height+'px',borderRadius:'0px',opacity:0}
+    ],opts));
+    const scale=parseFloat(getComputedStyle(title).fontSize)/parseFloat(source.font.match(/([\d.]+)px/)?.[1]||getComputedStyle(title).fontSize);
+    animations.push(label.animate([
+      {transform:'translate(0,0) scale(1)',opacity:1},
+      {transform:`translate(${dest.left-source.textRect.left}px,${dest.top-source.textRect.top}px) scale(${scale})`,opacity:1,offset:.8},
+      {transform:`translate(${dest.left-source.textRect.left}px,${dest.top-source.textRect.top}px) scale(${scale})`,opacity:0}
+    ],opts));
+    animations.push(title.animate([{opacity:0},{opacity:0,offset:.8},{opacity:1}],opts));
+    root.querySelectorAll('.dt-hdrow2,.dt-global-actions,.dt-tabs,.dt-sec').forEach(el=>{
+      animations.push(el.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],
+        {duration:190,delay:190,easing:'ease-out',fill:'both'}));
+    });
+    Promise.all(animations.map(a=>a.finished.catch(()=>{}))).then(cleanup);
+  }catch(error){cleanup();}
+}
+
 function openDetail(id){
   desktopFilterToggle.setAttribute('aria-expanded','false');
   const item=data.find(d=>d.id===id); if(!item||detailId===id) return;
+  const entrySource=captureDetailEntry(id);
   ensurePeopleIds(item,true);
   desktopChapterIndex=null;desktopChapterForm=null;desktopOpenSections.clear();
   detailId=id; dtTab='info'; peopleSearchOpen=false; peopleSearchQuery='';
@@ -11945,6 +12011,7 @@ function openDetail(id){
   backLayerOpenedNow('detailRoot');
   syncDetailListSelection();
   resetDetailTabScroll();
+  animateDetailEntry(entrySource);
 }
 // 页面内主动关闭（点分类、进日历……）：压进去的那条历史由返回栈跟着退掉，
 // 否则用户之后按返回会先「退回一条已经关掉的详情」，白按一次。
@@ -11953,6 +12020,7 @@ function closeDetail(){
   hideDetail();
 }
 function hideDetail(){
+  detailEntryCleanup?.();
   document.body.classList.remove('fab-hidden');
   if(document.getElementById('relGraph')?.classList.contains('open')) closeRelationGraphCompletely(false);
   dtSortPeople=false;
