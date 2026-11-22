@@ -5900,7 +5900,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
 }
 
-/* Mobile chapter reading: 70% / near-full-height snap positions. */
+/* Mobile chapter reading: original opening height / half-height snap positions. */
 @media(max-width:768px){
   #tlSheet:not(.chapter-keyboard){
     top:auto;height:var(--tl-detent-height,70dvh);max-height:calc(100dvh - max(16px,env(safe-area-inset-top)));
@@ -18018,11 +18018,18 @@ function migrateLegacyChapterHeadings(){
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
 // 让章节抽屉的上沿贴齐详情页视图导航的上沿，打开时完整遮住导航。
-// Two mobile reading detents; desktop keeps its existing drawer behavior.
-let tlReadingDetent='medium';
+// Original reading height / half-height detents; desktop keeps its drawer behavior.
+let tlReadingDetent='large';
 function chapterDetentHeights(){
   const h=window.innerHeight;
-  return {medium:Math.round(h*.7),large:Math.max(Math.round(h*.7),h-16)};
+  const detail=tlHostMedia&&document.querySelector('#detailRoot.open');
+  const tabs=detail&&detail.querySelector('.dt-tabs');
+  const rect=tabs&&tabs.getClientRects()[0];
+  const visibleTop=detail?Math.max(0,detail.getBoundingClientRect().top+detail.clientTop):0;
+  // Restore the original opening edge at the detail tabs, with 70% as standalone fallback.
+  const top=rect&&rect.bottom>visibleTop?Math.max(visibleTop,rect.top):h*.3;
+  const large=Math.round(Math.min(h-16,h-top));
+  return {medium:Math.round(large/2),large};
 }
 function applyChapterDetent(value=tlReadingDetent){
   const sheet=document.getElementById('tlSheet'),mask=document.getElementById('tlSheetMask');
@@ -18101,7 +18108,7 @@ function openChapterSheet(idx){
   tlSheetOrigSegs=tlSheetSegs.map(sg=>({text:sg.text,gap:sg.gap}));  // 原样留一份，「不保存」照它还原
   document.getElementById('tlSheetTitle').textContent=
     (isMobileLayout()?timelineSectionTitle(c.title)?.section:null)||c.title||'本章';
-  tlReadingDetent='medium';
+  tlReadingDetent='large';
   renderChapterSheet();
   // 重新打开阅读弹窗从头开始；编辑返回时由调用方随后恢复阅读位置。
   if(isMobileLayout())document.getElementById('tlSheetBody').scrollTop=0;
@@ -18671,7 +18678,7 @@ function initTlSheetDrag(){
     muteUntil=Date.now()+350;
     if(!g.mobile){mask.style.opacity='';if(!cancelled&&g.last-g.start>100)closeChapterSheet();return;}
     const heights=chapterDetentHeights(),height=sheet.getBoundingClientRect().height;
-    if(!cancelled&&(height<heights.medium-100||(tlReadingDetent==='medium'&&g.velocity>.9&&g.last-g.start>50))){
+    if(!cancelled&&tlReadingDetent==='medium'&&(height<heights.medium-Math.min(100,heights.medium*.3)||(g.velocity>.9&&g.last-g.start>50))){
       closeChapterSheet();return;
     }
     const velocity=performance.now()-g.time>100?0:g.velocity;
