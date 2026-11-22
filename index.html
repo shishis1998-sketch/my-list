@@ -11953,8 +11953,14 @@ function captureDetailEntry(id){
     clone.style.setProperty('display',style.display,'important');
     Object.assign(clone.style,{position:'absolute',left:r.left+'px',top:r.top+'px',
       width:r.width+'px',height:r.height+'px',margin:'0',boxSizing:'border-box',transform:'none'});
+    // A swipe row has edit/delete panels underneath its front card.
+    // Remove those panels from the visual snapshot before hiding the selected row.
+    clone.querySelectorAll('.swipe-edit,.swipe-del').forEach(panel=>panel.remove());
     clone.querySelectorAll('.mrow[data-id]').forEach(copy=>{
-      if(copy.dataset.id===id)copy.style.visibility='hidden';
+      if(copy.dataset.id===id){
+        const wrapper=copy.closest('.swipe-wrap-row')||copy;
+        wrapper.style.visibility='hidden';
+      }
     });
     backdrop.append(clone);
   });
