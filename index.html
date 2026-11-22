@@ -5900,20 +5900,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
 }
 
-/* Mobile chapter reading: original opening height / half-height snap positions. */
-@media(max-width:768px){
-  #tlSheet:not(.chapter-keyboard){
-    top:auto;height:var(--tl-detent-height,70dvh);max-height:calc(100dvh - max(16px,env(safe-area-inset-top)));
-    transition:height 280ms cubic-bezier(.22,1,.36,1),transform 280ms cubic-bezier(.22,1,.36,1);
-  }
-  #tlSheet:not(.chapter-keyboard):has(.chapter-editing){height:calc(100dvh - max(16px,env(safe-area-inset-top)));}
-  #tlSheet.dragging{transition:none!important;}
-  #tlSheetMask{transition:opacity 280ms ease;}
-}
-@media(prefers-reduced-motion:reduce){
-  #tlSheet,#tlSheetMask{transition:none!important;}
-}
-
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -18018,37 +18004,7 @@ function migrateLegacyChapterHeadings(){
 function autosizeTl(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
 // 让章节抽屉的上沿贴齐详情页视图导航的上沿，打开时完整遮住导航。
-// Original reading height / half-height detents; desktop keeps its drawer behavior.
-let tlReadingDetent='large';
-function chapterDetentHeights(){
-  const h=window.innerHeight;
-  const detail=tlHostMedia&&document.querySelector('#detailRoot.open');
-  const tabs=detail&&detail.querySelector('.dt-tabs');
-  const rect=tabs&&tabs.getClientRects()[0];
-  const visibleTop=detail?Math.max(0,detail.getBoundingClientRect().top+detail.clientTop):0;
-  // Restore the original opening edge at the detail tabs, with 70% as standalone fallback.
-  const top=rect&&rect.bottom>visibleTop?Math.max(visibleTop,rect.top):h*.3;
-  const large=Math.round(Math.min(h-16,h-top));
-  return {medium:Math.round(large/2),large};
-}
-function applyChapterDetent(value=tlReadingDetent){
-  const sheet=document.getElementById('tlSheet'),mask=document.getElementById('tlSheetMask');
-  tlReadingDetent=value;
-  if(!isMobileLayout()){
-    sheet.style.removeProperty('--tl-detent-height');mask.style.opacity='';return;
-  }
-  sheet.style.setProperty('--tl-detent-height',chapterDetentHeights()[value]+'px');
-  mask.style.opacity=value==='large'?'1':'.72';
-}
 function alignChapterSheetToCard(){
-  if(isMobileLayout()){
-    const mobileSheet=document.getElementById('tlSheet');
-    mobileSheet.classList.remove('card-aligned');
-    mobileSheet.style.removeProperty('--tl-card-top');
-    applyChapterDetent();return;
-  }
-  applyChapterDetent();
-
   const sheet=document.getElementById('tlSheet');
   const detail=tlHostMedia&&document.querySelector('#detailRoot.open');
   const tabs=detail&&detail.querySelector('.dt-tabs');
@@ -18108,7 +18064,6 @@ function openChapterSheet(idx){
   tlSheetOrigSegs=tlSheetSegs.map(sg=>({text:sg.text,gap:sg.gap}));  // 原样留一份，「不保存」照它还原
   document.getElementById('tlSheetTitle').textContent=
     (isMobileLayout()?timelineSectionTitle(c.title)?.section:null)||c.title||'本章';
-  tlReadingDetent='large';
   renderChapterSheet();
   // 重新打开阅读弹窗从头开始；编辑返回时由调用方随后恢复阅读位置。
   if(isMobileLayout())document.getElementById('tlSheetBody').scrollTop=0;
@@ -18606,7 +18561,6 @@ function cancelChapterSheet(){
   tlWholeEditing=false;closeChapterSheet();
 }
 function closeChapterSheet(){
-  document.getElementById('tlSheetMask').style.opacity='';
   // 编辑仅通过「完成」保存；新建取消或关闭不会追加空章节。
   tlWholeEditing=false;
   document.getElementById('tlSheet').classList.remove('chapter-keyboard');
@@ -18646,69 +18600,19 @@ function onTlSheetMaskTap(e){
 // 下拉弹窗头关闭（松手超过阈值即关，含自动保存）
 function initTlSheetDrag(){
   if(tlSheetDragInit) return; tlSheetDragInit=true;
-  const head=document.getElementById('tlSheetHead'),sheet=document.getElementById('tlSheet'),
-        mask=document.getElementById('tlSheetMask'),body=document.getElementById('tlSheetBody');
-  let gesture=null,muteUntil=0;
-  function start(y,fromBody=false){
-    gesture={start:y,last:y,time:performance.now(),velocity:0,height:sheet.getBoundingClientRect().height,
-      mobile:isMobileLayout()&&!tlWholeEditing&&!sheet.classList.contains('chapter-keyboard'),fromBody,moved:false};
-  }
-  function move(y){
-    if(!gesture)return;
-    const g=gesture,delta=y-g.start,now=performance.now();
-    if(g.fromBody&&!g.moved&&delta<=8)return;
-    g.velocity=(y-g.last)/Math.max(1,now-g.time);g.last=y;g.time=now;
-    if(Math.abs(delta)>6)g.moved=true;
-    if(!g.moved)return;
-    sheet.classList.add('dragging');
-    if(!g.mobile){
-      const dy=Math.max(0,delta);sheet.style.transform='translateY('+dy+'px)';
-      mask.style.opacity=String(Math.max(0,1-dy/300));return;
-    }
-    const heights=chapterDetentHeights(),raw=g.height-delta;
-    const height=raw>heights.large?heights.large+(raw-heights.large)*.18:Math.max(100,raw);
-    sheet.style.setProperty('--tl-detent-height',height+'px');
-    mask.style.opacity=String(Math.max(.12,Math.min(1,.72+(height-heights.medium)/Math.max(1,heights.large-heights.medium)*.28)));
-  }
-  function end(cancelled=false){
-    if(!gesture)return;
-    const g=gesture;gesture=null;
-    sheet.classList.remove('dragging');sheet.style.transform='';
-    if(!g.moved){applyChapterDetent();return;}
-    muteUntil=Date.now()+350;
-    if(!g.mobile){mask.style.opacity='';if(!cancelled&&g.last-g.start>100)closeChapterSheet();return;}
-    const heights=chapterDetentHeights(),height=sheet.getBoundingClientRect().height;
-    if(!cancelled&&tlReadingDetent==='medium'&&(height<heights.medium-Math.min(100,heights.medium*.3)||(g.velocity>.9&&g.last-g.start>50))){
-      closeChapterSheet();return;
-    }
-    const velocity=performance.now()-g.time>100?0:g.velocity;
-    const projected=height-velocity*140;
-    applyChapterDetent(cancelled?tlReadingDetent:projected>(heights.medium+heights.large)/2?'large':'medium');
-  }
-  head.addEventListener('pointerdown',e=>{
-    if(e.target.closest('button,input,textarea,select'))return;
-    start(e.clientY);try{head.setPointerCapture(e.pointerId);}catch(_){}
-  });
-  head.addEventListener('pointermove',e=>move(e.clientY));
-  head.addEventListener('pointerup',()=>end());
-  head.addEventListener('pointercancel',()=>end(true));
-  head.addEventListener('click',e=>{if(Date.now()<muteUntil){e.preventDefault();e.stopImmediatePropagation();}},true);
-  // Only take over a downward touch when the reader was already at its top.
-  body.addEventListener('touchstart',e=>{
-    if(!isMobileLayout()||e.touches.length!==1||body.scrollTop>0||tlWholeEditing||
-      e.target.closest('button,input,textarea,a,[contenteditable]'))return;
-    if(window.getSelection()?.toString())return;
-    start(e.touches[0].clientY,true);
-  },{passive:true});
-  body.addEventListener('touchmove',e=>{
-    if(!gesture?.fromBody)return;
-    if(!gesture.moved&&e.touches[0].clientY<gesture.start){gesture=null;return;}
-    move(e.touches[0].clientY);
-    if(gesture?.moved&&e.cancelable)e.preventDefault();
-  },{passive:false});
-  body.addEventListener('touchend',()=>{if(gesture?.fromBody)end();});
-  body.addEventListener('touchcancel',()=>{if(gesture?.fromBody)end(true);});
-  body.addEventListener('click',e=>{if(Date.now()<muteUntil){e.preventDefault();e.stopImmediatePropagation();}},true);
+  const head=document.getElementById('tlSheetHead'),
+        sheet=document.getElementById('tlSheet'),
+        mask=document.getElementById('tlSheetMask');
+  let sy=null,dy=0,drag=false;
+  head.addEventListener('pointerdown',e=>{sy=e.clientY;dy=0;drag=true;
+    sheet.classList.add('dragging');try{head.setPointerCapture(e.pointerId);}catch(_){}});
+  head.addEventListener('pointermove',e=>{if(!drag)return;dy=Math.max(0,e.clientY-sy);
+    sheet.style.transform='translateY('+dy+'px)';mask.style.opacity=String(Math.max(0,1-dy/300));});
+  const end=()=>{if(!drag)return;drag=false;sheet.classList.remove('dragging');
+    sheet.style.transform='';mask.style.opacity='';
+    if(dy>100) closeChapterSheet();};
+  head.addEventListener('pointerup',end);
+  head.addEventListener('pointercancel',end);
 }
 
 // 章节展开/收起：JS 测量真实高度做平滑过渡（比 CSS grid fr 更顺）
