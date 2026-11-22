@@ -11997,7 +11997,7 @@ function animateDetailEntry(source){
     if(detailEntryCleanup===cleanup)detailEntryCleanup=null;
   };
   detailEntryCleanup=cleanup;
-  const opts={duration:360,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
+  const opts={duration:240,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
   try{
     // Both move with identical timing. The white surface ends at the real title card,
     // not a blank full-screen rectangle; the text stays at its original size while moving.
@@ -12011,8 +12011,12 @@ function animateDetailEntry(source){
     ],opts));
     const titleHold=title.animate([{opacity:0},{opacity:0}],opts);
     animations.push(titleHold);
-    // The opaque card used to cover the author's fade until cleanup, causing a pop.
-    // Remove both covers as movement ends, then fade the real author/details in.
+    // Overlap content with the final 80ms of travel. Fade the covers too, so
+    // the author/content fade remains visible instead of popping after removal.
+    animations.push(surface.animate([{opacity:1},{opacity:0}],
+      {duration:80,delay:160,easing:'ease-out',fill:'both'}));
+    animations.push(source.backdrop.animate([{opacity:1},{opacity:0}],
+      {duration:80,delay:160,easing:'ease-out',fill:'both'}));
     const movement=animations[1];
     movement.finished.then(()=>{
       if(cleaned)return;
@@ -12020,7 +12024,7 @@ function animateDetailEntry(source){
     }).catch(()=>{});
     root.querySelectorAll('.dt-hdrow2,.dt-global-actions,.dt-tabs,#dtBody > :not(.dt-top)').forEach(el=>{
       animations.push(el.animate([{opacity:0},{opacity:1}],
-        {duration:180,delay:360,easing:'ease-out',fill:'both'}));
+        {duration:160,delay:160,easing:'ease-out',fill:'both'}));
     });
     Promise.all(animations.map(a=>a.finished.catch(()=>{}))).then(cleanup);
   }catch(error){cleanup();}
