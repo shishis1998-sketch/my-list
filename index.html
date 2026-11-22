@@ -11926,7 +11926,7 @@ function syncDetailListSelection(){
   });
 }
 
-// Mobile list-to-detail shared card/title transition. No persistent inline styles.
+// Mobile list-to-detail: reveal the real page and move its real title.
 let detailEntryCleanup=null;
 function captureDetailEntry(id){
   if(!matchMedia('(max-width:768px)').matches||
@@ -11936,56 +11936,44 @@ function captureDetailEntry(id){
   if(!row||!title)return null;
   const rect=row.getBoundingClientRect(),textRect=title.getBoundingClientRect();
   if(rect.bottom<=0||rect.top>=innerHeight||rect.width<=0)return null;
-  const style=getComputedStyle(title);
-  return {rect,textRect,text:title.textContent,font:style.font,color:style.color,
+  return {rect,textRect,fontSize:parseFloat(getComputedStyle(title).fontSize),
     radius:getComputedStyle(row.closest('.media-month-card')||row).borderRadius};
 }
 function animateDetailEntry(source){
   detailEntryCleanup?.();
   if(!source)return;
-  const root=document.getElementById('detailRoot');
-  const title=root.querySelector('.dt-name'),heading=root.querySelector('.dt-hd');
-  if(!title||!heading)return;
+  const root=document.getElementById('detailRoot'),title=root.querySelector('.dt-name');
+  if(!title)return;
   const dest=title.getBoundingClientRect(),bounds=root.getBoundingClientRect();
-  const end={left:bounds.left,top:Math.max(0,bounds.top),width:bounds.width,
-    height:Math.min(bounds.height,innerHeight-Math.max(0,bounds.top))};
-  const surface=document.createElement('div'),label=document.createElement('div');
-  surface.setAttribute('aria-hidden','true');label.setAttribute('aria-hidden','true');
-  Object.assign(surface.style,{position:'fixed',zIndex:'114',pointerEvents:'none',
-    background:getComputedStyle(heading).backgroundColor,
-    left:source.rect.left+'px',top:source.rect.top+'px',width:source.rect.width+'px',
-    height:source.rect.height+'px',borderRadius:source.radius,overflow:'hidden'});
-  Object.assign(label.style,{position:'fixed',zIndex:'114',pointerEvents:'none',
-    left:source.textRect.left+'px',top:source.textRect.top+'px',
-    width:source.textRect.width+'px',font:source.font,color:source.color,
-    margin:'0',transformOrigin:'left top'});
-  label.textContent=source.text;
-  document.body.append(surface,label);
-  const opts={duration:360,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
+  if(!bounds.width||!bounds.height)return;
+  const inset=[Math.max(0,source.rect.top-bounds.top),
+    Math.max(0,bounds.right-source.rect.right),
+    Math.max(0,bounds.bottom-source.rect.bottom),
+    Math.max(0,source.rect.left-bounds.left)].map(n=>n+'px').join(' ');
   const animations=[];
   let cleaned=false;
   const cleanup=()=>{
     if(cleaned)return;cleaned=true;
-    animations.forEach(a=>a.cancel());surface.remove();label.remove();
+    animations.forEach(a=>a.cancel());
     if(detailEntryCleanup===cleanup)detailEntryCleanup=null;
   };
   detailEntryCleanup=cleanup;
+  const opts={duration:360,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
   try{
-    animations.push(surface.animate([
-      {left:source.rect.left+'px',top:source.rect.top+'px',width:source.rect.width+'px',height:source.rect.height+'px',borderRadius:source.radius,opacity:1},
-      {left:end.left+'px',top:end.top+'px',width:end.width+'px',height:end.height+'px',borderRadius:'0px',opacity:1,offset:.78},
-      {left:end.left+'px',top:end.top+'px',width:end.width+'px',height:end.height+'px',borderRadius:'0px',opacity:0}
+    // One real surface: no duplicate white card, no layout animation or final crossfade.
+    animations.push(root.animate([
+      {clipPath:'inset('+inset+' round '+source.radius+')'},
+      {clipPath:'inset(0px round 0px)'}
     ],opts));
-    const scale=parseFloat(getComputedStyle(title).fontSize)/parseFloat(source.font.match(/([\d.]+)px/)?.[1]||getComputedStyle(title).fontSize);
-    animations.push(label.animate([
-      {transform:'translate(0,0) scale(1)',opacity:1},
-      {transform:`translate(${dest.left-source.textRect.left}px,${dest.top-source.textRect.top}px) scale(${scale})`,opacity:1,offset:.8},
-      {transform:`translate(${dest.left-source.textRect.left}px,${dest.top-source.textRect.top}px) scale(${scale})`,opacity:0}
+    const scale=source.fontSize/parseFloat(getComputedStyle(title).fontSize);
+    animations.push(title.animate([
+      {transform:`translate(${source.textRect.left-dest.left}px,${source.textRect.top-dest.top}px) scale(${scale})`,transformOrigin:'left top'},
+      {transform:'translate(0px,0px) scale(1)',transformOrigin:'left top'}
     ],opts));
-    animations.push(title.animate([{opacity:0},{opacity:0,offset:.8},{opacity:1}],opts));
-    root.querySelectorAll('.dt-hdrow2,.dt-global-actions,.dt-tabs,.dt-sec').forEach(el=>{
-      animations.push(el.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],
-        {duration:190,delay:190,easing:'ease-out',fill:'both'}));
+    // Metadata and FAB are direct children too; all non-title content shares one timing.
+    root.querySelectorAll('.dt-hdrow2,.dt-global-actions,.dt-tabs,#dtBody > :not(.dt-top)').forEach(el=>{
+      animations.push(el.animate([{opacity:0},{opacity:1}],
+        {duration:160,delay:200,easing:'ease-out',fill:'both'}));
     });
     Promise.all(animations.map(a=>a.finished.catch(()=>{}))).then(cleanup);
   }catch(error){cleanup();}
