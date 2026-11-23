@@ -2985,10 +2985,10 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
 .memo-card{--memo-disclosure-width:32px;--memo-disclosure-gap:var(--sp-8);}
 .memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
-/* 收起摘要的顶部扣除操作行居中产生的6px留白，与账号下方保持一致。 */
-.memo-card:has(>.memo-details:not(.is-expanded) .memo-account){padding-top:var(--sp-8);}
+/* 展开与收起使用相同顶部间距，标题位置不随详情状态改变。 */
+.memo-card{padding-top:var(--sp-8);}
 @media (max-width:1024px), (pointer:coarse){
-  .memo-card:has(>.memo-details:not(.is-expanded) .memo-account){padding-top:var(--sp-6);}
+  .memo-card{padding-top:var(--sp-6);}
 }
 .memo-card .memo-title{flex-basis:0;}
 .memo-card .memo-title{color:var(--text-primary);}
