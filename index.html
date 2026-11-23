@@ -3421,7 +3421,7 @@ mark.shl{
    排在前面的 @media 会被后面的基础规则盖掉。 */
 @media (max-width:1024px), (pointer: coarse){
   .cal-viewbar{display:none;}
-  body:not(.cal-searching) #calViewCalendar > :is(.cal-hdr,.cal-scroll,.cal-day-card,.cw-card){
+  body:not(.cal-searching) #calViewCalendar :is(.cal-hdr,.cal-scroll,.cal-day-card,.cw-card){
     margin-inline:0;
     border-radius:0;
   }
@@ -3470,6 +3470,20 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .dt-tabs.is-switching .cal-vtoggle .cvt.on{color:var(--text-secondary);transition:none;}
 .dt-tabs.is-switching .cal-vtoggle .cvt.was-on{color:var(--on-accent);transition:none;}
 #calViewCalendar{flex:1 1 auto;display:flex;flex-direction:column;overflow:visible;}
+.cal-records-pane{display:contents;}
+@media(min-width:1025px) and (pointer:fine){
+  body.cal-open:not(.cal-searching,.cal-view-food) #calViewCalendar{
+    display:grid;grid-template-columns:minmax(290px,400px) minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr);align-items:start;
+  }
+  #calViewCalendar>.cal-hdr{grid-area:1 / 1;}
+  #calViewCalendar>.cal-scroll{grid-area:2 / 1;}
+  body.cal-open:not(.cal-searching,.cal-view-food) .cal-records-pane{
+    display:block;grid-area:1 / 2 / 3 / 3;min-width:0;
+    margin-top:var(--sp-6);border-inline-start:1px solid var(--border);
+    max-height:calc(100dvh - 60px);overflow:auto;
+  }
+}
 #calViewPeriod{flex:1 1 auto;overflow-y:visible;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;-ms-overflow-style:none;}
 /* 隐藏纵向滚动条：选中日期后下方状态/信息卡展开会撑出滚动条，若占宽会把居中的日历网格整体挤向左侧（“向左偏”）。
@@ -6308,6 +6322,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <div class="cal-grabrow" id="calGrabRow" role="button" tabindex="0" aria-expanded="true" aria-label="上拖收起日历，下拖展开"><span class="cal-grab-bar"></span></div>
         <div class="cal-searchresults" id="calSearchResults"></div>
       </div>
+      <div class="cal-records-pane">
       <section class="cal-card cal-day-card" id="calDayCard" aria-labelledby="calDetailTitle" hidden>
         <header class="cal-day-card-header">
           <div class="cal-card-date" id="calDetailTitle"></div>
@@ -6321,6 +6336,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       </section>
       <!-- 本周卡片：选中日所在那一周的事件概览，排在「当天」卡下面，点标题栏收起/展开 -->
       <div class="cw-card" id="calWeekCard"></div>
+      </div><!-- /.cal-records-pane -->
       </div><!-- /#calViewCalendar -->
       <div id="calViewPeriod" style="display:none">
         <div class="year-picker-overlay" id="yearPickerOverlay" onclick="PV.closeYearPicker(event)">
