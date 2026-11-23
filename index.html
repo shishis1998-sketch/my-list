@@ -19211,7 +19211,7 @@ function renderMemoCard(n){
   const all=memoCollectFields(n);
   const expanded=memoExpandedState.has(n.id);
   return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
-    <div class="memo-head">
+    <div class="memo-head" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')">
       <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
       <div class="memo-tag-pills">${renderMemoTagPills(n)}</div>
