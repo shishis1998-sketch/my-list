@@ -5610,7 +5610,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border:1px solid var(--border);border-radius:var(--rlg);
     pointer-events:none;z-index:5;
   }
-  #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
+  #appSidebar{--sidebar-row-height:32px;background:var(--bg);padding:0;overflow:hidden;}
   .app>.main>.topbar{
     height:var(--sidebar-header-height);min-height:var(--sidebar-header-height);flex-shrink:0;
     align-items:center;padding-block:0;border-bottom:0;
@@ -5651,13 +5651,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     top:calc((100% - var(--sidebar-thumb-height)) * var(--sidebar-scroll-progress,0));
     height:var(--sidebar-thumb-height);border-radius:var(--rsm);background:var(--text-muted);
   }
-  #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sidebar-content-inset);margin-bottom:var(--sp-8);}
+  #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sidebar-content-inset);margin-bottom:var(--sp-6);}
   #appSidebar .sidebar-scroll>.nsec:last-child{margin-bottom:0;}
-  #appSidebar .sidebar-scroll>.nsec-look{margin-bottom:var(--sp-8);}
   #appSidebar .sidebar-disclosure-section>.nlbl{display:none;}
   #appSidebar .sidebar-disclosure{
     display:flex;align-items:center;justify-content:flex-start;
-    width:100%;min-height:var(--sidebar-row-height);padding:var(--sp-6) var(--sp-10);
+    width:100%;min-height:var(--sidebar-row-height);padding:var(--sp-4) var(--sp-10);
     border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);
     color:var(--text-primary);font:600 var(--fs-caption)/var(--lh-normal) var(--zh);
     cursor:pointer;text-align:left;
@@ -5695,15 +5694,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   #appSidebar .ncard+.ncard{margin-top:var(--sp-8);}
   #appSidebar .nitem{
-    min-height:34px;padding:var(--sp-6) var(--sp-8);
+    min-height:var(--sidebar-row-height);padding:var(--sp-4) var(--sp-8);
     font-size:var(--fs-caption);line-height:var(--lh-normal);
     color:var(--text-primary);
   }
   #appSidebar .nitem:not(.nitem-fs){
     border:1px solid transparent;
-    padding:calc(var(--sp-6) - 1px) calc(var(--sp-8) - 1px);
+    padding:calc(var(--sp-4) - 1px) calc(var(--sp-8) - 1px);
   }
-  #appSidebar .ncard-cats-desktop .nitem{padding:var(--sp-6) var(--sp-8);}
+  #appSidebar .ncard-cats-desktop .nitem{padding:var(--sp-4) var(--sp-8);}
   #appSidebar :is(.nitem,.nlbl-btn){transition:none;}
   #appSidebar .ncard-cats-desktop .nitem.on,
   #appSidebar .ncard-cats-desktop .nitem.parent-on{color:var(--accent);}
@@ -5714,7 +5713,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-notes-header{position:relative;}
   #appSidebar .sidebar-notes-header>#nav-notes{
     min-height:var(--sidebar-row-height);
-    padding:var(--sp-6) var(--sp-10) var(--sp-6) 33px;
+    padding:var(--sp-4) var(--sp-10) var(--sp-4) 33px;
     border-radius:var(--r);
     font-weight:600;
   }
