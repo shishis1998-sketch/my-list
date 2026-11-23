@@ -3476,13 +3476,13 @@ body.cal-view-period .cal-viewbar .cal-period-toggle{display:flex;}
 #calViewCalendar{flex:1 1 auto;display:flex;flex-direction:column;overflow:visible;}
 .cal-records-pane{display:contents;}
 @media(min-width:1025px) and (pointer:fine){
-  body.cal-open:not(.cal-searching,.cal-view-food) #calViewCalendar{
+  body.cal-open:not(.cal-searching) #calViewCalendar{
     display:grid;grid-template-columns:minmax(290px,400px) minmax(0,1fr);
     grid-template-rows:auto minmax(0,1fr);align-items:start;
   }
   #calViewCalendar>.cal-hdr{grid-area:1 / 1;}
   #calViewCalendar>.cal-scroll{grid-area:2 / 1;}
-  body.cal-open:not(.cal-searching,.cal-view-food) .cal-records-pane{
+  body.cal-open:not(.cal-searching) .cal-records-pane{
     display:block;grid-area:1 / 2 / 3 / 3;min-width:0;
     margin-top:var(--sp-6);border-inline-start:1px solid var(--border);
     max-height:calc(100dvh - 60px);overflow:auto;
