@@ -5647,14 +5647,17 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-scroll>.nsec-look{margin-bottom:var(--sp-8);}
   #appSidebar .sidebar-disclosure-section>.nlbl{display:none;}
   #appSidebar .sidebar-disclosure{
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:center;justify-content:flex-start;
     width:100%;min-height:var(--sidebar-row-height);padding:var(--sp-6) var(--sp-10);
     border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);
     color:var(--text-primary);font:600 var(--fs-caption)/var(--lh-normal) var(--zh);
     cursor:pointer;text-align:left;
   }
-  #appSidebar .sidebar-chevron{flex:none;margin-inline-start:auto;}
-  #appSidebar button[aria-expanded="true"]>.sidebar-chevron{transform:rotate(180deg);}
+  #appSidebar .sidebar-chevron{flex:none;order:-1;transform:rotate(-90deg);transition:transform .18s ease;}
+  #appSidebar button[aria-expanded="true"]>.sidebar-chevron{transform:rotate(0deg);}
+  @media(prefers-reduced-motion:reduce){
+    #appSidebar .sidebar-chevron{transition:none;}
+  }
   #appSidebar .sidebar-disclosure[aria-expanded="false"]+.ncard{display:none;}
   #appSidebar .sidebar-disclosure[aria-expanded="true"]{
     border-end-start-radius:0;border-end-end-radius:0;
@@ -5702,14 +5705,14 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-notes-header{position:relative;}
   #appSidebar .sidebar-notes-header>#nav-notes{
     min-height:var(--sidebar-row-height);
-    padding:var(--sp-6) 38px var(--sp-6) var(--sp-10);
+    padding:var(--sp-6) var(--sp-10) var(--sp-6) 33px;
     border-radius:var(--r);
     font-weight:600;
   }
   #appSidebar .sidebar-notes-header>#nav-notes.on,
   #appSidebar .sidebar-notes-header>#nav-notes.parent-on{font-weight:700;}
   #appSidebar #nav-notes-toggle{
-    position:absolute;inset-block:0;inset-inline-end:0;
+    position:absolute;inset-block:0;inset-inline-start:0;
     display:grid;place-items:center;width:34px;padding:0;
     border:0;border-radius:var(--r);background:transparent;
     color:var(--text-primary);cursor:pointer;
@@ -5810,7 +5813,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 @media(min-width:1025px) and (pointer:fine){
   #appSidebar :is(#nsub,#sidebarCalendarOptions,#sidebarDataOptions) .nitem>svg{display:none;}
   #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions) .nitem:not(.nitem-fs){
-    padding-inline-start:35px;
+    padding-inline-start:57px;
   }
 }
 
@@ -5820,11 +5823,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     width:16px;height:16px;flex:none;
   }
   #appSidebar .ncard{padding-inline:0;}
-  #appSidebar .ncard .nitem:not(.nitem-fs),
-  #appSidebar .sidebar-notes-header>#nav-notes,
+  #appSidebar .ncard .nitem:not(.nitem-fs,:where(#nav-notes)),
   #appSidebar #sync-btn{padding-inline-start:var(--sp-10);}
   #appSidebar .sidebar-disclosure{gap:var(--sp-8);padding-inline-start:11px;}
-  #appSidebar .ncard-notes .nsub{margin-inline-start:24px;padding-inline-start:0;}
+  #appSidebar .ncard-notes .nsub{margin-inline-start:46px;padding-inline-start:0;}
   #appSidebar .ncard{
     background:transparent;border-color:transparent;box-shadow:none;
   }
