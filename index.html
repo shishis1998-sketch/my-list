@@ -2990,7 +2990,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-tag-menu button{width:100%;padding:8px;border:0;border-top:1px solid var(--border-soft);background:none;color:var(--accent);font:inherit;cursor:pointer;}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
-.memo-card{--memo-disclosure-width:32px;--memo-disclosure-gap:var(--sp-8);}
+.memo-card{--memo-disclosure-width:32px;--memo-disclosure-gap:var(--sp-8);--memo-arrow-inset:12.25px;}
 .memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
 /* 展开与收起使用相同顶部间距，标题位置不随详情状态改变。 */
 .memo-card{padding-top:var(--sp-8);}
@@ -3005,13 +3005,14 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);cursor:pointer;}
 .memo-expand{margin-left:0;width:var(--memo-disclosure-width);height:32px;}
 .memo-expand:hover,.memo-expand:focus-visible{color:var(--accent);}
-.memo-expand svg{transform:rotate(-90deg);transition:transform 220ms cubic-bezier(.4,0,.2,1);}
-.memo-expand[aria-expanded="true"] svg{transform:rotate(0deg);}
-.memo-details{margin-inline-start:calc(var(--memo-disclosure-width) + var(--memo-disclosure-gap));overflow:hidden;overflow-anchor:none;}
+.memo-expand svg{width:15px;height:15px;transform:translateX(-1.875px) rotate(-90deg);transition:transform 220ms cubic-bezier(.4,0,.2,1);}
+.memo-expand[aria-expanded="true"] svg{transform:translateX(0) rotate(0deg);}
+.memo-details{margin-inline-start:calc(var(--memo-disclosure-width) + var(--memo-disclosure-gap) - var(--memo-arrow-inset));overflow:hidden;overflow-anchor:none;}
 .memo-details-clip{min-height:0;}
 /* 补齐标题在32px操作行内居中产生的留白，使内容底部与标题顶部一致。 */
 .memo-details-content{padding-top:var(--sp-6);padding-bottom:var(--sp-6);}
-.memo-expand{margin-left:0;flex-shrink:0;}
+/* 按箭头线条左端对齐卡片内边距，保留32px点击区；详情随标题一起对齐。 */
+.memo-expand{margin-left:calc(-1 * var(--memo-arrow-inset));flex-shrink:0;}
 /* 展开详情：字段名在上，内容在下，以细线分隔；两端共用。 */
 
 .memo-details .memo-fields{background:none;border-radius:0;padding:0;margin-bottom:0;}
