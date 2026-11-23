@@ -5542,6 +5542,30 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #timeModal .time-edit-row{min-height:44px;}
 #timeModal .time-edit-row output{display:flex;align-items:center;min-width:0;min-height:44px;padding:0 var(--sp-12);box-sizing:border-box;font-size:var(--fs-input);line-height:var(--lh-normal);color:var(--text-primary);font-variant-numeric:tabular-nums;}
 
+.desktop-note-months,.note-month-pane{display:none;}
+@media(min-width:1025px) and (pointer:fine){
+  body.notes-mode.note-month-split .app>.main{
+    display:grid;grid-template-columns:300px minmax(0,1fr);
+    grid-template-rows:var(--sidebar-header-height) minmax(0,1fr);
+  }
+  body.notes-mode.note-month-split .main>.topbar{grid-column:1 / -1;grid-row:1;}
+  body.notes-mode.note-month-split .main>.content{grid-column:1;grid-row:2;margin-inline:var(--sp-14);}
+  body.notes-mode.note-month-split .desktop-note-months{display:block;}
+  body.notes-mode.note-month-split #noteMonthPicker{display:none;}
+  body.notes-mode.note-month-split .note-month-pane{
+    display:flex;flex-direction:column;min-width:0;min-height:0;grid-column:2;grid-row:2;
+    border-left:1px solid var(--border);padding-inline:var(--sp-24);
+  }
+  .note-month-pane-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-12);padding-block:var(--sp-20) var(--sp-12);flex:none;}
+  .note-month-pane-head h2{font-size:var(--fs-heading);line-height:var(--lh-tight);}
+  .note-month-pane-close{border:0;background:transparent;color:var(--text-secondary);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:var(--r);}
+  .note-month-pane-close:hover{color:var(--accent);background:var(--accent-light);}
+  .note-month-pane-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:var(--sp-20);}
+  .desktop-note-months .note-month-row[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
+  .desktop-note-months .note-month-name{font-size:var(--fs-body);}
+  .desktop-note-months .note-month-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
+}
+
 /* 桌面侧栏：分类导航与设置分组 */
 .sidebar-palette-label,.sidebar-disclosure,.sidebar-scroll-indicator{display:none;}
 .sidebar-scroll{display:contents;}
@@ -6148,6 +6172,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
         <p id="empty-hint">点击右上角「添加」开始收录</p>
       </div>
     </div>
+    <div id="desktopNoteMonths" class="desktop-note-months"></div>
     <!-- 笔记列表容器（仅笔记模式显示） -->
     <div class="note-list" id="nlist" style="display:none"></div>
     <div id="nempty" class="empty" style="display:none">
@@ -6156,6 +6181,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <p>点击右上角「添加」开始记录想法</p>
     </div>
   </div>
+
+  <section class="note-month-pane" id="noteMonthPane" aria-label="月份笔记">
+    <div class="note-month-pane-head"><h2 id="noteMonthPaneTitle"></h2><button type="button" class="note-month-pane-close" onclick="closeNoteMonth()" aria-label="关闭月份内容">×</button></div>
+    <div class="note-month-pane-scroll" id="noteMonthPaneScroll"></div>
+  </section>
 
   <!-- ===== DETAIL VIEW：点列表某一行进来，同样与 .content 平级 ===== -->
   <div class="detail-view" id="detailRoot">
@@ -14290,6 +14320,7 @@ function syncAddBtn(){
 // 切换主区域 UI（媒体模式 vs 笔记模式）
 function applyModeUI(){
   const notes=isNoteMode();
+  if(!notes)resetDesktopNoteMonthPane();
   // 手机端笔记分类由底部菜单提供，电脑端保留顶部分类条。
   document.body.classList.toggle('notes-mode', notes);
   document.getElementById('frow').style.display=notes?'none':'';
@@ -17187,7 +17218,8 @@ function openNoteMonth(key,button){
   withNoteMonthFeedback(button,()=>{
     curNoteMonth=key;
     renderNotes();
-    scrollResultsTop();
+    if(document.body.classList.contains('note-month-split'))document.getElementById('noteMonthPaneScroll').scrollTop=0;
+    else scrollResultsTop();
     animateNoteMonthNavigation(false);
   });
 }
@@ -17267,7 +17299,34 @@ function renderNoteMonthOverview(groups, keys){
   ).join('')+'</div>';
 }
 
+function resetDesktopNoteMonthPane(){
+  const content=document.querySelector('.main>.content');
+  content.append(document.getElementById('nlist'),document.getElementById('nempty'));
+  document.body.classList.remove('note-month-split');
+  document.getElementById('desktopNoteMonths').innerHTML='';
+}
 function renderNotes(){
+  const content=document.querySelector('.main>.content');
+  const oldScroll=content.scrollTop;
+  const wasSplit=document.body.classList.contains('note-month-split');
+  resetDesktopNoteMonthPane();
+  renderNotesContent();
+  const split=window.matchMedia('(min-width:1025px) and (pointer:fine)').matches&&
+    noteUsesRecordDates(curNoteSub)&&!!curNoteMonth;
+  if(!split)return;
+  const groups=groupNotesByMonth(filteredNotes());
+  const months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
+  const nav=document.getElementById('desktopNoteMonths');
+  nav.innerHTML=renderNoteMonthOverview(groups,months);
+  nav.querySelectorAll('.note-month-row').forEach((button,i)=>button.setAttribute('aria-current',String(months[i]===curNoteMonth)));
+  document.getElementById('noteMonthPaneTitle').textContent=noteMonthLabel(curNoteMonth);
+  document.getElementById('vcnt').textContent=filteredNotes().length+' 条笔记';
+  document.getElementById('noteMonthPaneScroll').append(document.getElementById('nlist'),document.getElementById('nempty'));
+  document.body.classList.add('note-month-split');
+  if(wasSplit)content.scrollTop=oldScroll;
+}
+window.matchMedia('(min-width:1025px) and (pointer:fine)').addEventListener('change',()=>{if(isNoteMode())renderNotes();});
+function renderNotesContent(){
   cancelNoteMonthTap();
   // 顶部子分类胶囊条
   renderNoteChips();
@@ -19952,7 +20011,8 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   function update(){
     frame=0;
     const enabled=desktop.matches&&document.body.classList.contains('notes-mode');
-    const top=viewport.getBoundingClientRect().top;
+    const activeViewport=list.closest('.note-month-pane-scroll')||viewport;
+    const top=activeViewport.getBoundingClientRect().top;
     list.querySelectorAll('.note-card,.note-month-card').forEach(card=>{
       const rect=card.getBoundingClientRect();
       const cut=enabled&&rect.top<top&&rect.bottom>top?top-rect.top:0;
@@ -19963,6 +20023,7 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   }
   function schedule(){if(!frame)frame=requestAnimationFrame(update);}
   viewport.addEventListener('scroll',schedule,{passive:true});
+  document.getElementById('noteMonthPaneScroll').addEventListener('scroll',schedule,{passive:true});
   window.addEventListener('resize',schedule);
   desktop.addEventListener('change',schedule);
   new MutationObserver(schedule).observe(list,{childList:true,subtree:true,characterData:true});
