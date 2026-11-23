@@ -2983,7 +2983,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-tag-menu button{width:100%;padding:8px;border:0;border-top:1px solid var(--border-soft);background:none;color:var(--accent);font:inherit;cursor:pointer;}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
-.memo-card .memo-head{margin-bottom:var(--sp-2);}
+.memo-card{--memo-disclosure-width:32px;--memo-disclosure-gap:var(--sp-8);}
+.memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
 /* 收起摘要的顶部扣除操作行居中产生的6px留白，与账号下方保持一致。 */
 .memo-card:has(>.memo-details:not(.is-expanded) .memo-account){padding-top:var(--sp-8);}
 @media (max-width:1024px), (pointer:coarse){
@@ -2995,11 +2996,11 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-summary{display:flex;align-items:center;gap:var(--sp-8);min-width:0;}
 .memo-account{display:flex;align-items:center;gap:var(--sp-6);min-width:0;flex:1;}
 .memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);cursor:pointer;}
-.memo-expand{margin-left:auto;width:32px;height:32px;}
+.memo-expand{margin-left:0;width:var(--memo-disclosure-width);height:32px;}
 .memo-expand:hover,.memo-expand:focus-visible{color:var(--accent);}
-.memo-expand svg{transition:transform 220ms cubic-bezier(.4,0,.2,1);}
-.memo-expand[aria-expanded="true"] svg{transform:rotate(180deg);}
-.memo-details{overflow:hidden;overflow-anchor:none;}
+.memo-expand svg{transform:rotate(-90deg);transition:transform 220ms cubic-bezier(.4,0,.2,1);}
+.memo-expand[aria-expanded="true"] svg{transform:rotate(0deg);}
+.memo-details{margin-inline-start:calc(var(--memo-disclosure-width) + var(--memo-disclosure-gap));overflow:hidden;overflow-anchor:none;}
 .memo-details-clip{min-height:0;}
 /* 补齐标题在32px操作行内居中产生的留白，使内容底部与标题顶部一致。 */
 .memo-details-content{padding-top:var(--sp-6);padding-bottom:var(--sp-6);}
@@ -19196,9 +19197,9 @@ function renderMemoCard(n){
   const expanded=memoExpandedState.has(n.id);
   return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
+      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
       <div class="memo-tag-pills">${renderMemoTagPills(n)}</div>
-      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
     <div id="memo-details-${n.id}" class="memo-details${expanded?' is-expanded':''}">
