@@ -5551,10 +5551,18 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   body.notes-mode .app>.main,body.notes-mode .app>.main>.content{min-height:0;}
   body.notes-mode .app>.main>.content{
     margin-inline:var(--sp-24);padding-inline:0;
-    border:1px solid var(--border);border-bottom:0;
-    border-radius:var(--rxl) var(--rxl) 0 0;overflow-x:hidden;overflow-y:auto;
+    border:0;border-radius:0;overflow-x:hidden;overflow-y:auto;
   }
-  body.notes-mode .app>.main>.content>.vhdr{position:static;top:auto;z-index:auto;}
+  body.notes-mode .app>.main>.content>.vhdr,
+  body.notes-mode .app>.main>.content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
+  body.notes-mode #nlist .note-scroll-cut{
+    position:relative;clip-path:inset(var(--note-scroll-cut) 0 0 round var(--rlg));
+  }
+  body.notes-mode #nlist .note-scroll-cut::before{
+    content:"";position:absolute;top:var(--note-scroll-cut);left:0;right:0;height:var(--rlg);
+    border:1px solid var(--border);border-bottom:0;border-radius:var(--rlg) var(--rlg) 0 0;
+    pointer-events:none;z-index:5;
+  }
   #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
   .app>.main>.topbar{
     height:var(--sidebar-header-height);min-height:var(--sidebar-header-height);flex-shrink:0;
@@ -19932,6 +19940,34 @@ document.addEventListener('touchstart', function(){}, {passive:true});
     }
     e.preventDefault(); // 在遮罩或其他区域,拦截
   }, {passive:false});
+})();
+</script>
+<script>
+// 只在卡片穿过笔记滚动区顶部时补齐卡片自身的圆角描边。
+(function(){
+  const viewport=document.querySelector('.main>.content');
+  const list=document.getElementById('nlist');
+  const desktop=window.matchMedia('(min-width:1025px) and (pointer:fine)');
+  let frame=0;
+  function update(){
+    frame=0;
+    const enabled=desktop.matches&&document.body.classList.contains('notes-mode');
+    const top=viewport.getBoundingClientRect().top;
+    list.querySelectorAll('.note-card,.note-month-card').forEach(card=>{
+      const rect=card.getBoundingClientRect();
+      const cut=enabled&&rect.top<top&&rect.bottom>top?top-rect.top:0;
+      card.classList.toggle('note-scroll-cut',cut>0);
+      if(cut>0)card.style.setProperty('--note-scroll-cut',cut+'px');
+      else card.style.removeProperty('--note-scroll-cut');
+    });
+  }
+  function schedule(){if(!frame)frame=requestAnimationFrame(update);}
+  viewport.addEventListener('scroll',schedule,{passive:true});
+  window.addEventListener('resize',schedule);
+  desktop.addEventListener('change',schedule);
+  new MutationObserver(schedule).observe(list,{childList:true,subtree:true,characterData:true});
+  new ResizeObserver(schedule).observe(list);
+  schedule();
 })();
 </script>
 </body>
