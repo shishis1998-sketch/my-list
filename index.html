@@ -974,7 +974,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   .sidebar .ncard-cats-desktop{display:none;}
   .sidebar .ncard-cats-mobile{display:block;}
   /* 去掉设置页里的「日历看板」——日历入口已在底部导航 */
-  .sidebar .nsec-view,.sidebar #sidebarCalendarOptions>.nitem-cal{display:none;}
+  .sidebar .nsec-view,.sidebar .nitem-cal{display:none;}
   /* 分组内容卡片化 */
   .sidebar .ncard{
     background:var(--surface);border:1px solid var(--border);
@@ -3452,7 +3452,7 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle .cvt-thumb{width:calc(50% - 3px);}
 .cal-vtoggle.cvt3 .cvt-thumb{width:calc((100% - 6px)/3);}
 .cal-vtoggle.cvt4{display:flex;width:100%;}   /* 四段视图切换铺满整行（等分） */
-.cal-vtoggle.cvt4 .cvt-thumb{width:calc((100% - 6px)/5);}
+.cal-vtoggle.cvt4 .cvt-thumb{width:calc((100% - 6px)/4);}
 .cal-vtoggle .cvt-thumb.period,
 .cal-vtoggle .cvt-thumb.m{transform:translateX(100%);}
 .cal-vtoggle .cvt-thumb.y{transform:translateX(200%);}
@@ -5816,7 +5816,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 @media(min-width:1025px) and (pointer:fine){
   #appSidebar :is(#nsub,#sidebarCalendarOptions,#sidebarDataOptions) .nitem>svg{display:none;}
-  #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions) .nitem:not(.nitem-fs){
+  #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions) .nitem:not(.nitem-fs),
+  #appSidebar #sidebarPeriodOptions>.nitem-cal{
     padding-inline-start:57px;
   }
 }
@@ -6043,18 +6044,21 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   </div>
   <div class="nsec sidebar-disclosure-section">
     <div class="nlbl">经期</div>
-    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="ovuRow"
+    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarPeriodOptions"
       onclick="toggleSidebarSection(this)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-2 4-7 8-7 12a7 7 0 0 0 14 0c0-4-5-8-7-12z"/></svg>经期
       <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
-    <div class="ncard" id="ovuRow" aria-label="排卵期推算"></div>
+    <div class="ncard" id="sidebarPeriodOptions">
+      <button type="button" class="nitem nitem-cal" onclick="openCalendar('month')">经期日历</button>
+      <div id="ovuRow" aria-label="排卵期推算"></div>
+    </div>
   </div>
   <div class="nsec nsec-calendar sidebar-disclosure-section">
     <div class="nlbl">日历</div>
     <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarCalendarOptions" onclick="toggleSidebarSection(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历<svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="ncard ncard-calendar-data" id="sidebarCalendarOptions">
-      <button class="nitem nitem-cal" onclick="openCalendar()">
+      <button class="nitem nitem-cal" onclick="openCalendar('cal')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>日历看板
       </button>
       <button class="nitem" onclick="document.getElementById('icsimp').click()">
@@ -6274,7 +6278,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
           <span class="cvt-thumb" id="cvtThumb"></span>
           <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
           <button class="cvt" data-cv="food" onclick="setCalView('food')">食记</button>
-          <button class="cvt" data-cv="month" onclick="setCalView('month')">经期</button>
           <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
           <button class="cvt" data-cv="heat" onclick="setCalView('heat')">统计</button>
         </div>
@@ -9657,7 +9660,11 @@ function refreshCalPeriodView(){
 function syncCalToggle(v){
   document.querySelectorAll('.cal-viewbar .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   const thumb=document.getElementById('cvtThumb');
-  if(thumb)thumb.style.transform='translateX('+(['cal','food','month','year','heat'].indexOf(v)*100)+'%)';
+  if(thumb){
+    const index=['cal','food','year','heat'].indexOf(v);
+    thumb.hidden=index<0;
+    if(index>=0)thumb.style.transform='translateX('+(index*100)+'%)';
+  }
   if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
             thumb.classList.toggle('h',v==='heat');}
   document.querySelectorAll('#calViewPanel .cal-viewopt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
@@ -15784,17 +15791,18 @@ let calCollapseTravel=224;         // 收起全程像素（整月高 − 收起�
 let calSearchReturn=null;          // 离开日历时暂存搜索词；null 表示当时没有打开搜索
 (function initCal(){const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();})();
 
-function openCalendar(){
+function openCalendar(view){
+  const initialView=view||localStorage.getItem('my_list_cal_view')||'cal';
   closeNoteViewSheet();
   // 从其它底部页面回来时恢复刚才的搜索。空字符串也有意义：它代表搜索页里的「最近搜索」。
-  const returnSearch=calSearchReturn;
+  const returnSearch=view?null:calSearchReturn;
   calSearchReturn=null;
   closeDetail();                                  // 详情页开着的话先退回列表
   document.body.classList.remove('tabs-hidden');  // 列表页可能正收着底栏，这页底栏是唯一导航
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
   document.getElementById('calRoot').classList.add('open');
   const today=new Date();
-  if(localStorage.getItem('my_list_cal_view')==='food'&&calFoodPosition){
+  if(initialView==='food'&&calFoodPosition){
     calYear=calFoodPosition.year;calMonth=calFoodPosition.month;calSelDate=calFoodPosition.date;
   }else{
     calYear=today.getFullYear();calMonth=today.getMonth();
@@ -15818,8 +15826,7 @@ function openCalendar(){
   if(isMobileLayout()) toggleSidebar(false);
   measureCalBottomBar();           // 量底栏高度，给网格/抽屉留出空间
   if(window.PV&&PV.resetPos)PV.resetPos();   // 重新打开日历页：经期视图也回到当前年月（与上面日历重置到今天一致）
-  let _lv=localStorage.getItem('my_list_cal_view')||'cal';if(_lv==='period')_lv='month';
-  setCalView(_lv);   // 恢复上次视图（日历 / 经期月 / 经期年）
+  setCalView(initialView==='period'?'month':initialView);   // 恢复上次视图（日历 / 经期月 / 经期年）
   // 本周卡片放在最后画：它摆块要按像素量宽度，得等上面几位把「谁显示谁隐藏」定下来。
   // 早先排在 setCalView 前面，上次停在经期视图时 #calViewCalendar 还挂着上一轮的
   // display:none，量出来是 0，块就没摆——回到日历视图后卡片只剩一排日期，底下空着。
