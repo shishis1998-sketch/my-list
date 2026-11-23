@@ -3139,12 +3139,12 @@ mark.shl{
   body.detail-open .content .media-month-title{font-size:var(--fs-caption);}
   body.detail-open #mlist .mrow[aria-current="true"]{
     background:var(--accent-light);border-radius:calc(var(--rlg) - 1px);
-    box-shadow:inset 0 0 0 1px var(--accent);
+    box-shadow:none;
     content-visibility:visible;
   }
-  /* 单条记录直接给外层卡片描边，避免内外两重圆角夹出细缝。 */
+  /* 选中保留浅主题色底，沿用卡片原有的浅灰描边。 */
   body.detail-open #mlist .media-month-card:has(>.mrow:only-child[aria-current="true"]){
-    border-color:var(--accent);background:var(--accent-light);
+    border-color:var(--border);background:var(--accent-light);
   }
   body.detail-open #mlist .media-month-card>.mrow:only-child[aria-current="true"]{
     border-radius:0;box-shadow:none;background:transparent;
@@ -5760,7 +5760,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
 
   /* 列表单条记录用卡片原有的圆角，多条记录在行内描边。 */
-  #mlist .media-month-card:has(>.mrow:only-child:hover){border-color:var(--accent);}
+  #mlist .media-month-card:has(>.mrow:only-child:hover:not([aria-current="true"])){border-color:var(--accent);}
   #mlist .mrow:not([aria-current="true"],.media-month-card>.mrow:only-child):hover{
     border-radius:calc(var(--rlg) - 1px);
     box-shadow:inset 0 0 0 1px var(--accent);
