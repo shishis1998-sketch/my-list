@@ -5562,7 +5562,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 
 .desktop-note-months,.note-month-pane{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  body.notes-mode.note-month-split .app>.main{
+  body.notes-mode.note-month-split:not(.cal-open) .app>.main{
     display:grid;grid-template-columns:300px minmax(0,1fr);
     grid-template-rows:var(--sidebar-header-height) minmax(0,1fr);
   }
@@ -5570,7 +5570,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   body.notes-mode.note-month-split .main>.content{grid-column:1;grid-row:2;margin-inline:var(--sp-14);}
   body.notes-mode.note-month-split .desktop-note-months{display:block;}
   body.notes-mode.note-month-split #noteMonthPicker{display:none;}
-  body.notes-mode.note-month-split .note-month-pane{
+  body.notes-mode.note-month-split:not(.cal-open) .note-month-pane{
     display:flex;flex-direction:column;min-width:0;min-height:0;grid-column:2;grid-row:2;
     border-left:1px solid var(--border);padding-inline:var(--sp-24);
   }
@@ -5589,7 +5589,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .sidebar-scroll{display:contents;}
 @media (min-width:1025px) and (pointer:fine){
   /* 笔记页在各自内容区滚动，左右顶栏保持同高固定。 */
-  body.notes-mode .app{height:100vh;height:100dvh;min-height:0;}
+  body.notes-mode:not(.cal-open) .app{height:100vh;height:100dvh;min-height:0;}
+  body.cal-open.cal-view-period .app>.main{overflow:visible;}
   body.notes-mode .app>.main,body.notes-mode .app>.main>.content{min-height:0;}
   body.notes-mode .app>.main>.content{
     margin-inline:var(--sp-24);padding-inline:0;
@@ -5857,6 +5858,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     background:var(--accent-light);color:var(--accent);
     border-color:transparent;border-radius:8px;box-shadow:none;
   }
+  body.cal-open.cal-view-period #appSidebar #sidebarPeriodOptions>.nitem-cal,
+  body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>.nitem-cal{font-weight:700;}
 }
 
 /* 电脑端弹窗统一为屏幕中央的横向对话框；手机和平板继续使用原有底部抽屉。 */
