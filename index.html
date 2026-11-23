@@ -5818,13 +5818,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   body.notes-mode #nfrow{display:none !important;}
 }
 
-@media(min-width:1025px) and (pointer:fine){
-  #appSidebar :is(#nsub,#sidebarCalendarOptions,#sidebarDataOptions) .nitem>svg{display:none;}
-  #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions) .nitem:not(.nitem-fs),
-  #appSidebar #sidebarPeriodOptions :is(.nitem-cal,.nitem-ovu){
-    padding-inline-start:57px;
-  }
-}
+.sidebar-setting-icon{display:none;}
 
 /* 电脑侧栏以列表分组，当前项目显示圆角底色。 */
 @media(min-width:1025px) and (pointer:fine){
@@ -5836,7 +5830,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar #sync-btn{padding-inline-start:var(--sp-10);}
   #appSidebar .sidebar-disclosure{gap:var(--sp-8);padding-inline-start:11px;}
   #appSidebar .ncard-notes .nsub{margin-inline:0;padding-inline-start:0;}
-  #appSidebar .ncard-notes .nsub .nitem:not(.nitem-fs){padding-inline-start:56px;}
+  #appSidebar .ncard .nsub .nitem,
+  #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions,#sidebarPeriodOptions,#themeRow) .nitem{
+    padding-inline-start:32px;
+  }
+  #appSidebar .sidebar-setting-icon{display:block;}
   #appSidebar .ncard{
     background:transparent;border-color:transparent;box-shadow:none;
   }
@@ -6059,7 +6057,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="ncard" id="sidebarPeriodOptions">
-      <button type="button" class="nitem nitem-cal" onclick="openCalendar('month')">经期日历</button>
+      <button type="button" class="nitem nitem-cal" onclick="openCalendar('month')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18 M12 12.5c-1 1.5-2 2.7-2 3.8a2 2 0 0 0 4 0c0-1.1-1-2.3-2-3.8z"/></svg>经期日历
+      </button>
       <div id="ovuRow" aria-label="排卵期推算"></div>
     </div>
   </div>
@@ -10055,7 +10055,7 @@ function applyFontSize(id,save){
 }
 function fontSizeRowHTML(){
   return `<div class="nitem nitem-fs" role="radiogroup" aria-label="字号">`+
-    `<span class="nfs-lbl">字号</span><span class="nfs-segs">`+
+    `<svg class="sidebar-setting-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18l4-9 4 9M4.5 15h5M12 18l5-13 5 13m-8-4h6"/></svg><span class="nfs-lbl">字号</span><span class="nfs-segs">`+
     FONTSIZES.map(f=>
       `<button type="button" class="nfs-seg${f.id===curFontSize?' on':''}" role="radio"`+
       ` aria-checked="${f.id===curFontSize}" onclick="applyFontSize('${f.id}',true)">${f.name}</button>`
@@ -10066,7 +10066,7 @@ function modeRowHTML(){
   const dark=isDarkMode();
   return `<button type="button" class="nitem nitem-mode" role="switch" aria-checked="${dark}"`+
     ` aria-label="主题：${dark?'夜间':'白天'}，点击切换" onclick="toggleMode()">`+
-    `<span class="nmode-lbl">主题</span>`+
+    `<svg class="sidebar-setting-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c2 0 3-1 2-3s0-3 2-3h2c5 0 3-12-6-12z M7 11h.01M10 7h.01M15 7h.01M18 11h.01"/></svg><span class="nmode-lbl">主题</span>`+
     `<span class="nmode-btn"><svg viewBox="0 0 24 24">${dark?MODE_ICON.moon:MODE_ICON.sun}</svg></span></button>`;
 }
 function toggleMode(){haptic('tap');applyMode(isDarkMode()?'light':'dark',true);}
@@ -10158,7 +10158,7 @@ function renderOvuRow(){
   row.innerHTML=
     `<button type="button" class="nitem nitem-ovu" role="switch" aria-checked="${c.on}"`+
     ` aria-label="排卵期推算，点击${c.on?'关闭':'开启'}" onclick="toggleOvu()">`+
-      `<span class="novu-lbl">排卵期推算</span><span class="novu-sw"></span></button>`+
+      `<svg class="sidebar-setting-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-2 4-7 8-7 12a7 7 0 0 0 14 0c0-4-5-8-7-12z"/></svg><span class="novu-lbl">排卵期推算</span><span class="novu-sw"></span></button>`+
     `<div class="novu-body${c.on?'':' novu-off'}">${body}</div>`;
 }
 function toggleOvu(){haptic('tap');PV.setOvuCfg({on:!PV.getOvuCfg().on});renderOvuRow();}
@@ -11558,13 +11558,19 @@ function isCalEvent(n){return ('_ics' in n)||(n.tags||[]).includes('日历导入
 // 已搬进媒体记录的读书笔记不再露面（数据还留着，见 migrateBookNotes）
 function userNotes(){return notes.filter(n=>n.calendarId!=='food'&&!isCalEvent(n)&&!n.movedToMedia);}
 function renderNotesSidebar(){
+  const icons=new Map([
+    ['收集','M5 4h14v17l-7-4-7 4z'],
+    ['备忘','M4 3h16v11l-7 7H4z M13 21v-7h7M8 8h8m-8 4h5'],
+    ['日记','M7 3h13v18H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z M4 18a3 3 0 0 1 3-3h13M9 7h7m-7 4h5'],
+  ]);
+  const noteIcon=document.querySelector('#nav-notes svg path').getAttribute('d');
   const subCnt={};
   noteSubs.forEach(s=>subCnt[s]=0);
   userNotes().forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
   const items=[];
   noteSubs.forEach(s=>{
     items.push(`<button class="nitem ${curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l4 4v14H7z M14 3v5h4M10 12h5m-5 4h5"/></svg>${esc(s)}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons.get(s) ?? noteIcon}"/></svg>${esc(s)}
     </button>`);
   });
   document.getElementById('nsub').innerHTML=items.join('');
