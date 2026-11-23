@@ -5817,7 +5817,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 @media(min-width:1025px) and (pointer:fine){
   #appSidebar :is(#nsub,#sidebarCalendarOptions,#sidebarDataOptions) .nitem>svg{display:none;}
   #appSidebar :is(#sidebarCalendarOptions,#sidebarDataOptions) .nitem:not(.nitem-fs),
-  #appSidebar #sidebarPeriodOptions>.nitem-cal{
+  #appSidebar #sidebarPeriodOptions :is(.nitem-cal,.nitem-ovu){
     padding-inline-start:57px;
   }
 }
@@ -5831,7 +5831,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .ncard .nitem:not(.nitem-fs,:where(#nav-notes)),
   #appSidebar #sync-btn{padding-inline-start:var(--sp-10);}
   #appSidebar .sidebar-disclosure{gap:var(--sp-8);padding-inline-start:11px;}
-  #appSidebar .ncard-notes .nsub{margin-inline-start:46px;padding-inline-start:0;}
+  #appSidebar .ncard-notes .nsub{margin-inline:0;padding-inline-start:0;}
+  #appSidebar .ncard-notes .nsub .nitem:not(.nitem-fs){padding-inline-start:56px;}
   #appSidebar .ncard{
     background:transparent;border-color:transparent;box-shadow:none;
   }
