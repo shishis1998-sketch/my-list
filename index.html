@@ -2973,6 +2973,18 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 /* 备忘字段值可点：点一下从底部弹出单字段编辑面板 */
 .memo-field-value.editable{cursor:pointer;}
 
+/* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
+.memo-card .memo-head{margin-bottom:var(--sp-2);}
+.memo-card .memo-title{color:var(--text-primary);}
+.memo-card .memo-title.empty{color:var(--text-muted);}
+.memo-summary{display:flex;align-items:center;gap:var(--sp-8);min-width:0;}
+.memo-account{display:flex;align-items:center;gap:var(--sp-6);min-width:0;flex:1;}
+.memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);cursor:pointer;}
+.memo-expand{margin-left:auto;width:32px;height:32px;}
+.memo-expand:hover,.memo-expand:focus-visible{color:var(--accent);}
+.memo-details[hidden]{display:none;}
+.memo-details:not([hidden]){margin-top:var(--sp-8);}
+
 /* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
 .mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity var(--nav-dur) var(--nav-ease);z-index:1400;}
 .mfsheet-mask.show{opacity:1;pointer-events:auto;}
@@ -18983,6 +18995,8 @@ function saveTlEdit(){
 const MEMO_VISIBLE_FIELDS=3;
 // 备忘字段显示/遮罩状态（运行时，不持久化）
 let memoRevealState={};
+// 卡片默认收起；展开状态仅保留在当前会话，不写入备忘数据。
+const memoExpandedState=new Set();
 // 编辑器当前自定义字段（[{key,value}]）
 let curMemoCustom=[];
 // 编辑器当前 localOnly 状态
@@ -19161,26 +19175,43 @@ function renderMemoCard(n){
     stTitle='⚠️ 未设置PIN码，内容以明文同步！点击改为仅本机，或在云同步设置中设置PIN码';
   }
   const all=memoCollectFields(n);
+  const expanded=memoExpandedState.has(n.id);
+  const account=!isEncLocked(n)&&all.find(f=>f.key==='username');
+  const accountHtml=account?`<div class="memo-account"><div class="memo-account-value" onclick="event.stopPropagation();openMemoSheet('${n.id}','username',false)">${hl(account.value)}</div><button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${n.id}','username')" title="复制账号" aria-label="复制账号" type="button">${MEMO_ICON.copy}</button></div>`:'';
   let fieldsHtml='';
   if(isEncLocked(n)){
     fieldsHtml='<div class="memo-empty-hint">🔒 已加密——在「云同步」设置中填入PIN码后可见</div>';
   }else if(!all.length){
     fieldsHtml='<div class="memo-empty-hint">（点击编辑添加内容）</div>';
   }else{
-    fieldsHtml=all.map(f=>renderMemoFieldRow(n.id,f)).join('');
+    fieldsHtml=all.filter(f=>f.key!=='username').map(f=>renderMemoFieldRow(n.id,f)).join('');
   }
   const tagsHtml=(n.tags&&n.tags.length)
     ? `<div class="note-foot" style="margin-top:var(--sp-8)">${n.tags.slice(0,4).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}</div>`
     : '';
-  return `<div class="note-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
+  return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
       <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
-    <div class="memo-fields">${fieldsHtml}</div>
-    ${tagsHtml}
+    <div class="memo-summary">
+      ${accountHtml}
+      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${expanded?'m6 15 6-6 6 6':'m6 9 6 6 6-6'}"/></svg></button>
+    </div>
+    <div id="memo-details-${n.id}" class="memo-details"${expanded?'':' hidden'}>
+      ${expanded?`<div class="memo-fields">${fieldsHtml}</div>${tagsHtml}`:''}
+    </div>
   </div>`;
+}
+
+function toggleMemoExpanded(noteId){
+  if(memoExpandedState.has(noteId)){
+    memoExpandedState.delete(noteId);
+    // 收起后清除该卡片的密码显示状态，再展开仍默认遮罩。
+    Object.keys(memoRevealState).forEach(key=>{if(key.startsWith(noteId+'_'))delete memoRevealState[key];});
+  }else memoExpandedState.add(noteId);
+  render();
 }
 
 function toggleMemoReveal(stateKey){
