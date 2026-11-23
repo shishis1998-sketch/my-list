@@ -3023,6 +3023,13 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-details .memo-field-content{display:flex;align-items:center;gap:var(--sp-6);min-width:0;}
 .memo-details .memo-field-content>.memo-field-value{flex:1;min-width:0;}
 .memo-details .memo-field-value{flex:none;font-size:var(--fs-body);font-weight:400;line-height:var(--lh-normal);white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible;}
+.memo-details:not(.is-expanded) .memo-field:not([data-memo-key="username"]),
+.memo-details:not(.is-expanded) .memo-empty-hint,
+.memo-details:not(.is-expanded) .memo-field-label,
+.memo-details:not(.is-expanded) .memo-btn{display:none;}
+.memo-details:not(.is-expanded) .memo-details-content,
+.memo-details:not(.is-expanded) .memo-field{padding:0;border:0;}
+.memo-details:not(.is-expanded) .memo-field-value{color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 @media(prefers-reduced-motion:reduce){
   .memo-details,.memo-details-clip,.memo-expand svg{transition:none!important;}
@@ -19096,7 +19103,7 @@ function renderMemoFieldRow(noteId,f){
     ? `<button class="memo-btn" onclick="event.stopPropagation();toggleMemoReveal('${sk}')" title="${revealed?'隐藏密码':'显示密码'}" aria-label="${revealed?'隐藏密码':'显示密码'}" aria-pressed="${!!revealed}" type="button">${revealed?MEMO_ICON.eyeOff:MEMO_ICON.eye}</button>`
     : '';
   const contentHtml=`<div class="memo-field-content">${valueHtml}${revealButton}<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','${f.key}')" title="${copyLabel}" aria-label="${copyLabel}" type="button">${MEMO_ICON.copy}</button></div>`;
-  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span>${contentHtml}</div>`;
+  return `<div class="memo-field" data-memo-key="${esc(f.key)}"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span>${contentHtml}</div>`;
 }
 
 // ── 备忘字段行内编辑 ──────────────────────────────────────────
@@ -19221,7 +19228,7 @@ function renderMemoCard(n){
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
     <div id="memo-details-${n.id}" class="memo-details${expanded?' is-expanded':''}">
-      <div class="memo-details-clip">${expanded?renderMemoDetails(n):renderMemoAccount(n)}</div>
+      <div class="memo-details-clip">${renderMemoDetails(n)}</div>
     </div>
   </div>`;
 }
@@ -19319,11 +19326,31 @@ function toggleMemoExpanded(noteId){
   const button=card&&card.querySelector('.memo-expand');
   const n=notes.find(item=>item.id===noteId);
   if(!panel||!button||!n){render();return;}
-  const clip=panel.firstElementChild;
   // Measure only the endpoints; avoid intrinsic grid sizing on every animation frame.
   const from=panel.getBoundingClientRect().height;
   if(panel._memoAnimation)panel._memoAnimation.cancel();
-  clip.innerHTML=expanded?renderMemoDetails(n):renderMemoAccount(n);
+  // Keep the same field nodes mounted; closing only masks revealed passwords.
+  if(!expanded){
+    memoCollectFields(n).filter(f=>f.isPassword).forEach(f=>{
+      const row=Array.from(panel.querySelectorAll('.memo-field')).find(el=>el.dataset.memoKey===f.key);
+      if(!row)return;
+      const value=row.querySelector('.memo-field-value');
+      value.textContent=memoMask(f.value);value.classList.add('masked');
+      const reveal=row.querySelector('button[aria-pressed]');
+      if(reveal){
+        reveal.setAttribute('aria-pressed','false');reveal.title='显示密码';reveal.setAttribute('aria-label','显示密码');
+        const svg=reveal.querySelector('svg');
+        if(svg){
+          svg.replaceChildren();
+          const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+          path.setAttribute('d','M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z');
+          const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+          circle.setAttribute('cx','12');circle.setAttribute('cy','12');circle.setAttribute('r','3');
+          svg.append(path,circle);
+        }
+      }
+    });
+  }
   panel.classList.toggle('is-expanded',expanded);
   button.setAttribute('aria-expanded',String(expanded));
   button.setAttribute('aria-label',expanded?'收起备忘':'展开备忘');
