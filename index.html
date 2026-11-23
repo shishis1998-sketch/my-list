@@ -4200,6 +4200,25 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #pvEditFab[hidden]{display:none !important;}
 #pvEditFab:active,#foodAddBtn:active{transform:scale(.92);}
 #pvEditFab svg,#foodAddBtn svg{width:20px;height:20px;}
+.note-search-toggle{display:none;}
+@media(max-width:1024px), (pointer:coarse){
+  body.notes-mode:not(.cal-open):not(.sb-open){padding-bottom:calc(80px + env(safe-area-inset-bottom) + var(--kb,0px));}
+  body.notes-mode:not(.cal-open):not(.sb-open) .content>.vhdr{position:sticky;top:0;z-index:30;align-items:center;}
+  .vhdr>.bb-actions{margin-left:auto;padding:0;border:0;gap:4px;flex-shrink:0;}
+  .vhdr>.bb-actions .bb-sortbtn,.vhdr>.bb-actions .note-search-toggle{display:inline-flex;align-items:center;justify-content:center;width:34px;height:36px;margin:0;padding:0;border:0;background:transparent;color:var(--text-secondary);border-radius:var(--r);}
+  .vhdr>.bb-actions .bb-sortlabel{display:none;}
+  .vhdr>.bb-actions .bb-sbox{flex:none;min-width:0;}
+  .vhdr>.bb-actions .bb-sbox>svg,.vhdr>.bb-actions .bb-sbox>input,.vhdr>.bb-actions .bb-sclear{display:none!important;}
+  .vhdr>.bb-actions .bb-addbtn{position:fixed;right:var(--sp-16);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom));z-index:80;display:grid;place-items:center;width:48px;height:48px;margin:0;padding:0;border:0;border-radius:50%;color:#fff;background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--accent);}
+  .vhdr>.bb-actions .bb-addbtn svg{width:20px;height:20px;stroke-width:2.6;}
+  .vhdr>.bb-actions .bb-addbtn span{display:none;}
+  .vhdr>.bb-actions .bb-addbtn:active{transform:scale(.92);}
+  .vhdr:has(>.bb-actions.note-search-open)>.bb-actions{flex:1 0 100%;padding-top:6px;}
+  .vhdr>.bb-actions.note-search-open .bb-sbox{flex:1;display:flex;align-items:center;}
+  .vhdr>.bb-actions.note-search-open .bb-sbox>input{display:block!important;padding-left:10px;}
+  .vhdr>.bb-actions .bb-sbox:focus-within~.bb-sortbtn{max-width:none;opacity:1;pointer-events:auto;width:34px;margin:0;padding:0;border:0;}
+  body.notes-mode:is(.cal-open,.sb-open) .vhdr>.bb-actions .bb-addbtn{display:none;}
+}
 
 /* ═══ 经期记录 · 底部弹窗（点日期从底部滑出，一次编辑经血量 + 症状）═══ */
 .pv-sheet-scrim{position:fixed;inset:0;background:rgba(20,10,14,.30);
@@ -6600,6 +6619,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   <!-- 操作行：搜索 + 排序 + 添加 -->
   <div class="bb-actions">
     <div class="bb-sbox">
+      <button type="button" class="note-search-toggle" onclick="toggleNoteHeaderSearch()" aria-label="搜索笔记" aria-expanded="false" aria-controls="bbSearch"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" id="bbSearch" placeholder="搜索笔记..." oninput="onSearchBB(this.value)" autocomplete="off">
       <button class="bb-sclear" type="button" onclick="clearSearchBB()" aria-label="清空" style="display:none">
@@ -14607,7 +14627,28 @@ function clearSearchBB(){
 function onSort(v){curSort=v;render();}
 
 // ── 底部栏 tab 高亮 ───────────────────────────────────────────────
+function syncNoteHeaderActions(){
+  const actions=document.querySelector('.bb-actions');
+  const header=document.querySelector('.content>.vhdr');
+  const bottom=document.getElementById('bottombar');
+  if(!actions||!header||!bottom)return;
+  const atTop=isMobileLayout()&&isNoteMode();
+  const target=atTop?header:bottom;
+  if(actions.parentElement!==target){
+    if(atTop)header.append(actions);else bottom.prepend(actions);
+  }
+  actions.querySelector('.bb-addbtn')?.setAttribute('aria-label','添加');
+}
+function toggleNoteHeaderSearch(){
+  const actions=document.querySelector('.bb-actions');
+  const open=actions.classList.toggle('note-search-open');
+  actions.querySelector('.note-search-toggle').setAttribute('aria-expanded',String(open));
+  if(open)document.getElementById('bbSearch').focus();
+  else{document.getElementById('bbSearch').blur();if(curSearch)onSearchBB('');}
+}
+window.addEventListener('resize',syncNoteHeaderActions);
 function syncBottomTabs(){
+  syncNoteHeaderActions();
   const all=document.getElementById('bbtab-all');
   const notes=document.getElementById('bbtab-notes');
   const menu=document.getElementById('bbtab-menu');
@@ -14709,7 +14750,10 @@ function placeBBPanel(panelId,btn){
   if(!btn||!panel) return;
   const r=btn.getBoundingClientRect();
   if(!r.width) return;          // 底栏没显示（宽屏用顶部下拉），位置交给 CSS
-  panel.style.bottom=(window.innerHeight-r.top+8)+'px';
+  const atTop=!!btn.closest('.vhdr');
+  panel.style.top=atTop?(r.bottom+8)+'px':'auto';
+  panel.style.bottom=atTop?'auto':(window.innerHeight-r.top+8)+'px';
+  panel.style.maxHeight=Math.max(120,atTop?window.innerHeight-r.bottom-24:r.top-16)+'px';
   panel.style.right=Math.max(8,window.innerWidth-r.right)+'px';
 }
 function placeSortPanel(){ placeBBPanel('bbSortPanel',document.getElementById('bbSortBtn')); }
