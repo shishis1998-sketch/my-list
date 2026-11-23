@@ -5591,6 +5591,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     margin-inline:var(--sp-24);padding-inline:0;
     border:0;border-radius:0;overflow-x:hidden;overflow-y:auto;
   }
+  body.notes-mode:not(.note-month-split) .app>.main>.content{
+    margin-inline:0;padding-inline:var(--sp-24);
+  }
   body.notes-mode .app>.main>.content>.vhdr,
   body.notes-mode .app>.main>.content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
   body.notes-mode #nlist .note-scroll-cut{
