@@ -3452,7 +3452,11 @@ body.cal-view-period #calViewPeriod{flex:0 0 auto;overflow:visible;min-height:0;
 .cal-vtoggle .cvt-thumb{width:calc(50% - 3px);}
 .cal-vtoggle.cvt3 .cvt-thumb{width:calc((100% - 6px)/3);}
 .cal-vtoggle.cvt4{display:flex;width:100%;}   /* 四段视图切换铺满整行（等分） */
-.cal-vtoggle.cvt4 .cvt-thumb{width:calc((100% - 6px)/4);}
+.cal-viewbar .cal-vtoggle .cvt-thumb{width:calc((100% - 6px)/3);}
+.cal-viewbar .cal-period-toggle .cvt-thumb{width:calc((100% - 6px)/2);}
+.cal-viewbar .cal-period-toggle,
+body.cal-view-period .cal-viewbar .cal-vtoggle:not(.cal-period-toggle){display:none;}
+body.cal-view-period .cal-viewbar .cal-period-toggle{display:flex;}
 .cal-vtoggle .cvt-thumb.period,
 .cal-vtoggle .cvt-thumb.m{transform:translateX(100%);}
 .cal-vtoggle .cvt-thumb.y{transform:translateX(200%);}
@@ -5847,7 +5851,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-notes-header>#nav-notes{font-weight:600;color:var(--text-secondary);}
   #appSidebar .ncard .nitem.on:not(.nitem-fs),
   #appSidebar .sidebar-notes-header>#nav-notes.parent-on,
-  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes.parent-on{
+  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes.parent-on,
+  body.cal-open.cal-view-period #appSidebar #sidebarPeriodOptions>.nitem-cal,
+  body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>.nitem-cal{
     background:var(--accent-light);color:var(--accent);
     border-color:transparent;border-radius:8px;box-shadow:none;
   }
@@ -6276,11 +6282,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
            在日历页再点一次底栏「日历」tab，从 tab 头上弹出 #calViewSheet 小卡片。 -->
       <div class="cal-viewbar">
         <div class="cal-vtoggle cvt4" role="tablist" aria-label="视图切换">
-          <span class="cvt-thumb" id="cvtThumb"></span>
+          <span class="cvt-thumb"></span>
           <button class="cvt on" data-cv="cal" onclick="setCalView('cal')">日历</button>
           <button class="cvt" data-cv="food" onclick="setCalView('food')">食记</button>
-          <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
           <button class="cvt" data-cv="heat" onclick="setCalView('heat')">统计</button>
+        </div>
+        <div class="cal-vtoggle cvt4 cal-period-toggle" role="tablist" aria-label="经期视图切换">
+          <span class="cvt-thumb"></span>
+          <button class="cvt" data-cv="month" onclick="setCalView('month')">经期日历</button>
+          <button class="cvt" data-cv="year" onclick="setCalView('year')">年度</button>
         </div>
       </div>
       <div id="calViewCalendar" class="cal-view">
@@ -9659,15 +9669,11 @@ function refreshCalPeriodView(){
 // 四段控件的高亮 + 滑块位置 + 记住的档位；setCalView 和 PV 内部换层级时都走这里，
 // 免得两处各写一遍走偏
 function syncCalToggle(v){
-  document.querySelectorAll('.cal-viewbar .cvt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
-  const thumb=document.getElementById('cvtThumb');
-  if(thumb){
-    const index=['cal','food','year','heat'].indexOf(v);
-    thumb.hidden=index<0;
-    if(index>=0)thumb.style.transform='translateX('+(index*100)+'%)';
-  }
-  if(thumb){thumb.classList.toggle('m',v==='month');thumb.classList.toggle('y',v==='year');
-            thumb.classList.toggle('h',v==='heat');}
+  document.querySelectorAll('.cal-viewbar .cal-vtoggle').forEach(group=>{
+    const index=[...group.querySelectorAll('.cvt')].findIndex(button=>button.dataset.cv===v);
+    group.querySelectorAll('.cvt').forEach((button,i)=>button.classList.toggle('on',i===index));
+    if(index>=0)group.querySelector('.cvt-thumb').style.transform='translateX('+(index*100)+'%)';
+  });
   document.querySelectorAll('#calViewPanel .cal-viewopt').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));
   syncCalTabLabel();
   try{localStorage.setItem('my_list_cal_view',v);}catch(e){}
