@@ -19326,8 +19326,7 @@ function toggleMemoExpanded(noteId){
   const button=card&&card.querySelector('.memo-expand');
   const n=notes.find(item=>item.id===noteId);
   if(!panel||!button||!n){render();return;}
-  // Measure only the endpoints; avoid intrinsic grid sizing on every animation frame.
-  const from=panel.getBoundingClientRect().height;
+  // Change layout once; animate opacity only to avoid per-frame reflow on phones.
   if(panel._memoAnimation)panel._memoAnimation.cancel();
   // Keep the same field nodes mounted; closing only masks revealed passwords.
   if(!expanded){
@@ -19355,9 +19354,8 @@ function toggleMemoExpanded(noteId){
   button.setAttribute('aria-expanded',String(expanded));
   button.setAttribute('aria-label',expanded?'收起备忘':'展开备忘');
   button.title=expanded?'收起':'展开';
-  const to=panel.getBoundingClientRect().height;
-  if(!matchMedia('(prefers-reduced-motion:reduce)').matches&&panel.animate&&from!==to){
-    const animation=panel.animate([{height:from+'px'},{height:to+'px'}],{duration:200,easing:'cubic-bezier(.4,0,.2,1)'});
+  if(expanded&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&panel.animate){
+    const animation=panel.animate([{opacity:0},{opacity:1}],{duration:140,easing:'ease-out'});
     panel._memoAnimation=animation;
     animation.onfinish=()=>{if(panel._memoAnimation===animation)panel._memoAnimation=null;};
   }
