@@ -19201,14 +19201,25 @@ function renderMemoTagPills(n){
   const tags=n.tags&&n.tags.length?n.tags:['未分类'];
   return tags.map(tag=>`<button class="memo-tag-pill" onclick="event.stopPropagation();openMemoTagMenu(event,'${n.id}')" aria-haspopup="dialog" title="选择标签" type="button"><span>${esc(tag)}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m7 10 5 5 5-5"/></svg></button>`).join('');
 }
+function closeMemoTagMenu(){
+  const menu=document.getElementById('memoTagMenu');
+  if(!menu)return;
+  menu._memoListeners?.abort();
+  if(menu.matches(':popover-open'))menu.hidePopover();
+  menu.remove();
+}
 function openMemoTagMenu(event,noteId){
   const n=notes.find(item=>item.id===noteId);
   if(!n)return;
   const anchor=event.currentTarget;
   const pillGroup=anchor.closest('.memo-tag-pills');
-  document.getElementById('memoTagMenu')?.remove();
+  const existing=document.getElementById('memoTagMenu');
+  const sameGroup=existing&&existing._memoPillGroup===pillGroup;
+  closeMemoTagMenu();
+  if(sameGroup)return;
   const menu=document.createElement('div');
-  menu.id='memoTagMenu';menu.className='memo-tag-menu';menu.setAttribute('popover','auto');
+  menu.id='memoTagMenu';menu.className='memo-tag-menu';menu.setAttribute('popover','manual');
+  menu._memoPillGroup=pillGroup;
   menu.setAttribute('role','dialog');menu.setAttribute('aria-label','选择备忘标签');
   const choices=[...new Set([...(n.tags||[]),...userNotes().flatMap(item=>item.tags||[])])];
   const addOption=(label,checked,onchange)=>{
@@ -19227,8 +19238,15 @@ function openMemoTagMenu(event,noteId){
     const tags=new Set(n.tags||[]);if(checked)tags.add(tag);else tags.delete(tag);n.tags=[...tags];
   }));
   const done=document.createElement('button');done.type='button';done.textContent='完成';
-  done.onclick=()=>{menu.hidePopover();render();};menu.append(done);
+  done.onclick=()=>{closeMemoTagMenu();render();};menu.append(done);
   document.body.append(menu);menu.showPopover();
+  const listeners=new AbortController();menu._memoListeners=listeners;
+  document.addEventListener('pointerdown',e=>{
+    if(!menu.contains(e.target)&&!pillGroup.contains(e.target))closeMemoTagMenu();
+  },{capture:true,signal:listeners.signal});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();closeMemoTagMenu();pillGroup.querySelector('button')?.focus({preventScroll:true});}
+  },{signal:listeners.signal});
   const rect=anchor.getBoundingClientRect();
   menu.style.left=Math.max(8,Math.min(rect.right-menu.offsetWidth,innerWidth-menu.offsetWidth-8))+'px';
   menu.style.top=Math.max(8,Math.min(rect.bottom+6,innerHeight-menu.offsetHeight-8))+'px';
