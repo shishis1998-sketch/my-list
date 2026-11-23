@@ -5587,6 +5587,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 桌面侧栏：分类导航与设置分组 */
 .sidebar-palette-label,.sidebar-disclosure,.sidebar-scroll-indicator{display:none;}
 .sidebar-scroll{display:contents;}
+.sidebar-fold,.sidebar-fold-clip{display:contents;}
+.sidebar-scroll-reserve{display:none;}
 @media (min-width:1025px) and (pointer:fine){
   /* 笔记页在各自内容区滚动，左右顶栏保持同高固定。 */
   body.notes-mode:not(.cal-open) .app{height:100vh;height:100dvh;min-height:0;}
@@ -5628,7 +5630,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .logo h1{font-size:var(--fs-title);line-height:var(--lh-tight);}
   #appSidebar .sidebar-scroll{
     display:block;flex:1;min-height:0;
-    overflow-y:auto;overscroll-behavior-y:contain;
+    overflow-y:auto;overscroll-behavior-y:contain;overflow-anchor:none;scroll-behavior:auto;
     scrollbar-width:none;
     padding:var(--sp-14) 0 var(--sp-16);
   }
@@ -5652,7 +5654,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     height:var(--sidebar-thumb-height);border-radius:var(--rsm);background:var(--text-muted);
   }
   #appSidebar .sidebar-scroll>.nsec{padding:0 var(--sidebar-content-inset);margin-bottom:var(--sp-6);}
-  #appSidebar .sidebar-scroll>.nsec:last-child{margin-bottom:0;}
+  #appSidebar .sidebar-scroll>.nsec:has(+.sidebar-scroll-reserve){margin-bottom:0;}
   #appSidebar .sidebar-disclosure-section>.nlbl{display:none;}
   #appSidebar .sidebar-disclosure{
     display:flex;align-items:center;justify-content:flex-start;
@@ -5661,16 +5663,31 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     color:var(--text-primary);font:600 var(--fs-caption)/var(--lh-normal) var(--zh);
     cursor:pointer;text-align:left;
   }
-  #appSidebar .sidebar-chevron{flex:none;order:-1;transform:rotate(-90deg);transition:transform .18s ease;}
+  #appSidebar .sidebar-chevron{flex:none;order:-1;transform:rotate(-90deg);transition:transform 220ms cubic-bezier(.4,0,.2,1);}
   #appSidebar button[aria-expanded="true"]>.sidebar-chevron{transform:rotate(0deg);}
   @media(prefers-reduced-motion:reduce){
     #appSidebar .sidebar-chevron{transition:none;}
   }
-  #appSidebar .sidebar-disclosure[aria-expanded="false"]+.ncard{display:none;}
+  #appSidebar .sidebar-fold{
+    display:grid;grid-template-rows:0fr;
+    transition:grid-template-rows 220ms cubic-bezier(.4,0,.2,1);
+    overflow-anchor:none;
+  }
+  #appSidebar .sidebar-fold.is-expanded{grid-template-rows:1fr;}
+  #appSidebar .sidebar-fold-clip{display:block;min-height:0;overflow:hidden;}
+  #appSidebar .sidebar-fold:not(.is-expanded) .sidebar-fold-clip{
+    visibility:hidden;transition:visibility 0s 220ms;
+  }
+  #appSidebar .sidebar-fold.is-expanded .sidebar-fold-clip{visibility:visible;}
+  #appSidebar .sidebar-scroll-reserve{display:block;height:0;pointer-events:none;}
+  #appSidebar .ncard-notes .nsub{max-height:none;transition:none;visibility:visible;}
+  @media(prefers-reduced-motion:reduce){
+    #appSidebar .sidebar-fold,#appSidebar .sidebar-fold-clip{transition:none!important;}
+  }
   #appSidebar .sidebar-disclosure[aria-expanded="true"]{
     border-end-start-radius:0;border-end-end-radius:0;
   }
-  #appSidebar .sidebar-disclosure+.ncard{
+  #appSidebar .sidebar-disclosure+.sidebar-fold .ncard{
     border-top:0;border-start-start-radius:0;border-start-end-radius:0;
   }
   #appSidebar .nlbl{
@@ -5726,8 +5743,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     color:var(--text-primary);cursor:pointer;
   }
   #appSidebar #nav-notes-toggle .sidebar-chevron{margin:0;}
-  #appSidebar .ncard-notes .nsub{margin:0 var(--sp-4);visibility:hidden;}
-  #appSidebar .ncard-notes .nsub.open{margin-bottom:var(--sp-4);visibility:visible;}
+  #appSidebar .ncard-notes .nsub{margin:0 var(--sp-4);}
+  #appSidebar .ncard-notes .nsub.open{margin-bottom:var(--sp-4);}
   #appSidebar button:focus-visible{
     outline:2px solid var(--accent);outline-offset:1px;
   }
@@ -14190,9 +14207,65 @@ function renderStats(){
     hideIndicator=setTimeout(()=>indicator.classList.remove('is-visible'),600);
   },{passive:true});
 }
+// All desktop sidebar groups share a top-anchored, interruptible disclosure.
+const sidebarDisclosureMedia=matchMedia('(min-width:1025px) and (pointer:fine)');
+const sidebarScrollArea=document.querySelector('#appSidebar .sidebar-scroll');
+const sidebarScrollReserve=document.createElement('div');
+sidebarScrollReserve.className='sidebar-scroll-reserve';
+sidebarScrollReserve.setAttribute('aria-hidden','true');
+sidebarScrollArea.append(sidebarScrollReserve);
+function trimSidebarScrollReserve(){
+  if(!sidebarDisclosureMedia.matches){sidebarScrollReserve.style.height='0px';return;}
+  // Keep enough trailing space to avoid browser scroll clamping on collapse.
+  // It disappears as the user scrolls back up or opens another group.
+  const bottom=sidebarScrollReserve.getBoundingClientRect().top
+    -sidebarScrollArea.getBoundingClientRect().top+sidebarScrollArea.scrollTop
+    +parseFloat(getComputedStyle(sidebarScrollArea).paddingBottom);
+  const needed=Math.max(0,sidebarScrollArea.scrollTop+sidebarScrollArea.clientHeight-bottom);
+  sidebarScrollReserve.style.height=needed+'px';
+}
+function prepareSidebarFold(panel,button){
+  const fold=document.createElement('div');
+  const clip=document.createElement('div');
+  fold.className='sidebar-fold';
+  clip.className='sidebar-fold-clip';
+  panel.before(fold);fold.append(clip);clip.append(panel);
+  fold.classList.toggle('is-expanded',button.getAttribute('aria-expanded')==='true');
+  fold.addEventListener('transitionend',event=>{
+    if(event.target===fold&&event.propertyName==='grid-template-rows') trimSidebarScrollReserve();
+  });
+  return fold;
+}
+document.querySelectorAll('#appSidebar .sidebar-disclosure').forEach(button=>{
+  prepareSidebarFold(document.getElementById(button.getAttribute('aria-controls')),button);
+});
+prepareSidebarFold(document.getElementById('nsub'),document.getElementById('nav-notes'));
+function syncSidebarFoldAccess(){
+  document.querySelectorAll('#appSidebar .sidebar-fold').forEach(fold=>{
+    fold.firstElementChild.inert=sidebarDisclosureMedia.matches&&!fold.classList.contains('is-expanded');
+  });
+  trimSidebarScrollReserve();
+}
+sidebarDisclosureMedia.addEventListener('change',syncSidebarFoldAccess);
+sidebarScrollArea.addEventListener('scroll',trimSidebarScrollReserve,{passive:true});
+window.addEventListener('resize',trimSidebarScrollReserve);
+syncSidebarFoldAccess();
+function setSidebarFoldExpanded(panel,expanded){
+  const fold=panel.closest('.sidebar-fold');
+  if(fold.classList.contains('is-expanded')===expanded) return;
+  trimSidebarScrollReserve();
+  if(sidebarDisclosureMedia.matches&&!expanded&&sidebarScrollArea.scrollTop>0){
+    sidebarScrollReserve.style.height=(parseFloat(sidebarScrollReserve.style.height)||0)
+      +fold.getBoundingClientRect().height+'px';
+  }
+  fold.classList.toggle('is-expanded',expanded);
+  fold.firstElementChild.inert=sidebarDisclosureMedia.matches&&!expanded;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches) trimSidebarScrollReserve();
+}
 function toggleSidebarSection(button){
-  const expanded=button.getAttribute('aria-expanded')==='true';
-  button.setAttribute('aria-expanded',String(!expanded));
+  const expanded=button.getAttribute('aria-expanded')!=='true';
+  setSidebarFoldExpanded(document.getElementById(button.getAttribute('aria-controls')),expanded);
+  button.setAttribute('aria-expanded',String(expanded));
 }
 function toggleDesktopSidebar(button){
   const collapsed=button.parentElement.classList.toggle('desktop-sidebar-collapsed');
@@ -14403,6 +14476,7 @@ function setSidebarNotesExpanded(expanded){
   document.getElementById('nav-notes').setAttribute('aria-expanded',String(expanded));
   toggle.setAttribute('aria-expanded',String(expanded));
   toggle.setAttribute('aria-label',expanded?'收起笔记子分类':'展开笔记子分类');
+  setSidebarFoldExpanded(document.getElementById('nsub'),expanded);
   document.getElementById('nsub').classList.toggle('open',expanded);
 }
 // 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
