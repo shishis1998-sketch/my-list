@@ -4213,9 +4213,15 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .vhdr>.bb-actions .bb-addbtn svg{width:20px;height:20px;stroke-width:2.6;}
   .vhdr>.bb-actions .bb-addbtn span{display:none;}
   .vhdr>.bb-actions .bb-addbtn:active{transform:scale(.92);}
-  body.notes-mode .content>.vhdr:has(>.bb-actions.note-search-open){padding-bottom:62px;margin-bottom:0;}
+  /* Keep the title row identical while the search gets its own second row. */
+  body.notes-mode:not(.cal-open):not(.sb-open) .content>.vhdr{display:grid;grid-template-columns:max-content max-content minmax(0,1fr);grid-template-rows:38px;column-gap:var(--sp-10);}
+  .vhdr>.bb-actions{grid-column:3;grid-row:1;justify-self:end;}
+  body.notes-mode .content>.vhdr:has(>.bb-actions.note-search-open){grid-template-rows:38px 54px;margin-bottom:0;}
+  body.notes-mode .content>.vhdr:has(>.bb-actions.note-search-open)::after{content:"";grid-column:1 / -1;grid-row:2;}
+  .vhdr>.bb-actions.note-search-open .note-search-toggle{visibility:hidden;}
+  .vhdr>.bb-actions.note-search-open .bb-sbox>svg{display:block!important;left:calc(var(--content-gutter) + 12px);top:auto;bottom:23px;transform:none;width:16px;height:16px;z-index:1;}
   .vhdr>.bb-actions.note-search-open .bb-sbox{position:static;}
-  .vhdr>.bb-actions.note-search-open .bb-sbox>input{border-radius:999px;display:block!important;position:absolute;left:var(--content-gutter);bottom:12px;width:calc(100% - 2 * var(--content-gutter));padding-left:10px;padding-right:38px;}
+  .vhdr>.bb-actions.note-search-open .bb-sbox>input{border-radius:999px;display:block!important;position:absolute;left:var(--content-gutter);bottom:12px;width:calc(100% - 2 * var(--content-gutter));padding-left:36px;padding-right:38px;}
   .vhdr>.bb-actions.note-search-open .bb-sclear{display:inline-flex!important;position:absolute;right:calc(var(--content-gutter) + 6px);top:auto;bottom:19px;transform:none;}
   .vhdr>.bb-actions.note-search-open .bb-sclear:active{transform:scale(.9);}
   .vhdr>.bb-actions .bb-sbox:focus-within~.bb-sortbtn{max-width:none;opacity:1;pointer-events:auto;width:34px;margin:0;padding:0;border:0;}
@@ -14652,7 +14658,7 @@ function toggleNoteHeaderSearch(){
   const clear=actions.querySelector('.bb-sclear');
   clear.setAttribute('aria-label',open?'退出搜索':'清空');
   clear.title=open?'退出搜索':'清空';
-  if(open)document.getElementById('bbSearch').focus();
+  if(open)document.getElementById('bbSearch').focus({preventScroll:true});
   else{document.getElementById('bbSearch').blur();if(curSearch)onSearchBB('');}
 }
 window.addEventListener('resize',syncNoteHeaderActions);
