@@ -4217,8 +4217,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .vhdr>.bb-actions.note-search-open .bb-sbox{position:static;}
   .vhdr>.bb-actions.note-search-open .bb-sbox>input{display:block!important;position:absolute;left:var(--content-gutter);bottom:10px;width:calc(100% - 2 * var(--content-gutter));padding-left:10px;padding-right:38px;}
   .vhdr>.bb-actions.note-search-open .bb-sclear{display:inline-flex!important;position:absolute;right:calc(var(--content-gutter) + 6px);top:auto;bottom:17px;transform:none;}
-  .vhdr>.bb-actions.note-search-open .bb-sclear[style*="display: none"],
-  .vhdr>.bb-actions.note-search-open .bb-sclear[style*="display:none"]{display:none!important;}
   .vhdr>.bb-actions.note-search-open .bb-sclear:active{transform:scale(.9);}
   .vhdr>.bb-actions .bb-sbox:focus-within~.bb-sortbtn{max-width:none;opacity:1;pointer-events:auto;width:34px;margin:0;padding:0;border:0;}
   body.notes-mode:is(.cal-open,.sb-open) .vhdr>.bb-actions .bb-addbtn{display:none;}
@@ -14621,6 +14619,10 @@ function scrollResultsTop(){
   }
 }
 function clearSearchBB(){
+  const actions=document.querySelector('.bb-actions');
+  if(actions?.closest('.vhdr')&&actions.classList.contains('note-search-open')){
+    toggleNoteHeaderSearch();return;
+  }
   curSearch='';
   syncSearchInputs('');
   syncSearchClear();
@@ -14647,6 +14649,9 @@ function toggleNoteHeaderSearch(){
   const actions=document.querySelector('.bb-actions');
   const open=actions.classList.toggle('note-search-open');
   actions.querySelector('.note-search-toggle').setAttribute('aria-expanded',String(open));
+  const clear=actions.querySelector('.bb-sclear');
+  clear.setAttribute('aria-label',open?'退出搜索':'清空');
+  clear.title=open?'退出搜索':'清空';
   if(open)document.getElementById('bbSearch').focus();
   else{document.getElementById('bbSearch').blur();if(curSearch)onSearchBB('');}
 }
