@@ -2990,12 +2990,12 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-tag-menu button{width:100%;padding:8px;border:0;border-top:1px solid var(--border-soft);background:none;color:var(--accent);font:inherit;cursor:pointer;}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
-.memo-card{--memo-disclosure-width:32px;--memo-disclosure-gap:var(--sp-8);--memo-arrow-inset:12.25px;}
+.memo-card{--memo-disclosure-width:32px;--memo-arrow-inset:12.25px;--memo-disclosure-gap:calc(var(--note-card-inset,var(--sp-16)) - var(--memo-arrow-inset));}
 .memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
 /* 展开与收起使用相同顶部间距，标题位置不随详情状态改变。 */
 .memo-card{padding-top:var(--sp-8);}
 @media (max-width:1024px), (pointer:coarse){
-  .memo-card{padding-top:var(--sp-6);}
+  .memo-card{--note-card-inset:var(--sp-14);padding-top:var(--sp-6);}
 }
 .memo-card .memo-title{flex-basis:0;}
 .memo-card .memo-title{color:var(--text-primary);}
@@ -5633,7 +5633,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .note-month-pane-head h2{font-size:var(--fs-heading);line-height:var(--lh-tight);}
   .note-month-pane-close{border:0;background:transparent;color:var(--text-secondary);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:var(--r);}
   .note-month-pane-close:hover{color:var(--accent);background:var(--accent-light);}
-  .note-month-pane-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:var(--sp-20);}
+  .note-month-pane-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:var(--sp-20);scrollbar-gutter:stable both-edges;}
   .desktop-note-months .note-month-row[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
   .desktop-note-months .note-month-name{font-size:var(--fs-body);}
   .desktop-note-months .note-month-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
@@ -5655,6 +5655,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   body.notes-mode:not(.note-month-split) .app>.main>.content{
     margin-inline:0;padding-inline:var(--sp-24);
+    /* 滚动条两侧对称预留，避免右侧卡片外留白比左侧更宽。 */
+    scrollbar-gutter:stable both-edges;
   }
   body.notes-mode .app>.main>.content>.vhdr,
   body.notes-mode .app>.main>.content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
