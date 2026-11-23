@@ -19070,9 +19070,8 @@ function renderMemoFieldRow(noteId,f){
   if(shouldMask) valueCls='masked';
   else if(f.isNote) valueCls='note';
   const valueHtml=`<div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div>`;
-  const contentHtml=f.key==='username'
-    ? `<div class="memo-field-content">${valueHtml}<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','username')" title="复制账号" aria-label="复制账号" type="button">${MEMO_ICON.copy}</button></div>`
-    : valueHtml;
+  const copyLabel=esc('复制'+f.label);
+  const contentHtml=`<div class="memo-field-content">${valueHtml}<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','${f.key}')" title="${copyLabel}" aria-label="${copyLabel}" type="button">${MEMO_ICON.copy}</button></div>`;
   return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span>${contentHtml}</div>`;
 }
 
