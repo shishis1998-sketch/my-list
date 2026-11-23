@@ -3006,6 +3006,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-details .memo-field:first-child{border-top:0;padding-top:0;}
 .memo-details .memo-field:last-child{padding-bottom:0;}
 .memo-details .memo-field-label{font-size:var(--fs-caption);font-weight:400;line-height:var(--lh-normal);color:var(--text-muted);}
+.memo-details .memo-field-content{display:flex;align-items:center;gap:var(--sp-6);min-width:0;}
+.memo-details .memo-field-content>.memo-field-value{flex:1;min-width:0;}
 .memo-details .memo-field-value{flex:none;font-size:var(--fs-body);font-weight:400;line-height:var(--lh-normal);white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible;}
 
 @media(prefers-reduced-motion:reduce){
@@ -19067,7 +19069,11 @@ function renderMemoFieldRow(noteId,f){
   let valueCls='';
   if(shouldMask) valueCls='masked';
   else if(f.isNote) valueCls='note';
-  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div></div>`;
+  const valueHtml=`<div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div>`;
+  const contentHtml=f.key==='username'
+    ? `<div class="memo-field-content">${valueHtml}<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','username')" title="复制账号" aria-label="复制账号" type="button">${MEMO_ICON.copy}</button></div>`
+    : valueHtml;
+  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span>${contentHtml}</div>`;
 }
 
 // ── 备忘字段行内编辑 ──────────────────────────────────────────
@@ -19255,7 +19261,7 @@ function openMemoTagMenu(event,noteId){
 function renderMemoAccount(n){
   const all=memoCollectFields(n);
   const account=!isEncLocked(n)&&all.find(f=>f.key==='username');
-  const accountHtml=account?`<div class="memo-account"><div class="memo-account-value" onclick="event.stopPropagation();openMemoSheet('${n.id}','username',false)">${hl(account.value)}</div><button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${n.id}','username')" title="复制账号" aria-label="复制账号" type="button">${MEMO_ICON.copy}</button></div>`:'';
+  const accountHtml=account?`<div class="memo-account"><div class="memo-account-value" onclick="event.stopPropagation();openMemoSheet('${n.id}','username',false)">${hl(account.value)}</div></div>`:'';
   return accountHtml;
 }
 
