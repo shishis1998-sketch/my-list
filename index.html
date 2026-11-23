@@ -5551,9 +5551,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   body.notes-mode .app>.main,body.notes-mode .app>.main>.content{min-height:0;}
   body.notes-mode .app>.main>.content{
     margin-inline:var(--sp-24);padding-inline:0;
+    border:1px solid var(--border);border-bottom:0;
     border-radius:var(--rxl) var(--rxl) 0 0;overflow-x:hidden;overflow-y:auto;
   }
-  body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
+  body.notes-mode .app>.main>.content>.vhdr{position:static;top:auto;z-index:auto;}
   #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
   .app>.main>.topbar{
     height:var(--sidebar-header-height);min-height:var(--sidebar-header-height);flex-shrink:0;
