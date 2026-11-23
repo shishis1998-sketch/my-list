@@ -209,7 +209,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   .app>.sidebar>.logo{padding-right:44px;}
   .desktop-sidebar-toggle{
     display:grid;place-items:center;position:fixed;top:calc(var(--desktop-toolbar-center) - var(--sidebar-toggle-size) / 2);
-    left:calc(var(--desktop-sidebar-width) - var(--sidebar-content-inset) - var(--sidebar-toggle-size));z-index:21;
+    left:calc(var(--desktop-sidebar-width) - var(--sidebar-content-inset) - var(--sidebar-toggle-size) + 7px);z-index:21;
     width:var(--sidebar-toggle-size);height:var(--sidebar-toggle-size);padding:0;border:0;
     background:transparent;color:var(--text-secondary);cursor:pointer;
     transition:left var(--desktop-sidebar-duration) ease;
@@ -5687,7 +5687,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   #appSidebar .nsec-data>.sidebar-disclosure[aria-controls="sidebarCalendarOptions"]{margin-top:var(--sp-8);}
   #appSidebar .nsec-cats>.nlbl-desktop{padding-right:0;}
-  #appSidebar .nsec-cats .nlbl-btn{margin-right:0;width:var(--sidebar-toggle-size);height:var(--sidebar-toggle-size);padding:0;align-items:center;justify-content:center;}
+  #appSidebar .nsec-cats .nlbl-btn{margin-right:0;width:var(--sidebar-toggle-size);height:var(--sidebar-toggle-size);padding:0;align-items:center;justify-content:flex-end;}
   #appSidebar .ncard{
     padding:var(--sp-4);border:1px solid var(--border);
     border-radius:var(--rlg);background:var(--surface);
