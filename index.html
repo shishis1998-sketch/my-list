@@ -2973,7 +2973,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 /* 备忘字段值可点：点一下从底部弹出单字段编辑面板 */
 .memo-field-value.editable{cursor:pointer;}
 
-.memo-tag-pill{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;max-width:45%;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg);color:var(--text-secondary);font:inherit;font-size:var(--fs-caption);cursor:pointer;}
+.memo-tag-pills{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;min-width:0;max-width:55%;}
+.memo-tag-pill{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;max-width:100%;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg);color:var(--text-secondary);font:inherit;font-size:var(--fs-caption);cursor:pointer;}
 .memo-tag-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .memo-tag-pill svg{width:14px;height:14px;flex-shrink:0;}
 .memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:170px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
@@ -2983,6 +2984,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
 .memo-card .memo-head{margin-bottom:var(--sp-2);}
+.memo-card .memo-title{flex-basis:0;}
 .memo-card .memo-title{color:var(--text-primary);}
 .memo-card .memo-title.empty{color:var(--text-muted);}
 .memo-summary{display:flex;align-items:center;gap:var(--sp-8);min-width:0;}
@@ -2994,7 +2996,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-expand[aria-expanded="true"] svg{transform:rotate(180deg);}
 .memo-details{overflow:hidden;overflow-anchor:none;}
 .memo-details-clip{min-height:0;}
-.memo-details-content{padding-top:var(--sp-6);}
+/* 补齐标题在32px操作行内居中产生的留白，使内容底部与标题顶部一致。 */
+.memo-details-content{padding-top:var(--sp-6);padding-bottom:var(--sp-6);}
 .memo-expand{margin-left:0;flex-shrink:0;}
 /* 展开详情：字段名在上，内容在下，以细线分隔；两端共用。 */
 
@@ -19184,7 +19187,7 @@ function renderMemoCard(n){
   return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
-      <button class="memo-tag-pill" onclick="event.stopPropagation();openMemoTagMenu(event,'${n.id}')" aria-haspopup="dialog" title="选择标签" type="button"><span>${esc(memoTagCaption(n))}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m7 10 5 5 5-5"/></svg></button>
+      <div class="memo-tag-pills">${renderMemoTagPills(n)}</div>
       <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
@@ -19194,14 +19197,15 @@ function renderMemoCard(n){
   </div>`;
 }
 
-function memoTagCaption(n){
-  const tags=n.tags||[];
-  return tags.length?tags[0]+(tags.length>1?' +'+(tags.length-1):''):'未分类';
+function renderMemoTagPills(n){
+  const tags=n.tags&&n.tags.length?n.tags:['未分类'];
+  return tags.map(tag=>`<button class="memo-tag-pill" onclick="event.stopPropagation();openMemoTagMenu(event,'${n.id}')" aria-haspopup="dialog" title="选择标签" type="button"><span>${esc(tag)}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m7 10 5 5 5-5"/></svg></button>`).join('');
 }
 function openMemoTagMenu(event,noteId){
   const n=notes.find(item=>item.id===noteId);
   if(!n)return;
   const anchor=event.currentTarget;
+  const pillGroup=anchor.closest('.memo-tag-pills');
   document.getElementById('memoTagMenu')?.remove();
   const menu=document.createElement('div');
   menu.id='memoTagMenu';menu.className='memo-tag-menu';menu.setAttribute('popover','auto');
@@ -19214,7 +19218,7 @@ function openMemoTagMenu(event,noteId){
     row.append(input,text);menu.append(row);input.onchange=()=>{
       if(isReadOnly()){input.checked=!input.checked;toast('当前为只读模式');return;}
       onchange(input.checked);n.updatedAt=Date.now();persistNotes();
-      anchor.querySelector('span').textContent=memoTagCaption(n);
+      pillGroup.innerHTML=renderMemoTagPills(n);
       menu.querySelectorAll('input').forEach((el,i)=>el.checked=i===0?!(n.tags||[]).length:(n.tags||[]).includes(choices[i-1]));
     };
   };
