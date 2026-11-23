@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#F7F7F5">
+<meta name="theme-color" content="#F9F9F7">
 <title>我的清单</title>
 <!-- build: 2026-07-22 分段卡片弹窗(方案A) -->
 <style>
@@ -22,7 +22,7 @@
 
 :root{
   /* === 极简风：黑灰白底 + 一点墨绿点缀 === */
-  --bg:#F7F7F5;--surface:#FFFFFF;--border:#ECECEA;--border-soft:#F2F2F0;
+  --bg:#F9F9F7;--surface:#FFFFFF;--border:#ECECEA;--border-soft:#F2F2F0;
   --text-primary:#1A1A1A;--text-secondary:#6B6B6B;--text-muted:#9B9B9B;
   /* 主题色(可在设置里切换,见 THEMES / applyTheme)。四个值一套 + rgb 分量供半透明用 */
   --accent:#2B4D3F;--accent-light:#E8EEEB;--accent-mid:#4A7B68;
@@ -9976,7 +9976,7 @@ function applyMode(id,save,quiet){
   else document.documentElement.removeAttribute('data-mode');
   // 地址栏/状态栏颜色跟着走，不然深色页面顶上顶着一条浅色
   const mt=document.querySelector('meta[name=theme-color]');
-  if(mt)mt.setAttribute('content',dark?'#121214':'#F7F7F5');
+  if(mt)mt.setAttribute('content',dark?'#121214':'#F9F9F7');
   if(save){
     try{localStorage.setItem(MODE_KEY,m);}catch(e){}
     if(typeof persistLocalVault==='function')persistLocalVault();
