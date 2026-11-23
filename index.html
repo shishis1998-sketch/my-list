@@ -2995,6 +2995,15 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 }
 .memo-details.is-expanded .memo-details-clip{visibility:visible;}
 .memo-details-content{padding-top:var(--sp-8);}
+/* 展开详情：字段名在上，内容在下，以细线分隔；两端共用。 */
+.memo-card:has(.memo-expand[aria-expanded="true"]) .memo-account{display:none;}
+.memo-details .memo-fields{background:none;border-radius:0;padding:0;margin-bottom:0;}
+.memo-details .memo-field{display:flex;flex-direction:column;align-items:stretch;gap:var(--sp-4);height:auto;padding:var(--sp-16) 0;border-top:1px solid var(--border-soft);}
+.memo-details .memo-field:first-child{border-top:0;padding-top:0;}
+.memo-details .memo-field:last-child{padding-bottom:0;}
+.memo-details .memo-field-label{font-size:var(--fs-caption);font-weight:400;line-height:var(--lh-normal);color:var(--text-muted);}
+.memo-details .memo-field-value{flex:none;font-size:var(--fs-body);font-weight:400;line-height:var(--lh-normal);white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible;}
+
 @media(prefers-reduced-motion:reduce){
   .memo-details,.memo-details-clip,.memo-expand svg{transition:none!important;}
 }
@@ -19054,14 +19063,7 @@ function renderMemoFieldRow(noteId,f){
   let valueCls='';
   if(shouldMask) valueCls='masked';
   else if(f.isNote) valueCls='note';
-  const eyeBtn=f.isPassword
-    ? `<button class="memo-btn" onclick="event.stopPropagation();toggleMemoReveal('${sk}')" title="${revealed?'遮住':'显示'}" type="button">${revealed?MEMO_ICON.eyeOff:MEMO_ICON.eye}</button>`
-    : '';
-  // 复制时按 id+字段现查值，不把明文预埋进 DOM（避免密码在开发者工具里可见）
-  const copyBtn=!f.isNote
-    ? `<button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${noteId}','${f.key}')" title="复制" type="button">${MEMO_ICON.copy}</button>`
-    : '';
-  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div>${eyeBtn}${copyBtn}</div>`;
+  return `<div class="memo-field"><span class="memo-field-label">${f.isPassword?esc(f.label):hl(f.label)}</span><div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div></div>`;
 }
 
 // ── 备忘字段行内编辑 ──────────────────────────────────────────
@@ -19216,7 +19218,7 @@ function renderMemoDetails(n){
   }else if(!all.length){
     fieldsHtml='<div class="memo-empty-hint">（点击编辑添加内容）</div>';
   }else{
-    fieldsHtml=all.filter(f=>f.key!=='username').map(f=>renderMemoFieldRow(n.id,f)).join('');
+    fieldsHtml=all.map(f=>renderMemoFieldRow(n.id,f)).join('');
   }
   const tagsHtml=(n.tags&&n.tags.length)
     ? `<div class="note-foot" style="margin-top:var(--sp-8)">${n.tags.slice(0,4).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}</div>`
