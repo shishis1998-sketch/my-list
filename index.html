@@ -5591,14 +5591,18 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     margin-inline:var(--sp-24);padding-inline:0;
     border:0;border-radius:0;overflow-x:hidden;overflow-y:auto;
   }
+  body.notes-mode:not(.note-month-split) .app>.main>.content{
+    margin-inline:0;padding-inline:var(--sp-24);
+  }
   body.notes-mode .app>.main>.content>.vhdr,
   body.notes-mode .app>.main>.content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
   body.notes-mode #nlist .note-scroll-cut{
-    position:relative;clip-path:inset(var(--note-scroll-cut) 0 0 round var(--rlg));
+    position:relative;overflow:visible;border-color:transparent;transition-property:background-color;
+    clip-path:inset(var(--note-scroll-cut) 0 0 round var(--rlg));
   }
   body.notes-mode #nlist .note-scroll-cut::before{
-    content:"";position:absolute;top:var(--note-scroll-cut);left:0;right:0;height:var(--rlg);
-    border:1px solid var(--border);border-bottom:0;border-radius:var(--rlg) var(--rlg) 0 0;
+    content:"";position:absolute;inset:calc(var(--note-scroll-cut) - 1px) -1px -1px;
+    border:1px solid var(--border);border-radius:var(--rlg);
     pointer-events:none;z-index:5;
   }
   #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
