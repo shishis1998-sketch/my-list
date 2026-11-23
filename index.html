@@ -2990,12 +2990,12 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-tag-menu button{width:100%;padding:8px;border:0;border-top:1px solid var(--border-soft);background:none;color:var(--accent);font:inherit;cursor:pointer;}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
-.memo-card{--memo-disclosure-width:32px;--memo-disclosure-gap:var(--sp-8);--memo-arrow-inset:12.25px;}
+.memo-card{--memo-disclosure-width:32px;--memo-arrow-inset:12.25px;--memo-disclosure-gap:calc(var(--note-card-inset,var(--sp-16)) - var(--memo-arrow-inset));}
 .memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
 /* 展开与收起使用相同顶部间距，标题位置不随详情状态改变。 */
 .memo-card{padding-top:var(--sp-8);}
 @media (max-width:1024px), (pointer:coarse){
-  .memo-card{padding-top:var(--sp-6);}
+  .memo-card{--note-card-inset:var(--sp-14);padding-top:var(--sp-6);}
 }
 .memo-card .memo-title{flex-basis:0;}
 .memo-card .memo-title{color:var(--text-primary);}
