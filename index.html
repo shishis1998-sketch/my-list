@@ -2996,7 +2996,8 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-expand[aria-expanded="true"] svg{transform:rotate(180deg);}
 .memo-details{overflow:hidden;overflow-anchor:none;}
 .memo-details-clip{min-height:0;}
-.memo-details-content{padding-top:var(--sp-6);}
+/* 补齐标题在32px操作行内居中产生的留白，使内容底部与标题顶部一致。 */
+.memo-details-content{padding-top:var(--sp-6);padding-bottom:var(--sp-6);}
 .memo-expand{margin-left:0;flex-shrink:0;}
 /* 展开详情：字段名在上，内容在下，以细线分隔；两端共用。 */
 
