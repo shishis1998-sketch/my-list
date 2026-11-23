@@ -15060,18 +15060,23 @@ document.getElementById('tinput').addEventListener('keydown',function(e){
 
 // ── Tag Manager (重命名 / 删除已有标签) ────────────────────────────
 let tagMgrScope='media', tagMgrEdits=[];
+function tagMgrItems(scope){
+  if(scope==='memo')return notes.filter(n=>n.subCat==='备忘');
+  return scope==='note'?notes:data;
+}
 function getTagCounts(scope){
   const cnt={};
-  const list=scope==='note'?notes:data;
+  const list=tagMgrItems(scope);
   list.forEach(d=>(d.tags||[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1;}));
   return cnt;
 }
 function openTagMgr(scope){
+  if(scope==='note'&&document.getElementById('nf-sub').value==='备忘')scope='memo';
   tagMgrScope=scope;
   const cnt=getTagCounts(scope);
   tagMgrEdits=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b))
     .map(t=>({old:t,name:t,count:cnt[t],del:false}));
-  document.getElementById('tagMgrTitle').textContent=scope==='note'?'管理笔记标签':'管理标签';
+  document.getElementById('tagMgrTitle').textContent=scope==='memo'?'管理备忘标签':scope==='note'?'管理笔记标签':'管理标签';
   renderTagMgr();
   document.getElementById('tagMgrModal').classList.add('open');
 }
@@ -15105,9 +15110,9 @@ function saveTagMgr(){
     });
     return out;
   };
-  const list=tagMgrScope==='note'?notes:data;
+  const list=tagMgrItems(tagMgrScope);
   list.forEach(d=>{if(d.tags&&d.tags.length)d.tags=transform(d.tags);});
-  if(tagMgrScope==='note'){
+  if(tagMgrScope==='note'||tagMgrScope==='memo'){
     curNoteTags=transform(curNoteTags); renderNoteChips2(); persistNotes();
   }else{
     curTags=transform(curTags); renderChips(); persist();
@@ -19242,7 +19247,7 @@ function openMemoTagMenu(event,noteId){
   menu.id='memoTagMenu';menu.className='memo-tag-menu';menu.setAttribute('popover','manual');
   menu._memoPillGroup=pillGroup;
   menu.setAttribute('role','dialog');menu.setAttribute('aria-label','选择备忘标签');
-  const choices=[...new Set([...(n.tags||[]),...userNotes().flatMap(item=>item.tags||[])])];
+  const choices=[...new Set([...(n.tags||[]),...userNotes().filter(item=>item.subCat==='备忘').flatMap(item=>item.tags||[])])];
   const addOption=(label,checked,onchange)=>{
     const row=document.createElement('label');
     const input=document.createElement('input');input.type='checkbox';input.checked=checked;
@@ -19829,7 +19834,8 @@ const noteTagOptions=document.getElementById('noteTagOptions');
 let noteTagChoices=[], noteTagSelection=new Set();
 function openNoteTagPicker(){
   noteTagSelection=new Set(curNoteTags);
-  noteTagChoices=[...new Set([...curNoteTags,...userNotes().flatMap(n=>n.tags||[])])];
+  const memoMode=document.getElementById('nf-sub').value==='备忘';
+  noteTagChoices=[...new Set([...curNoteTags,...userNotes().filter(n=>!memoMode||n.subCat==='备忘').flatMap(n=>n.tags||[])])];
   noteTagInput.value='';
   renderNoteTagOptions();
   noteTagPicker.classList.add('open');
