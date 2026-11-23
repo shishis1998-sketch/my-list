@@ -2973,6 +2973,14 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 /* 备忘字段值可点：点一下从底部弹出单字段编辑面板 */
 .memo-field-value.editable{cursor:pointer;}
 
+.memo-tag-pill{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;max-width:45%;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg);color:var(--text-secondary);font:inherit;font-size:var(--fs-caption);cursor:pointer;}
+.memo-tag-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.memo-tag-pill svg{width:14px;height:14px;flex-shrink:0;}
+.memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:170px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
+.memo-tag-menu label{display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;overflow-wrap:anywhere;}
+.memo-tag-menu input{accent-color:var(--accent);}
+.memo-tag-menu button{width:100%;padding:8px;border:0;border-top:1px solid var(--border-soft);background:none;color:var(--accent);font:inherit;cursor:pointer;}
+
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
 .memo-card .memo-head{margin-bottom:var(--sp-2);}
 .memo-card .memo-title{color:var(--text-primary);}
@@ -19171,24 +19179,12 @@ function closeMemoSheet(save){
 function renderMemoCard(n){
   const title=n.title||'（无标题）';
   const titleCls=n.title?'':' empty';
-  // 存储状态徽章：三种真实状态，不撒谎
-  let stCls,stIcon,stLbl,stTitle;
-  if(n.localOnly){
-    stCls='local';stIcon=MEMO_ICON.lockClosed;stLbl='仅本机';
-    stTitle='仅本机存储，不上云。点击改为加密上云';
-  }else if(getMasterPw()){
-    stCls='enc';stIcon=MEMO_ICON.shield;stLbl='已加密';
-    stTitle='已用PIN码加密后同步到云。点击改为仅本机';
-  }else{
-    stCls='plain';stIcon=MEMO_ICON.lockOpen;stLbl='明文上云';
-    stTitle='⚠️ 未设置PIN码，内容以明文同步！点击改为仅本机，或在云同步设置中设置PIN码';
-  }
   const all=memoCollectFields(n);
   const expanded=memoExpandedState.has(n.id);
   return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head">
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
-      <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
+      <button class="memo-tag-pill" onclick="event.stopPropagation();openMemoTagMenu(event,'${n.id}')" aria-haspopup="dialog" title="选择标签" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 7V5h6l2 2h10v13H3z"/></svg><span>${esc(memoTagCaption(n))}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m7 10 5 5 5-5"/></svg></button>
       <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
@@ -19196,6 +19192,42 @@ function renderMemoCard(n){
       <div class="memo-details-clip">${expanded?renderMemoDetails(n):renderMemoAccount(n)}</div>
     </div>
   </div>`;
+}
+
+function memoTagCaption(n){
+  const tags=n.tags||[];
+  return tags.length?tags[0]+(tags.length>1?' +'+(tags.length-1):''):'未分类';
+}
+function openMemoTagMenu(event,noteId){
+  const n=notes.find(item=>item.id===noteId);
+  if(!n)return;
+  const anchor=event.currentTarget;
+  document.getElementById('memoTagMenu')?.remove();
+  const menu=document.createElement('div');
+  menu.id='memoTagMenu';menu.className='memo-tag-menu';menu.setAttribute('popover','auto');
+  menu.setAttribute('role','dialog');menu.setAttribute('aria-label','选择备忘标签');
+  const choices=[...new Set([...(n.tags||[]),...userNotes().flatMap(item=>item.tags||[])])];
+  const addOption=(label,checked,onchange)=>{
+    const row=document.createElement('label');
+    const input=document.createElement('input');input.type='checkbox';input.checked=checked;
+    const text=document.createElement('span');text.textContent=label;
+    row.append(input,text);menu.append(row);input.onchange=()=>{
+      if(isReadOnly()){input.checked=!input.checked;toast('当前为只读模式');return;}
+      onchange(input.checked);n.updatedAt=Date.now();persistNotes();
+      anchor.querySelector('span').textContent=memoTagCaption(n);
+      menu.querySelectorAll('input').forEach((el,i)=>el.checked=i===0?!(n.tags||[]).length:(n.tags||[]).includes(choices[i-1]));
+    };
+  };
+  addOption('未分类',!(n.tags||[]).length,()=>{n.tags=[];});
+  choices.forEach(tag=>addOption(tag,(n.tags||[]).includes(tag),checked=>{
+    const tags=new Set(n.tags||[]);if(checked)tags.add(tag);else tags.delete(tag);n.tags=[...tags];
+  }));
+  const done=document.createElement('button');done.type='button';done.textContent='完成';
+  done.onclick=()=>{menu.hidePopover();render();};menu.append(done);
+  document.body.append(menu);menu.showPopover();
+  const rect=anchor.getBoundingClientRect();
+  menu.style.left=Math.max(8,Math.min(rect.right-menu.offsetWidth,innerWidth-menu.offsetWidth-8))+'px';
+  menu.style.top=Math.max(8,Math.min(rect.bottom+6,innerHeight-menu.offsetHeight-8))+'px';
 }
 
 function renderMemoAccount(n){
@@ -19215,10 +19247,7 @@ function renderMemoDetails(n){
   }else{
     fieldsHtml=all.map(f=>renderMemoFieldRow(n.id,f)).join('');
   }
-  const tagsHtml=(n.tags&&n.tags.length)
-    ? `<div class="note-foot" style="margin-top:var(--sp-8)">${n.tags.slice(0,4).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}</div>`
-    : '';
-  return `<div class="memo-details-content"><div class="memo-fields">${fieldsHtml}</div>${tagsHtml}</div>`;
+  return `<div class="memo-details-content"><div class="memo-fields">${fieldsHtml}</div></div>`;
 }
 function toggleMemoExpanded(noteId){
   const expanded=!memoExpandedState.has(noteId);
