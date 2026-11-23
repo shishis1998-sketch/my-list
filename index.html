@@ -1050,13 +1050,13 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     margin-bottom:var(--sp-16);
     padding:var(--sp-8) var(--content-gutter);
     padding-inline-start:calc(var(--content-gutter) + var(--note-card-inset) + var(--bd));
-    background:#fff;
+    background:var(--bg);
   }
   body.notes-mode .note-dated-label{margin-inline-start:calc(-1 * var(--content-gutter));}
   body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{
     min-height:calc(54px + env(safe-area-inset-top));
     padding-top:calc(var(--sp-8) + env(safe-area-inset-top));
-    background:#fff;
+    background:var(--bg);
     padding-inline-start:calc(var(--content-gutter) + var(--note-month-text-inset));
   }
 
@@ -4213,10 +4213,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .vhdr>.bb-actions .bb-addbtn svg{width:20px;height:20px;stroke-width:2.6;}
   .vhdr>.bb-actions .bb-addbtn span{display:none;}
   .vhdr>.bb-actions .bb-addbtn:active{transform:scale(.92);}
-  .vhdr:has(>.bb-actions.note-search-open){padding-bottom:58px;}
+  body.notes-mode .content>.vhdr:has(>.bb-actions.note-search-open){padding-bottom:62px;margin-bottom:0;}
   .vhdr>.bb-actions.note-search-open .bb-sbox{position:static;}
-  .vhdr>.bb-actions.note-search-open .bb-sbox>input{border-radius:999px;display:block!important;position:absolute;left:var(--content-gutter);bottom:10px;width:calc(100% - 2 * var(--content-gutter));padding-left:10px;padding-right:38px;}
-  .vhdr>.bb-actions.note-search-open .bb-sclear{display:inline-flex!important;position:absolute;right:calc(var(--content-gutter) + 6px);top:auto;bottom:17px;transform:none;}
+  .vhdr>.bb-actions.note-search-open .bb-sbox>input{border-radius:999px;display:block!important;position:absolute;left:var(--content-gutter);bottom:12px;width:calc(100% - 2 * var(--content-gutter));padding-left:10px;padding-right:38px;}
+  .vhdr>.bb-actions.note-search-open .bb-sclear{display:inline-flex!important;position:absolute;right:calc(var(--content-gutter) + 6px);top:auto;bottom:19px;transform:none;}
   .vhdr>.bb-actions.note-search-open .bb-sclear:active{transform:scale(.9);}
   .vhdr>.bb-actions .bb-sbox:focus-within~.bb-sortbtn{max-width:none;opacity:1;pointer-events:auto;width:34px;margin:0;padding:0;border:0;}
   body.notes-mode:is(.cal-open,.sb-open) .vhdr>.bb-actions .bb-addbtn{display:none;}
