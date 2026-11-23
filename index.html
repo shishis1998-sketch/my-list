@@ -5549,6 +5549,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   /* 笔记页在各自内容区滚动，左右顶栏保持同高固定。 */
   body.notes-mode .app{height:100vh;height:100dvh;min-height:0;}
   body.notes-mode .app>.main,body.notes-mode .app>.main>.content{min-height:0;}
+  body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
   #appSidebar{--sidebar-row-height:38px;background:var(--bg);padding:0;overflow:hidden;}
   .app>.main>.topbar{
     height:var(--sidebar-header-height);min-height:var(--sidebar-header-height);flex-shrink:0;
