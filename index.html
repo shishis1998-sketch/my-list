@@ -2982,8 +2982,22 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);cursor:pointer;}
 .memo-expand{margin-left:auto;width:32px;height:32px;}
 .memo-expand:hover,.memo-expand:focus-visible{color:var(--accent);}
-.memo-details[hidden]{display:none;}
-.memo-details:not([hidden]){margin-top:var(--sp-8);}
+.memo-expand svg{transition:transform 220ms cubic-bezier(.4,0,.2,1);}
+.memo-expand[aria-expanded="true"] svg{transform:rotate(180deg);}
+.memo-details{
+  display:grid;grid-template-rows:0fr;overflow-anchor:none;
+  transition:grid-template-rows 220ms cubic-bezier(.4,0,.2,1);
+}
+.memo-details.is-expanded{grid-template-rows:1fr;}
+.memo-details-clip{min-height:0;overflow:hidden;}
+.memo-details:not(.is-expanded) .memo-details-clip{
+  visibility:hidden;transition:visibility 0s 220ms;
+}
+.memo-details.is-expanded .memo-details-clip{visibility:visible;}
+.memo-details-content{padding-top:var(--sp-8);}
+@media(prefers-reduced-motion:reduce){
+  .memo-details,.memo-details-clip,.memo-expand svg{transition:none!important;}
+}
 
 /* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
 .mfsheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.34);opacity:0;pointer-events:none;transition:opacity var(--nav-dur) var(--nav-ease);z-index:1400;}
@@ -19178,6 +19192,24 @@ function renderMemoCard(n){
   const expanded=memoExpandedState.has(n.id);
   const account=!isEncLocked(n)&&all.find(f=>f.key==='username');
   const accountHtml=account?`<div class="memo-account"><div class="memo-account-value" onclick="event.stopPropagation();openMemoSheet('${n.id}','username',false)">${hl(account.value)}</div><button class="memo-btn" onclick="event.stopPropagation();memoCopy(event,'${n.id}','username')" title="复制账号" aria-label="复制账号" type="button">${MEMO_ICON.copy}</button></div>`:'';
+  return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
+    <div class="memo-head">
+      <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
+      <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
+      <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
+    </div>
+    <div class="memo-summary">
+      ${accountHtml}
+      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
+    <div id="memo-details-${n.id}" class="memo-details${expanded?' is-expanded':''}" ontransitionend="finishMemoCollapse(this,event)">
+      <div class="memo-details-clip"${expanded?'':' inert'}>${expanded?renderMemoDetails(n):''}</div>
+    </div>
+  </div>`;
+}
+
+function renderMemoDetails(n){
+  const all=memoCollectFields(n);
   let fieldsHtml='';
   if(isEncLocked(n)){
     fieldsHtml='<div class="memo-empty-hint">🔒 已加密——在「云同步」设置中填入PIN码后可见</div>';
@@ -19189,29 +19221,36 @@ function renderMemoCard(n){
   const tagsHtml=(n.tags&&n.tags.length)
     ? `<div class="note-foot" style="margin-top:var(--sp-8)">${n.tags.slice(0,4).map(t=>`<span class="ctag">${esc(t)}</span>`).join('')}</div>`
     : '';
-  return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
-    <div class="memo-head">
-      <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
-      <button class="memo-lock ${stCls}" onclick="event.stopPropagation();toggleNoteLocal('${n.id}')" title="${stTitle}" type="button">${stIcon}<span class="memo-lock-lbl">${stLbl}</span></button>
-      <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
-    </div>
-    <div class="memo-summary">
-      ${accountHtml}
-      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${expanded?'m6 15 6-6 6 6':'m6 9 6 6 6-6'}"/></svg></button>
-    </div>
-    <div id="memo-details-${n.id}" class="memo-details"${expanded?'':' hidden'}>
-      ${expanded?`<div class="memo-fields">${fieldsHtml}</div>${tagsHtml}`:''}
-    </div>
-  </div>`;
+  return `<div class="memo-details-content"><div class="memo-fields">${fieldsHtml}</div>${tagsHtml}</div>`;
 }
-
+function finishMemoCollapse(panel,event){
+  if(event&&(event.target!==panel||event.propertyName!=='grid-template-rows'))return;
+  if(!panel.classList.contains('is-expanded'))panel.firstElementChild.innerHTML='';
+}
 function toggleMemoExpanded(noteId){
-  if(memoExpandedState.has(noteId)){
+  const expanded=!memoExpandedState.has(noteId);
+  if(expanded)memoExpandedState.add(noteId);
+  else{
     memoExpandedState.delete(noteId);
-    // 收起后清除该卡片的密码显示状态，再展开仍默认遮罩。
+    // Always mask passwords again when this card closes.
     Object.keys(memoRevealState).forEach(key=>{if(key.startsWith(noteId+'_'))delete memoRevealState[key];});
-  }else memoExpandedState.add(noteId);
-  render();
+  }
+  const panel=document.getElementById('memo-details-'+noteId);
+  const card=panel&&panel.closest('.memo-card');
+  const button=card&&card.querySelector('.memo-expand');
+  const n=notes.find(item=>item.id===noteId);
+  if(!panel||!button||!n){render();return;}
+  const clip=panel.firstElementChild;
+  // Keep the existing card mounted so its height can transition both ways.
+  // Lazy content is measured before opening and removed after closing.
+  clip.innerHTML=renderMemoDetails(n);
+  clip.inert=!expanded;
+  if(expanded)void panel.offsetHeight;
+  panel.classList.toggle('is-expanded',expanded);
+  button.setAttribute('aria-expanded',String(expanded));
+  button.setAttribute('aria-label',expanded?'收起备忘':'展开备忘');
+  button.title=expanded?'收起':'展开';
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)finishMemoCollapse(panel);
 }
 
 function toggleMemoReveal(stateKey){
