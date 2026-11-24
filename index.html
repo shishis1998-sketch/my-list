@@ -3420,6 +3420,8 @@ mark.shl{
 .vhdr .vcnt:has(> .note-month-picker:not([hidden])){margin-inline-start:var(--sp-8);font-size:var(--menu-font-size);}
 .note-month-picker:not([hidden]){display:inline-flex;align-items:center;gap:var(--sp-4);vertical-align:baseline;}
 .note-month-picker svg{width:12px;height:12px;}
+/* 月份详情标题加粗，保留现有字号与位置。 */
+.note-month-picker:not([hidden]){font-weight:700;}
 #noteMonthSheet.open{display:block;position:fixed;inset:0;z-index:120;background:rgba(10,8,6,.16);}
 #noteMonthPanel{
   position:absolute;right:auto;min-width:118px;max-width:calc(100vw - 16px);
@@ -6121,9 +6123,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 
 
-/* 收集 / 日记字体对比：仅统一字体组，保留字号、字重与颜色。 */
+/* 收集 / 日记统一 zh 字体组，保留字号、字重与颜色。 */
 body.notes-mode[data-note-font="zh"]{--note-page-font:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;}
-body.notes-mode[data-note-font="en"]{--note-page-font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
 body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMonthSheet,#noteTagPicker),
 body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMonthSheet,#noteTagPicker) *{
   font-family:var(--note-page-font)!important;
@@ -17792,7 +17793,7 @@ function renderNotes(){
 }
 window.matchMedia('(min-width:1025px) and (pointer:fine)').addEventListener('change',()=>{if(isNoteMode())renderNotes();});
 function renderNotesContent(){
-  if(curNoteSub==='收集'||curNoteSub==='日记')document.body.dataset.noteFont=curNoteSub==='收集'?'zh':'en';
+  if(curNoteSub==='收集'||curNoteSub==='日记')document.body.dataset.noteFont='zh';
   else delete document.body.dataset.noteFont;
   cancelNoteMonthTap();
   // 顶部子分类胶囊条
