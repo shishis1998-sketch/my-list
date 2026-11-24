@@ -3448,7 +3448,7 @@ mark.shl{
 .note-dated-row .note-card.collect .note-foot{margin-top:var(--sp-14);}
 .note-card.collect .note-created{max-width:100%;margin-left:auto;text-align:right;overflow-wrap:anywhere;flex-shrink:1;}
 @media (hover:none){
-  .note-dated-row .note-foot:not(:has(.ctag,.note-created)){display:none;}
+  .note-dated-row .note-foot:not(:has(.ctag)){display:none;}
 }
 @media (hover:hover){
   .note-dated-row .note-foot .note-edit{margin-left:auto;}
@@ -17767,14 +17767,14 @@ function renderNotesContent(){
       const sameDay=recordDate&&recordDate===noteRecordDateISO({createdAt:n.createdAt});
       const headerTime=sameDay?`<span class="note-date note-created">${renderNoteCreatedAt(n.createdAt,true)}</span>`:createdAt;
       const head=desktopMonth?`<div class="note-head">${dateHeading}${titleLine}${headerTime}</div>`:
-        monthMode?(titleLine?`<div class="note-head">${titleLine}</div>`:''):
+        monthMode?(titleLine||createdAt?`<div class="note-head">${titleLine}${createdAt}</div>`:''):
         `<div class="note-head">${titleLine}${actions}</div>`;
       const tags=(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
       const foot=monthMode?tags+actions:`<span class="note-subcat">${esc(n.subCat||'灵感')}</span>${tags}`;
       const card=`<div class="note-card collect expanded" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
         ${head}
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
-        <div class="note-foot">${foot}${desktopMonth?'':createdAt}</div>
+        <div class="note-foot">${foot}${monthMode?'':createdAt}</div>
       </div>`;
       return monthMode&&!desktopMonth?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n)}${card}</div>`:card;
     }
