@@ -2986,9 +2986,10 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 }
 .memo-tag-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .memo-tag-pill svg{width:14px;height:14px;flex-shrink:0;}
-.memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:140px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
-.memo-tag-menu label{display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;overflow-wrap:anywhere;}
-.memo-tag-menu input{accent-color:var(--accent);}
+.memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:140px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
+.memo-tag-menu label{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--r);cursor:pointer;overflow-wrap:anywhere;}
+.memo-tag-menu label:hover,.memo-tag-menu label:focus-within{background:var(--accent-light);}
+.memo-tag-menu input{margin:0;accent-color:var(--accent);}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
 .memo-card{--memo-disclosure-width:32px;--memo-arrow-inset:12.25px;--memo-disclosure-gap:calc(var(--note-card-inset,var(--sp-16)) - var(--memo-arrow-inset));}
@@ -5692,6 +5693,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     margin-inline:0;padding-inline:var(--sp-24);
     /* 滚动条两侧对称预留，避免右侧卡片外留白比左侧更宽。 */
     scrollbar-gutter:stable both-edges;
+  }
+  /* 备忘页抵消两侧各 10px 的滚动条预留，与顶栏的 24px 留白对齐。 */
+  body.notes-mode:not(.note-month-split) .app>.main>.content:has(#nlist[data-memo-view]){
+    padding-inline:calc(var(--sp-24) - 10px);
   }
   body.notes-mode .app>.main>.content>.vhdr,
   body.notes-mode .app>.main>.content:has(#nlist[data-month-view])>.vhdr{position:static;top:auto;z-index:auto;}
