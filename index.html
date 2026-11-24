@@ -1059,6 +1059,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     padding-top:calc(var(--sp-8) + env(safe-area-inset-top));
     background:var(--bg);
   }
+  body.notes-mode .content:has(:where(#nlist[data-month-view]))>.vhdr{margin-bottom:var(--sp-10);}
   body.notes-mode .content:has(#nlist[data-month-view])>.vhdr:not(:has(.note-month-picker:not([hidden]))){
     padding-inline-start:calc(var(--content-gutter) + var(--note-month-text-inset));
   }
