@@ -4207,6 +4207,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   /* Keep the title row identical while the search gets its own second row. */
   body.notes-mode:not(.cal-open):not(.sb-open) .content>.vhdr{display:grid;grid-template-columns:max-content max-content minmax(0,1fr);grid-template-rows:38px;column-gap:var(--sp-10);}
   .vhdr>.bb-actions{grid-column:3;grid-row:1;justify-self:end;}
+  body.notes-mode .content>.vhdr:has(.note-month-picker:not([hidden])){
+    padding-inline-start:calc(var(--content-gutter) + var(--note-card-inset) + var(--bd));
+  }
+  body.notes-mode .content>.vhdr:has(.note-month-picker:not([hidden]))>.vtitle{display:none;}
+  body.notes-mode .vhdr>.vcnt:has(>.note-month-picker:not([hidden])){
+    grid-column:1 / 3;grid-row:1;margin-inline-start:0;
+  }
   body.notes-mode .content>.vhdr:has(>.bb-actions.note-search-open){grid-template-rows:38px 54px;margin-bottom:0;}
   body.notes-mode .content>.vhdr:has(>.bb-actions.note-search-open)::after{content:"";grid-column:1 / -1;grid-row:2;}
   .vhdr>.bb-actions.note-search-open .note-search-toggle{visibility:hidden;}
