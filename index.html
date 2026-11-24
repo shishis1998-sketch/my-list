@@ -5677,8 +5677,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .desktop-note-month>summary small{font-weight:400;color:var(--text-muted);}
   .desktop-note-date{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:10px;border:0;border-top:1px solid var(--border-soft);background:transparent;color:var(--text-primary);font:inherit;text-align:left;cursor:pointer;}
   .desktop-note-date:hover,.desktop-note-date[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
-  .desktop-note-date .note-dated-label{flex:0 0 30px;margin:0;padding-top:0;align-self:center;}
-  .desktop-note-date .note-dated-day{font-size:var(--fs-body);}
+  .desktop-note-date-short{flex:none;color:var(--text-muted);font-size:var(--fs-caption);font-variant-numeric:tabular-nums;}
   .desktop-note-date-copy{flex:1;min-width:0;}
   .desktop-note-date-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .desktop-note-date-copy strong{font-size:var(--fs-caption);font-weight:600;}
@@ -5709,6 +5708,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .note-month-pane-close{border:0;background:transparent;color:var(--text-secondary);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:var(--r);}
   .note-month-pane-close:hover{color:var(--accent);background:var(--accent-light);}
   .note-month-pane-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:var(--sp-20);scrollbar-gutter:stable both-edges;}
+  .note-month-pane .note-card.collect .note-preview{color:#1a1a1a;}
+  .note-month-pane .note-card.collect .note-head{flex-wrap:wrap;}
+  .note-month-pane .note-record-date{font-weight:700;color:var(--text-primary);white-space:nowrap;}
+  .note-month-pane .note-card.collect .note-head .note-created{height:auto;margin-inline-start:auto;}
+  .note-month-pane .note-card.collect .note-edit{margin-inline-start:auto;}
   .desktop-note-months .note-month-row[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
   .desktop-note-months .note-month-name{font-size:var(--fs-body);}
   .desktop-note-months .note-month-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
@@ -17460,6 +17464,13 @@ function recordNoteDate(n, value=noteDateInputValue(n.title)){
   date.setHours(0,0,0,0);
   return date;
 }
+function noteRecordDateISO(n){
+  const date=recordNoteDate(n);
+  if(!Number.isFinite(date.getTime()))return '';
+  return [date.getFullYear(),date.getMonth()+1,date.getDate()]
+    .map(part=>String(part).padStart(2,'0')).join('-');
+}
+
 function renderNoteDateLabel(value, n){
   const date=recordNoteDate(n,value);
   if(!Number.isFinite(date.getTime()))return '<div aria-hidden="true"></div>';
@@ -17610,8 +17621,13 @@ function desktopNoteMonthGroups(groups,months){
     if(!rows.length)return '';
     return `<details class="desktop-note-month" data-month="${key}"${state.expanded.has(key)||curSearch||state.tags.size?' open':''} ontoggle="rememberDesktopNoteMonth(this)">
       <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg><span>${noteMonthLabel(key)}</span><small>${rows.length}</small></summary>
-      ${rows.map(n=>`<button type="button" class="desktop-note-date" data-note-id="${esc(n.id)}" aria-current="${state.selected===n.id}">
-        ${renderNoteDateLabel(noteDateInputValue(n.title),n)}<span class="desktop-note-date-copy"><strong>${esc(noteDateInputValue(n.title)?(n.body||'').split('\n').find(line=>line.trim())||'（无内容）':n.title||'（无标题）')}</strong></span></button>`).join('')}
+      ${rows.map(n=>{
+        const date=noteRecordDateISO(n);
+        const shortDate=date?`<time class="desktop-note-date-short" datetime="${date}">${date.slice(8)}/${date.slice(5,7)}</time>`:'';
+        const title=noteDateInputValue(n.title)?(n.body||'').split('\n').find(line=>line.trim())||'（无内容）':n.title||'（无标题）';
+        return `<button type="button" class="desktop-note-date" data-note-id="${esc(n.id)}" aria-current="${state.selected===n.id}">
+          <span class="desktop-note-date-copy"><strong>${esc(title)}</strong></span>${shortDate}</button>`;
+      }).join('')}
     </details>`;
   }).join('')||'<p class="empty-hint">没有匹配的记录</p>';
 }
@@ -17636,6 +17652,18 @@ function renderDesktopNoteIndex(groups,months){
 document.addEventListener('click',event=>{
   const menu=document.getElementById('desktopNoteTagFilter');
   if(menu.open&&!menu.contains(event.target))menu.open=false;
+  const month=event.target.closest('.desktop-note-month > summary')?.parentElement;
+  if(month&&month.dataset.month!==curNoteMonth){
+    event.preventDefault();
+    const state=desktopNoteIndexStateForSub();
+    state.expanded.add(month.dataset.month);
+    state.selected='';
+    curNoteMonth=month.dataset.month;
+    renderNotes();
+    document.getElementById('noteMonthPaneScroll').scrollTop=0;
+    document.querySelector(`.desktop-note-month[data-month="${curNoteMonth}"] > summary`)?.focus({preventScroll:true});
+    return;
+  }
   const button=event.target.closest('.desktop-note-date');
   if(!button)return;
   const id=button.dataset.noteId,key=button.closest('[data-month]').dataset.month;
@@ -17686,6 +17714,7 @@ function renderNotesContent(){
   // 数据变化后若当前月份已经没有记录，自动退回月份总览。
   if(monthMode&&curNoteMonth&&!groups[curNoteMonth]) curNoteMonth='';
   const selectedMonth=monthMode?curNoteMonth:'';
+  const desktopMonth=!!selectedMonth&&isDesktopNoteIndex();
   if(selectedMonth) L=groups[selectedMonth];
   const picker=document.getElementById('noteMonthPicker');
   closeNoteMonthSheet();
@@ -17732,16 +17761,22 @@ function renderNotesContent(){
         `<div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>`;
       const actions=`<button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>`;
-      const head=monthMode?(titleLine?`<div class="note-head">${titleLine}</div>`:''):
+      const recordDate=desktopMonth?noteRecordDateISO(n):'';
+      const dateHeading=recordDate?`<time class="note-record-date" datetime="${recordDate}">${recordDate}</time>`:'';
+      const createdAt=renderNoteCreatedAt(n.createdAt);
+      const sameDay=recordDate&&recordDate===noteRecordDateISO({createdAt:n.createdAt});
+      const headerTime=sameDay?`<span class="note-date note-created">${renderNoteCreatedAt(n.createdAt,true)}</span>`:createdAt;
+      const head=desktopMonth?`<div class="note-head">${dateHeading}${titleLine}${headerTime}</div>`:
+        monthMode?(titleLine?`<div class="note-head">${titleLine}</div>`:''):
         `<div class="note-head">${titleLine}${actions}</div>`;
       const tags=(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
       const foot=monthMode?tags+actions:`<span class="note-subcat">${esc(n.subCat||'灵感')}</span>${tags}`;
       const card=`<div class="note-card collect expanded" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
         ${head}
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
-        <div class="note-foot">${foot}${renderNoteCreatedAt(n.createdAt)}</div>
+        <div class="note-foot">${foot}${desktopMonth?'':createdAt}</div>
       </div>`;
-      return monthMode?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n)}${card}</div>`:card;
+      return monthMode&&!desktopMonth?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n)}${card}</div>`:card;
     }
     // 读书笔记用按段落分行的预览；其他笔记走原版
     const isBook=isBookNote(n);
