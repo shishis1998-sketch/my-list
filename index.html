@@ -1958,6 +1958,12 @@ body.cal-searching .cw-card{display:none;}
 .note-month-ico svg{width:15px;height:15px;display:block;transform:rotate(-90deg);}
 .note-month-name{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:600;line-height:1.2;}
 .note-month-count{font-family:var(--en);font-size:var(--fs-body);color:var(--text-muted);font-variant-numeric:tabular-nums;}
+@media (prefers-reduced-motion: no-preference){
+  .note-month-row .note-month-ico svg{transition:transform 80ms ease-out;}
+  .note-month-row.month-tap .note-month-ico svg{transform:rotate(0);}
+  .note-month-row{transition:opacity 80ms ease-out;}
+  .note-month-card:has(.month-tap) .note-month-row:not(.month-tap){opacity:.35;}
+}
 /* 淡主题色点击反馈保留至导航开始，文字沿用原来的可读颜色。 */
 .note-month-row:active,.note-month-row.month-tap{
   background:rgba(var(--accent-rgb),.08);
@@ -17459,13 +17465,19 @@ function noteMonthLabel(key){
 }
 
 let noteMonthTapTimer=null, noteMonthTapButton=null;
+let noteMonthOverviewPosition=null;
+
+function canAnimateMobileNoteMonth(){
+  return isMobileLayout()&&typeof Element.prototype.animate==='function'&&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 function cancelNoteMonthTap(){
   clearTimeout(noteMonthTapTimer);
   noteMonthTapTimer=null;
   if(noteMonthTapButton)noteMonthTapButton.classList.remove('month-tap');
   noteMonthTapButton=null;
 }
-function withNoteMonthFeedback(button,go){
+function withNoteMonthFeedback(button,go,delay=120){
   cancelNoteMonthTap();
   haptic('tap');
   if(!button){go();return;}
@@ -17477,7 +17489,7 @@ function withNoteMonthFeedback(button,go){
       !document.body.classList.contains('cal-open')&&!document.body.classList.contains('sb-open');
     cancelNoteMonthTap();
     if(valid)go();
-  },120);
+  },delay);
 }
 
 // 只在月份导航时播放：点击反馈后，进入向上淡入，返回向下淡入。
@@ -17492,22 +17504,104 @@ function animateNoteMonthNavigation(back){
   ],{duration:240,easing:'cubic-bezier(.22,.61,.36,1)'});
 }
 
+function captureNoteMonthLabel(label){
+  const rect=label.getBoundingClientRect();
+  if(!rect.width||rect.bottom<=0||rect.top>=window.innerHeight)return null;
+  const style=getComputedStyle(label);
+  return {
+    rect,text:label.textContent,color:style.color,fontFamily:style.fontFamily,
+    fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,
+    letterSpacing:style.letterSpacing
+  };
+}
+
+function moveNoteMonthLabel(source,target,back=false){
+  const destination=target.getBoundingClientRect();
+  if(!destination.width||destination.bottom<=0||destination.top>=window.innerHeight)return false;
+  const {rect,text,...typography}=source;
+  const label=document.createElement('span');
+  label.textContent=text;
+  label.setAttribute('aria-hidden','true');
+  Object.assign(label.style,typography,{
+    position:'fixed',zIndex:'110',left:rect.left+'px',top:rect.top+'px',
+    whiteSpace:'nowrap',pointerEvents:'none'
+  });
+  document.body.append(label);
+  const x=destination.left-rect.left;
+  const y=destination.top-rect.top+(destination.height-rect.height)/2;
+  const easing='cubic-bezier(.22,.61,.36,1)';
+  const motion=label.animate([
+    {transform:'translate(0,0)',opacity:1},
+    {transform:`translate(${x}px,${y}px)`,opacity:1,offset:.9},
+    {transform:`translate(${x}px,${y}px)`,opacity:0}
+  ],{duration:200,easing,fill:'both'});
+  const title=target.animate([{opacity:0,offset:0},{opacity:0,offset:.9},{opacity:1}],
+    {duration:200,fill:'both'});
+  const list=document.getElementById('nlist');
+  const listRect=list.getBoundingClientRect();
+  const belowViewport=Math.max(0,listRect.bottom-window.innerHeight);
+  const reveal=back?list.animate([{opacity:0},{opacity:1}],{duration:160,fill:'both'}):
+    list.animate([
+      {opacity:0,clipPath:'inset(0 0 100% 0)',transform:'translateY(-6px)'},
+      {opacity:1,clipPath:`inset(0 0 ${belowViewport}px 0)`,transform:'translateY(0)'}
+    ],{delay:180,duration:160,easing,fill:'both'});
+  const transition={cancel(){
+    motion.cancel();title.cancel();reveal.cancel();label.remove();
+  }};
+  list._monthTransition=transition;
+  Promise.all([motion.finished,title.finished,reveal.finished]).then(()=>{
+    transition.cancel();
+    if(list._monthTransition===transition)list._monthTransition=null;
+  },()=>{});
+  return true;
+}
+
 function openNoteMonth(key,button){
+  const overviewRow=isMobileLayout()&&button?.classList.contains('note-month-row');
+  const sharedMotion=overviewRow&&canAnimateMobileNoteMonth();
   withNoteMonthFeedback(button,()=>{
+    const source=sharedMotion?captureNoteMonthLabel(button.querySelector('.note-month-name')):null;
+    if(overviewRow)noteMonthOverviewPosition={sub:curNoteSub,scrollY:window.scrollY};
     curNoteMonth=key;
     renderNotes();
-    if(document.body.classList.contains('note-month-split'))document.getElementById('noteMonthPaneScroll').scrollTop=0;
-    else scrollResultsTop();
-    animateNoteMonthNavigation(false);
-  });
+    if(document.body.classList.contains('note-month-split')){
+      document.getElementById('noteMonthPaneScroll').scrollTop=0;
+    }else if(overviewRow){
+      window.scrollTo({top:0,behavior:'instant'});
+    }else{
+      scrollResultsTop();
+    }
+    if(!source||!moveNoteMonthLabel(source,document.getElementById('noteMonthPickerLabel'))){
+      animateNoteMonthNavigation(false);
+    }
+  },sharedMotion?80:overviewRow?0:120);
 }
 
 function closeNoteMonth(button){
-  withNoteMonthFeedback(button,()=>{
+  const mobile=isMobileLayout();
+  const key=curNoteMonth;
+  const position=noteMonthOverviewPosition;
+  const pickerLabel=document.getElementById('noteMonthPickerLabel');
+  const source=canAnimateMobileNoteMonth()?captureNoteMonthLabel(pickerLabel):null;
+  const go=()=>{
+    noteMonthOverviewPosition=null;
     curNoteMonth='';
     renderNotes();
-    scrollResultsTop();
-    animateNoteMonthNavigation(true);
+    if(mobile&&position?.sub===curNoteSub){
+      window.scrollTo({top:position.scrollY,behavior:'instant'});
+    }else{
+      scrollResultsTop();
+    }
+    const target=document.querySelector(`.note-month-row[data-month="${key}"] .note-month-name`);
+    if(!source||!target||!moveNoteMonthLabel(source,target,true))animateNoteMonthNavigation(true);
+  };
+  withNoteMonthFeedback(button,()=>{
+    if(!source){go();return;}
+    const list=document.getElementById('nlist');
+    if(list._monthTransition)list._monthTransition.cancel();
+    const fade=list.animate([{opacity:1},{opacity:0}],{duration:90,fill:'forwards'});
+    list._monthTransition=fade;
+    fade.finished.then(go,()=>{});
   });
 }
 
@@ -17569,7 +17663,7 @@ function groupNotesByMonth(list){
 
 function renderNoteMonthOverview(groups, keys){
   return '<div class="note-month-card" role="list">'+keys.map(key=>
-    `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}',this)">`+
+    `<button type="button" class="note-month-row" data-month="${key}" role="listitem" onclick="openNoteMonth('${key}',this)">`+
       `<span class="note-month-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
