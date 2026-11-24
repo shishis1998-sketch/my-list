@@ -11615,10 +11615,11 @@ const SIDEBAR_CATEGORY_ICONS=new Map([
 ]);
 
 function renderSidebar(){
-  // 媒体「全部」高亮：仅 curCat==='all' 时亮（修复笔记模式下仍残留 on 的双高亮）
-  document.getElementById('nav-all').classList.toggle('on', curCat==='all');
+  // 日历是独立页面；保留列表分类，但只在列表可见时高亮。
+  const listActive=!document.body.classList.contains('cal-open');
+  document.getElementById('nav-all').classList.toggle('on', listActive&&curCat==='all');
   document.getElementById('cat-nav').innerHTML=cats.map(c=>`
-    <button class="nitem ${curCat===c.id?'on':''}" onclick="filterCat('${c.id}')">
+    <button class="nitem ${listActive&&curCat===c.id?'on':''}" onclick="filterCat('${c.id}')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${SIDEBAR_CATEGORY_ICONS.get(c.name)||'M4 7h7l2 2h7v10H4z'}"/></svg>${esc(c.name)}
     </button>`).join('');
   // 手机端设置页:分类管理列表(点=打开分类管理弹窗编辑)
@@ -11680,7 +11681,7 @@ function renderNotesSidebar(){
   userNotes().forEach(n=>{if(subCnt[n.subCat]!==undefined)subCnt[n.subCat]++;});
   const items=[];
   noteSubs.forEach(s=>{
-    items.push(`<button class="nitem ${curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
+    items.push(`<button class="nitem ${!document.body.classList.contains('cal-open')&&curCat==='notes:'+s?'on':''}" onclick="filterCat('notes:${esc(s).replace(/'/g,"\\'")}')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons.get(s) ?? noteIcon}"/></svg>${esc(s)}
     </button>`);
   });
@@ -16019,6 +16020,7 @@ function openCalendar(view){
   closeDetail();                                  // 详情页开着的话先退回列表
   document.body.classList.remove('tabs-hidden');  // 列表页可能正收着底栏，这页底栏是唯一导航
   document.body.classList.add('cal-open');        // 独立页模式：底栏浮于其上、只留 tab
+  renderSidebar();
   document.getElementById('calRoot').classList.add('open');
   const today=new Date();
   if(initialView==='food'&&calFoodPosition){
@@ -16059,6 +16061,7 @@ function closeCalendar(){
   const returnSearch=document.body.classList.contains('cal-searching')?(inp?inp.value:''):null;
   document.getElementById('calRoot').classList.remove('open');
   document.body.classList.remove('cal-open');
+  renderSidebar();
   closeCalViewSheet();             // 视图卡片跟着日历页一起收
   syncCalTabLabel();               // cal-open 已去掉 → tab 文字回到「日历」
   document.body.classList.remove('cal-view-period');
