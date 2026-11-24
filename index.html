@@ -1948,21 +1948,16 @@ body.cal-searching .cw-card{display:none;}
 
 /* 笔记卡片列表 */
 .note-list{display:flex;flex-direction:column;gap:var(--sp-10);}
-.note-month-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  overflow:hidden;
-}
+.note-month-card{display:flex;flex-direction:column;gap:var(--sp-10);}
 .note-month-row{
-  width:100%;min-height:60px;padding:0 var(--note-month-padding);display:flex;align-items:center;gap:var(--note-month-gap);
-  border:0;border-bottom:1px solid var(--border-soft);background:transparent;color:var(--text-primary);
+  width:100%;min-height:48px;padding:0 var(--note-month-padding);display:flex;align-items:center;gap:var(--note-month-gap);
+  border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);color:var(--text-primary);
   cursor:pointer;font-family:var(--zh);text-align:left;
 }
-.note-month-row:last-child{border-bottom:0;}
 .note-month-ico{
-  width:var(--note-month-icon);height:var(--note-month-icon);flex:none;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
-  color:var(--accent);background:var(--accent-light);
+  width:var(--note-month-icon);height:32px;flex:none;display:flex;align-items:center;color:var(--text-muted);
 }
-.note-month-ico svg{width:17px;height:17px;display:block;}
+.note-month-ico svg{width:15px;height:15px;display:block;transform:rotate(-90deg);}
 .note-month-name{flex:1;min-width:0;font-size:var(--fs-headline);font-weight:600;line-height:1.2;}
 .note-month-count{font-family:var(--en);font-size:var(--fs-body);color:var(--text-muted);font-variant-numeric:tabular-nums;}
 /* 淡主题色点击反馈保留至导航开始，文字沿用原来的可读颜色。 */
@@ -17600,7 +17595,7 @@ function groupNotesByMonth(list){
 function renderNoteMonthOverview(groups, keys){
   return '<div class="note-month-card" role="list">'+keys.map(key=>
     `<button type="button" class="note-month-row" role="listitem" onclick="openNoteMonth('${key}',this)">`+
-      `<span class="note-month-ico">${NOTE_MONTH_ICON}</span>`+
+      `<span class="note-month-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
     `</button>`
