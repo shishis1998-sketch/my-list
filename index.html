@@ -5652,6 +5652,43 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #timeModal .time-edit-row{min-height:44px;}
 #timeModal .time-edit-row output{display:flex;align-items:center;min-width:0;min-height:44px;padding:0 var(--sp-12);box-sizing:border-box;font-size:var(--fs-input);line-height:var(--lh-normal);color:var(--text-primary);font-variant-numeric:tabular-nums;}
 
+
+/* 电脑端月份目录沿用书籍目录的描边、圆角与主题色交互。 */
+@media(min-width:1025px) and (pointer:fine){
+  .desktop-note-index{min-width:0;}
+  .desktop-note-tools{position:sticky;top:0;z-index:4;background:var(--bg);padding:0 0 10px;display:flex;align-items:center;gap:8px;}
+  .desktop-note-tools>strong{flex:1;font-size:var(--fs-body);}
+  .desktop-note-tool{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:var(--r);background:transparent;color:var(--text-secondary);cursor:pointer;}
+  .desktop-note-tool:hover,.desktop-note-tool:focus-visible{color:var(--accent);background:var(--accent-light);}
+  .desktop-note-tool svg{width:18px;height:18px;}
+  .desktop-note-search{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);padding:8px 10px;margin-bottom:10px;font:inherit;font-size:var(--fs-caption);}
+  .desktop-note-search[hidden]{display:none;}
+  .desktop-note-tags{position:relative;}
+  .desktop-note-tags>summary{list-style:none;}
+  .desktop-note-tags>summary::-webkit-details-marker{display:none;}
+  .desktop-note-tags[open]>summary{color:var(--accent);background:var(--accent-light);}
+  .desktop-note-tag-menu{position:absolute;right:0;top:36px;z-index:5;min-width:140px;max-width:240px;max-height:280px;overflow:auto;padding:4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
+  .desktop-note-tag-menu label{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--r);font-size:var(--fs-caption);cursor:pointer;overflow-wrap:anywhere;}
+  .desktop-note-tag-menu label:hover{background:var(--accent-light);}
+  .desktop-note-tag-menu input{accent-color:var(--accent);}
+  .desktop-note-month{border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);margin-bottom:8px;overflow:hidden;}
+  .desktop-note-month>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 10px;box-sizing:border-box;font-size:var(--fs-sub);font-weight:600;cursor:pointer;}
+  .desktop-note-month>summary::-webkit-details-marker{display:none;}
+  .desktop-note-month>summary:hover{background:var(--accent-light);}
+  .desktop-note-month>summary svg{width:16px;height:16px;flex:none;transform:rotate(-90deg);}
+  .desktop-note-month[open]>summary svg{transform:none;}
+  .desktop-note-month>summary span{flex:1;}
+  .desktop-note-month>summary small{font-weight:400;color:var(--text-muted);}
+  .desktop-note-date{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:10px;border:0;border-top:1px solid var(--border-soft);background:transparent;color:var(--text-primary);font:inherit;text-align:left;cursor:pointer;}
+  .desktop-note-date:hover,.desktop-note-date[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
+  .desktop-note-date .note-dated-label{flex:0 0 30px;margin:0;}
+  .desktop-note-date .note-dated-day{font-size:var(--fs-body);}
+  .desktop-note-date-copy{flex:1;min-width:0;}
+  .desktop-note-date-copy strong,.desktop-note-date-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .desktop-note-date-copy strong{font-size:var(--fs-caption);font-weight:600;}
+  .desktop-note-date-copy small{font-size:var(--fs-caption);color:var(--text-muted);margin-top:4px;}
+}
+
 .desktop-note-months,.note-month-pane{display:none;}
 @media(min-width:1025px) and (pointer:fine){
   body.notes-mode.note-month-split:not(.cal-open) .app>.main{
@@ -17554,6 +17591,57 @@ function renderNoteMonthOverview(groups, keys){
   ).join('')+'</div>';
 }
 
+// 仅桌面端中栏的筛选和折叠状态；不改变右侧正文或手机端筛选。
+const desktopNoteIndexState=new Map();
+function desktopNoteIndexStateForSub(){
+  if(!desktopNoteIndexState.has(curNoteSub))desktopNoteIndexState.set(curNoteSub,{search:'',searchOpen:false,tags:new Set(),expanded:new Set(),selected:''});
+  return desktopNoteIndexState.get(curNoteSub);
+}
+function isDesktopNoteIndex(){return window.matchMedia('(min-width:1025px) and (pointer:fine)').matches&&noteUsesRecordDates(curNoteSub);}
+function desktopNoteMonthGroups(groups,months){
+  const state=desktopNoteIndexStateForSub(),q=state.search.toLocaleLowerCase();
+  return months.map(key=>{
+    const rows=groups[key].filter(n=>(!q||[n.title,n.body,...(n.tags||[])].join(' ').toLocaleLowerCase().includes(q))&&[...state.tags].every(t=>(n.tags||[]).includes(t)));
+    if(!rows.length)return '';
+    return `<details class="desktop-note-month" data-month="${key}"${state.expanded.has(key)||q||state.tags.size?' open':''} ontoggle="rememberDesktopNoteMonth(this)">
+      <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg><span>${noteMonthLabel(key)}</span><small>${rows.length}</small></summary>
+      ${rows.map(n=>`<button type="button" class="desktop-note-date" data-note-id="${esc(n.id)}" aria-current="${state.selected===n.id}">
+        ${renderNoteDateLabel(noteDateInputValue(n.title),n)}<span class="desktop-note-date-copy"><strong>${esc(noteDateInputValue(n.title)?(n.body||'').split('\n').find(line=>line.trim())||'（无内容）':n.title||'（无标题）')}</strong><small>${esc((n.body||'').replace(/\s+/g,' ').slice(0,100))}</small></span></button>`).join('')}
+    </details>`;
+  }).join('')||'<p class="empty-hint">没有匹配的记录</p>';
+}
+function rememberDesktopNoteMonth(el){
+  const state=desktopNoteIndexStateForSub();
+  if(el.open)state.expanded.add(el.dataset.month);else state.expanded.delete(el.dataset.month);
+}
+function refreshDesktopNoteIndex(){
+  const groups=groupNotesByMonth(filteredNotes()),months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
+  document.querySelectorAll('.desktop-note-index-groups').forEach(el=>el.innerHTML=desktopNoteMonthGroups(groups,months));
+}
+function toggleDesktopNoteIndexSearch(button){
+  const state=desktopNoteIndexStateForSub();state.searchOpen=!state.searchOpen;
+  const input=button.closest('.desktop-note-index').querySelector('.desktop-note-search');
+  input.hidden=!state.searchOpen;button.setAttribute('aria-expanded',String(state.searchOpen));
+  if(state.searchOpen)input.focus();else{state.search='';input.value='';refreshDesktopNoteIndex();}
+}
+function renderDesktopNoteIndex(groups,months){
+  const state=desktopNoteIndexStateForSub();
+  const tags=[...new Set(Object.values(groups).flat().flatMap(n=>n.tags||[]))];
+  return `<div class="desktop-note-index"><div class="desktop-note-tools"><strong>月份</strong>
+    <button type="button" class="desktop-note-tool" aria-label="搜索记录" aria-expanded="${state.searchOpen}" onclick="toggleDesktopNoteIndexSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></button>
+    <details class="desktop-note-tags"><summary class="desktop-note-tool" aria-label="标签筛选"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1"/></svg></summary><div class="desktop-note-tag-menu">${tags.length?tags.map(tag=>`<label><input type="checkbox" value="${esc(tag)}"${state.tags.has(tag)?' checked':''} onchange="const tags=desktopNoteIndexStateForSub().tags;if(this.checked)tags.add(this.value);else tags.delete(this.value);refreshDesktopNoteIndex()">${esc(tag)}</label>`).join(''):'暂无标签'}</div></details>
+    </div><input class="desktop-note-search" type="search" aria-label="搜索中栏记录" placeholder="搜索标题、正文、标签…" value="${esc(state.search)}"${state.searchOpen?'':' hidden'} oninput="desktopNoteIndexStateForSub().search=this.value;refreshDesktopNoteIndex()"><div class="desktop-note-index-groups">${desktopNoteMonthGroups(groups,months)}</div></div>`;
+}
+document.addEventListener('click',event=>{
+  const button=event.target.closest('.desktop-note-date');
+  if(!button)return;
+  const id=button.dataset.noteId,key=button.closest('[data-month]').dataset.month;
+  const state=desktopNoteIndexStateForSub();state.selected=id;state.expanded.add(key);
+  curNoteMonth=key;renderNotes();
+  const target=[...document.querySelectorAll('#nlist .note-card[data-nid]')].find(el=>el.dataset.nid===id);
+  if(target){const pane=document.getElementById('noteMonthPaneScroll');pane.scrollTop=Math.max(0,target.getBoundingClientRect().top-pane.getBoundingClientRect().top+pane.scrollTop-12);}
+});
+
 function resetDesktopNoteMonthPane(){
   const content=document.querySelector('.main>.content');
   content.append(document.getElementById('nlist'),document.getElementById('nempty'));
@@ -17572,7 +17660,7 @@ function renderNotes(){
   const groups=groupNotesByMonth(filteredNotes());
   const months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
   const nav=document.getElementById('desktopNoteMonths');
-  nav.innerHTML=renderNoteMonthOverview(groups,months);
+  nav.innerHTML=renderDesktopNoteIndex(groups,months);
   nav.querySelectorAll('.note-month-row').forEach((button,i)=>button.setAttribute('aria-current',String(months[i]===curNoteMonth)));
   document.getElementById('noteMonthPaneTitle').textContent=noteMonthLabel(curNoteMonth);
   document.getElementById('vcnt').textContent=filteredNotes().length+' 条笔记';
@@ -17623,7 +17711,7 @@ function renderNotesContent(){
   list.style.display='';
   empty.style.display='none';
   if(monthMode&&!curNoteMonth){
-    list.innerHTML=renderNoteMonthOverview(groups,months);
+    list.innerHTML=isDesktopNoteIndex()?renderDesktopNoteIndex(groups,months):renderNoteMonthOverview(groups,months);
     return;
   }
   list.innerHTML=L.map(n=>{
