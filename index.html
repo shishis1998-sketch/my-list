@@ -17789,6 +17789,7 @@ function renderNotesContent(){
   document.getElementById('vtitle').textContent=curNoteSub;
   let L=filteredNotes();
   const monthMode=noteUsesRecordDates(curNoteSub);
+  if(monthMode)document.body.classList.remove('tabs-hidden');
   const groups=monthMode?groupNotesByMonth(L):{};
   const months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
   // 数据变化后若当前月份已经没有记录，自动退回月份总览。
@@ -20382,7 +20383,7 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   // 只监听正文区域，分类栏横滑、底部操作、弹窗和其他页面不参与。
   let noteTouch=null;
   function noteGestureEnabled(){
-    return isMobileLayout()&&isNoteMode()&&
+    return isMobileLayout()&&isNoteMode()&&!noteUsesRecordDates(curNoteSub)&&
       !['cal-open','detail-open','sb-open','modal-open','kb-open'].some(c=>document.body.classList.contains(c));
   }
   document.addEventListener('touchstart',e=>{
