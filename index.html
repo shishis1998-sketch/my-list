@@ -1038,7 +1038,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   .content{--content-gutter:var(--sp-14);padding:var(--content-gutter);overflow:visible;flex:none;}
   body.notes-mode .content{
     --note-card-inset:var(--sp-14);
-    --note-date-column:calc(var(--note-month-text-inset) - var(--sp-10) - var(--note-card-inset) - var(--bd));
     padding-top:0;
   }
   body.notes-mode .content>.vhdr{
@@ -1055,7 +1054,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   }
   body.notes-mode .content:has(#nlist[data-memo-view])>.vhdr{margin-bottom:var(--sp-8);}
   body.notes-mode .content:has(#nlist[data-memo-view]) #vcnt{display:none;}
-  body.notes-mode .note-dated-label{margin-inline-start:calc(-1 * var(--content-gutter));}
   body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{
     min-height:calc(54px + env(safe-area-inset-top));
     padding-top:calc(var(--sp-8) + env(safe-area-inset-top));
@@ -3401,20 +3399,10 @@ mark.shl{
   background:var(--surface);box-shadow:none;
 }
 .content,.note-month-pane{
-  --note-date-column:calc(3 * var(--fs-sub));
   --note-month-padding:var(--sp-16);
   --note-month-icon:30px;
   --note-month-gap:var(--sp-12);
   --note-month-text-inset:calc(1px + var(--note-month-padding) + var(--note-month-icon) + var(--note-month-gap));
-}
-.note-dated-row{
-  display:grid;grid-template-columns:var(--note-date-column) minmax(0,1fr);gap:var(--sp-10);
-  align-items:start;font-size:var(--fs-sub);
-}
-.note-dated-label{
-  display:flex;flex-direction:column;align-items:center;gap:var(--sp-4);
-  margin-inline-end:calc(-1 * var(--sp-10));
-  padding-top:var(--sp-14);line-height:var(--lh-tight);
 }
 .note-month-picker{
   min-height:32px;padding:0;border:0;border-radius:var(--r);
@@ -3436,17 +3424,16 @@ mark.shl{
 #noteMonthPanel .bb-sortopt.on{color:var(--accent);background:var(--accent-light);}
 #noteMonthPanel .bb-sortopt.on svg{color:var(--accent);}
 #noteMonthPanel .bb-sortopt:focus-visible{background:var(--accent-light);}
-.note-dated-day{font-size:var(--fs-title);font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;}
-.note-dated-weekday{font-size:var(--fs-caption);color:var(--text-muted);}
-.note-list[data-month-view]:has(> .note-dated-row){gap:var(--sp-12);}
-.note-dated-row .note-card.collect{padding-bottom:var(--sp-14);}
-.note-dated-row .note-card.collect .note-foot{margin-top:var(--sp-14);}
+.note-list:has(> .note-record-card){gap:var(--sp-12);}
+.note-card.collect.note-record-card{padding-bottom:var(--sp-14);}
+.note-record-card .note-record-date{color:var(--text-muted);font-weight:600;white-space:nowrap;}
+.note-card.collect.note-record-card .note-foot{margin-top:var(--sp-14);}
 .note-card.collect .note-created{max-width:100%;margin-left:auto;text-align:right;overflow-wrap:anywhere;flex-shrink:1;}
 @media (hover:none){
-  .note-dated-row .note-foot:not(:has(.ctag)){display:none;}
+  .note-record-card .note-foot:not(:has(.ctag,.note-created)){display:none;}
 }
 @media (hover:hover){
-  .note-dated-row .note-foot .note-edit{margin-left:auto;}
+  .note-record-card .note-foot .note-edit{margin-left:auto;}
 }
 .note-title{color:var(--text-primary);}
 .note-date{font-family:var(--zh);}
@@ -17466,18 +17453,6 @@ function noteRecordDateISO(n){
     .map(part=>String(part).padStart(2,'0')).join('-');
 }
 
-function renderNoteDateLabel(value, n){
-  const date=recordNoteDate(n,value);
-  if(!Number.isFinite(date.getTime()))return '<div aria-hidden="true"></div>';
-  const day=String(date.getDate()).padStart(2,'0');
-  const weekday='周'+'日一二三四五六'[date.getDay()];
-  const iso=value||date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+day;
-  return `<time class="note-dated-label" datetime="${iso}">
-    <span class="note-dated-day">${day}</span>
-    <span class="note-dated-weekday">${weekday}</span>
-  </time>`;
-}
-
 function noteMonthLabel(key){
   const p=String(key||'').split('-');
   return p.length===2?(Number(p[0])+'年'+Number(p[1])+'月'):key;
@@ -17756,22 +17731,21 @@ function renderNotesContent(){
         `<div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>`;
       const actions=`<button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>`;
-      const recordDate=desktopMonth?noteRecordDateISO(n):'';
+      const recordDate=monthMode?noteRecordDateISO(n):'';
       const dateHeading=recordDate?`<time class="note-record-date" datetime="${recordDate}">${recordDate}</time>`:'';
       const createdAt=renderNoteCreatedAt(n.createdAt);
-      const sameDay=recordDate&&recordDate===noteRecordDateISO({createdAt:n.createdAt});
+      const sameDay=desktopMonth&&recordDate&&recordDate===noteRecordDateISO({createdAt:n.createdAt});
       const headerTime=sameDay?`<span class="note-date note-created">${renderNoteCreatedAt(n.createdAt,true)}</span>`:createdAt;
       const head=desktopMonth?`<div class="note-head">${dateHeading}${titleLine}${headerTime}</div>`:
-        monthMode?(titleLine||createdAt?`<div class="note-head">${titleLine}${createdAt}</div>`:''):
+        monthMode?(dateHeading||titleLine?`<div class="note-head">${dateHeading}${titleLine}</div>`:''):
         `<div class="note-head">${titleLine}${actions}</div>`;
       const tags=(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
       const foot=monthMode?tags+actions:`<span class="note-subcat">${esc(n.subCat||'灵感')}</span>${tags}`;
-      const card=`<div class="note-card collect expanded" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
+      return `<div class="note-card collect expanded${monthMode&&!desktopMonth?' note-record-card':''}" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
         ${head}
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
-        <div class="note-foot">${foot}${monthMode?'':createdAt}</div>
+        <div class="note-foot">${foot}${desktopMonth?'':createdAt}</div>
       </div>`;
-      return monthMode&&!desktopMonth?`<div class="note-dated-row">${renderNoteDateLabel(dateTitle,n)}${card}</div>`:card;
     }
     // 读书笔记用按段落分行的预览；其他笔记走原版
     const isBook=isBookNote(n);
