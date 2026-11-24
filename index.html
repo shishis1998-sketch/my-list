@@ -5694,8 +5694,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     /* 滚动条两侧对称预留，避免右侧卡片外留白比左侧更宽。 */
     scrollbar-gutter:stable both-edges;
   }
-  /* 备忘页抵消两侧各 10px 的滚动条预留，与顶栏的 24px 留白对齐。 */
-  body.notes-mode:not(.note-month-split) .app>.main>.content:has(#nlist[data-memo-view]){
+  /* 笔记各分类抵消两侧各 10px 的滚动条预留，与顶栏的 24px 留白对齐。 */
+  body.notes-mode:not(.note-month-split) .app>.main>.content{
     padding-inline:calc(var(--sp-24) - 10px);
   }
   body.notes-mode .app>.main>.content>.vhdr,
