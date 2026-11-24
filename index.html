@@ -5656,13 +5656,9 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 /* 电脑端月份目录沿用书籍目录的描边、圆角与主题色交互。 */
 @media(min-width:1025px) and (pointer:fine){
   .desktop-note-index{min-width:0;}
-  .desktop-note-tools{position:sticky;top:0;z-index:4;background:var(--bg);padding:0 0 10px;display:flex;align-items:center;gap:8px;}
-  .desktop-note-tools>strong{flex:1;font-size:var(--fs-body);}
   .desktop-note-tool{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:var(--r);background:transparent;color:var(--text-secondary);cursor:pointer;}
   .desktop-note-tool:hover,.desktop-note-tool:focus-visible{color:var(--accent);background:var(--accent-light);}
   .desktop-note-tool svg{width:18px;height:18px;}
-  .desktop-note-search{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);padding:8px 10px;margin-bottom:10px;font:inherit;font-size:var(--fs-caption);}
-  .desktop-note-search[hidden]{display:none;}
   .desktop-note-tags{position:relative;}
   .desktop-note-tags>summary{list-style:none;}
   .desktop-note-tags>summary::-webkit-details-marker{display:none;}
@@ -5690,6 +5686,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 }
 
 .desktop-note-months,.note-month-pane{display:none;}
+#desktopNoteTagFilter{display:none;}
+@media(min-width:1025px) and (pointer:fine){
+  body.notes-mode:has(#nlist[data-month-view]) #desktopNoteTagFilter{display:block;}
+  #desktopNoteTagOptions{top:44px;}
+  #desktopNoteTagFilter>summary{width:auto;padding:0 10px;gap:6px;border:1px solid var(--border);background:var(--surface);height:40px;font-size:var(--fs-caption);}
+}
 @media(min-width:1025px) and (pointer:fine){
   body.notes-mode.note-month-split:not(.cal-open) .app>.main{
     display:grid;grid-template-columns:300px minmax(0,1fr);
@@ -6284,6 +6286,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
       筛选
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
+    <details class="desktop-note-tags" id="desktopNoteTagFilter">
+      <summary class="desktop-note-tool" aria-label="标签筛选">标签<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg></summary>
+      <div class="desktop-note-tag-menu" id="desktopNoteTagOptions"></div>
+    </details>
     <select class="ssort" onchange="onSort(this.value)">
       <option value="media-auto" selected>默认排序</option>
       <option value="upd-desc">最近修改</option>
@@ -17594,16 +17600,16 @@ function renderNoteMonthOverview(groups, keys){
 // 仅桌面端中栏的筛选和折叠状态；不改变右侧正文或手机端筛选。
 const desktopNoteIndexState=new Map();
 function desktopNoteIndexStateForSub(){
-  if(!desktopNoteIndexState.has(curNoteSub))desktopNoteIndexState.set(curNoteSub,{search:'',searchOpen:false,tags:new Set(),expanded:new Set(),selected:''});
+  if(!desktopNoteIndexState.has(curNoteSub))desktopNoteIndexState.set(curNoteSub,{tags:new Set(),expanded:new Set(),selected:''});
   return desktopNoteIndexState.get(curNoteSub);
 }
 function isDesktopNoteIndex(){return window.matchMedia('(min-width:1025px) and (pointer:fine)').matches&&noteUsesRecordDates(curNoteSub);}
 function desktopNoteMonthGroups(groups,months){
-  const state=desktopNoteIndexStateForSub(),q=state.search.toLocaleLowerCase();
+  const state=desktopNoteIndexStateForSub();
   return months.map(key=>{
-    const rows=groups[key].filter(n=>(!q||[n.title,n.body,...(n.tags||[])].join(' ').toLocaleLowerCase().includes(q))&&[...state.tags].every(t=>(n.tags||[]).includes(t)));
+    const rows=groups[key].filter(n=>[...state.tags].every(t=>(n.tags||[]).includes(t)));
     if(!rows.length)return '';
-    return `<details class="desktop-note-month" data-month="${key}"${state.expanded.has(key)||q||state.tags.size?' open':''} ontoggle="rememberDesktopNoteMonth(this)">
+    return `<details class="desktop-note-month" data-month="${key}"${state.expanded.has(key)||curSearch||state.tags.size?' open':''} ontoggle="rememberDesktopNoteMonth(this)">
       <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg><span>${noteMonthLabel(key)}</span><small>${rows.length}</small></summary>
       ${rows.map(n=>`<button type="button" class="desktop-note-date" data-note-id="${esc(n.id)}" aria-current="${state.selected===n.id}">
         ${renderNoteDateLabel(noteDateInputValue(n.title),n)}<span class="desktop-note-date-copy"><strong>${esc(noteDateInputValue(n.title)?(n.body||'').split('\n').find(line=>line.trim())||'（无内容）':n.title||'（无标题）')}</strong><small>${esc((n.body||'').replace(/\s+/g,' ').slice(0,100))}</small></span></button>`).join('')}
@@ -17618,21 +17624,19 @@ function refreshDesktopNoteIndex(){
   const groups=groupNotesByMonth(filteredNotes()),months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
   document.querySelectorAll('.desktop-note-index-groups').forEach(el=>el.innerHTML=desktopNoteMonthGroups(groups,months));
 }
-function toggleDesktopNoteIndexSearch(button){
-  const state=desktopNoteIndexStateForSub();state.searchOpen=!state.searchOpen;
-  const input=button.closest('.desktop-note-index').querySelector('.desktop-note-search');
-  input.hidden=!state.searchOpen;button.setAttribute('aria-expanded',String(state.searchOpen));
-  if(state.searchOpen)input.focus();else{state.search='';input.value='';refreshDesktopNoteIndex();}
+function syncDesktopNoteTagFilter(){
+  const menu=document.getElementById('desktopNoteTagFilter');
+  if(!isDesktopNoteIndex()){menu.open=false;return;}
+  const state=desktopNoteIndexStateForSub();
+  const tags=[...new Set(userNotes().filter(n=>n.subCat===curNoteSub).flatMap(n=>n.tags||[]))];
+  document.getElementById('desktopNoteTagOptions').innerHTML=tags.length?tags.map(tag=>`<label><input type="checkbox" value="${esc(tag)}"${state.tags.has(tag)?' checked':''} onchange="const tags=desktopNoteIndexStateForSub().tags;if(this.checked)tags.add(this.value);else tags.delete(this.value);refreshDesktopNoteIndex()">${esc(tag)}</label>`).join(''):'暂无标签';
 }
 function renderDesktopNoteIndex(groups,months){
-  const state=desktopNoteIndexStateForSub();
-  const tags=[...new Set(Object.values(groups).flat().flatMap(n=>n.tags||[]))];
-  return `<div class="desktop-note-index"><div class="desktop-note-tools"><strong>月份</strong>
-    <button type="button" class="desktop-note-tool" aria-label="搜索记录" aria-expanded="${state.searchOpen}" onclick="toggleDesktopNoteIndexSearch(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></button>
-    <details class="desktop-note-tags"><summary class="desktop-note-tool" aria-label="标签筛选"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h8l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1"/></svg></summary><div class="desktop-note-tag-menu">${tags.length?tags.map(tag=>`<label><input type="checkbox" value="${esc(tag)}"${state.tags.has(tag)?' checked':''} onchange="const tags=desktopNoteIndexStateForSub().tags;if(this.checked)tags.add(this.value);else tags.delete(this.value);refreshDesktopNoteIndex()">${esc(tag)}</label>`).join(''):'暂无标签'}</div></details>
-    </div><input class="desktop-note-search" type="search" aria-label="搜索中栏记录" placeholder="搜索标题、正文、标签…" value="${esc(state.search)}"${state.searchOpen?'':' hidden'} oninput="desktopNoteIndexStateForSub().search=this.value;refreshDesktopNoteIndex()"><div class="desktop-note-index-groups">${desktopNoteMonthGroups(groups,months)}</div></div>`;
+  return `<div class="desktop-note-index"><div class="desktop-note-index-groups">${desktopNoteMonthGroups(groups,months)}</div></div>`;
 }
 document.addEventListener('click',event=>{
+  const menu=document.getElementById('desktopNoteTagFilter');
+  if(menu.open&&!menu.contains(event.target))menu.open=false;
   const button=event.target.closest('.desktop-note-date');
   if(!button)return;
   const id=button.dataset.noteId,key=button.closest('[data-month]').dataset.month;
@@ -17654,6 +17658,7 @@ function renderNotes(){
   const wasSplit=document.body.classList.contains('note-month-split');
   resetDesktopNoteMonthPane();
   renderNotesContent();
+  syncDesktopNoteTagFilter();
   const split=window.matchMedia('(min-width:1025px) and (pointer:fine)').matches&&
     noteUsesRecordDates(curNoteSub)&&!!curNoteMonth;
   if(!split)return;
