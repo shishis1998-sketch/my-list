@@ -1052,6 +1052,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     padding-inline-start:calc(var(--content-gutter) + var(--note-card-inset) + var(--bd));
     background:var(--bg);
   }
+  body.notes-mode .content:has(#nlist[data-memo-view])>.vhdr{margin-bottom:var(--sp-8);}
+  body.notes-mode .content:has(#nlist[data-memo-view]) #vcnt{display:none;}
   body.notes-mode .note-dated-label{margin-inline-start:calc(-1 * var(--content-gutter));}
   body.notes-mode .content:has(#nlist[data-month-view])>.vhdr{
     min-height:calc(54px + env(safe-area-inset-top));
@@ -17602,6 +17604,7 @@ function renderNotesContent(){
   // 渲染列表
   const list=document.getElementById('nlist');
   list.toggleAttribute('data-month-view',monthMode);
+  list.toggleAttribute('data-memo-view',curNoteSub==='备忘');
   if(list._monthTransition){list._monthTransition.cancel();list._monthTransition=null;}
   const empty=document.getElementById('nempty');
   if(!L.length){
