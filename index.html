@@ -5677,12 +5677,11 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .desktop-note-month>summary small{font-weight:400;color:var(--text-muted);}
   .desktop-note-date{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:10px;border:0;border-top:1px solid var(--border-soft);background:transparent;color:var(--text-primary);font:inherit;text-align:left;cursor:pointer;}
   .desktop-note-date:hover,.desktop-note-date[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
-  .desktop-note-date .note-dated-label{flex:0 0 30px;margin:0;}
+  .desktop-note-date .note-dated-label{flex:0 0 30px;margin:0;padding-top:0;align-self:center;}
   .desktop-note-date .note-dated-day{font-size:var(--fs-body);}
   .desktop-note-date-copy{flex:1;min-width:0;}
-  .desktop-note-date-copy strong,.desktop-note-date-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .desktop-note-date-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .desktop-note-date-copy strong{font-size:var(--fs-caption);font-weight:600;}
-  .desktop-note-date-copy small{font-size:var(--fs-caption);color:var(--text-muted);margin-top:4px;}
 }
 
 .desktop-note-months,.note-month-pane{display:none;}
@@ -17612,7 +17611,7 @@ function desktopNoteMonthGroups(groups,months){
     return `<details class="desktop-note-month" data-month="${key}"${state.expanded.has(key)||curSearch||state.tags.size?' open':''} ontoggle="rememberDesktopNoteMonth(this)">
       <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg><span>${noteMonthLabel(key)}</span><small>${rows.length}</small></summary>
       ${rows.map(n=>`<button type="button" class="desktop-note-date" data-note-id="${esc(n.id)}" aria-current="${state.selected===n.id}">
-        ${renderNoteDateLabel(noteDateInputValue(n.title),n)}<span class="desktop-note-date-copy"><strong>${esc(noteDateInputValue(n.title)?(n.body||'').split('\n').find(line=>line.trim())||'（无内容）':n.title||'（无标题）')}</strong><small>${esc((n.body||'').replace(/\s+/g,' ').slice(0,100))}</small></span></button>`).join('')}
+        ${renderNoteDateLabel(noteDateInputValue(n.title),n)}<span class="desktop-note-date-copy"><strong>${esc(noteDateInputValue(n.title)?(n.body||'').split('\n').find(line=>line.trim())||'（无内容）':n.title||'（无标题）')}</strong></span></button>`).join('')}
     </details>`;
   }).join('')||'<p class="empty-hint">没有匹配的记录</p>';
 }
