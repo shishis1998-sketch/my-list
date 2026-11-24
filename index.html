@@ -2986,10 +2986,9 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 }
 .memo-tag-pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .memo-tag-pill svg{width:14px;height:14px;flex-shrink:0;}
-.memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:170px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
+.memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:140px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:6px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
 .memo-tag-menu label{display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;overflow-wrap:anywhere;}
 .memo-tag-menu input{accent-color:var(--accent);}
-.memo-tag-menu button{width:100%;padding:8px;border:0;border-top:1px solid var(--border-soft);background:none;color:var(--accent);font:inherit;cursor:pointer;}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
 .memo-card{--memo-disclosure-width:32px;--memo-arrow-inset:12.25px;--memo-disclosure-gap:calc(var(--note-card-inset,var(--sp-16)) - var(--memo-arrow-inset));}
@@ -19338,8 +19337,6 @@ function openMemoTagMenu(event,noteId){
   choices.forEach(tag=>addOption(tag,(n.tags||[]).includes(tag),checked=>{
     const tags=new Set(n.tags||[]);if(checked)tags.add(tag);else tags.delete(tag);n.tags=[...tags];
   }));
-  const done=document.createElement('button');done.type='button';done.textContent='完成';
-  done.onclick=()=>{closeMemoTagMenu();render();};menu.append(done);
   document.body.append(menu);menu.showPopover();
   const listeners=new AbortController();menu._memoListeners=listeners;
   document.addEventListener('pointerdown',e=>{
