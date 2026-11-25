@@ -3475,6 +3475,12 @@ mark.shl{
 /* ═══ 日历/经期 视图切换（my-list 侧 chrome）═══ */
 .cal-viewbar{display:flex;align-items:center;justify-content:flex-end;gap:12px;
   padding:calc(10px + env(safe-area-inset-top)) var(--sp-14) 6px;flex-shrink:0;background:var(--bg);}
+.calendar-label-desktop{display:none;}
+@media(min-width:1025px) and (pointer:fine){
+  body:not(.cal-view-period) .cal-viewbar{display:none;}
+  .calendar-label-mobile{display:none;}
+  .calendar-label-desktop{display:inline;}
+}
 /* 有底栏的那一档（＝ .bottombar 显示的同一个条件）整条收起：视图切换改走底栏
    「日历」tab 上方弹出的小卡片。这条必须写在上面那条基础规则之后——同优先级，
    排在前面的 @media 会被后面的基础规则盖掉。 */
@@ -6006,12 +6012,12 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-notes-header>#nav-notes.parent-on,
   #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes.parent-on,
   body.cal-open.cal-view-period #appSidebar #sidebarPeriodOptions>.nitem-cal,
-  body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>.nitem-cal{
+  body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>[data-calendar-view].on{
     background:var(--accent-light);color:var(--accent);
     border-color:transparent;border-radius:8px;box-shadow:none;
   }
   body.cal-open.cal-view-period #appSidebar #sidebarPeriodOptions>.nitem-cal,
-  body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>.nitem-cal{font-weight:700;}
+  body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>[data-calendar-view].on{font-weight:700;}
 }
 
 /* 电脑端弹窗统一为屏幕中央的横向对话框；手机和平板继续使用原有底部抽屉。 */
@@ -6230,14 +6236,20 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
     <div class="nlbl">日历</div>
     <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarCalendarOptions" onclick="toggleSidebarSection(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历<svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="ncard ncard-calendar-data" id="sidebarCalendarOptions">
-      <button class="nitem nitem-cal" onclick="openCalendar('cal')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历看板
+      <button type="button" class="nitem nitem-cal" data-calendar-view="cal" onclick="openCalendar('cal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历
+      </button>
+      <button type="button" class="nitem nitem-cal" data-calendar-view="food" onclick="openCalendar('food')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v7m3-7v7M3 3v5a3 3 0 0 0 6 0V3M6 11v10M18 3v18M18 3c-4 3-4 9 0 9"/></svg>食记
+      </button>
+      <button type="button" class="nitem nitem-cal" data-calendar-view="heat" onclick="openCalendar('heat')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M7 16v-5m5 5V4m5 12V8"/></svg>统计
       </button>
       <button class="nitem" onclick="document.getElementById('icsimp').click()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>导入日历
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg><span class="calendar-label-mobile">导入日历</span><span class="calendar-label-desktop">导入</span>
       </button>
       <button class="nitem" style="color:var(--danger)" onclick="openClearICS()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>清除日历
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg><span class="calendar-label-mobile">清除日历</span><span class="calendar-label-desktop">清除</span>
       </button>
     </div>
   </div>
@@ -9887,6 +9899,12 @@ function setCalView(v){
   if(hv)hv.style.display=isH?'':'none';
   document.body.classList.toggle('cal-view-period',isP);   // 经期视图：整块 modal 滚动，视图切换条随内容一起滑走
   syncCalToggle(v);
+  document.querySelectorAll('#sidebarCalendarOptions [data-calendar-view]').forEach(button=>{
+    const active=button.dataset.calendarView===v;
+    button.classList.toggle('on',active);
+    if(active)button.setAttribute('aria-current','page');
+    else button.removeAttribute('aria-current');
+  });
   closeCalSearch();closeCalFilter();
   calHiddenCats=loadCalHidden();
   document.body.classList.toggle('cal-view-food',v==='food');
@@ -11674,6 +11692,9 @@ const SIDEBAR_CATEGORY_ICONS=new Map([
 function renderSidebar(){
   // 日历是独立页面；保留列表分类，但只在列表可见时高亮。
   const listActive=!document.body.classList.contains('cal-open');
+  if(listActive)document.querySelectorAll('#sidebarCalendarOptions [data-calendar-view]').forEach(button=>{
+    button.classList.remove('on');button.removeAttribute('aria-current');
+  });
   document.getElementById('nav-all').classList.toggle('on', listActive&&curCat==='all');
   document.getElementById('cat-nav').innerHTML=cats.map(c=>`
     <button class="nitem ${listActive&&curCat===c.id?'on':''}" onclick="filterCat('${c.id}')">
