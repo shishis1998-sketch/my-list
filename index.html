@@ -1961,11 +1961,15 @@ body.cal-searching .cw-card{display:none;}
 .note-year-row .note-month-ico svg{transform:rotate(-90deg);}
 .note-year-group[open]>.note-year-row .note-month-ico svg{transform:none;}
 .note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
-.note-year-months{display:flex;flex-direction:column;gap:0;padding:0 0 0 var(--sp-16);}
+.note-year-months{display:flex;flex-direction:column;gap:0;padding:0;}
 .desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
 .desktop-note-index-groups .note-year-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
 .desktop-note-index-groups .note-year-row .note-month-name{font-size:var(--fs-body);}
 .desktop-note-index-groups .note-year-months{gap:0;}
+.desktop-note-index-groups .note-year-months .desktop-note-month-button{
+  padding-inline-start:calc(var(--sp-12) + var(--note-month-icon) + var(--sp-8));
+  padding-inline-end:var(--sp-12);
+}
 
 .note-year-months .note-month-row{
   border:0;border-radius:var(--r);background:transparent;
@@ -5764,6 +5768,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .note-month-pane .note-card.collect .note-head .note-created{height:auto;margin-inline-start:auto;}
   .note-month-pane .note-card.collect .note-edit{margin-inline-start:auto;}
   .desktop-note-months .note-month-row[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
+  .desktop-note-index-groups .note-month-name,
   .desktop-note-months .note-month-name{font-size:var(--fs-body);}
   .desktop-note-months .note-month-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
 }
@@ -17794,22 +17799,20 @@ function renderNoteMonthOverview(groups, keys){
   ).join(''))+'</div>';
 }
 
-// 仅桌面端中栏的筛选和折叠状态；不改变右侧正文或手机端筛选。
+// 电脑端标签筛选按分类与月份分别保存，仅筛选当前月份详情。
 const desktopNoteIndexState=new Map();
 function desktopNoteIndexStateForSub(){
-  if(!desktopNoteIndexState.has(curNoteSub))desktopNoteIndexState.set(curNoteSub,{tags:new Set(),expanded:new Set(),selected:''});
-  return desktopNoteIndexState.get(curNoteSub);
+  const key=curNoteSub+'|'+curNoteMonth;
+  if(!desktopNoteIndexState.has(key))desktopNoteIndexState.set(key,{tags:new Set()});
+  return desktopNoteIndexState.get(key);
+}
+function filterDesktopMonthNotes(list){
+  const tags=desktopNoteIndexStateForSub().tags;
+  return list.filter(note=>[...tags].every(tag=>(note.tags||[]).includes(tag)));
 }
 function isDesktopNoteIndex(){return window.matchMedia('(min-width:1025px) and (pointer:fine)').matches&&noteUsesRecordDates(curNoteSub);}
 function desktopNoteMonthGroups(groups,months){
-  const state=desktopNoteIndexStateForSub();
-  const visible={};
-  months.forEach(key=>{
-    const rows=groups[key].filter(n=>[...state.tags].every(t=>(n.tags||[]).includes(t)));
-    if(rows.length)visible[key]=rows;
-  });
-  const keys=months.filter(key=>visible[key]);
-  return renderNoteYearGroups(visible,keys,yearMonths=>desktopNoteMonthRows(visible,yearMonths))||'<p class="empty-hint">没有匹配的记录</p>';
+  return renderNoteYearGroups(groups,months,yearMonths=>desktopNoteMonthRows(groups,yearMonths))||'<p class="empty-hint">没有匹配的记录</p>';
 }
 function desktopNoteMonthRows(groups,months){
   return months.map(key=>
@@ -17820,14 +17823,17 @@ function desktopNoteMonthRows(groups,months){
   ).join('')||'<p class="empty-hint">没有匹配的记录</p>';
 }
 function refreshDesktopNoteIndex(){
-  const groups=groupNotesByMonth(filteredNotes()),months=Object.keys(groups).sort((a,b)=>curSort==='n-date-asc'?a.localeCompare(b):b.localeCompare(a));
-  document.querySelectorAll('.desktop-note-index-groups').forEach(el=>el.innerHTML=desktopNoteMonthGroups(groups,months));
+  renderNotes();
 }
 function syncDesktopNoteTagFilter(){
   const menu=document.getElementById('desktopNoteTagFilter');
   if(!isDesktopNoteIndex()){menu.open=false;return;}
+  if(!curNoteMonth){
+    document.getElementById('desktopNoteTagOptions').textContent='请先选择月份';
+    return;
+  }
   const state=desktopNoteIndexStateForSub();
-  const tags=[...new Set(userNotes().filter(n=>n.subCat===curNoteSub).flatMap(n=>n.tags||[]))];
+  const tags=[...new Set(userNotes().filter(n=>n.subCat===curNoteSub&&noteMonthKey(n)===curNoteMonth).flatMap(n=>n.tags||[]))];
   document.getElementById('desktopNoteTagOptions').innerHTML=tags.length?tags.map(tag=>`<label><input type="checkbox" value="${esc(tag)}"${state.tags.has(tag)?' checked':''} onchange="const tags=desktopNoteIndexStateForSub().tags;if(this.checked)tags.add(this.value);else tags.delete(this.value);refreshDesktopNoteIndex()">${esc(tag)}</label>`).join(''):'暂无标签';
 }
 function renderDesktopNoteIndex(groups,months){
@@ -17861,7 +17867,7 @@ function renderNotes(){
   nav.innerHTML=renderDesktopNoteIndex(groups,months);
   nav.querySelectorAll('.note-month-row').forEach(button=>button.setAttribute('aria-current',String(button.dataset.month===curNoteMonth)));
   document.getElementById('noteMonthPaneTitle').textContent=noteMonthLabel(curNoteMonth);
-  document.getElementById('vcnt').textContent=filteredNotes().length+' 条笔记';
+  document.getElementById('vcnt').textContent='';
   document.getElementById('noteMonthPaneScroll').append(document.getElementById('nlist'),document.getElementById('nempty'));
   document.body.classList.add('note-month-split');
   if(wasSplit)content.scrollTop=oldScroll;
@@ -17885,6 +17891,7 @@ function renderNotesContent(){
   const selectedMonth=monthMode?curNoteMonth:'';
   const desktopMonth=!!selectedMonth&&isDesktopNoteIndex();
   if(selectedMonth) L=groups[selectedMonth];
+  if(desktopMonth) L=filterDesktopMonthNotes(L);
   const picker=document.getElementById('noteMonthPicker');
   closeNoteMonthSheet();
   picker.hidden=!selectedMonth;
@@ -17893,7 +17900,7 @@ function renderNotesContent(){
     const on=key===selectedMonth;
     return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" aria-pressed="${on}" onclick="pickNoteMonth('${key}')">${NOTE_MONTH_ICON}<span>${noteMonthLabel(key)}</span></button>`;
   }).join(''):'';
-  document.getElementById('vcnt').textContent=selectedMonth?'':L.length+' 条笔记';
+  document.getElementById('vcnt').textContent=monthMode?'':L.length+' 条笔记';
   // 月份明细没有可见返回键；用隐藏状态节点接入系统返回手势/后退键。
   document.getElementById('noteMonthState')?.classList.toggle('open',!!(monthMode&&curNoteMonth));
   syncSearchNoResult(L.length);
