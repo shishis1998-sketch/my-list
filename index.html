@@ -1954,19 +1954,26 @@ body.cal-searching .cw-card{display:none;}
 .note-year-row{
   list-style:none;display:flex;align-items:center;gap:var(--note-month-gap);
   min-height:48px;padding:0 var(--note-month-padding);cursor:pointer;
-  border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);
+  border:0;border-radius:var(--r);background:transparent;
   color:var(--text-primary);font-family:var(--zh);
 }
 .note-year-row::-webkit-details-marker{display:none;}
 .note-year-row .note-month-ico svg{transform:rotate(-90deg);}
 .note-year-group[open]>.note-year-row .note-month-ico svg{transform:none;}
 .note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
-.note-year-months{display:flex;flex-direction:column;gap:var(--sp-10);padding:var(--sp-10) 0 0 var(--sp-16);}
+.note-year-months{display:flex;flex-direction:column;gap:0;padding:0 0 0 var(--sp-16);}
 .desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
 .desktop-note-index-groups .note-year-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
 .desktop-note-index-groups .note-year-row .note-month-name{font-size:var(--fs-body);}
 .desktop-note-index-groups .note-year-months{gap:0;}
 
+.note-year-months .note-month-row{
+  border:0;border-radius:var(--r);background:transparent;
+}
+.note-year-months .note-month-row:hover,
+.note-year-months .note-month-row:active,
+.note-year-months .note-month-row.month-tap{background:var(--accent-light);}
+.note-year-group .note-year-row .note-month-name{font-weight:700;}
 .note-month-row{
   width:100%;min-height:48px;padding:0 var(--note-month-padding);display:flex;align-items:center;gap:var(--note-month-gap);
   border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);color:var(--text-primary);
@@ -5699,6 +5706,10 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .desktop-note-tag-menu label:hover{background:var(--accent-light);}
   .desktop-note-tag-menu input{accent-color:var(--accent);}
   .desktop-note-month{border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);margin-bottom:8px;overflow:hidden;}
+  .note-year-months .desktop-note-month{
+    border:0;border-radius:0;background:transparent;margin-bottom:0;
+  }
+  .note-year-months .desktop-note-month>summary{border-radius:var(--r);}
   .desktop-note-month>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 10px;box-sizing:border-box;font-size:var(--fs-sub);font-weight:600;cursor:pointer;}
   .desktop-note-month>summary::-webkit-details-marker{display:none;}
   .desktop-note-month>summary:hover{background:var(--accent-light);}
