@@ -10032,7 +10032,7 @@ const OVU_KEY='my_list_ovu_cfg_v1';
 const GIST_FILE='media-tracker-data.json';
 let data=[], cats=[];
 let notes=[], noteSubs=[];
-let curCat='notes:', curSearch='', curSort='media-auto', curStatus='in-progress', curScore='all';
+let curCat='notes:', curSearch='', curSort='media-auto', curStatus='all', curScore='all';
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
 let curNoteSub=''; // 笔记子分类筛选
@@ -14549,6 +14549,7 @@ function filterCat(cat){
   if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
   closeDetail();                                                     // 从详情页切回列表
   curCat=cat;
+  if(categoryChanged&&!isNoteMode()){curStatus='all';curScore='all';}
   curFilterTags=[];
   curNoteMonth='';
   // 解析笔记模式的子分类
@@ -15017,7 +15018,7 @@ function renderTagFilterRow(){
   syncFilterBtn();
   const chips=document.getElementById('ftag-chips');
   document.getElementById('desktopTagFilters').hidden=!tags.length;
-  desktopFilterToggle.classList.toggle('has-filters',curScore!=='all'||curFilterTags.length>0);
+  desktopFilterToggle.classList.toggle('has-filters',curStatus!=='all'||curScore!=='all'||curFilterTags.length>0);
   if(!tags.length){
     chips.innerHTML='';
     return;
