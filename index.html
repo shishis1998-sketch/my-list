@@ -5764,6 +5764,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .note-month-pane .note-card.collect .note-head .note-created{height:auto;margin-inline-start:auto;}
   .note-month-pane .note-card.collect .note-edit{margin-inline-start:auto;}
   .desktop-note-months .note-month-row[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
+  .desktop-note-index-groups .note-month-name,
   .desktop-note-months .note-month-name{font-size:var(--fs-body);}
   .desktop-note-months .note-month-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
 }
@@ -17861,7 +17862,7 @@ function renderNotes(){
   nav.innerHTML=renderDesktopNoteIndex(groups,months);
   nav.querySelectorAll('.note-month-row').forEach(button=>button.setAttribute('aria-current',String(button.dataset.month===curNoteMonth)));
   document.getElementById('noteMonthPaneTitle').textContent=noteMonthLabel(curNoteMonth);
-  document.getElementById('vcnt').textContent=filteredNotes().length+' 条笔记';
+  document.getElementById('vcnt').textContent='';
   document.getElementById('noteMonthPaneScroll').append(document.getElementById('nlist'),document.getElementById('nempty'));
   document.body.classList.add('note-month-split');
   if(wasSplit)content.scrollTop=oldScroll;
@@ -17893,7 +17894,7 @@ function renderNotesContent(){
     const on=key===selectedMonth;
     return `<button type="button" class="bb-sortopt cal-viewopt${on?' on':''}" aria-pressed="${on}" onclick="pickNoteMonth('${key}')">${NOTE_MONTH_ICON}<span>${noteMonthLabel(key)}</span></button>`;
   }).join(''):'';
-  document.getElementById('vcnt').textContent=selectedMonth?'':L.length+' 条笔记';
+  document.getElementById('vcnt').textContent=monthMode?'':L.length+' 条笔记';
   // 月份明细没有可见返回键；用隐藏状态节点接入系统返回手势/后退键。
   document.getElementById('noteMonthState')?.classList.toggle('open',!!(monthMode&&curNoteMonth));
   syncSearchNoResult(L.length);
