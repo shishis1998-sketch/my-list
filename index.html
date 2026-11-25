@@ -3478,6 +3478,10 @@ mark.shl{
 .calendar-label-desktop{display:none;}
 @media(min-width:1025px) and (pointer:fine){
   body:not(.cal-view-period) .cal-viewbar{display:none;}
+  /* 顶部留白与页面左右 14px 外边距一致。 */
+  body:not(.cal-view-period) #calViewCalendar>.cal-hdr,
+  body:not(.cal-view-period) #calViewCalendar>.cal-records-pane{margin-top:var(--sp-14);}
+  body:not(.cal-view-period) #calViewHeat{padding-top:var(--sp-14);}
   .calendar-label-mobile{display:none;}
   .calendar-label-desktop{display:inline;}
 }
