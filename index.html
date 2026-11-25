@@ -1978,6 +1978,7 @@ body.cal-searching .cw-card{display:none;}
 .note-year-months .note-month-row:active,
 .note-year-months .note-month-row.month-tap{background:var(--accent-light);}
 .note-year-group .note-year-row .note-month-name{font-weight:700;}
+.note-year-months .note-month-name{font-weight:400;}
 /* 年月目录采用紧凑行高，只影响目录，不改变正文卡片。 */
 .note-year-row,.note-year-months .note-month-row{min-height:36px;}
 .note-month-card:has(>.note-year-group){gap:var(--sp-4);}
@@ -5753,6 +5754,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   }
   body.notes-mode.note-month-split .main>.topbar{grid-column:1 / -1;grid-row:1;}
   body.notes-mode.note-month-split .main>.content{grid-column:1;grid-row:2;margin-inline:var(--sp-14);}
+  /* 年份展开后滚动条出现也不挤压目录内容，计数与高亮宽度保持一致。 */
+  body.notes-mode.note-month-split .app>.main>.content{scrollbar-gutter:stable;min-width:0;}
   body.notes-mode.note-month-split .desktop-note-months{display:block;}
   body.notes-mode.note-month-split #noteMonthPicker{display:none;}
   body.notes-mode.note-month-split:not(.cal-open) .note-month-pane{
