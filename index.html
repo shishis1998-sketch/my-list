@@ -1302,7 +1302,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   }
   .catfrow .nfchip.on{background:transparent;color:var(--accent);font-weight:700;}
   .catfrow .nfchip.on::after{background:var(--accent);}
-  .catfrow .media-status-count{margin-left:3px;font-family:var(--en);font-size:inherit;font-weight:inherit;}
+  .catfrow .media-status-count{margin-left:3px;font:inherit;vertical-align:baseline;}
   .bb-media-sort-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;}
   .bb-media-sort-options .bb-sortopt{justify-content:center;white-space:nowrap;}
   /* 手机端的笔记分类放在底部菜单。 */
@@ -11777,7 +11777,7 @@ function renderMediaStatusFilters(){
   items.forEach(item=>{const status=mediaStatusOf(item);counts[status]=(counts[status]||0)+1;});
   [['catfrow','nfchip'],['desktopMediaStatuses','fchip']].forEach(([id,cls])=>{
     document.getElementById(id).innerHTML=MEDIA_STATUSES.map(([value,label])=>
-      `<button type="button" class="${cls}${value===curStatus?' on':''}" aria-pressed="${value===curStatus}" onclick="pickStatus('${value}')">${label}${id==='catfrow'?`<span class="media-status-count">${counts[value]||0}</span>`:''}</button>`
+      `<button type="button" class="${cls}${value===curStatus?' on':''}" aria-pressed="${value===curStatus}" onclick="pickStatus('${value}')">${id==='catfrow'?`<span>${label}<span class="media-status-count">${counts[value]||0}</span></span>`:label}</button>`
     ).join('');
   });
 }
