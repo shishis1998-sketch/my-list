@@ -1283,7 +1283,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   .catfrow,.nfrow{position:sticky;top:0;z-index:30;}
   .catfrow{
     display:flex;align-items:stretch;gap:var(--sp-8);
-    background:var(--surface);border-bottom:1px solid var(--border-soft);
+    background:var(--bg);border-bottom:1px solid var(--border-soft);
     padding:0 var(--sp-14);
     flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
@@ -14393,11 +14393,8 @@ function initNoteSheetDrag(){
 
 function renderStats(){
   const sb=document.getElementById('sbar');
-  // 统计卡只在「全部」视图出现。点进某个分类后，这一排数字讲的仍是整库的事
-  // （总计 42、电影 12……），和眼前这份列表没关系，纯占地方。
-  // 整块 display:none 而不是只清空内容：.sbar 自带 margin-bottom，
-  // 空着留在流里会在标题上方多出 12px 的缝。
-  if(curCat!=='all'){ sb.style.display='none'; sb.innerHTML=''; return; }
+  // 整库统计只在全部分类、全部状态下显示；隐藏容器以免留下空白间距。
+  if(curCat!=='all'||curStatus!=='all'){ sb.style.display='none'; sb.innerHTML=''; return; }
   sb.style.display='';
   const cnt={};cats.forEach(c=>cnt[c.id]=0);
   data.forEach(d=>{cnt[d.type]=(cnt[d.type]||0)+1;});
