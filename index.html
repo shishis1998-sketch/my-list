@@ -6344,7 +6344,7 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
       </button>
     </div>
     <button type="button" class="desktop-filter-toggle" id="desktopFilterToggle" aria-expanded="false" aria-controls="frow">
-      筛选
+      <span id="desktopFilterStatusLabel">全部</span>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <details class="desktop-note-tags" id="desktopNoteTagFilter">
@@ -15019,6 +15019,9 @@ function renderTagFilterRow(){
   const chips=document.getElementById('ftag-chips');
   document.getElementById('desktopTagFilters').hidden=!tags.length;
   desktopFilterToggle.classList.toggle('has-filters',curStatus!=='all'||curScore!=='all'||curFilterTags.length>0);
+  const statusLabel=MEDIA_STATUSES.find(([value])=>value===curStatus)?.[1]||'全部';
+  document.getElementById('desktopFilterStatusLabel').textContent=statusLabel;
+  desktopFilterToggle.setAttribute('aria-label','筛选：'+statusLabel);
   if(!tags.length){
     chips.innerHTML='';
     return;
