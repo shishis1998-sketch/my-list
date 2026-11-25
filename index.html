@@ -14549,7 +14549,7 @@ function filterCat(cat){
   if(document.body.classList.contains('cal-open')) closeCalendar();  // 从日历页切回列表
   closeDetail();                                                     // 从详情页切回列表
   curCat=cat;
-  if(categoryChanged&&!isNoteMode()){curStatus='all';curScore='all';}
+  if(categoryChanged&&!isNoteMode()){curStatus=cat==='book'?'in-progress':'all';curScore='all';}
   curFilterTags=[];
   curNoteMonth='';
   // 解析笔记模式的子分类
