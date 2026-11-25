@@ -1282,20 +1282,26 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   /* 筛选条贴顶（媒体模式 .catfrow 分类条 / 笔记模式 .nfrow 子分类条）*/
   .catfrow,.nfrow{position:sticky;top:0;z-index:30;}
   .catfrow{
-    display:flex;align-items:center;gap:var(--sp-8);
+    display:flex;align-items:stretch;gap:var(--sp-8);
     background:var(--surface);border-bottom:1px solid var(--border-soft);
-    padding:var(--sp-8) var(--sp-14);
+    padding:0 var(--sp-14);
     flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
   .catfrow::-webkit-scrollbar{display:none;}
   .catfrow .nfchip{
-    display:inline-flex;align-items:center;padding:var(--sp-6) var(--sp-14);
-    border-radius:var(--rchip);font-size:var(--fs-caption);font-weight:600;cursor:pointer;
-    border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);
-    font-family:var(--zh);white-space:nowrap;flex-shrink:0;transition:all .12s;
+    position:relative;display:inline-flex;align-items:center;justify-content:center;
+    min-height:44px;padding:var(--sp-8);box-sizing:border-box;
+    border-radius:0;font-size:var(--fs-caption);font-weight:600;cursor:pointer;
+    border:0;background:transparent;color:var(--text-secondary);
+    font-family:var(--zh);white-space:nowrap;flex-shrink:0;
+    -webkit-tap-highlight-color:transparent;
   }
-  .catfrow .nfchip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
-  .catfrow .nfchip{padding-inline:var(--sp-8);}
+  .catfrow .nfchip::after{
+    content:'';position:absolute;bottom:0;left:var(--sp-8);right:var(--sp-8);
+    height:3px;border-radius:3px;background:transparent;
+  }
+  .catfrow .nfchip.on{background:transparent;color:var(--accent);}
+  .catfrow .nfchip.on::after{background:var(--accent);}
   .bb-media-sort-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;}
   .bb-media-sort-options .bb-sortopt{justify-content:center;white-space:nowrap;}
   /* 手机端的笔记分类放在底部菜单。 */
