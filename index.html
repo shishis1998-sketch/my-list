@@ -3478,21 +3478,14 @@ mark.shl{
 .calendar-label-desktop{display:none;}
 @media(min-width:1025px) and (pointer:fine){
   body:not(.cal-view-period) .cal-viewbar{display:none;}
-  /* 月份文字上边沿对齐左侧问候语，使用同一标题高度和行高。 */
-  body:not(.cal-view-period) #calViewCalendar>.cal-hdr{
-    margin-top:calc((var(--sidebar-header-height) - 32px) / 2 - var(--sp-8));
+  /* 卡片顶部边缘对齐侧栏问候语文字顶部，卡片内部保持原有留白。 */
+  body:not(.cal-view-period) #calViewCalendar>.cal-hdr,
+  body:not(.cal-view-period) #calViewCalendar>.cal-records-pane{
+    margin-top:calc((var(--sidebar-header-height) - var(--fs-title)) / 2);
   }
-  body:not(.cal-view-period) #calViewCalendar .cal-title{line-height:var(--lh-tight);}
-  body:not(.cal-view-period) #calViewCalendar>.cal-records-pane{margin-top:0;}
-  body:not(.cal-view-period) #calViewCalendar .cal-day-card-header{
-    align-items:flex-start;
-    padding-top:calc((var(--sidebar-header-height) - var(--fs-title) * var(--lh-tight)) / 2);
-  }
-  body:not(.cal-view-period) #calViewCalendar .cal-card-date{line-height:var(--lh-tight);}
   body:not(.cal-view-period) #calViewHeat{
-    padding-top:calc((var(--sidebar-header-height) - 28px) / 2 - var(--sp-12));
+    padding-top:calc((var(--sidebar-header-height) - var(--fs-title)) / 2);
   }
-  body:not(.cal-view-period) #calViewHeat .hm-title{line-height:var(--lh-tight);}
   .calendar-label-mobile{display:none;}
   .calendar-label-desktop{display:inline;}
 }
