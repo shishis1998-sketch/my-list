@@ -1282,26 +1282,27 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
   /* 筛选条贴顶（媒体模式 .catfrow 分类条 / 笔记模式 .nfrow 子分类条）*/
   .catfrow,.nfrow{position:sticky;top:0;z-index:30;}
   .catfrow{
-    display:flex;align-items:stretch;gap:var(--sp-8);
-    background:var(--surface);border-bottom:1px solid var(--border-soft);
-    padding:0 var(--sp-14);
+    display:flex;align-items:stretch;gap:0;
+    background:var(--bg);border-bottom:1px solid var(--border-soft);
+    padding:0 var(--sp-4);
     flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
   .catfrow::-webkit-scrollbar{display:none;}
   .catfrow .nfchip{
     position:relative;display:inline-flex;align-items:center;justify-content:center;
-    min-height:44px;padding:var(--sp-8);box-sizing:border-box;
-    border-radius:0;font-size:var(--fs-caption);font-weight:600;cursor:pointer;
+    min-height:44px;padding:var(--sp-8) var(--sp-4);box-sizing:border-box;
+    border-radius:0;font-size:var(--fs-caption);font-weight:400;cursor:pointer;
     border:0;background:transparent;color:var(--text-secondary);
-    font-family:var(--zh);white-space:nowrap;flex-shrink:0;
+    font-family:var(--zh);white-space:nowrap;flex:1 0 auto;
     -webkit-tap-highlight-color:transparent;
   }
   .catfrow .nfchip::after{
     content:'';position:absolute;bottom:0;left:var(--sp-8);right:var(--sp-8);
     height:3px;border-radius:3px;background:transparent;
   }
-  .catfrow .nfchip.on{background:transparent;color:var(--accent);}
+  .catfrow .nfchip.on{background:transparent;color:var(--accent);font-weight:700;}
   .catfrow .nfchip.on::after{background:var(--accent);}
+  .catfrow .media-status-count{margin-left:3px;font-family:var(--en);font-size:inherit;font-weight:inherit;}
   .bb-media-sort-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;}
   .bb-media-sort-options .bb-sortopt{justify-content:center;white-space:nowrap;}
   /* 手机端的笔记分类放在底部菜单。 */
@@ -11770,9 +11771,13 @@ function mediaSort(){
   return 'upd-desc';
 }
 function renderMediaStatusFilters(){
+  // 状态数量按当前媒体分类统计，不受当前选中的状态影响。
+  const items=curCat==='all'?data:data.filter(item=>item.type===curCat);
+  const counts={all:items.length};
+  items.forEach(item=>{const status=mediaStatusOf(item);counts[status]=(counts[status]||0)+1;});
   [['catfrow','nfchip'],['desktopMediaStatuses','fchip']].forEach(([id,cls])=>{
     document.getElementById(id).innerHTML=MEDIA_STATUSES.map(([value,label])=>
-      `<button type="button" class="${cls}${value===curStatus?' on':''}" aria-pressed="${value===curStatus}" onclick="pickStatus('${value}')">${label}</button>`
+      `<button type="button" class="${cls}${value===curStatus?' on':''}" aria-pressed="${value===curStatus}" onclick="pickStatus('${value}')">${label}${id==='catfrow'?`<span class="media-status-count">${counts[value]||0}</span>`:''}</button>`
     ).join('');
   });
 }
@@ -14393,11 +14398,8 @@ function initNoteSheetDrag(){
 
 function renderStats(){
   const sb=document.getElementById('sbar');
-  // 统计卡只在「全部」视图出现。点进某个分类后，这一排数字讲的仍是整库的事
-  // （总计 42、电影 12……），和眼前这份列表没关系，纯占地方。
-  // 整块 display:none 而不是只清空内容：.sbar 自带 margin-bottom，
-  // 空着留在流里会在标题上方多出 12px 的缝。
-  if(curCat!=='all'){ sb.style.display='none'; sb.innerHTML=''; return; }
+  // 整库统计只在全部分类、全部状态下显示；隐藏容器以免留下空白间距。
+  if(curCat!=='all'||curStatus!=='all'){ sb.style.display='none'; sb.innerHTML=''; return; }
   sb.style.display='';
   const cnt={};cats.forEach(c=>cnt[c.id]=0);
   data.forEach(d=>{cnt[d.type]=(cnt[d.type]||0)+1;});
