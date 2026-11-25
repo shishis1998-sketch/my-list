@@ -1961,11 +1961,15 @@ body.cal-searching .cw-card{display:none;}
 .note-year-row .note-month-ico svg{transform:rotate(-90deg);}
 .note-year-group[open]>.note-year-row .note-month-ico svg{transform:none;}
 .note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
-.note-year-months{display:flex;flex-direction:column;gap:0;padding:0 0 0 var(--sp-16);}
+.note-year-months{display:flex;flex-direction:column;gap:0;padding:0;}
 .desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
 .desktop-note-index-groups .note-year-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
 .desktop-note-index-groups .note-year-row .note-month-name{font-size:var(--fs-body);}
 .desktop-note-index-groups .note-year-months{gap:0;}
+.desktop-note-index-groups .note-year-months .desktop-note-month-button{
+  padding-inline-start:calc(var(--sp-12) + var(--note-month-icon) + var(--sp-8));
+  padding-inline-end:var(--sp-12);
+}
 
 .note-year-months .note-month-row{
   border:0;border-radius:var(--r);background:transparent;
