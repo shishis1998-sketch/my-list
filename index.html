@@ -1950,6 +1950,23 @@ body.cal-searching .cw-card{display:none;}
 /* 笔记卡片列表 */
 .note-list{display:flex;flex-direction:column;gap:var(--sp-10);}
 .note-month-card{display:flex;flex-direction:column;gap:var(--sp-10);}
+.note-year-group{min-width:0;}
+.note-year-row{
+  list-style:none;display:flex;align-items:center;gap:var(--note-month-gap);
+  min-height:48px;padding:0 var(--note-month-padding);cursor:pointer;
+  border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);
+  color:var(--text-primary);font-family:var(--zh);
+}
+.note-year-row::-webkit-details-marker{display:none;}
+.note-year-row .note-month-ico svg{transform:rotate(-90deg);}
+.note-year-group[open]>.note-year-row .note-month-ico svg{transform:none;}
+.note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
+.note-year-months{display:flex;flex-direction:column;gap:var(--sp-10);padding:var(--sp-10) 0 0 var(--sp-16);}
+.desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
+.desktop-note-index-groups .note-year-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
+.desktop-note-index-groups .note-year-row .note-month-name{font-size:var(--fs-body);}
+.desktop-note-index-groups .note-year-months{gap:0;}
+
 .note-month-row{
   width:100%;min-height:48px;padding:0 var(--note-month-padding);display:flex;align-items:center;gap:var(--note-month-gap);
   border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);color:var(--text-primary);
@@ -17717,14 +17734,43 @@ function groupNotesByMonth(list){
   return groups;
 }
 
+// 年份默认收起；收集与日记分别保留展开状态，月份仍沿用原有导航。
+const noteYearExpanded=new Map();
+function noteYearsForSub(){
+  if(!noteYearExpanded.has(curNoteSub))noteYearExpanded.set(curNoteSub,new Set());
+  return noteYearExpanded.get(curNoteSub);
+}
+function rememberNoteYear(el){
+  const sub=el.dataset.sub;
+  if(!noteYearExpanded.has(sub))noteYearExpanded.set(sub,new Set());
+  const expanded=noteYearExpanded.get(sub);
+  if(el.open)expanded.add(el.dataset.year);else expanded.delete(el.dataset.year);
+}
+function renderNoteYearGroups(groups,keys,renderMonths){
+  const years=new Map();
+  keys.forEach(key=>{
+    const year=key.slice(0,4);
+    if(!years.has(year))years.set(year,[]);
+    years.get(year).push(key);
+  });
+  const expanded=noteYearsForSub();
+  return [...years].map(([year,months])=>{
+    const count=months.reduce((sum,key)=>sum+groups[key].length,0);
+    return `<details class="note-year-group" data-year="${year}" data-sub="${esc(curNoteSub)}"${expanded.has(year)?' open':''} ontoggle="rememberNoteYear(this)">
+      <summary class="note-year-row"><span class="note-month-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="note-month-name">${year}年</span><span class="note-month-count">${count}</span></summary>
+      <div class="note-year-months">${renderMonths(months)}</div>
+    </details>`;
+  }).join('');
+}
+
 function renderNoteMonthOverview(groups, keys){
-  return '<div class="note-month-card" role="list">'+keys.map(key=>
+  return '<div class="note-month-card">'+renderNoteYearGroups(groups,keys,months=>months.map(key=>
     `<button type="button" class="note-month-row" data-month="${key}" role="listitem" onclick="openNoteMonth('${key}',this)">`+
       `<span class="note-month-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
     `</button>`
-  ).join('')+'</div>';
+  ).join(''))+'</div>';
 }
 
 // 仅桌面端中栏的筛选和折叠状态；不改变右侧正文或手机端筛选。
@@ -17735,6 +17781,16 @@ function desktopNoteIndexStateForSub(){
 }
 function isDesktopNoteIndex(){return window.matchMedia('(min-width:1025px) and (pointer:fine)').matches&&noteUsesRecordDates(curNoteSub);}
 function desktopNoteMonthGroups(groups,months){
+  const state=desktopNoteIndexStateForSub();
+  const visible={};
+  months.forEach(key=>{
+    const rows=groups[key].filter(n=>[...state.tags].every(t=>(n.tags||[]).includes(t)));
+    if(rows.length)visible[key]=rows;
+  });
+  const keys=months.filter(key=>visible[key]);
+  return renderNoteYearGroups(visible,keys,yearMonths=>desktopNoteMonthRows(visible,yearMonths))||'<p class="empty-hint">没有匹配的记录</p>';
+}
+function desktopNoteMonthRows(groups,months){
   const state=desktopNoteIndexStateForSub();
   return months.map(key=>{
     const rows=groups[key].filter(n=>[...state.tags].every(t=>(n.tags||[]).includes(t)));
