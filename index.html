@@ -433,7 +433,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
 /* --- FILTER ROW --- */
 .desktop-filter-toggle{display:none;}
 @media(min-width:1025px) and (pointer:fine){
-  body:not(.detail-open,.notes-mode) .desktop-filter-toggle{
+  body:not(.notes-mode) .desktop-filter-toggle{
     display:inline-flex;align-items:center;gap:var(--sp-6);flex-shrink:0;
     padding:var(--sp-8) var(--sp-10);border:1px solid var(--border);border-radius:var(--r);
     background:var(--surface);color:var(--text-secondary);
@@ -442,9 +442,9 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   .desktop-filter-toggle:is(:hover,[aria-expanded="true"],.has-filters){
     border-color:var(--accent);color:var(--accent);
   }
-  body:not(.detail-open) .main>.frow{display:none;}
-  body:not(.detail-open) .main:has(.desktop-filter-toggle[aria-expanded="true"])>.frow{
-    display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;
+  body:not(.notes-mode) .main>.frow{display:none;}
+  body:not(.notes-mode) .main:has(.desktop-filter-toggle[aria-expanded="true"])>.frow{
+    display:flex!important;flex-direction:column;align-items:stretch;flex-wrap:nowrap;
     position:fixed;top:var(--desktop-filter-top);right:var(--desktop-filter-right);z-index:21;
     width:520px;max-width:calc(100vw - 2 * var(--sp-24));
     max-height:min(45dvh,calc(100dvh - var(--desktop-filter-top) - var(--sp-12)));
@@ -3215,27 +3215,15 @@ mark.shl{
     /* 书影列表列宽跟随五个状态胶囊的文字大小。 */
     --desktop-media-list-width:calc(136px + 12 * var(--fs-caption));
     display:grid;grid-template-columns:var(--desktop-media-list-width) minmax(0, 1fr);
-    grid-template-rows:auto auto minmax(0, 1fr);height:100dvh;
+    grid-template-rows:var(--sidebar-header-height) minmax(0, 1fr);height:100dvh;
   }
-  body.detail-open .main>:is(.topbar,.frow,.content){
-    background:var(--bg);border-right:1px solid var(--border);
-  }
-  body.detail-open .main>:is(.topbar,.frow){border-bottom:0;}
+  body.detail-open .main>.content{background:var(--bg);border-right:1px solid var(--border);}
   body.detail-open .main>.topbar{
-    display:flex!important;grid-area:1 / 1;padding-inline:var(--sp-14);
+    display:flex!important;grid-column:1 / -1;grid-row:1;padding-inline:var(--sp-24);
+    background:var(--bg);z-index:22;
   }
-  body.detail-open .topbar :is(.ssort,.addbtn){display:none;}
-  body.detail-open .main>.frow{
-    display:flex!important;grid-area:2 / 1;padding-inline:var(--sp-14);
-    gap:var(--sp-4);
-  }
-  body.detail-open .frow>:not(.desktop-filter-status),
-  body.detail-open .desktop-filter-status>.flbl{display:none!important;}
-  body.detail-open .desktop-filter-status,
-  body.detail-open #desktopMediaStatuses{display:contents;}
-  body.detail-open #desktopMediaStatuses .fchip{padding-inline:var(--desktop-media-chip-inset,var(--sp-8));}
   body.detail-open .main>.content{
-    display:block!important;grid-area:3 / 1;min-width:0;overflow-y:auto;
+    display:block!important;grid-area:2 / 1;min-width:0;min-height:0;overflow-y:auto;
     padding:var(--sp-14);
   }
   body.detail-open .content>.sbar{display:none;}
@@ -3256,7 +3244,7 @@ mark.shl{
   body.detail-open #mlist .mrow[aria-current="true"]::after{display:none;}
   body.detail-open .content .mrow[aria-current="true"] .cname{color:var(--accent);}
   .detail-view.open{
-    grid-area:1 / 2 / 4 / 3;min-width:0;overflow-y:auto;
+    grid-area:2 / 2;min-width:0;min-height:0;overflow-y:auto;
     scrollbar-gutter:stable both-edges;
   }
   .dt-top-book{position:relative;}
@@ -3360,9 +3348,6 @@ mark.shl{
   body.detail-open .main{
     --desktop-media-open-duration:200ms;
     animation:desktopMediaColumnTighten var(--desktop-media-open-duration) var(--nav-ease);
-  }
-  body.detail-open .main>.frow{
-    animation:desktopMediaStatusRowTighten var(--desktop-media-open-duration) var(--nav-ease);
   }
   @keyframes desktopMediaColumnTighten{
     /* 入口留出标题位移、五个胶囊的内边距和四个间隙，避免动画起点换行。 */
