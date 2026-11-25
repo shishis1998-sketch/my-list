@@ -4251,6 +4251,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #pvEditFab svg,#foodAddBtn svg{width:20px;height:20px;}
 .note-search-toggle{display:none;}
 @media(max-width:1024px), (pointer:coarse){
+  /* 手机收集、日历记录的月份菜单只显示年月文字。 */
+  #noteMonthPanel .bb-sortopt svg{display:none;}
   body.notes-mode:not(.cal-open):not(.sb-open){padding-bottom:calc(80px + env(safe-area-inset-bottom) + var(--kb,0px));}
   body.notes-mode:not(.cal-open):not(.sb-open) .content>.vhdr{position:sticky;top:0;z-index:30;align-items:center;}
   .vhdr>.bb-actions{margin-left:auto;padding:0;border:0;gap:4px;flex-shrink:0;}
