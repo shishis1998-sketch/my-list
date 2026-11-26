@@ -6201,7 +6201,8 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 
 @media(max-width:1024px), (pointer:coarse){
  body:not(.notes-mode) #bottombar>.bb-actions{display:none;}
- body.media-search-active.kb-open .bb-tabs{display:flex;}
+ body.media-search-active.kb-open .bottombar{visibility:hidden;pointer-events:none;}
+ body.media-search-active.kb-open .media-tools{bottom:calc(var(--sp-16) - 7px);}
  body.media-search-active.tabs-hidden:not(.kb-open):not(.vv-track) .bottombar{transform:translateY(0);}
  body.media-search-active .media-tools{transform:translateY(calc(-1 * var(--kb,0px)));}
 
