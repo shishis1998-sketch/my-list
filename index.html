@@ -6266,6 +6266,12 @@ input.no-result,input.no-result:focus,
 .media-search-box.no-result,.media-search-box.no-result:focus-within,
 #calViewHeat .hm-searchfield.no-result,#calViewHeat .hm-searchfield.no-result:focus-within,
 .cal-sfield.no-result,.cal-sfield.no-result:focus-within{border-color:var(--danger)!important;}
+
+/* 统一折线箭头：只调整图形，不改变按钮点击区域或已有旋转。 */
+svg.app-chevron{width:16px!important;height:16px!important;flex:0 0 16px;fill:none;stroke:currentColor;stroke-width:1.8!important;stroke-linecap:round;stroke-linejoin:round;}
+svg.app-back-chevron{width:20px!important;height:20px!important;flex-basis:20px;}
+svg.novu-chevron{vertical-align:middle;transform:rotate(-90deg);}
+svg.novu-chevron.open{transform:rotate(0deg);}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -6331,7 +6337,7 @@ input.no-result,input.no-result:focus,
         <button class="nitem" id="nav-notes" type="button" aria-expanded="false" aria-controls="nsub" onclick="setSidebarNotesExpanded(this.getAttribute('aria-expanded')!=='true')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18H5z M8 8h8m-8 4h8m-8 4h5"/></svg>笔记</button>
         <button id="nav-notes-toggle" type="button" aria-label="展开笔记子分类" aria-expanded="false"
           aria-controls="nsub" onclick="setSidebarNotesExpanded(this.getAttribute('aria-expanded')!=='true')">
-          <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          <svg class="app-chevron sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         </button>
       </div>
       <div class="nsub" id="nsub"></div>
@@ -6344,7 +6350,7 @@ input.no-result,input.no-result:focus,
     <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="themeRow"
       onclick="toggleSidebarSection(this)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c2 0 3-1 2-3s0-3 2-3h2c5 0 3-12-6-12z M7 11h.01M10 7h.01M15 7h.01M18 11h.01"/></svg>外观
-      <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      <svg class="app-chevron sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="ncard" id="themeRow" aria-label="外观"></div>
   </div>
@@ -6353,7 +6359,7 @@ input.no-result,input.no-result:focus,
     <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarPeriodOptions"
       onclick="toggleSidebarSection(this)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c-2 4-7 8-7 12a7 7 0 0 0 14 0c0-4-5-8-7-12z"/></svg>经期
-      <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      <svg class="app-chevron sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="ncard" id="sidebarPeriodOptions">
       <button type="button" class="nitem nitem-cal" onclick="openCalendar('month')">
@@ -6364,7 +6370,7 @@ input.no-result,input.no-result:focus,
   </div>
   <div class="nsec nsec-calendar sidebar-disclosure-section">
     <div class="nlbl">日历</div>
-    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarCalendarOptions" onclick="toggleSidebarSection(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历<svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarCalendarOptions" onclick="toggleSidebarSection(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历<svg class="app-chevron sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="ncard ncard-calendar-data" id="sidebarCalendarOptions">
       <button type="button" class="nitem nitem-cal" data-calendar-view="cal" onclick="openCalendar('cal')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg>日历
@@ -6385,7 +6391,7 @@ input.no-result,input.no-result:focus,
   </div>
   <div class="nsec nsec-data sidebar-disclosure-section">
     <div class="nlbl">数据</div>
-    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarDataOptions" onclick="toggleSidebarSection(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z M4 10h16M10 10v10"/></svg>数据<svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="sidebar-disclosure" type="button" aria-expanded="false" aria-controls="sidebarDataOptions" onclick="toggleSidebarSection(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z M4 10h16M10 10v10"/></svg>数据<svg class="app-chevron sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <div class="ncard" id="sidebarDataOptions">
       <button class="nitem" onclick="exportJSON()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 JSON
@@ -6435,13 +6441,13 @@ input.no-result,input.no-result:focus,
     </div>
     <button type="button" class="desktop-filter-toggle" id="desktopFilterToggle" aria-expanded="false" aria-controls="frow">
       <span id="desktopFilterStatusLabel">全部</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      <svg class="app-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <details class="desktop-note-tags" id="desktopNoteTagFilter">
       <summary class="desktop-note-tool" aria-label="标签筛选">标签<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg></summary>
       <div class="desktop-note-tag-menu" id="desktopNoteTagOptions"></div>
     </details>
-    <button type="button" class="desktop-sort-button" id="desktopSortButton" aria-haspopup="listbox" aria-expanded="false" aria-controls="desktopSortMenu" onclick="toggleDesktopSort()"><span id="desktopSortLabel">默认排序</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button type="button" class="desktop-sort-button" id="desktopSortButton" aria-haspopup="listbox" aria-expanded="false" aria-controls="desktopSortMenu" onclick="toggleDesktopSort()"><span id="desktopSortLabel">默认排序</span><svg class="app-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <select class="ssort" onchange="onSort(this.value)">
       <option value="media-auto" selected>默认排序</option>
       <option value="upd-desc">最近修改</option>
@@ -6562,7 +6568,7 @@ input.no-result,input.no-result:focus,
   <!-- 人物关系图是详情页上的独立全屏页面，返回后恢复进入前的详情栏目。 -->
   <div class="rel-graph" id="relGraph" aria-hidden="true">
     <div class="rg-head">
-      <button type="button" class="rg-back" onclick="closeRelationGraph()" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button type="button" class="rg-back" onclick="closeRelationGraph()" aria-label="返回"><svg class="app-chevron app-back-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="rg-title" id="rgTitle">人物关系图</div>
       <div class="people-toolbar">
         <button type="button" class="people-tool" onclick="toggleGraphSearch()" aria-label="搜索人物"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
@@ -6608,9 +6614,9 @@ input.no-result,input.no-result:focus,
       <div id="calViewCalendar" class="cal-view">
       <div class="cal-hdr">
         <div class="cal-titlenav">
-          <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+          <button class="cal-navbtn" onclick="calPrev()" aria-label="上一月"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
           <div class="cal-title" id="calTitle" onclick="triggerCalMonthPick()" style="cursor:pointer;user-select:none">2026 年 1 月</div>
-          <button class="cal-navbtn" onclick="calNext()" aria-label="下一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+          <button class="cal-navbtn" onclick="calNext()" aria-label="下一月"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
         </div>
         <input type="month" id="calMonthPicker" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0">
         <div class="cal-nav">
@@ -6682,9 +6688,9 @@ input.no-result,input.no-result:focus,
         <!-- 标题条在卡片外（与普通日历 .cal-hdr 一致）；卡片只含星期行+网格（与 .cal-scroll 一致） -->
         <div class="home-header">
           <div class="pv-nav">
-            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button class="pv-navbtn" onclick="PV.navPrev()" aria-label="上一页"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
             <div class="pv-navlabel" id="pvNavLabel" onclick="PV.openYearPicker()">2026 年 7 月</div>
-            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="pv-navbtn" onclick="PV.navNext()" aria-label="下一页"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
           </div>
           <div class="home-header-right">
             <div class="home-filter" id="homeFilter">
@@ -6777,8 +6783,8 @@ input.no-result,input.no-result:focus,
         <div class="hm-hdr">
           <div class="hm-title" id="hmTitle">2026 年 1 月</div>
           <div class="hm-hdr-actions">
-            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+            <button class="cal-navbtn" onclick="PV.heatShift(-1)" aria-label="上一月"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button class="cal-navbtn" onclick="PV.heatShift(1)" aria-label="下一月"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
             <div class="hm-filter" id="hmFilter">
               <button class="hm-filter-btn" id="hmFilterBtn" onclick="PV.toggleHeatFilter(event)" aria-label="筛选标签或食记" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h16M7 12h10M10 19h4"/></svg>
@@ -10475,7 +10481,7 @@ function renderOvuRow(){
     ovuStepRow('luteal',c,R)+
     ovuStepRow('sample',c,R)+
     `<button type="button" class="novu-adv" aria-expanded="${ovuAdvOpen}" onclick="toggleOvuAdv()">`+
-      `高级<span class="novu-chev">${ovuAdvOpen?'▾':'▸'}</span></button>`+
+      `高级<svg class="app-chevron novu-chevron${ovuAdvOpen?' open':''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`+
     (ovuAdvOpen
       ? OVU_ADV_HEAD.map(k=>ovuStepRow(k,c,R)).join('')+
         ovuCycWinRows(c,R)+
@@ -17329,7 +17335,7 @@ function calCurTail(r){
 // 起点 = 它那一天的列左边，宽 = max(真实跨度, 名字撑开的宽)。名字比跨度长时块会
 // 伸出真实结束日——一周概览要的是「一眼认出是什么事」，精确到哪天点进那天看。
 const CW_OPEN_KEY='my_list_cal_week_open';
-const CW_CHEV='<svg class="cw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"'+
+const CW_CHEV='<svg class="app-chevron cw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"'+
   ' stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
 const CW_WK=['一','二','三','四','五','六','日'];
 let calWeekOpen=localStorage.getItem(CW_OPEN_KEY)!=='0';
@@ -17414,9 +17420,9 @@ function renderWeekCard(force){
   const wkTxt=wk.year===+sel.slice(0,4)?`第 ${wk.week} 周`:`${wk.year} 年第 ${wk.week} 周`;
   card.innerHTML=
     `<div class="cw-hd">`+
-    `<button type="button" class="cw-nav" onclick="calWeekStep(-1)" aria-label="上一周"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>`+
+    `<button type="button" class="cw-nav" onclick="calWeekStep(-1)" aria-label="上一周"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>`+
     `<button type="button" class="cw-hd-t" onclick="toggleWeekCard()">${days.includes(today)?'本周':wkTxt}</button>`+
-    `<button type="button" class="cw-nav" onclick="calWeekStep(1)" aria-label="下一周"><svg class="nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>`+
+    `<button type="button" class="cw-nav" onclick="calWeekStep(1)" aria-label="下一周"><svg class="app-chevron nav-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>`+
     `<button type="button" class="cw-hd-x" onclick="toggleWeekCard()" aria-label="收起或展开">${CW_CHEV}</button>`+
     `</div>`+
     `<div class="cw-body"><div class="cw-cols">${cols}</div><div class="cw-pills" id="calWeekPills"></div></div>`;
@@ -17971,7 +17977,7 @@ function renderNoteYearGroups(groups,keys,renderMonths){
   return [...years].map(([year,months])=>{
     const count=months.reduce((sum,key)=>sum+groups[key].length,0);
     return `<details class="note-year-group" data-year="${year}" data-sub="${esc(curNoteSub)}"${expanded.has(year)?' open':''} ontoggle="rememberNoteYear(this)">
-      <summary class="note-year-row"><span class="note-month-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="note-month-name">${year}年</span><span class="note-month-count">${count}</span></summary>
+      <summary class="note-year-row"><span class="note-month-ico" aria-hidden="true"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="note-month-name">${year}年</span><span class="note-month-count">${count}</span></summary>
       <div class="note-year-months">${renderMonths(months)}</div>
     </details>`;
   }).join('');
@@ -17980,7 +17986,7 @@ function renderNoteYearGroups(groups,keys,renderMonths){
 function renderNoteMonthOverview(groups, keys){
   return '<div class="note-month-card">'+renderNoteYearGroups(groups,keys,months=>months.map(key=>
     `<button type="button" class="note-month-row" data-month="${key}" role="listitem" onclick="openNoteMonth('${key}',this)">`+
-      `<span class="note-month-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`+
+      `<span class="note-month-ico" aria-hidden="true"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
     `</button>`
@@ -18613,7 +18619,7 @@ function renderTimelineChapterCards(chs,openFn){
       const x=entry.item;
       if(inline)return `<details class="tl-item tl-chapter-single has-paras" data-idx="${x.i}" ${x.i===desktopChapterIndex?'open':''}
         data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}">
-        <summary class="tl-head" onclick="toggleTimelineSingle(event,this)"><svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div>${desktopChapterEditButton(x.i)}</summary>
+        <summary class="tl-head" onclick="toggleTimelineSingle(event,this)"><svg class="app-chevron tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 9 6 6 6-6"/></svg><div class="tl-main"><div class="tl-ch">${esc(x.c.title)}</div></div>${desktopChapterEditButton(x.i)}</summary>
         <div class="desktop-chapter-reader" data-desktop-chapter="${x.i}">${desktopChapterHtml(x.c)}</div>
       </details>`;
       return `<div class="tl-item tl-chapter-single has-paras"${order} data-idx="${x.i}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${openFn}(${x.i})">
@@ -18623,7 +18629,7 @@ function renderTimelineChapterCards(chs,openFn){
     const collapsed=openFn==='openDetailChapter'&&isTimelineChapterCollapsed(entry.title);
     return `<div class="tl-chapter-group${collapsed?' collapsed':''}"${order} ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''}>
       <button type="button" class="tl-chapter-group-head" aria-expanded="${!collapsed}" ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-group="${esc(entry.title)}" data-graph-title="${esc(entry.title)}"`:''} onclick="toggleTimelineChapterGroup(this)">
-        <svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        <svg class="app-chevron tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
         <span class="tl-chapter-group-title">${esc(entry.title)}</span>
       </button>
       <div class="tl-section-grid" ${collapsed?'hidden':''}>
@@ -18631,7 +18637,7 @@ function renderTimelineChapterCards(chs,openFn){
           const expanded=inline&&desktopOpenSections.has(x.i);
           const toggle=inline?`aria-expanded="${expanded}" aria-controls="desktop-chapter-${x.i}"`:'';
           const action=inline?"setDesktopSectionExpanded(this,this.getAttribute('aria-expanded')!=='true')":`${openFn}(${x.i})`;
-          const arrow=inline?'<svg class="tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>':'';
+          const arrow=inline?'<svg class="app-chevron tl-chapter-group-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>':'';
           const row=`<button type="button" class="tl-section-btn" data-idx="${x.i}" ${toggle} ${openFn==='openDetailChapter'?`data-graph-longpress="1" data-graph-chapter="${x.i}" data-graph-title="${esc(x.c.title)}"`:''} onclick="${action}" aria-label="${esc(entry.title)} ${esc(x.section)}" title="${esc(x.section)}">${arrow}<span class="tl-section-name">${esc(x.section)}</span></button>`;
           return inline?`<section class="desktop-chapter-section"><div class="desktop-chapter-heading">${row}${desktopChapterEditButton(x.i)}</div>
             <div class="desktop-chapter-reader" id="desktop-chapter-${x.i}" data-desktop-chapter="${x.i}" ${expanded?'':'hidden'}>${desktopChapterHtml(x.c,true)}</div></section>`:row;
@@ -19782,7 +19788,7 @@ function renderMemoCard(n){
   const expanded=memoExpandedState.has(n.id);
   return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
     <div class="memo-head" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')">
-      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
       <div class="memo-tag-pills">${renderMemoTagPills(n)}</div>
       <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
