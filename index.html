@@ -2624,7 +2624,7 @@ body.cal-searching .cw-card{display:none;}
 /* 日记长按菜单：只标记当前卡片；菜单沿用应用的描边、无投影风格。 */
 #diaryActionMenu{background:transparent;}
 #diaryActionMenu .chapter-action-panel{
-  width:184px;padding:6px;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;
+  width:175px;padding:6px;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;
 }
 #nlist .note-card.diary-action-selected{
   border-color:var(--accent);background:rgba(var(--accent-rgb),.08);
@@ -6282,6 +6282,15 @@ svg.novu-chevron.open{transform:rotate(0deg);}
 .diary-more-btn:focus-visible{outline:1px solid var(--accent);outline-offset:2px;}
 @media(hover:hover) and (pointer:fine){.diary-more-btn:hover{color:var(--accent);background:var(--accent-light);}}
 #diaryActionMenu .diary-action-icon{width:20px;height:20px;flex:0 0 20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* 与书籍时间线的三个点菜单复用同一展开动画。 */
+#diaryActionMenu.open .chapter-action-panel{
+  transform-origin:top right;
+  animation:people-menu-in .22s cubic-bezier(.2,.8,.2,1) both;
+}
+@media(prefers-reduced-motion:reduce){
+  #diaryActionMenu.open .chapter-action-panel{animation:none;}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
