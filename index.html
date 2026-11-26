@@ -6186,11 +6186,19 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 
 /* 手机书影：浮动更多菜单与日历同款添加按钮。 */
 .media-tools{display:none;}
-#mediaMore{margin:auto 16px calc(136px + env(safe-area-inset-bottom)) auto;padding:8px;width:min(280px,calc(100vw - 32px));border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);}
+#mediaMore{margin:auto 16px calc(136px + env(safe-area-inset-bottom)) auto;padding:8px;width:max-content;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);}
 #mediaMore::backdrop{background:transparent;}
-#mediaMore button{display:block;width:100%;padding:12px;border:0;border-radius:var(--r);text-align:left;background:transparent;color:inherit;font:inherit;cursor:pointer;}
+#mediaMore:popover-open{display:flex;gap:4px;}
+#mediaMore button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:var(--r);background:transparent;color:inherit;cursor:pointer;}
+.media-search-box{display:none;}
+.media-tools.search-open{width:calc(100vw - 32px);box-sizing:border-box;}
+.media-tools.search-open>button{display:none;}
+.media-tools.search-open .media-search-box{display:flex;align-items:center;gap:8px;width:100%;height:48px;padding-left:10px;box-sizing:border-box;}
+.media-search-box input{flex:1;min-width:0;height:44px;border:0;outline:none;background:transparent;color:var(--text-primary);font-family:var(--zh);font-size:var(--fs-input);}
+.media-search-box>svg{flex:none;color:var(--text-muted);}
+.media-tools .media-search-box button{width:44px;height:44px;flex:none;}
 #mediaMore button:active{background:var(--accent-light);}
-#mediaMore input{box-sizing:border-box;width:100%;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:inherit;font-family:var(--zh);font-size:var(--fs-input);}
+
 @media(max-width:1024px), (pointer:coarse){
  body:not(.notes-mode) #bottombar>.bb-actions{display:none;}
  body:not(.notes-mode):not(.cal-open):not(.sb-open):not(.detail-open) .media-tools{display:flex;align-items:center;gap:8px;position:fixed;right:calc(var(--sp-16) - 7px);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom) - 7px);z-index:80;padding:6px;border:1px solid var(--border);border-radius:999px;background:var(--surface);}
@@ -6759,12 +6767,12 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 <div class="media-tools" aria-label="书影操作">
   <button type="button" popovertarget="mediaMore" aria-label="更多操作" title="更多操作"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
   <button type="button" class="media-add" onclick="openAdd()" aria-label="添加" title="添加"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  <div class="media-search-box"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg><input id="mediaSearch" type="search" placeholder="搜索书影…" oninput="onSearchBB(this.value)" autocomplete="off" aria-label="搜索书影"><button type="button" onclick="closeMediaSearch()" aria-label="退出搜索" title="退出搜索"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
 </div>
 <div id="mediaMore" popover aria-label="书影更多操作">
-  <label for="mediaSearch">搜索</label>
-  <input id="mediaSearch" type="search" placeholder="搜索书影…" oninput="onSearchBB(this.value)" autocomplete="off">
-  <button type="button" onclick="document.getElementById('mediaMore').hidePopover();openSortSheet()">分类</button>
-  <button type="button" onclick="document.getElementById('mediaMore').hidePopover();openTagSheet()">筛选与排序</button>
+  <button type="button" onclick="openMediaSearch()" aria-label="搜索" title="搜索"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg></button>
+  <button type="button" onclick="document.getElementById('mediaMore').hidePopover();openSortSheet()" aria-label="分类" title="分类"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg></button>
+  <button type="button" onclick="document.getElementById('mediaMore').hidePopover();openTagSheet()" aria-label="筛选与排序" title="筛选与排序"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="8" cy="5" r="3" fill="var(--surface)"/><circle cx="16" cy="12" r="3" fill="var(--surface)"/><circle cx="8" cy="19" r="3" fill="var(--surface)"/></svg></button>
 </div>
 
 <!-- ===== 手机端底部栏（仅 ≤1024px 显示）===== -->
@@ -14770,6 +14778,16 @@ function clearSearch(){
   if(inp) inp.focus();
 }
 // 底部栏搜索
+function openMediaSearch(){
+  document.getElementById('mediaMore').hidePopover();
+  document.querySelector('.media-tools').classList.add('search-open');
+  document.getElementById('mediaSearch').focus({preventScroll:true});
+}
+function closeMediaSearch(){
+  document.getElementById('mediaSearch').blur();
+  document.querySelector('.media-tools').classList.remove('search-open');
+  onSearchBB('');
+}
 function onSearchBB(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
 // 搜索后让结果可见：滚动到内容区起点（用 scrollIntoView 尊重 sticky 筛选条，
 // 不用 scrollTo(0)——后者在键盘弹起时会把内容顶到状态栏下被裁切）
