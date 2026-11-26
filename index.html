@@ -18088,7 +18088,7 @@ function renderNoteYearGroups(groups,keys,renderMonths){
 function renderNoteMonthOverview(groups, keys){
   return '<div class="note-month-card">'+renderNoteYearGroups(groups,keys,months=>months.map(key=>
     `<button type="button" class="note-month-row" data-month="${key}" role="listitem" onclick="openNoteMonth('${key}',this)">`+
-      `<span class="note-month-ico" aria-hidden="true"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`+
+      `<span class="note-month-ico" aria-hidden="true"></span>`+
       `<span class="note-month-name">${noteMonthLabel(key)}</span>`+
       `<span class="note-month-count">${groups[key].length}</span>`+
     `</button>`
