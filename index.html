@@ -6862,7 +6862,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 <div class="media-tools" aria-label="书影操作">
 <div id="mediaMore" aria-label="书影更多操作" inert>
   <button type="button" onclick="openMediaSearch()" aria-label="搜索" title="搜索"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg></button>
-  <button type="button" onclick="closeMediaMore();openSortSheet()" aria-label="分类" title="分类"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg></button>
+  <button type="button" id="mediaCategoryToggle" onclick="openSortSheet()" aria-label="分类" title="分类"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg></button>
   <button type="button" id="mediaFilterToggle" onclick="openTagSheet()" aria-label="筛选与排序" title="筛选与排序"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="8" cy="5" r="3" fill="var(--surface)"/><circle cx="16" cy="12" r="3" fill="var(--surface)"/><circle cx="8" cy="19" r="3" fill="var(--surface)"/></svg></button>
 </div>
   <button type="button" id="mediaMoreToggle" onclick="toggleMediaMore()" aria-controls="mediaMore" aria-expanded="false" aria-label="更多操作" title="更多操作"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
@@ -15114,8 +15114,8 @@ function placeBBPanel(panelId,btn){
   const panel=document.getElementById(panelId);
   if(!btn||!panel) return;
   if(!isNoteMode()&&isMobileLayout()){
-    if(panelId==='bbTagPanel'){
-      const anchor=document.getElementById('mediaFilterToggle');
+    if(panelId==='bbTagPanel'||panelId==='bbSortPanel'){
+      const anchor=document.getElementById(panelId==='bbTagPanel'?'mediaFilterToggle':'mediaCategoryToggle');
       const r=anchor.getBoundingClientRect();
       panel.style.top='auto';
       panel.style.bottom=Math.max(8,window.innerHeight-r.bottom)+'px';
