@@ -2624,7 +2624,7 @@ body.cal-searching .cw-card{display:none;}
 /* 日记长按菜单：只标记当前卡片；菜单沿用应用的描边、无投影风格。 */
 #diaryActionMenu{background:transparent;}
 #diaryActionMenu .chapter-action-panel{
-  width:184px;padding:6px;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;
+  width:175px;padding:6px;border:var(--bd) solid var(--ink);border-radius:var(--rlg);box-shadow:none;
 }
 #nlist .note-card.diary-action-selected{
   border-color:var(--accent);background:rgba(var(--accent-rgb),.08);
@@ -2638,7 +2638,7 @@ body.cal-searching .cw-card{display:none;}
 .diary-action-icon{width:21px;height:21px;flex:0 0 21px;fill:none;stroke:currentColor;
   stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .diary-action-label{min-width:0;}
-[data-graph-longpress],[data-diary-longpress]{
+[data-graph-longpress]{
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
 .rg-filter{display:none;position:absolute;z-index:7;right:var(--sp-12);top:calc(62px + env(safe-area-inset-top));
@@ -6272,6 +6272,25 @@ svg.app-chevron{width:16px!important;height:16px!important;flex:0 0 16px;fill:no
 svg.app-back-chevron{width:20px!important;height:20px!important;flex-basis:20px;}
 svg.novu-chevron{vertical-align:middle;transform:rotate(-90deg);}
 svg.novu-chevron.open{transform:rotate(0deg);}
+
+/* 日记卡片右上角更多入口，操作图标统一圆润 B。 */
+.note-card[data-diary-menu]{position:relative;}
+.note-card[data-diary-menu] .note-head{padding-right:36px;min-height:24px;}
+.diary-more-btn{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:var(--r);background:transparent;color:var(--text-secondary);cursor:pointer;}
+.diary-more-btn svg{width:18px;height:18px;flex:none;}
+.diary-more-btn:active{background:var(--accent-light);color:var(--accent);}
+.diary-more-btn:focus-visible{outline:1px solid var(--accent);outline-offset:2px;}
+@media(hover:hover) and (pointer:fine){.diary-more-btn:hover{color:var(--accent);background:var(--accent-light);}}
+#diaryActionMenu .diary-action-icon{width:20px;height:20px;flex:0 0 20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* 与书籍时间线的三个点菜单复用同一展开动画。 */
+#diaryActionMenu.open .chapter-action-panel{
+  transform-origin:top right;
+  animation:people-menu-in .22s cubic-bezier(.2,.8,.2,1) both;
+}
+@media(prefers-reduced-motion:reduce){
+  #diaryActionMenu.open .chapter-action-panel{animation:none;}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -6543,7 +6562,7 @@ svg.novu-chevron.open{transform:rotate(0deg);}
   <div class="chapter-action-menu" id="diaryActionMenu" onclick="if(event.target===this)closeDiaryActionMenu()" aria-hidden="true">
     <div class="chapter-action-panel" role="menu" aria-label="日记操作">
       <button type="button" class="chapter-action-item" role="menuitem" data-diary-pin onclick="toggleDiaryPin()">
-        <svg class="diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6"/><path d="M9 4v5l-3 5h12l-3-5V4"/><path d="M12 14v8"/></svg>
+        <svg class="diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(45 12 12)"><path d="M9 4h6"/><path d="M9 4v5l-3 5h12l-3-5V4"/><path d="M12 14v8"/></g></svg>
         <span class="diary-action-label" data-diary-pin-label>置顶</span>
       </button>
       <button type="button" class="chapter-action-item" role="menuitem" onclick="editDiaryAction()">
@@ -18125,11 +18144,12 @@ function renderNotesContent(){
     // ── 「收集」「日记」子分类：卡片可展开/收起显示全文（默认展开），共用 collect 样式 ──
     if(n.subCat==='收集'||n.subCat==='日记'){
       const fullBody=renderRich(n.body||'');
-      const diaryLongpress=n.subCat==='日记'?' data-diary-longpress="1"':'';
+      const diaryMenu=n.subCat==='日记'?' data-diary-menu="1"':'';
+      const diaryMore=n.subCat==='日记'?`<button type="button" class="diary-more-btn" aria-label="日记更多操作" aria-haspopup="menu" aria-expanded="false" aria-controls="diaryActionMenu" onclick="openDiaryCardMenu(event,this,'${n.id}')">${ICON_MORE}</button>`:'';
       const dateTitle=monthMode?noteDateInputValue(n.title):'';
       const titleLine=monthMode&&(!n.title||dateTitle)?'':
         `<div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>`;
-      const actions=`<button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
+      const actions=n.subCat==='日记'?'':`<button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>`;
       const recordDate=monthMode?noteRecordDateISO(n):'';
       const dateHeading=recordDate?`<time class="note-record-date" datetime="${recordDate}">${recordDate}</time>`:'';
@@ -18141,8 +18161,8 @@ function renderNotesContent(){
         `<div class="note-head">${titleLine}${actions}</div>`;
       const tags=(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
       const foot=monthMode?tags+actions:`<span class="note-subcat">${esc(n.subCat||'灵感')}</span>${tags}`;
-      return `<div class="note-card collect expanded${monthMode&&!desktopMonth?' note-record-card':''}" data-nid="${n.id}"${diaryLongpress} onclick="toggleCollectCard('${n.id}', event)">
-        ${head}
+      return `<div class="note-card collect expanded${monthMode&&!desktopMonth?' note-record-card':''}" data-nid="${n.id}"${diaryMenu} onclick="toggleCollectCard('${n.id}', event)">
+        ${diaryMore}${head}
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
         <div class="note-foot">${foot}${desktopMonth?'':createdAt}</div>
       </div>`;
@@ -18203,11 +18223,8 @@ function enhanceNoteSwipe(list){
   list.querySelectorAll('.note-card').forEach(card=>{
     const nid=card.getAttribute('data-nid');
     if(!nid) return;
-    // 日记改用长按菜单，不再创建左右滑动面板；收集和其它笔记维持原交互。
-    if(card.hasAttribute('data-diary-longpress')){
-      attachDiaryLongPress(card,nid);
-      return;
-    }
+    // 日记通过右上角更多按钮操作，不创建滑动面板。
+    if(card.hasAttribute('data-diary-menu'))return;
     // 包一层滑动容器：面板在下层（删除在右、编辑在左），卡片在上层可左右平移
     const wrap=document.createElement('div');
     wrap.className='swipe-wrap';
@@ -18234,9 +18251,16 @@ function enhanceNoteSwipe(list){
 }
 
 
-// ── 日记卡片：长按任意位置弹出编辑 / 删除菜单 ──────────────────
+// ── 日记卡片：右上角更多按钮打开操作菜单 ──────────────────
 let diaryActionId=null,diaryActionCard=null;
-function openDiaryActionMenu(card,id,point){
+function openDiaryCardMenu(event,button,id){
+  event.stopPropagation();
+  const card=button.closest('.note-card');
+  if(diaryActionCard===card){closeDiaryActionMenu();return;}
+  closeDiaryActionMenu();
+  openDiaryActionMenu(card,id,button);
+}
+function openDiaryActionMenu(card,id,button){
   const menu=document.getElementById('diaryActionMenu');
   if(!menu||!card)return;
   if(diaryActionCard&&diaryActionCard!==card)diaryActionCard.classList.remove('diary-action-selected');
@@ -18251,22 +18275,38 @@ function openDiaryActionMenu(card,id,point){
   if(pinButton)pinButton.setAttribute('aria-label',pinned?'取消置顶':'置顶');
   menu.classList.add('open');
   menu.setAttribute('aria-hidden','false');
-  window.getSelection?.().removeAllRanges();
+  window.getSelection?.()?.removeAllRanges();
   const panel=menu.querySelector('.chapter-action-panel');
-  const rect=card.getBoundingClientRect();
-  const x=point?.x??rect.left,y=point?.y??rect.bottom;
+  const rect=button.getBoundingClientRect();
+  button.setAttribute('aria-expanded','true');
+  const x=rect.right,y=rect.bottom;
   const w=panel.offsetWidth,h=panel.offsetHeight;
-  panel.style.left=Math.max(12,Math.min(x+8,window.innerWidth-w-12))+'px';
+  panel.style.left=Math.max(12,Math.min(x-w,window.innerWidth-w-12))+'px';
   panel.style.top=Math.max(12,Math.min(y+8+h<=window.innerHeight-12?y+8:y-h-8,window.innerHeight-h-12))+'px';
+  menu.querySelector('button')?.focus({preventScroll:true});
   haptic('tap');
 }
 function closeDiaryActionMenu(){
   const menu=document.getElementById('diaryActionMenu');
   if(menu){menu.classList.remove('open');menu.setAttribute('aria-hidden','true');}
-  if(diaryActionCard)diaryActionCard.classList.remove('diary-action-selected');
+  if(diaryActionCard){
+    diaryActionCard.classList.remove('diary-action-selected');
+    diaryActionCard.querySelector('.diary-more-btn')?.setAttribute('aria-expanded','false');
+  }
   diaryActionCard=null;
   diaryActionId=null;
 }
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&diaryActionCard){
+    const button=diaryActionCard.querySelector('.diary-more-btn');
+    closeDiaryActionMenu();
+    button?.focus({preventScroll:true});
+  }
+});
+window.addEventListener('resize',closeDiaryActionMenu);
+document.addEventListener('scroll',event=>{
+  if(diaryActionCard&&!event.target.closest?.('#diaryActionMenu'))closeDiaryActionMenu();
+},true);
 function toggleDiaryPin(){
   const id=diaryActionId;
   const note=id&&notes.find(n=>n.id===id);
@@ -18289,43 +18329,6 @@ function deleteDiaryAction(){
   closeDiaryActionMenu();
   if(id)askDelNoteById(id);
 }
-function attachDiaryLongPress(card,id){
-  let press=null,suppressClickUntil=0;
-  const clear=()=>{
-    if(press?.timer)clearTimeout(press.timer);
-    press=null;
-  };
-  card.addEventListener('pointerdown',e=>{
-    if(!e.isPrimary||(e.button!=null&&e.button!==0)||e.target.closest('button,a,input,textarea,select'))return;
-    clear();
-    press={pointerId:e.pointerId,x:e.clientX,y:e.clientY,timer:setTimeout(()=>{
-      suppressClickUntil=Date.now()+800;
-      openDiaryActionMenu(card,id,{x:e.clientX,y:e.clientY});
-      press=null;
-    },500)};
-  });
-  card.addEventListener('pointermove',e=>{
-    if(press?.pointerId===e.pointerId&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>10)clear();
-  });
-  for(const type of ['pointerup','pointercancel','lostpointercapture']){
-    card.addEventListener(type,e=>{if(press?.pointerId===e.pointerId)clear();});
-  }
-  card.addEventListener('click',e=>{
-    if(Date.now()>suppressClickUntil)return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    suppressClickUntil=0;
-  },true);
-  card.addEventListener('contextmenu',e=>{
-    e.preventDefault();
-    clear();
-    suppressClickUntil=Date.now()+800;
-    if(!document.getElementById('diaryActionMenu').classList.contains('open')){
-      openDiaryActionMenu(card,id,{x:e.clientX,y:e.clientY});
-    }
-  });
-}
-
 // 媒体列表：同一套手势（左滑删除 / 右滑编辑）。列表里每个 .mrow 就是一行，
 // 和笔记的区别只有两点：每行都有编辑，动作走 openEdit / askDel。
 function enhanceMediaSwipe(list){
