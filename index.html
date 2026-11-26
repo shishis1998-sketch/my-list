@@ -6183,6 +6183,22 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
   font-family:var(--note-page-font)!important;
 }
 
+
+/* 手机书影：浮动更多菜单与日历同款添加按钮。 */
+.media-tools{display:none;}
+#mediaMore{margin:auto 16px calc(136px + env(safe-area-inset-bottom)) auto;padding:8px;width:min(280px,calc(100vw - 32px));border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);}
+#mediaMore::backdrop{background:transparent;}
+#mediaMore button{display:block;width:100%;padding:12px;border:0;border-radius:var(--r);text-align:left;background:transparent;color:inherit;font:inherit;cursor:pointer;}
+#mediaMore button:active{background:var(--accent-light);}
+#mediaMore input{box-sizing:border-box;width:100%;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:inherit;font-family:var(--zh);font-size:var(--fs-input);}
+@media(max-width:1024px), (pointer:coarse){
+ body:not(.notes-mode) #bottombar>.bb-actions{display:none;}
+ body:not(.notes-mode):not(.cal-open):not(.sb-open):not(.detail-open) .media-tools{display:flex;align-items:center;gap:8px;position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:80;padding:6px;border:1px solid var(--border);border-radius:999px;background:var(--surface);}
+ .media-tools button{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;color:var(--text-primary);background:transparent;cursor:pointer;}
+ .media-tools .media-add{color:var(--on-accent);background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--accent);}
+ .media-tools button:active{transform:scale(.92);}
+}
+
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -6739,6 +6755,17 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
     <line x1="5" y1="12" x2="19" y2="12"/>
   </svg>
 </button>
+
+<div class="media-tools" aria-label="书影操作">
+  <button type="button" popovertarget="mediaMore" aria-label="更多操作" title="更多操作"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+  <button type="button" class="media-add" onclick="openAdd()" aria-label="添加" title="添加"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+</div>
+<div id="mediaMore" popover aria-label="书影更多操作">
+  <label for="mediaSearch">搜索</label>
+  <input id="mediaSearch" type="search" placeholder="搜索书影…" oninput="onSearchBB(this.value)" autocomplete="off">
+  <button type="button" onclick="document.getElementById('mediaMore').hidePopover();openSortSheet()">分类</button>
+  <button type="button" onclick="document.getElementById('mediaMore').hidePopover();openTagSheet()">筛选与排序</button>
+</div>
 
 <!-- ===== 手机端底部栏（仅 ≤1024px 显示）===== -->
 <div class="bottombar" id="bottombar">
@@ -10014,6 +10041,7 @@ function placeTabPanel(panelId,btnId){
   const panel=document.getElementById(panelId);
   const btn=document.getElementById(btnId);
   if(!panel||!btn)return;
+  if(!isNoteMode()&&isMobileLayout())btn=document.querySelector('.media-tools');
   const r=btn.getBoundingClientRect();
   if(!r.width)return;                       // 底栏没显示（桌面用顶部四段条）
   panel.style.bottom=(window.innerHeight-r.top+10)+'px';
@@ -14727,6 +14755,8 @@ function syncSearchClear(){
 }
 // 让顶部/底部两个搜索框内容保持一致（不互相触发 oninput）
 function syncSearchInputs(v){
+  const media=document.getElementById('mediaSearch');
+  if(media&&media.value!==v)media.value=v;
   const top=document.querySelector('.sbox input');
   const bb=document.getElementById('bbSearch');
   if(top&&top.value!==v) top.value=v;
