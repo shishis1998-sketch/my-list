@@ -280,3 +280,16 @@
 - 日记三个点菜单展开复用书籍时间线的 people-menu-in 动画：右上角为原点，220ms 缩放与淡入，缓动 cubic-bezier(.2,.8,.2,1)；遵循减少动态效果设置。
 
 - 置顶和删除的图形轮廓使用曲线／圆弧构造圆角，不能只依赖 stroke-linejoin；置顶保留右上45°方向，编辑沿用全站圆润空心铅笔。
+
+
+### 编辑与删除的公共 SVG（唯一图形定义）
+
+| 操作 | 唯一 symbol ID | 引用方式 | 图形 |
+|---|---|---|---|
+| 编辑 | `app-symbol-edit` | `<use href="#app-symbol-edit"/>` | 无下划线的圆润空心铅笔 |
+| 删除／回收站 | `app-symbol-delete` | `<use href="#app-symbol-delete"/>` | 圆弧轮廓垃圾桶 |
+
+- 两个 symbol 在 index.html 的 body 起始处集中定义，24×24画布；调用方不得再复制路径或单独重画。
+- 外层 SVG 使用 app-icon-edit／app-icon-delete 类，统一空心、currentColor、1.8px线宽、round端点与连接。
+- 保留各入口的尺寸、点击区域、颜色和交互；日记菜单操作图标20px。文字形式的编辑／删除按钮保持原样。
+- ICON_EDIT_DOC 保留兼容名称，其内容同样引用 app-symbol-edit。
