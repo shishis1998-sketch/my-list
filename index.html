@@ -6291,6 +6291,9 @@ svg.novu-chevron.open{transform:rotate(0deg);}
 @media(prefers-reduced-motion:reduce){
   #diaryActionMenu.open .chapter-action-panel{animation:none;}
 }
+
+/* 公共 SVG 的线条统一，尺寸继续由各入口的布局规则控制。 */
+svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;stroke-width:1.8!important;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -6313,6 +6316,13 @@ svg.novu-chevron.open{transform:rotate(0deg);}
 </script>
 </head>
 <body>
+<!-- 公共操作图标：路径只在这里定义，各入口通过 use 引用。 -->
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden;pointer-events:none">
+  <defs>
+    <symbol id="app-symbol-edit" viewBox="0 0 24 24"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></symbol>
+    <symbol id="app-symbol-delete" viewBox="0 0 24 24"><path d="M3.5 6.5h17"/><path d="M8 6.5V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5"/><path d="m5.5 6.5.9 12.6A2 2 0 0 0 8.4 21h7.2a2 2 0 0 0 2-1.9l.9-12.6"/><path d="M10 10.5v6M14 10.5v6"/></symbol>
+  </defs>
+</svg>
 <div class="app">
 
 <!-- 手机端侧边栏遮罩 -->
@@ -6339,7 +6349,7 @@ svg.novu-chevron.open{transform:rotate(0deg);}
     <div class="nlbl nlbl-desktop">
       分类
       <button type="button" class="nlbl-btn" onclick="openCatMgr()" title="管理分类" aria-label="管理分类">
-        <svg class="app-icon-edit" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg>
+        <svg class="app-icon-edit" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg>
       </button>
     </div>
     <!-- 手机端整屏「设置」用的分组标题(桌面端隐藏) -->
@@ -6404,7 +6414,7 @@ svg.novu-chevron.open{transform:rotate(0deg);}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v16H3z M7 3v4m10-4v4M3 10h18"/></svg><span class="calendar-label-mobile">导入日历</span><span class="calendar-label-desktop">导入</span>
       </button>
       <button class="nitem" style="color:var(--danger)" onclick="openClearICS()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg><span class="calendar-label-mobile">清除日历</span><span class="calendar-label-desktop">清除</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" class="app-icon-delete" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-delete"/></svg><span class="calendar-label-mobile">清除日历</span><span class="calendar-label-desktop">清除</span>
       </button>
     </div>
   </div>
@@ -6422,7 +6432,7 @@ svg.novu-chevron.open{transform:rotate(0deg);}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>导出 CSV
       </button>
       <button class="nitem" onclick="openTrash()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/><path d="M9.5 17v-4.5M14.5 17v-4.5"/></svg>回收站
+        <svg width="13" height="13" viewBox="0 0 24 24" class="app-icon-delete" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-delete"/></svg>回收站
         <span class="ncnt" id="trashCount"></span>
       </button>
     </div>
@@ -6566,11 +6576,11 @@ svg.novu-chevron.open{transform:rotate(0deg);}
         <span class="diary-action-label" data-diary-pin-label>置顶</span>
       </button>
       <button type="button" class="chapter-action-item" role="menuitem" onclick="editDiaryAction()">
-        <svg class="app-icon-edit diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg>
+        <svg class="app-icon-edit diary-action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg>
         <span class="diary-action-label">编辑</span>
       </button>
       <button type="button" class="chapter-action-item danger" role="menuitem" onclick="deleteDiaryAction()">
-        <svg class="diary-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17"/><path d="M8 6.5V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5"/><path d="m5.5 6.5.9 12.6A2 2 0 0 0 8.4 21h7.2a2 2 0 0 0 2-1.9l.9-12.6"/><path d="M10 10.5v6M14 10.5v6"/></svg>
+        <svg class="app-icon-delete diary-action-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-delete"/></svg>
         <span class="diary-action-label">删除</span>
       </button>
     </div>
@@ -6601,7 +6611,7 @@ svg.novu-chevron.open{transform:rotate(0deg);}
     <div class="rg-stage" id="rgStage"><div class="rg-canvas" id="rgCanvas"></div></div>
     <div class="rg-legend-dock" id="rgLegendDock">
       <div class="rg-legend-tools">
-        <button type="button" class="rg-legend-tool" onclick="openGraphManager()" aria-label="编辑关系图" title="编辑关系图"><svg class="app-icon-edit" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg></button>
+        <button type="button" class="rg-legend-tool" onclick="openGraphManager()" aria-label="编辑关系图" title="编辑关系图"><svg class="app-icon-edit" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg></button>
         <button type="button" class="rg-legend-tool" id="rgLabelToggle" onclick="toggleGraphLabels()" aria-pressed="true"></button>
         <button type="button" class="rg-legend-tool" id="rgGridToggle" onclick="toggleGraphGrid()" aria-pressed="true" aria-label="隐藏网格" title="隐藏网格"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></button>
         <button type="button" class="rg-legend-tool rg-zoom-btn" onclick="zoomRelationGraph(1)" aria-label="放大关系图" title="放大关系图">+</button>
@@ -11909,7 +11919,7 @@ function renderMediaStatusFilters(){
 function renderMobileCatMgr(){
   const box=document.getElementById('mcatmgr');
   if(!box) return;
-  const pencil='<span class="cat-edit-ic"><svg class="app-icon-edit" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg></span>';
+  const pencil='<span class="cat-edit-ic"><svg class="app-icon-edit" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg></span>';
   box.innerHTML=cats.map(c=>`
     <button class="nitem" onclick="openCatMgr()">
       <span class="dot" style="background:${c.color}"></span>${esc(c.name)}${pencil}
@@ -13146,7 +13156,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
         ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签，点这里添加</div>'}
       </div>
       </div>
-      <button class="dt-fab dt-edit-fab" onclick="openEdit(detailId)" aria-label="编辑记录"><svg class="app-icon-edit" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg></button>`:''}
+      <button class="dt-fab dt-edit-fab" onclick="openEdit(detailId)" aria-label="编辑记录"><svg class="app-icon-edit" width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg></button>`:''}
 
     ${viewTab==='note'?`
       <div class="dt-sec">
@@ -13240,7 +13250,7 @@ const ICON_DRAG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const ICON_ADD_PERSON=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="7.6" r="3.6"/><path d="M3.6 19.4c0-3.2 2.6-5.9 5.9-5.9s5.9 2.7 5.9 5.9"/><path d="M19.4 5.6v6M16.4 8.6h6"/></svg>`;
 // 右下角那颗按钮的图标：一页纸 + 一支笔，「改这一整篇正文」。
 // 画法跟全站其它图标同一套（24 视框、描边 2、圆头收尾）
-const ICON_EDIT_DOC=`<svg class="app-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg>`;
+const ICON_EDIT_DOC=`<svg class="app-icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg>`;
 
 const desktopChapterLayout=window.matchMedia('(min-width: 1025px) and (pointer: fine)');
 let desktopChapterIndex=null, desktopChapterForm=null;
@@ -13309,7 +13319,7 @@ function collapseDesktopSection(footerButton){
 }
 function desktopChapterEditButton(idx){
   return `<span class="desktop-chapter-controls"><button type="button" class="nlbl-btn desktop-chapter-edit" aria-label="编辑当前章节或小节" title="编辑当前章节或小节" onclick="event.preventDefault();event.stopPropagation();editDesktopChapter(${idx})">
-  <svg class="app-icon-edit" width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m14.5 5.5 4 4M5.2 14.8l10-10a2.83 2.83 0 0 1 4 4l-10 10-4.5 1a.5.5 0 0 1-.6-.6l1.1-4.4Z"/></svg></button>
+  <svg class="app-icon-edit" width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-edit"/></svg></button>
   <button type="button" class="nlbl-btn desktop-chapter-commit desktop-chapter-cancel" aria-label="取消" title="取消"><svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
   <button type="button" class="nlbl-btn desktop-chapter-commit desktop-chapter-save" aria-label="保存" title="保存"><svg width="16" height="16" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg></button></span>`;
 }
@@ -13779,7 +13789,7 @@ function renderGraphLibrary(){
       <summary aria-label="${esc(g.title)}的菜单" onclick="togglePeopleMenu(event,this)">${ICON_MORE}</summary>
       <div class="people-more-menu">
         <button type="button" class="people-more-item" onclick="graphLibraryAction('edit','${g.id}',this)">${ICON_EDIT_DOC}<span>编辑</span></button>
-        ${g.id==='legacy'?'':`<button type="button" class="people-more-item danger" onclick="graphLibraryAction('delete','${g.id}',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg><span>删除</span></button>`}
+        ${g.id==='legacy'?'':`<button type="button" class="people-more-item danger" onclick="graphLibraryAction('delete','${g.id}',this)"><svg viewBox="0 0 24 24" class="app-icon-delete" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-delete"/></svg><span>删除</span></button>`}
       </div>
     </details></div>`).join('')+
     `<div class="rg-form-actions"><button type="button" class="primary" onclick="openGraphManager('new')">＋ 新建关系图</button></div>`;
@@ -13826,7 +13836,7 @@ function renderGraphRelationEditor(item,g){
   const people=ensurePeopleIds(item,false).filter(p=>g?.personIds?.includes(p.id));
   const names=new Map(people.map(p=>[p.id,p.name]));
   return `<h3 class="rg-manager-section-title">关系</h3><div class="rg-form-card">
-    ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${CONNECTION_TYPES.some(t=>t.id===r.type)?`<option value="" disabled selected>${esc(relType(r.type,item).lbl)}</option>`:''}${relationTypes(item).filter(t=>!t.unlabeled).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><details class="people-more rg-list-more"><summary onclick="togglePeopleMenu(event,this)" aria-label="关系菜单">${ICON_MORE}</summary><div class="people-more-menu">${CONNECTION_TYPES.map(t=>`<button type="button" class="people-more-item" onclick="setGraphConnectionMode('${r.id}','${t.id}')"><span>${esc(t.lbl)}</span>${r.type===t.id?'<span aria-label="已选中">✓</span>':''}</button>`).join('')}<button type="button" class="people-more-item danger" onclick="removeGraphRelation('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg><span>删除关系</span></button></div></details></div>`).join('')||'<p>还没有关系线</p>'}
+    ${(g?.relationships||[]).filter(r=>names.has(r.a)&&names.has(r.b)).map(r=>`<div class="rg-rel-row"><span>${esc(names.get(r.a))} — ${esc(names.get(r.b))}</span><select aria-label="关系类别" onchange="changeGraphRelation('${r.id}',this.value)">${CONNECTION_TYPES.some(t=>t.id===r.type)?`<option value="" disabled selected>${esc(relType(r.type,item).lbl)}</option>`:''}${relationTypes(item).filter(t=>!t.unlabeled).map(t=>`<option value="${t.id}" ${t.id===r.type?'selected':''}>${esc(t.lbl)}</option>`).join('')}</select><details class="people-more rg-list-more"><summary onclick="togglePeopleMenu(event,this)" aria-label="关系菜单">${ICON_MORE}</summary><div class="people-more-menu">${CONNECTION_TYPES.map(t=>`<button type="button" class="people-more-item" onclick="setGraphConnectionMode('${r.id}','${t.id}')"><span>${esc(t.lbl)}</span>${r.type===t.id?'<span aria-label="已选中">✓</span>':''}</button>`).join('')}<button type="button" class="people-more-item danger" onclick="removeGraphRelation('${r.id}')"><svg viewBox="0 0 24 24" aria-hidden="true" class="app-icon-delete" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#app-symbol-delete"/></svg><span>删除关系</span></button></div></details></div>`).join('')||'<p>还没有关系线</p>'}
     </div>${people.length>1?`<h3 class="rg-manager-section-title">添加关系</h3><div class="rg-form-card"><div class="rg-rel-add-fields"><select id="rgRelA">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelB">${people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>
     <select id="rgRelType">${relationTypes(item).filter(t=>!t.unlabeled).map(t=>`<option value="${t.id}">${esc(t.lbl)}</option>`).join('')}</select></div>
