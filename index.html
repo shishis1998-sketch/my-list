@@ -6237,9 +6237,8 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 .desktop-sort-menu[hidden]{display:none;}
 .desktop-sort-menu{position:fixed;z-index:24;min-width:144px;padding:6px;border:1px solid var(--border);border-radius:8px;background:var(--surface);max-height:calc(100dvh - 80px);overflow-y:auto;}
 .desktop-sort-option{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--text-primary);padding:8px 10px;font:400 var(--fs-caption)/1.4 var(--zh);text-align:left;cursor:pointer;}
-.desktop-sort-option[aria-selected="true"]{color:var(--accent);font-weight:700;}
-.desktop-sort-option:is(:hover,:focus-visible){background:#E8F2FF;outline:none;color:#244A76;}
-:root[data-mode="dark"] .desktop-sort-option:is(:hover,:focus-visible){background:#243B53;color:#D6E9FF;}
+.desktop-sort-option[aria-selected="true"]{background:var(--accent-light);color:var(--accent);font-weight:700;}
+.desktop-sort-option:is(:hover,:focus-visible){background:var(--accent-light);outline:none;color:var(--accent);}
 @media(min-width:1025px) and (pointer:fine){
   .app>.main>.topbar select.ssort{display:none;}
   .desktop-sort-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--desktop-toolbar-control-height);padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-secondary);font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;flex-shrink:0;}
@@ -14887,7 +14886,6 @@ function toggleDesktopSort(){
   menu.replaceChildren(...Array.from(document.querySelector('select.ssort').options,option=>{
     const item=document.createElement('button');item.type='button';item.className='desktop-sort-option';item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.value===curSort));
     const label=document.createElement('span');label.textContent=option.textContent;item.append(label);
-    if(option.value===curSort){const check=document.createElement('span');check.textContent='✓';check.setAttribute('aria-hidden','true');item.append(check);}
     item.onclick=()=>{document.querySelector('select.ssort').value=option.value;onSort(option.value);closeDesktopSort();button.focus();};return item;
   }));
   document.getElementById('desktopFilterToggle').setAttribute('aria-expanded','false');
