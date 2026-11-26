@@ -6863,7 +6863,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 <div id="mediaMore" aria-label="书影更多操作" inert>
   <button type="button" onclick="openMediaSearch()" aria-label="搜索" title="搜索"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg></button>
   <button type="button" onclick="closeMediaMore();openSortSheet()" aria-label="分类" title="分类"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M6 12h12M10 18h4"/></svg></button>
-  <button type="button" onclick="closeMediaMore();openTagSheet()" aria-label="筛选与排序" title="筛选与排序"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="8" cy="5" r="3" fill="var(--surface)"/><circle cx="16" cy="12" r="3" fill="var(--surface)"/><circle cx="8" cy="19" r="3" fill="var(--surface)"/></svg></button>
+  <button type="button" id="mediaFilterToggle" onclick="openTagSheet()" aria-label="筛选与排序" title="筛选与排序"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="8" cy="5" r="3" fill="var(--surface)"/><circle cx="16" cy="12" r="3" fill="var(--surface)"/><circle cx="8" cy="19" r="3" fill="var(--surface)"/></svg></button>
 </div>
   <button type="button" id="mediaMoreToggle" onclick="toggleMediaMore()" aria-controls="mediaMore" aria-expanded="false" aria-label="更多操作" title="更多操作"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
   <button type="button" class="media-add" onclick="openAdd()" aria-label="添加" title="添加"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -15046,7 +15046,7 @@ function syncBottomTabs(){
 const MEDIA_SORTS=[
   ['media-auto','默认'],['upd-desc','修改'],['date-desc','添加'],
   ['start-desc','开始'],['watch-desc','看完'],['name-asc','名称'],
-  ['score-desc','评分'],['year-desc','年份']
+  ['year-desc','年份']
 ];
 const MEDIA_ASC_SORTS={'date-desc':'date-asc','watch-desc':'watch-asc'};
 function noteUsesRecordDates(sub){
@@ -15113,7 +15113,18 @@ function closeNoteViewSheet(){
 function placeBBPanel(panelId,btn){
   const panel=document.getElementById(panelId);
   if(!btn||!panel) return;
-  if(!isNoteMode()&&isMobileLayout())btn=document.querySelector('.media-tools');
+  if(!isNoteMode()&&isMobileLayout()){
+    if(panelId==='bbTagPanel'){
+      const anchor=document.getElementById('mediaFilterToggle');
+      const r=anchor.getBoundingClientRect();
+      panel.style.top='auto';
+      panel.style.bottom=Math.max(8,window.innerHeight-r.bottom)+'px';
+      panel.style.maxHeight=Math.max(120,r.bottom-16)+'px';
+      panel.style.right=Math.max(8,window.innerWidth-r.right)+'px';
+      return;
+    }
+    btn=document.querySelector('.media-tools');
+  }
   const r=btn.getBoundingClientRect();
   if(!r.width) return;          // 底栏没显示（宽屏用顶部下拉），位置交给 CSS
   const atTop=!!btn.closest('.vhdr');
@@ -15272,7 +15283,7 @@ function toggleFilterTag(t){
   render();
   playCatStagger();
 }
-// 底部「筛选」弹层:媒体模式含 状态 + 评分 + 标签;笔记模式只含 标签
+// 底部「筛选」弹层:媒体模式含排序和标签;笔记模式只含标签
 function buildFilterSheetHTML(){
   const notes=isNoteMode();
   // 和排序卡片一致：选中项只用绿底+绿字，不打勾（标签是多选，高亮同样看得出来）
@@ -15291,9 +15302,6 @@ function buildFilterSheetHTML(){
         opt(curSort===selected,'最新',`pickMediaSort('${selected}')`)+
         opt(curSort===ascending,'最早',`pickMediaSort('${ascending}')`)+'</div>';
     }
-    html+='<div class="bb-filter-glbl">评分</div>';
-    [['all','全部'],['5','5/5'],['4','≥4/5'],['3','≥3/5'],['12','≤2/5']]
-      .forEach(([v,lbl])=>{html+=opt(curScore===v,lbl,`pickScore('${v}')`);});
   }
   html+='<div class="bb-filter-glbl">标签<span class="bb-filter-hint">可多选</span></div>';
   const tags=getAllCurrentTags();
