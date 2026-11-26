@@ -6342,6 +6342,21 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 }
 @media(prefers-reduced-motion:reduce){.vhdr>.bb-actions.note-floating-actions>.bb-sbox,.vhdr>.bb-actions.note-floating-actions>.bb-sortbtn{transition:none!important;}}
 
+/* 搜索共用外层胶囊描边，输入框自身不再画第二圈。 */
+@media(max-width:1024px), (pointer:coarse){
+ body.notes-mode .content>.vhdr>.bb-actions.note-floating-actions.note-search-open{
+  width:calc(100vw - 32px);right:16px;border-color:var(--accent-mid);
+ }
+ body .media-tools.search-open{border-color:var(--accent-mid)!important;}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .bb-sbox>input,
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .bb-sbox>input:focus,
+ .media-tools.search-open .media-search-box input{
+  border:0!important;outline:none!important;box-shadow:none!important;background:transparent!important;
+ }
+ body.notes-mode .content>.vhdr>.bb-actions.note-floating-actions.note-search-open:has(input.no-result),
+ body .media-tools.search-open:has(input.no-result){border-color:var(--danger)!important;}
+}
+
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
