@@ -6250,14 +6250,22 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
   #frow .fchip.on{background:var(--accent-light);color:var(--accent);border-color:var(--accent-light);}
 }
 
-/* 圆润图标 B：导航 22 / 操作 20，保留原点击区域。 */
-.bb-tab svg{width:22px;height:22px;stroke-linecap:round;stroke-linejoin:round;}
+/* 圆润图标 B：导航 20 / 操作 20，保留原点击区域。 */
+.bb-tab svg{width:20px;height:20px;stroke-linecap:round;stroke-linejoin:round;}
 .bb-tab .bb-icon-outline{stroke-width:1.8;}
 .bb-tab.on .bb-icon-outline{stroke-width:1.8;}
 .app-icon-edit{fill:none!important;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 :is(.app-icon-edit,.diary-action-icon,.food-action-icon,.bb-sortbtn svg,.note-search-toggle svg,.cal-search-btn svg){width:20px;height:20px;flex-shrink:0;stroke-linecap:round;stroke-linejoin:round;}
 .bb-tab svg path,.bb-tab svg line{stroke-linecap:round;stroke-linejoin:round;}
 
+
+/* 搜索无结果统一红框反馈，保留各输入框布局。 */
+input.no-result,input.no-result:focus,
+.people-search-field.no-result,.people-search-field.no-result:focus,
+.rg-searchbar input.no-result,.rg-searchbar input.no-result:focus,
+.media-search-box.no-result,.media-search-box.no-result:focus-within,
+#calViewHeat .hm-searchfield.no-result,#calViewHeat .hm-searchfield.no-result:focus-within,
+.cal-sfield.no-result,.cal-sfield.no-result:focus-within{border-color:var(--danger)!important;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -9805,6 +9813,7 @@ window.PV = (function(){
       return {...group, cards};
     }).filter(group => group.cards.length).sort((a, b) => b.key.localeCompare(a.key));
 
+    setSearchResultFeedback('hmSearchInput',heatSearchQuery,groups.length);
     if (!groups.length) {
       box.innerHTML = '<div class="hm-empty"><div class="hm-empty-ic">🌱</div>' +
         `<p>没有找到“${escapeHtml(heatSearchQuery.trim())}”</p>` +
@@ -9837,6 +9846,7 @@ window.PV = (function(){
 
     const dim = new Date(heatYear, heatMonth, 0).getDate();
     const normalizedQuery = heatSearchQuery.trim().toLocaleLowerCase();
+    if(!normalizedQuery)setSearchResultFeedback('hmSearchInput','',0);
     if (normalizedQuery) {
       renderGlobalHeatSearch(box, normalizedQuery);
       scheduleHeatLayout();
@@ -12682,6 +12692,7 @@ function filterPeopleList(value){
   });
   const empty=document.getElementById('peopleSearchEmpty');
   if(empty)empty.hidden=!query||matches>0;
+  setSearchResultFeedback('peopleSearchInput',query,matches);
 }
 function toggleTimelineSearch(){
   timelineSearchOpen=!timelineSearchOpen;
@@ -12812,6 +12823,7 @@ function filterTimelineList(value){
   });
   const empty=document.getElementById('timelineSearchEmpty');
   if(empty)empty.hidden=!query||matches>0;
+  setSearchResultFeedback('timelineSearchInput',query,matches);
 }
 function setSortPeople(on){
   const it=data.find(d=>d.id===detailId);
@@ -13857,7 +13869,7 @@ function openRelationGraph(id,recordStep=true){
   document.getElementById('rgFilter').classList.remove('open');
   document.getElementById('rgPersonCard').classList.remove('open');
   updateGraphLabelButton();
-  const search=document.getElementById('rgSearch');if(search)search.value='';
+  const search=document.getElementById('rgSearch');if(search)search.value='';setSearchResultFeedback(search,'',0);
   root.classList.add('open');root.setAttribute('aria-hidden','false');document.body.classList.add('rel-graph-open');
   backLayerOpenedNow('relGraph');
   graphScreen('graph');
@@ -14460,8 +14472,8 @@ function toggleGraphType(type,btn){rgState.filters.has(type)?rgState.filters.del
   const {relations}=currentGraphData();drawGraphLines(relations);renderGraphLegend(relations);}
 function searchGraphPerson(q){
   const s=String(q||'').trim().toLowerCase(),people=currentGraphData().people;
-  if(!s){rgState.selectedId='';closeGraphPersonCard();updateGraphHighlights();drawGraphLines(currentGraphData().relations);return;}
-  const hit=people.find(p=>String(p.name||'').toLowerCase().includes(s));if(hit){selectGraphPerson(hit.id,true);centerGraphOn(hit.id,true);}
+  if(!s){setSearchResultFeedback('rgSearch','',0);rgState.selectedId='';closeGraphPersonCard();updateGraphHighlights();drawGraphLines(currentGraphData().relations);return;}
+  const hit=people.find(p=>String(p.name||'').toLowerCase().includes(s));setSearchResultFeedback('rgSearch',s,hit?1:0);if(hit){selectGraphPerson(hit.id,true);centerGraphOn(hit.id,true);}
 }
 // 下拉标题带关闭（同章节抽屉：松手超过阈值即关，含自动保存）
 function initNoteSheetDrag(){
@@ -14806,15 +14818,24 @@ function setSidebarNotesExpanded(expanded){
 }
 // 搜索无结果时给两个搜索框加红色边框（有搜索词且结果为 0）
 let _wasNoResult=false;
+function setSearchResultFeedback(input, query, count){
+  if(typeof input==='string')input=document.getElementById(input);
+  if(!input)return;
+  const no=!!String(query||'').trim()&&count===0;
+  input.classList.toggle('no-result',no);
+  if(no)input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid');
+  const field=input.closest('.media-search-box,.cal-sfield,.hm-searchfield');
+  if(field)field.classList.toggle('no-result',no);
+}
 function syncSearchNoResult(count){
   const term=!!(curSearch&&curSearch.trim());
   const no=term&&count===0;
   const has=term&&count>0;
   const top=document.querySelector('.sbox input');
   const bb=document.getElementById('bbSearch');
-  [top,bb].forEach(el=>{
+  [top,bb,document.getElementById('mediaSearch')].forEach(el=>{
     if(!el) return;
-    el.classList.toggle('no-result',no);
+    setSearchResultFeedback(el,curSearch,count);
     el.classList.toggle('has-result',has);
   });
   // 只在「刚变成 0 结果」的那一刻震一下，避免逐字输入时反复震动
@@ -16663,7 +16684,7 @@ function closeCalSearch(){
   const btn=document.getElementById('calSearchBtn');if(btn)btn.classList.remove('on');
   const inp=document.getElementById('calSearchInput');if(inp)inp.value='';
   // 关掉时把三态描边一并清掉，否则下次打开还挂着上一轮的红边/绿边
-  const f=document.getElementById('calSearchField');if(f)f.classList.remove('no-result','has-result');
+  const f=document.getElementById('calSearchField');if(f)f.classList.remove('no-result','has-result');setSearchResultFeedback('calSearchInput','',0);
   if(wasSearching)flushWeekPills();   // 搜索态把本周卡片藏了，这会儿露出来，欠着的那摊补摆上
 }
 // 收集所有「能落到某一天」的记录，跟随图例筛选（隐藏的分类不参与搜索）
@@ -16759,7 +16780,7 @@ function runCalSearch(){
   const q=raw.toLowerCase();
   const box=document.getElementById('calSearchResults');
   const field=document.getElementById('calSearchField');
-  const setState=s=>{if(!field)return;field.classList.remove('no-result','has-result');if(s)field.classList.add(s);};
+  const setState=s=>{setSearchResultFeedback('calSearchInput',raw,s==='no-result'?0:1);if(!field)return;field.classList.remove('no-result','has-result');if(s)field.classList.add(s);};
   box.innerHTML='';
   if(!q){box.innerHTML=calRecentHTML();setState(null);return;}
   const hits=calSearchItems().filter(it=>it.hay.includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
