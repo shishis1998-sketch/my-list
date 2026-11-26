@@ -20476,10 +20476,10 @@ function saveNoteSubs(){
     const kbShown=typing && (kb>0 || layoutShrunk);
     // 先应用 kb-open（收 tab、去安全区 padding）再量底栏高度
     document.body.classList.toggle('kb-open', kbShown);
-    // 按可视区底部直接定位搜索框，不再叠加底部导航或键盘高度。
+    // 按可视区底部定位搜索框，与键盘保留 8px 空隙。
     const mediaSearchTools=document.querySelector('.media-tools.search-open');
     if(mediaSearchTools&&kbShown){
-      root.style.setProperty('--media-search-y',Math.max(0,vvBottom-mediaSearchTools.offsetHeight)+'px');
+      root.style.setProperty('--media-search-y',Math.max(0,vvBottom-mediaSearchTools.offsetHeight-8)+'px');
     }else{
       root.style.removeProperty('--media-search-y');
     }
