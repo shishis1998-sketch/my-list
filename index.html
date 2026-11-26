@@ -6202,7 +6202,7 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 @media(max-width:1024px), (pointer:coarse){
  body:not(.notes-mode) #bottombar>.bb-actions{display:none;}
  body.media-search-active.kb-open .bottombar{visibility:hidden;pointer-events:none;}
- body.media-search-active.kb-open .media-tools{bottom:calc(var(--sp-16) - 7px);}
+ body.media-search-active.kb-open .media-tools{top:0;bottom:auto;transform:translateY(var(--media-search-y,0px));}
  body.media-search-active.tabs-hidden:not(.kb-open):not(.vv-track) .bottombar{transform:translateY(0);}
  body.media-search-active .media-tools{transform:translateY(calc(-1 * var(--kb,0px)));}
 
@@ -20447,6 +20447,14 @@ function saveNoteSubs(){
     const kbShown=typing && (kb>0 || layoutShrunk);
     // 先应用 kb-open（收 tab、去安全区 padding）再量底栏高度
     document.body.classList.toggle('kb-open', kbShown);
+    // 按可视区底部直接定位搜索框，不再叠加底部导航或键盘高度。
+    const mediaSearchTools=document.querySelector('.media-tools.search-open');
+    if(mediaSearchTools&&kbShown){
+      root.style.setProperty('--media-search-y',Math.max(0,vvBottom-mediaSearchTools.offsetHeight)+'px');
+    }else{
+      root.style.removeProperty('--media-search-y');
+    }
+
     if(typing && !layoutShrunk && kb>0){
       // 行为 B：布局没缩，用可视区底部钉住底栏
       document.body.classList.add('vv-track');
