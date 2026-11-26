@@ -442,10 +442,13 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
   .desktop-filter-toggle:is(:hover,[aria-expanded="true"],.has-filters){
     border-color:var(--accent);color:var(--accent);
   }
+  body:not(.notes-mode) .desktop-filter-toggle.has-filters{
+    background:var(--accent);border-color:var(--accent);color:var(--on-accent);
+  }
   body:not(.notes-mode) .main>.frow{display:none;}
   body:not(.notes-mode) .main:has(.desktop-filter-toggle[aria-expanded="true"])>.frow{
     display:flex!important;flex-direction:column;align-items:stretch;flex-wrap:nowrap;
-    position:fixed;top:var(--desktop-filter-top);right:var(--desktop-filter-right);z-index:21;
+    position:fixed;top:var(--desktop-filter-top);right:var(--desktop-filter-right);z-index:23;
     width:520px;max-width:calc(100vw - 2 * var(--sp-24));
     max-height:min(45dvh,calc(100dvh - var(--desktop-filter-top) - var(--sp-12)));
     overflow-y:auto;padding:var(--sp-12);
@@ -15083,7 +15086,8 @@ const desktopFilterToggle=document.getElementById('desktopFilterToggle');
 const desktopFilterPanel=document.getElementById('frow');
 function positionDesktopFilterPanel(){
   const anchor=desktopFilterToggle.getBoundingClientRect();
-  desktopFilterPanel.style.setProperty('--desktop-filter-top',`${anchor.bottom+4}px`);
+  const toolbarBottom=desktopFilterToggle.closest('.topbar').getBoundingClientRect().bottom;
+  desktopFilterPanel.style.setProperty('--desktop-filter-top',`${Math.max(anchor.bottom,toolbarBottom)+4}px`);
   desktopFilterPanel.style.setProperty('--desktop-filter-right',`${document.documentElement.clientWidth-anchor.right}px`);
 }
 desktopFilterToggle.addEventListener('click',()=>{
