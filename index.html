@@ -870,7 +870,7 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
    槽 10、两边各留 2 的透明边（background-clip 只填内容盒）＝ 看得见的 6px，
    比原来的 5 粗、颜色也从 --border（几乎是白的）换成 --text-muted，
    在正文编辑框那种整屏白底上才找得着。
-   不滑的时候只是把滑块调成透明，槽的宽度一直占着—���出现/消失时不会顶得版面跳。
+   不滑的时候只是把滑块调成透明，槽的宽度一直占着——出现/消失时不会顶得版面跳。
    .scrolling 由页脚那段脚本挂在正在滚动的容器上，见「滚动条：滑起来才显形」。 */
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -3041,7 +3041,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
 .memo-card{--memo-disclosure-width:32px;--memo-arrow-inset:12.25px;--memo-disclosure-gap:calc(var(--note-card-inset,var(--sp-16)) - var(--memo-arrow-inset));}
 .memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
-/* 展开与收起使用相同���部间距，标题位置不随详情状态改变。 */
+/* 展开与收起使用相同顶部间距，标题位置不随详情状态改变。 */
 .memo-card{padding-top:var(--sp-8);}
 @media (max-width:1024px), (pointer:coarse){
   .memo-card{--note-card-inset:var(--sp-14);padding-top:var(--sp-6);}
@@ -5311,7 +5311,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     border:none;
   }
   #noteModal .mbox{height:min(80vh,100%);max-height:min(80vh,100%);min-height:50vh;}
-  /* 底栏「排序/筛选」现在是贴着按钮弹出的小卡片���宽度由内容决定，屏幕宽了也不用放开 */
+  /* 底栏「排序/筛选」现在是贴着按钮弹出的小卡片，宽度由内容决定，屏幕宽了也不用放开 */
   /* 从底部升起的独立抽屉：540px 就是手机的宽度，这里一并跟着屏幕放大
      （章节抽屉、经期记录抽屉、备忘单字段抽屉）*/
   .tlsheet,.pv-sheet,.mfsheet{max-width:var(--pop-w);}
@@ -18757,7 +18757,7 @@ function openChapterSheet(idx){
 })();
 
 // 段内格式条：和笔记页那排是同一套标记（走 noteFmt），只少一颗 H——
-// 标题另有两条路（见 tlSegType）：行首写「## 」，或者短行自动认——这排里就不再放 H ���
+// 标题另有两条路（见 tlSegType）：行首写「## 」，或者短行自动认——这排里就不再放 H 了
 const TL_FMT_BTNS=[['b','粗体','<b>B</b>'],['i','斜体','<i>I</i>'],['u','下划线','<u>U</u>'],['li','列点','•']];
 function tlFmtBarHtml(){
   return `<div class="fmt-bar tlseg-fmt">`+TL_FMT_BTNS.map(b=>
