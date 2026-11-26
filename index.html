@@ -6294,6 +6294,36 @@ svg.novu-chevron.open{transform:rotate(0deg);}
 
 /* 公共 SVG 的线条统一，尺寸继续由各入口的布局规则控制。 */
 svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;stroke-width:1.8!important;stroke-linecap:round;stroke-linejoin:round;}
+/* 日记、收集：列表与月份详情共用底部操作胶囊。 */
+@media(max-width:1024px), (pointer:coarse){
+ body.notes-mode .content>.vhdr>.bb-actions.note-floating-actions{
+  position:fixed;top:auto;right:9px;bottom:calc(73px + env(safe-area-inset-bottom));z-index:80;
+  display:flex;align-items:center;gap:8px;width:auto;height:58px;min-height:58px;max-height:58px;
+  box-sizing:border-box;padding:4px;margin:0;border:1px solid var(--border);border-radius:999px;background:var(--surface);
+ }
+ body.notes-mode .content>.vhdr:has(>.note-floating-actions.note-search-open){grid-template-rows:38px;margin-bottom:6px;}
+ body.notes-mode .content>.vhdr:has(>.note-floating-actions.note-search-open)::after{content:none;}
+ .vhdr>.bb-actions.note-floating-actions .bb-sortbtn,
+ .vhdr>.bb-actions.note-floating-actions .note-search-toggle{
+  width:44px;height:48px;min-width:44px;max-width:none;margin:0;padding:0;flex:0 0 44px;opacity:1;pointer-events:auto;color:var(--text-primary);
+ }
+ .vhdr>.bb-actions.note-floating-actions .bb-addbtn{position:static;inset:auto;flex:0 0 48px;width:48px;height:48px;}
+ .vhdr>.bb-actions.note-floating-actions .bb-sbox{flex:0 0 44px;min-width:0;}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open{width:calc(100vw - 32px);right:16px;}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open>.bb-sortbtn,
+ .vhdr>.bb-actions.note-floating-actions.note-search-open>.bb-addbtn{display:none;}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .note-search-toggle{display:none;}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .bb-sbox{position:relative;flex:1;width:100%;height:48px;}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .bb-sbox>input{
+  position:static;display:block!important;width:100%;height:48px;padding:0 44px 0 36px;background:transparent;font-size:var(--fs-input);border-radius:999px;
+ }
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .bb-sbox>svg{left:12px;top:50%;bottom:auto;transform:translateY(-50%);}
+ .vhdr>.bb-actions.note-floating-actions.note-search-open .bb-sclear{right:4px;top:50%;bottom:auto;transform:translateY(-50%);width:36px;height:36px;}
+ body.notes-mode:is(.cal-open,.sb-open,.detail-open) .vhdr>.bb-actions.note-floating-actions{display:none;}
+ body.notes-mode.kb-open .vhdr>.bb-actions.note-floating-actions.note-search-open{top:0;bottom:auto;transform:translateY(var(--media-search-y,0px));}
+ body.notes-mode.kb-open:has(.note-floating-actions.note-search-open) .bottombar{visibility:hidden;pointer-events:none;}
+}
+
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -14995,6 +15025,7 @@ function syncNoteHeaderActions(){
   const bottom=document.getElementById('bottombar');
   if(!actions||!header||!bottom)return;
   const atTop=isMobileLayout()&&isNoteMode();
+  actions.classList.toggle('note-floating-actions',atTop&&['日记','收集'].includes(curNoteSub));
   const target=atTop?header:bottom;
   if(actions.parentElement!==target){
     if(atTop)header.append(actions);else bottom.prepend(actions);
@@ -15127,9 +15158,10 @@ function placeBBPanel(panelId,btn){
   }
   const r=btn.getBoundingClientRect();
   if(!r.width) return;          // 底栏没显示（宽屏用顶部下拉），位置交给 CSS
-  const atTop=!!btn.closest('.vhdr');
+  const floatingNote=!!btn.closest('.note-floating-actions');
+  const atTop=!!btn.closest('.vhdr')&&!floatingNote;
   panel.style.top=atTop?(r.bottom+8)+'px':'auto';
-  panel.style.bottom=atTop?'auto':(window.innerHeight-r.top+8)+'px';
+  panel.style.bottom=atTop?'auto':(window.innerHeight-(floatingNote?r.bottom:r.top)+ (floatingNote?0:8))+'px';
   panel.style.maxHeight=Math.max(120,atTop?window.innerHeight-r.bottom-24:r.top-16)+'px';
   panel.style.right=Math.max(8,window.innerWidth-r.right)+'px';
 }
@@ -20608,7 +20640,7 @@ function saveNoteSubs(){
     // 先应用 kb-open（收 tab、去安全区 padding）再量底栏高度
     document.body.classList.toggle('kb-open', kbShown);
     // 按可视区底部定位搜索框，与键盘保留 8px 空隙。
-    const mediaSearchTools=document.querySelector('.media-tools.search-open');
+    const mediaSearchTools=document.querySelector('.media-tools.search-open, .note-floating-actions.note-search-open');
     if(mediaSearchTools&&kbShown){
       root.style.setProperty('--media-search-y',Math.max(0,vvBottom-mediaSearchTools.offsetHeight-8)+'px');
     }else{
