@@ -6245,6 +6245,10 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
   .app>.main>.topbar :is(.desktop-filter-toggle,.addbtn){padding-block:0;line-height:1;justify-content:center;}
   .desktop-sort-button svg,.desktop-filter-toggle svg{display:block;flex-shrink:0;}
 }
+/* 电脑筛选面板：选中项使用主题浅色。 */
+@media(min-width:1025px) and (pointer:fine){
+  #frow .fchip.on{background:var(--accent-light);color:var(--accent);border-color:var(--accent-light);}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
