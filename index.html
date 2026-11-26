@@ -6212,6 +6212,21 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
  .media-tools button:active{transform:scale(.92);}
 }
 
+/* 电脑端书籍详情：移除标题卡，保留右侧更多操作，使用文字下划线导航。 */
+@media(min-width:1025px) and (pointer:fine){
+  .dt-top-book{position:relative;}
+  .dt-top-book > .dt-hd,
+  .dt-top-book > .dt-hd > .dt-hdrow:first-child{display:contents;}
+  .dt-top-book .dt-name,
+  .dt-top-book .dt-hdrow2{display:none;}
+  .dt-top-book .dt-global-actions{position:absolute;right:var(--dt-padx);top:var(--dt-padt);z-index:6;height:44px;display:flex;align-items:center;}
+  .dt-top-book .dt-tabs{padding:0 44px 0 0;}
+  .dt-top-book .dt-tabs .cal-vtoggle{display:flex;width:100%;padding:0;background:transparent;border:0;border-bottom:1px solid var(--border-soft);border-radius:0;box-shadow:none;}
+  .dt-top-book .dt-tabs .cvt-thumb{display:none;}
+  .dt-top-book .dt-tabs .cal-vtoggle .cvt{flex:1;min-height:44px;padding:var(--sp-8);border-radius:0;background:transparent;color:var(--text-secondary);font-weight:400;transition:none;}
+  .dt-top-book .dt-tabs .cal-vtoggle .cvt.on{color:var(--accent);font-weight:700;}
+  .dt-top-book .dt-tabs .cvt.on::after{content:'';position:absolute;bottom:0;left:var(--sp-8);right:var(--sp-8);height:3px;border-radius:3px;background:var(--accent);}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
