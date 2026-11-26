@@ -195,6 +195,12 @@ button:focus,button:focus-visible,a:focus,a:focus-visible,
 body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:var(--fs-body);line-height:var(--lh-loose);
   background:var(--bg);}
 
+/* 书影列表单独试用中性浅灰，保留其他页面与夜间模式的底色。 */
+:root:not([data-mode="dark"]) body:not(.notes-mode):not(.cal-open):not(.sb-open):not(.detail-open),
+:root:not([data-mode="dark"]) body:not(.notes-mode):not(.cal-open):not(.sb-open):not(.detail-open) .catfrow{
+  background:#F7F7F7;
+}
+
 /* ===== LAYOUT ===== */
 .app{display:flex;min-height:100vh;}
 
