@@ -17674,9 +17674,9 @@ function filteredNotes(){
       return false;
     });
   }
-  // 日记置顶永远优先于当前排序；多个置顶项按最近置顶的在前。
+  // 日记／收集置顶优先于当前排序；沿用 diaryPinnedAt 存储字段。
   const pinCmp=(a,b)=>{
-    if(curNoteSub!=='日记')return 0;
+    if(curNoteSub!=='日记'&&curNoteSub!=='收集')return 0;
     const ap=Number(a.diaryPinnedAt)||0,bp=Number(b.diaryPinnedAt)||0;
     if(Boolean(ap)!==Boolean(bp))return bp?1:-1;
     return ap&&bp?bp-ap:0;
@@ -18154,12 +18154,13 @@ function renderNotesContent(){
     // ── 「收集」「日记」子分类：卡片可展开/收起显示全文（默认展开），共用 collect 样式 ──
     if(n.subCat==='收集'||n.subCat==='日记'){
       const fullBody=renderRich(n.body||'');
-      const diaryMenu=n.subCat==='日记'?' data-diary-menu="1"':'';
-      const diaryMore=n.subCat==='日记'?`<button type="button" class="diary-more-btn" aria-label="日记更多操作" aria-haspopup="menu" aria-expanded="false" aria-controls="diaryActionMenu" onclick="openDiaryCardMenu(event,this,'${n.id}')">${ICON_MORE}</button>`:'';
+      const hasCardMenu=n.subCat==='日记'||n.subCat==='收集';
+      const diaryMenu=hasCardMenu?' data-diary-menu="1"':'';
+      const diaryMore=hasCardMenu?`<button type="button" class="diary-more-btn" aria-label="${esc(n.subCat)}更多操作" aria-haspopup="menu" aria-expanded="false" aria-controls="diaryActionMenu" onclick="openDiaryCardMenu(event,this,'${n.id}')">${ICON_MORE}</button>`:'';
       const dateTitle=monthMode?noteDateInputValue(n.title):'';
       const titleLine=monthMode&&(!n.title||dateTitle)?'':
         `<div class="note-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>`;
-      const actions=n.subCat==='日记'?'':`<button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
+      const actions=hasCardMenu?'':`<button class="note-edit" onclick="event.stopPropagation();openNoteEdit('${n.id}')" title="编辑" type="button">编辑</button>
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>`;
       const recordDate=monthMode?noteRecordDateISO(n):'';
       const dateHeading=recordDate?`<time class="note-record-date" datetime="${recordDate}">${recordDate}</time>`:'';
@@ -18233,7 +18234,7 @@ function enhanceNoteSwipe(list){
   list.querySelectorAll('.note-card').forEach(card=>{
     const nid=card.getAttribute('data-nid');
     if(!nid) return;
-    // 日记通过右上角更多按钮操作，不创建滑动面板。
+    // 日记／收集通过右上角更多按钮操作，不创建滑动面板。
     if(card.hasAttribute('data-diary-menu'))return;
     // 包一层滑动容器：面板在下层（删除在右、编辑在左），卡片在上层可左右平移
     const wrap=document.createElement('div');
@@ -18278,6 +18279,7 @@ function openDiaryActionMenu(card,id,button){
   diaryActionCard=card;
   card.classList.add('diary-action-selected');
   const note=notes.find(n=>n.id===id);
+  menu.querySelector('[role="menu"]').setAttribute('aria-label',`${note?.subCat||'笔记'}操作`);
   const pinned=!!(note&&Number(note.diaryPinnedAt));
   const pinLabel=menu.querySelector('[data-diary-pin-label]');
   if(pinLabel)pinLabel.textContent=pinned?'取消置顶':'置顶';
