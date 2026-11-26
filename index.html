@@ -6201,6 +6201,10 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 
 @media(max-width:1024px), (pointer:coarse){
  body:not(.notes-mode) #bottombar>.bb-actions{display:none;}
+ body.media-search-active.kb-open .bb-tabs{display:flex;}
+ body.media-search-active.tabs-hidden:not(.kb-open):not(.vv-track) .bottombar{transform:translateY(0);}
+ body.media-search-active .media-tools{transform:translateY(calc(-1 * var(--kb,0px)));}
+
  body:not(.notes-mode):not(.cal-open):not(.sb-open):not(.detail-open) .media-tools{display:flex;align-items:center;gap:8px;position:fixed;right:calc(var(--sp-16) - 7px);bottom:calc(var(--sp-16) + 64px + env(safe-area-inset-bottom) - 7px);z-index:80;padding:6px;border:1px solid var(--border);border-radius:999px;background:var(--surface);}
  .media-tools button{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;color:var(--text-primary);background:transparent;cursor:pointer;}
  .media-tools .media-add{color:var(--on-accent);background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--accent);}
@@ -14781,11 +14785,14 @@ function clearSearch(){
 function openMediaSearch(){
   document.getElementById('mediaMore').hidePopover();
   document.querySelector('.media-tools').classList.add('search-open');
+  document.body.classList.add('media-search-active');
+  document.body.classList.remove('tabs-hidden');
   document.getElementById('mediaSearch').focus({preventScroll:true});
 }
 function closeMediaSearch(){
   document.getElementById('mediaSearch').blur();
   document.querySelector('.media-tools').classList.remove('search-open');
+  document.body.classList.remove('media-search-active');
   onSearchBB('');
 }
 function onSearchBB(v){curSearch=v;syncSearchInputs(v);syncSearchClear();render();scrollResultsTop();}
