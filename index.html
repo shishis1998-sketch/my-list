@@ -6233,6 +6233,19 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
   .dt-top-book .dt-tabs .cal-vtoggle .cvt.on{color:var(--accent);font-weight:700;}
   .dt-top-book .dt-tabs .cvt.on::after{content:'';position:absolute;bottom:0;left:var(--sp-8);right:var(--sp-8);height:3px;border-radius:3px;background:var(--accent);}
 }
+.desktop-sort-button{display:none;}
+.desktop-sort-menu[hidden]{display:none;}
+.desktop-sort-menu{position:fixed;z-index:24;min-width:144px;padding:6px;border:1px solid var(--border);border-radius:8px;background:var(--surface);max-height:calc(100dvh - 80px);overflow-y:auto;}
+.desktop-sort-option{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--text-primary);padding:8px 10px;font:400 var(--fs-caption)/1.4 var(--zh);text-align:left;cursor:pointer;}
+.desktop-sort-option[aria-selected="true"]{color:var(--accent);font-weight:700;}
+.desktop-sort-option:is(:hover,:focus-visible){background:#E8F2FF;outline:none;color:#244A76;}
+:root[data-mode="dark"] .desktop-sort-option:is(:hover,:focus-visible){background:#243B53;color:#D6E9FF;}
+@media(min-width:1025px) and (pointer:fine){
+  .app>.main>.topbar select.ssort{display:none;}
+  .desktop-sort-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--desktop-toolbar-control-height);padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-secondary);font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;flex-shrink:0;}
+  .app>.main>.topbar :is(.desktop-filter-toggle,.addbtn){padding-block:0;line-height:1;justify-content:center;}
+  .desktop-sort-button svg,.desktop-filter-toggle svg{display:block;flex-shrink:0;}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -6408,6 +6421,7 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
       <summary class="desktop-note-tool" aria-label="标签筛选">标签<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg></summary>
       <div class="desktop-note-tag-menu" id="desktopNoteTagOptions"></div>
     </details>
+    <button type="button" class="desktop-sort-button" id="desktopSortButton" aria-haspopup="listbox" aria-expanded="false" aria-controls="desktopSortMenu" onclick="toggleDesktopSort()"><span id="desktopSortLabel">默认排序</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
     <select class="ssort" onchange="onSort(this.value)">
       <option value="media-auto" selected>默认排序</option>
       <option value="upd-desc">最近修改</option>
@@ -11918,6 +11932,7 @@ function mediaMonthGroups(items,sort){
 }
 
 function render(){
+  queueMicrotask(syncDesktopSort);
   const noteSub=preferredNoteSub();
   if(noteSub!==curNoteSub){
     curNoteSub=noteSub;
@@ -14853,6 +14868,43 @@ function clearSearchBB(){
   const inp=document.getElementById('bbSearch');
   if(inp) inp.focus();
 }
+function syncDesktopSort(){
+  const button=document.getElementById('desktopSortButton'),select=document.querySelector('select.ssort');
+  if(!button||!select)return;
+  const option=Array.from(select.options).find(o=>o.value===curSort)||select.selectedOptions[0];
+  document.getElementById('desktopSortLabel').textContent=option?.textContent||'默认排序';
+  closeDesktopSort();
+}
+function closeDesktopSort(){
+  document.getElementById('desktopSortMenu')?.setAttribute('hidden','');
+  document.getElementById('desktopSortButton')?.setAttribute('aria-expanded','false');
+}
+function toggleDesktopSort(){
+  const button=document.getElementById('desktopSortButton');
+  if(button.getAttribute('aria-expanded')==='true'){closeDesktopSort();return;}
+  let menu=document.getElementById('desktopSortMenu');
+  if(!menu){menu=document.createElement('div');menu.id='desktopSortMenu';menu.className='desktop-sort-menu';menu.setAttribute('role','listbox');menu.setAttribute('aria-label','排序');document.body.append(menu);}
+  menu.replaceChildren(...Array.from(document.querySelector('select.ssort').options,option=>{
+    const item=document.createElement('button');item.type='button';item.className='desktop-sort-option';item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.value===curSort));
+    const label=document.createElement('span');label.textContent=option.textContent;item.append(label);
+    if(option.value===curSort){const check=document.createElement('span');check.textContent='✓';check.setAttribute('aria-hidden','true');item.append(check);}
+    item.onclick=()=>{document.querySelector('select.ssort').value=option.value;onSort(option.value);closeDesktopSort();button.focus();};return item;
+  }));
+  document.getElementById('desktopFilterToggle').setAttribute('aria-expanded','false');
+  const r=button.getBoundingClientRect(),bottom=button.closest('.topbar').getBoundingClientRect().bottom;
+  menu.style.top=`${Math.max(r.bottom,bottom)+4}px`;menu.style.right=`${document.documentElement.clientWidth-r.right}px`;menu.hidden=false;button.setAttribute('aria-expanded','true');
+  menu.querySelector('[aria-selected="true"]')?.focus();
+}
+document.addEventListener('click',event=>{if(!event.target.closest('#desktopSortButton,#desktopSortMenu'))closeDesktopSort();});
+document.addEventListener('keydown',event=>{
+  const menu=document.getElementById('desktopSortMenu');if(!menu||menu.hidden)return;
+  if(event.key==='Escape'){event.preventDefault();closeDesktopSort();document.getElementById('desktopSortButton').focus();}
+  if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){
+    event.preventDefault();const options=Array.from(menu.children),index=options.indexOf(document.activeElement);
+    options[event.key==='Home'?0:event.key==='End'?options.length-1:(index+(event.key==='ArrowDown'?1:-1)+options.length)%options.length]?.focus();
+  }
+});
+window.addEventListener('resize',closeDesktopSort);
 function onSort(v){curSort=v;render();}
 
 // ── 底部栏 tab 高亮 ───────────────────────────────────────────────
