@@ -6270,7 +6270,7 @@ svg.novu-chevron.open{transform:rotate(0deg);}
 
 /* 公共 SVG 的线条统一，尺寸继续由各入口的布局规则控制。 */
 svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;stroke-width:1.8!important;stroke-linecap:round;stroke-linejoin:round;}
-/* 日记、收集：列表与月份详情共用底部操作胶囊。 */
+/* 日记、收集、备忘：复用底部操作胶囊。 */
 @media(max-width:1024px), (pointer:coarse){
  body.notes-mode .content>.vhdr>.bb-actions.note-floating-actions{
   position:fixed;top:auto;right:9px;bottom:calc(73px + env(safe-area-inset-bottom));z-index:80;
@@ -6342,7 +6342,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
   min-height:calc(100dvh - 80px - env(safe-area-inset-bottom) - var(--kb,0px));
  }
  body.notes-mode:not(.cal-open):not(.sb-open):not(.detail-open) .app>.main{min-height:0;}
- body.notes-mode #nlist[data-month-view]{padding-bottom:56px;}
+ body.notes-mode #nlist:is([data-month-view],[data-memo-view]){padding-bottom:56px;}
 }
 
 /* 正文优先：标题、正文、分类、标签依次上下排列。 */
@@ -15073,7 +15073,7 @@ function syncNoteHeaderActions(){
   const bottom=document.getElementById('bottombar');
   if(!actions||!header||!bottom)return;
   const atTop=isMobileLayout()&&isNoteMode();
-  actions.classList.toggle('note-floating-actions',atTop&&['日记','收集'].includes(curNoteSub));
+  actions.classList.toggle('note-floating-actions',atTop&&['日记','收集','备忘'].includes(curNoteSub));
   const target=atTop?header:bottom;
   if(actions.parentElement!==target){
     if(atTop)header.append(actions);else bottom.prepend(actions);
