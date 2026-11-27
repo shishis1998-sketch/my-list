@@ -6361,6 +6361,24 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 @media(max-width:1024px), (pointer:coarse){
  body.notes-mode #nlist[data-month-view]{padding-bottom:56px;}
 }
+
+/* 正文优先：标题、正文、分类、标签依次上下排列。 */
+#noteModal.stacked-editor .fg{grid-template-columns:minmax(0,1fr);gap:8px;}
+#noteModal.stacked-editor .fg>:not(label){grid-column:1;}
+#noteModal.stacked-editor #nf-body-group>label{padding-top:0;}
+#noteModal.stacked-editor #nf-body{min-height:280px;}
+#noteModal.stacked-editor .fg-created{display:flex;gap:8px;flex-wrap:wrap;}
+#nfKeyboardToolbar{display:none;}
+#nfKeyboardToolbar.is-visible{display:flex;}
+#nfKeyboardToolbar.keyboard-docked{
+ position:fixed;z-index:160;box-sizing:border-box;margin:0;padding:4px 12px;
+ height:44px;gap:0;flex-wrap:nowrap;align-items:center;justify-content:space-around;
+ background:var(--surface);border-top:1px solid var(--border);border-radius:0;
+}
+#nfKeyboardToolbar.keyboard-docked .fmt-btn{flex:1;height:36px;border:0;border-radius:0;background:transparent;font-size:18px;}
+#nfKeyboardToolbar.keyboard-docked .fmt-btn+.fmt-btn{border-left:1px solid var(--border-soft);}
+#nfKeyboardToolbar.keyboard-docked .fmt-hint{display:none;}
+#noteModal.note-toolbar-open .mbody{padding-bottom:64px;scroll-padding-bottom:64px;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -7311,7 +7329,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
         <textarea id="nf-body" class="note-body" rows="6" placeholder="开始写点什么…&#10;&#10;格式提示：&#10;# 这是标题&#10;**粗体文字**&#10;*斜体文字*&#10;__下划线文字__&#10;- 列表项"></textarea>
         <div class="nf-thumb" id="nf-thumb"></div>
       </div>
-      <div class="fmt-bar">
+      <div class="fmt-bar" id="nfKeyboardToolbar" role="toolbar" aria-label="正文格式">
         <button type="button" class="fmt-btn" onclick="noteFmt('h')" title="标题">H</button>
         <button type="button" class="fmt-btn" onclick="noteFmt('b')" title="粗体"><b>B</b></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('i')" title="斜体"><i>I</i></button>
@@ -20082,6 +20100,9 @@ function applyMemoEditorMode(){
   const subGroup=document.getElementById('nf-sub-group');
   const nextGroup=document.getElementById(isMemo?'memo-custom-group':'nf-body-group');
   if(subGroup.nextElementSibling!==nextGroup)nextGroup.before(subGroup);
+  const stacked=!isMemo&&!document.getElementById('noteModal').classList.contains('food-editor');
+  document.getElementById('noteModal').classList.toggle('stacked-editor',stacked);
+  if(stacked)document.getElementById('nf-body-group').after(subGroup);
   applyNoteTitleMode();
   document.getElementById('nf-body-group').style.display=isMemo?'none':'';
   document.getElementById('memo-fields-group').style.display=isMemo?'':'none';
@@ -20987,6 +21008,42 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   schedule();
 })();
 
+
+// 格式条停靠可视视口底部；保持正文焦点和选区，点工具不收起键盘。
+(function bindNoteKeyboardToolbar(){
+ const modal=document.getElementById('noteModal'),ta=document.getElementById('nf-body');
+ const toolbar=document.getElementById('nfKeyboardToolbar'),home=document.getElementById('nf-body-group');
+ const vv=window.visualViewport;
+ let frame=0;
+ function update(){
+  frame=0;
+  const mobile=isMobileLayout();
+  const editing=modal.classList.contains('open')&&modal.classList.contains('stacked-editor')&&
+   !modal.inert&&document.activeElement===ta;
+  const show=editing&&(!mobile||document.body.classList.contains('kb-open'));
+  toolbar.classList.toggle('is-visible',show);
+  toolbar.classList.toggle('keyboard-docked',show&&mobile);
+  modal.classList.toggle('note-toolbar-open',show&&mobile);
+  if(show&&mobile){
+   if(toolbar.parentElement!==document.body)document.body.append(toolbar);
+   toolbar.style.top=Math.max(0,(vv?vv.offsetTop+vv.height:window.innerHeight)-44)+'px';
+   toolbar.style.left=(vv?vv.offsetLeft:0)+'px';
+   toolbar.style.width=(vv?vv.width:window.innerWidth)+'px';
+  }else{
+   if(toolbar.parentElement!==home)home.append(toolbar);
+   toolbar.style.removeProperty('top');toolbar.style.removeProperty('left');toolbar.style.removeProperty('width');
+  }
+ }
+ function schedule(){if(!frame)frame=requestAnimationFrame(update);}
+ toolbar.addEventListener('pointerdown',e=>{if(e.target.closest('button'))e.preventDefault();});
+ document.addEventListener('focusin',schedule);
+ document.addEventListener('focusout',schedule);
+ window.addEventListener('resize',schedule);
+ if(vv){vv.addEventListener('resize',schedule);vv.addEventListener('scroll',schedule);}
+ new MutationObserver(schedule).observe(modal,{attributes:true,attributeFilter:['class','inert']});
+ new MutationObserver(schedule).observe(document.body,{attributes:true,attributeFilter:['class']});
+ schedule();
+})();
 </script>
 </body>
 </html>
