@@ -21179,8 +21179,8 @@ document.addEventListener('touchstart', function(){}, {passive:true});
 (function desktopAnimatedHover(){
   const pointer=matchMedia('(hover:hover) and (pointer:fine)');
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
-  const selector='button,a[href],summary,[role="button"],[role="tab"],[role="menuitem"],[role="option"],[role="switch"],[onclick],.memo-tag-menu label,.desktop-note-tag-menu label,.cal-filter-row,.desktop-sort-option,.mrow,.note-card,.dt-card:not(.dt-meta),.cal-day,.cal-sr,.cal-tl-row,.memo-field-value.editable';
-  const excluded='.note-year-row,.nitem-fs,.theme-sw,.btn-p,.addbtn,.fchip.on,.nfchip.on,input,textarea,select,[contenteditable="true"],[disabled],[aria-disabled="true"],[data-hover="off"]';
+  const selector='button,a[href],summary,[role="button"],[role="tab"],[role="menuitem"],[role="option"],[role="switch"],.nitem,.nlbl-btn,.fchip,.nfchip,.memo-tag-menu label,.desktop-note-tag-menu label,.cal-filter-row,.desktop-sort-option,.people-more-item,.bb-sortopt,.chapter-action-item,.chapter-heading-option,.emoji-cell,.cal-day';
+  const excluded='.mrow,.note-card,.dt-card,.memo-head,.memo-field-value,.memo-account-value,.cal-sr,.cal-tl-row,.note-title,.note-preview,.cnote,.desktop-chapter-reader,.note-year-row,.nitem-fs,.theme-sw,.btn-p,.addbtn,.fchip.on,.nfchip.on,input,textarea,select,[contenteditable="true"],[disabled],[aria-disabled="true"],[data-hover="off"]';
   const groupSelector='[data-hover-group],[role="menu"],[role="tablist"],.ncard,.nsec,.dt-tabs,.frow,.nfrow,.chapter-format,.desktop-sort-menu,.people-more-menu,.bb-sortmenu,.memo-tag-menu,.desktop-note-tag-menu,.note-year-months,.note-list,.tl-list';
   let active=null,layer=null,animation=null,group=null,positioned=false;
   function clear(){
