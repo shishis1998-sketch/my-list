@@ -18262,10 +18262,7 @@ function renderNotesContent(){
         <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除">删除</button>`;
       const recordDate=monthMode?noteRecordDateISO(n):'';
       const dateHeading=recordDate?`<time class="note-record-date" datetime="${recordDate}">${recordDate}</time>`:'';
-      const createdAt=renderNoteCreatedAt(n.createdAt);
-      const sameDay=desktopMonth&&recordDate&&recordDate===noteRecordDateISO({createdAt:n.createdAt});
-      const headerTime=sameDay?`<span class="note-date note-created">${renderNoteCreatedAt(n.createdAt,true)}</span>`:createdAt;
-      const head=desktopMonth?`<div class="note-head">${dateHeading}${titleLine}${headerTime}</div>`:
+      const head=desktopMonth?`<div class="note-head">${dateHeading}${titleLine}</div>`:
         monthMode?(dateHeading||titleLine?`<div class="note-head">${dateHeading}${titleLine}</div>`:''):
         `<div class="note-head">${titleLine}${actions}</div>`;
       const tags=(n.tags||[]).slice(0,3).map(t=>`<span class="ctag">${hl(t)}</span>`).join('');
@@ -18273,7 +18270,7 @@ function renderNotesContent(){
       return `<div class="note-card collect expanded${monthMode&&!desktopMonth?' note-record-card':''}" data-nid="${n.id}"${diaryMenu} onclick="toggleCollectCard('${n.id}', event)">
         ${diaryMore}${head}
         <div class="note-preview${n.body?'':' empty'}">${fullBody||'（无内容）'}</div>
-        <div class="note-foot">${foot}${desktopMonth?'':createdAt}</div>
+        <div class="note-foot">${foot}</div>
       </div>`;
     }
     // 读书笔记用按段落分行的预览；其他笔记走原版
