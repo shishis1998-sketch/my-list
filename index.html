@@ -3448,13 +3448,13 @@ mark.shl{
 }
 .note-month-picker{
   min-height:32px;padding:0;border:0;border-radius:var(--r);
-  background:transparent;color:var(--text-secondary);font:inherit;cursor:pointer;
+  background:transparent;color:var(--text-primary);font:inherit;cursor:pointer;
 }
 .vhdr .vcnt:has(> .note-month-picker:not([hidden])){margin-inline-start:var(--sp-8);font-size:var(--menu-font-size);}
 .note-month-picker:not([hidden]){display:inline-flex;align-items:center;gap:var(--sp-4);vertical-align:baseline;}
 .note-month-picker svg{width:12px;height:12px;}
-/* 月份详情标题加粗，保留现有字号与位置。 */
-.note-month-picker:not([hidden]){font-weight:700;}
+/* 月份详情沿用列表文字颜色，使用常规字重。 */
+.note-month-picker:not([hidden]){font-weight:400;}
 #noteMonthSheet.open{display:block;position:fixed;inset:0;z-index:120;background:rgba(10,8,6,.16);}
 #noteMonthPanel{
   position:absolute;right:auto;min-width:118px;max-width:calc(100vw - 16px);
