@@ -6400,16 +6400,24 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 #noteModal.stacked-editor .fg-created{display:flex;gap:8px;flex-wrap:wrap;}
 #nfKeyboardToolbar{display:none;}
 #nfKeyboardToolbar.is-visible{display:flex;}
+#nfKeyboardToolbar{gap:6px;align-items:center;}
+#nfKeyboardToolbar .nf-format-group{display:flex;align-items:center;flex:1;min-width:0;height:36px;overflow:hidden;border:1px solid var(--border);border-radius:999px;background:var(--surface);}
+#nfKeyboardToolbar .fmt-btn{position:relative;min-width:0;height:34px;padding:0 8px;border:0;background:transparent;color:var(--accent);font-size:18px;box-shadow:none;}
+#nfKeyboardToolbar .nf-format-group>.fmt-btn{flex:1;border-radius:0;}
+#nfKeyboardToolbar .nf-format-group>.fmt-btn+.fmt-btn::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:1px;background:var(--border-soft);}
+#nfKeyboardToolbar>.fmt-btn{flex:0 0 40px;height:36px;border:1px solid var(--border);border-radius:999px;background:var(--surface);}
+#nfKeyboardToolbar .fmt-btn:not(:disabled):active{background:var(--accent-light);}
+#nfKeyboardToolbar .fmt-btn:focus-visible{outline:1px solid var(--accent);outline-offset:-3px;}
+#nfKeyboardToolbar>.fmt-btn:disabled{opacity:1;color:var(--text-muted);cursor:default;}
+#nfKeyboardToolbar>.fmt-btn:disabled svg{opacity:.45;}
 #nfKeyboardToolbar.keyboard-docked{
- position:fixed;z-index:160;box-sizing:border-box;margin:0;padding:4px 12px;
- height:44px;gap:0;flex-wrap:nowrap;align-items:center;justify-content:space-around;
- background:var(--surface);border-top:1px solid var(--border);border-radius:0;
+ position:fixed;z-index:160;box-sizing:border-box;margin:0;padding:4px 8px;
+ height:44px;gap:6px;flex-wrap:nowrap;align-items:center;
+ background:var(--bg);border:0;border-radius:0;
 }
-#nfKeyboardToolbar.keyboard-docked .fmt-btn{flex:1;height:36px;border:0;border-radius:0;background:transparent;font-size:18px;}
-#nfKeyboardToolbar.keyboard-docked .fmt-btn+.fmt-btn{border-left:1px solid var(--border-soft);}
 #nfKeyboardToolbar.keyboard-docked .fmt-hint{display:none;}
 #noteModal.note-toolbar-open .mbody{padding-bottom:64px;scroll-padding-bottom:64px;}
-#nfKeyboardToolbar .fmt-btn:disabled{opacity:.3;cursor:default;}
+
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -7361,11 +7369,13 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
         <div class="nf-thumb" id="nf-thumb"></div>
       </div>
       <div class="fmt-bar" id="nfKeyboardToolbar" role="toolbar" aria-label="正文格式">
+        <div class="nf-format-group" role="group" aria-label="文字格式">
         <button type="button" class="fmt-btn" onclick="noteFmt('h')" title="标题">H</button>
         <button type="button" class="fmt-btn" onclick="noteFmt('b')" title="粗体"><b>B</b></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('i')" title="斜体"><i>I</i></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('u')" title="下划线"><u>U</u></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
+        </div>
         <button type="button" class="fmt-btn" id="nf-undo" onclick="noteBodyHistoryStep(-1)" title="撤销" aria-label="撤销" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5-5 5 5 5"/><path d="M4 10h10a6 6 0 0 1 0 12"/></svg></button>
         <button type="button" class="fmt-btn" id="nf-redo" onclick="noteBodyHistoryStep(1)" title="重做" aria-label="重做" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 5 5-5 5"/><path d="M20 10H10a6 6 0 0 0 0 12"/></svg></button>
         <span class="fmt-hint">选中文字后点按钮加格式</span>
