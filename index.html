@@ -1973,6 +1973,8 @@ body.cal-searching .cw-card{display:none;}
 .note-list{display:flex;flex-direction:column;gap:var(--sp-10);}
 .note-month-card{display:flex;flex-direction:column;gap:var(--sp-10);}
 .note-year-group{min-width:0;}
+/* Accordion divide-y：仅相邻年份之间显示主题细线。 */
+.note-year-group+.note-year-group{border-top:1px solid var(--border);}
 .note-year-row{
   list-style:none;display:flex;align-items:center;gap:var(--note-month-gap);
   min-height:48px;padding:0 var(--note-month-padding);cursor:pointer;
