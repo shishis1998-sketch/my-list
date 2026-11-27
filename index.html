@@ -1075,6 +1075,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;}
     background:var(--bg);
   }
   body.notes-mode .content:has(:where(#nlist[data-month-view]))>.vhdr{margin-bottom:var(--sp-6);}
+  body.notes-mode .content:has(:where(#nlist[data-month-view][data-collect-view]))>.vhdr{margin-bottom:var(--sp-2);}
   body.notes-mode .content:has(#nlist[data-month-view])>.vhdr:not(:has(.note-month-picker:not([hidden]))){
     padding-inline-start:calc(var(--content-gutter) + var(--note-month-text-inset));
   }
@@ -18267,6 +18268,7 @@ function renderNotesContent(){
   const list=document.getElementById('nlist');
   list.toggleAttribute('data-month-view',monthMode);
   list.toggleAttribute('data-memo-view',curNoteSub==='备忘');
+  list.toggleAttribute('data-collect-view',curNoteSub==='收集');
   if(list._monthTransition){list._monthTransition.cancel();list._monthTransition=null;}
   const empty=document.getElementById('nempty');
   if(!L.length){
