@@ -6386,6 +6386,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 #nfKeyboardToolbar.keyboard-docked .fmt-btn+.fmt-btn{border-left:1px solid var(--border-soft);}
 #nfKeyboardToolbar.keyboard-docked .fmt-hint{display:none;}
 #noteModal.note-toolbar-open .mbody{padding-bottom:64px;scroll-padding-bottom:64px;}
+#nfKeyboardToolbar .fmt-btn:disabled{opacity:.3;cursor:default;}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -7342,6 +7343,8 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
         <button type="button" class="fmt-btn" onclick="noteFmt('i')" title="斜体"><i>I</i></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('u')" title="下划线"><u>U</u></button>
         <button type="button" class="fmt-btn" onclick="noteFmt('li')" title="列点">•</button>
+        <button type="button" class="fmt-btn" id="nf-undo" onclick="noteBodyHistoryStep(-1)" title="撤销" aria-label="撤销" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5-5 5 5 5"/><path d="M4 10h10a6 6 0 0 1 0 12"/></svg></button>
+        <button type="button" class="fmt-btn" id="nf-redo" onclick="noteBodyHistoryStep(1)" title="重做" aria-label="重做" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 5 5-5 5"/><path d="M20 10H10a6 6 0 0 0 0 12"/></svg></button>
         <span class="fmt-hint">选中文字后点按钮加格式</span>
       </div>
     </div>
@@ -20485,6 +20488,7 @@ function askDelNoteById(id){
 function noteFmt(kind,el){
   const ta=el||document.getElementById('nf-body');
   if(!ta) return;
+  ta._noteHistory?.capture();
   const start=ta.selectionStart,end=ta.selectionEnd;
   const before=ta.value.slice(0,start);
   const sel=ta.value.slice(start,end);
@@ -20530,6 +20534,7 @@ function noteFmt(kind,el){
     ta.selectionStart=ta.selectionEnd=newBefore.length+sel.length;
   }
   ta.focus();
+  ta._noteHistory?.record();
 }
 
 // 笔记标签
@@ -21047,6 +21052,54 @@ document.addEventListener('touchstart', function(){}, {passive:true});
  new MutationObserver(schedule).observe(modal,{attributes:true,attributeFilter:['class','inert']});
  new MutationObserver(schedule).observe(document.body,{attributes:true,attributeFilter:['class']});
  schedule();
+})();
+
+// 正文历史同时记录输入、粘贴、删除和格式按钮；每次打开编辑器重新开始。
+(function bindNoteBodyHistory(){
+ const ta=document.getElementById('nf-body'),modal=document.getElementById('noteModal');
+ const undo=document.getElementById('nf-undo'),redo=document.getElementById('nf-redo');
+ let states=[],index=0,restoring=false,opened=false,composing=false;
+ const snapshot=()=>({value:ta.value,start:ta.selectionStart,end:ta.selectionEnd,scroll:ta.scrollTop});
+ function buttons(){undo.disabled=index<=0;redo.disabled=index>=states.length-1;}
+ function reset(){states=[snapshot()];index=0;buttons();}
+ function capture(){
+  if(composing||restoring)return;
+  if(!states.length)reset();
+  if(states[index].value!==ta.value){reset();return;}
+  states[index]=snapshot();
+ }
+ function record(){
+  if(restoring)return;
+  if(!states.length){reset();return;}
+  if(states[index].value===ta.value){buttons();return;}
+  states=states.slice(0,index+1);states.push(snapshot());
+  if(states.length>200)states.shift();
+  index=states.length-1;buttons();
+ }
+ ta._noteHistory={capture,record};
+ window.noteBodyHistoryStep=function(direction){
+  const next=index+direction;
+  if(next<0||next>=states.length)return;
+  index=next;const state=states[index];restoring=true;
+  ta.value=state.value;ta.focus({preventScroll:true});
+  ta.setSelectionRange(state.start,state.end);ta.scrollTop=state.scroll;
+  ta.dispatchEvent(new Event('input',{bubbles:true}));restoring=false;buttons();
+ };
+ ta.addEventListener('beforeinput',capture);
+ ta.addEventListener('input',e=>{if(!e.isComposing)record();});
+ ta.addEventListener('compositionstart',()=>{capture();composing=true;});
+ ta.addEventListener('compositionend',()=>{composing=false;record();});
+ ta.addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+  const key=e.key.toLowerCase();
+  if(key==='z'||key==='y'){e.preventDefault();window.noteBodyHistoryStep(key==='y'||e.shiftKey?1:-1);}
+ });
+ new MutationObserver(()=>{
+  const open=modal.classList.contains('open');
+  if(open&&!opened)reset();
+  opened=open;
+ }).observe(modal,{attributes:true,attributeFilter:['class']});
+ reset();
 })();
 </script>
 </body>
