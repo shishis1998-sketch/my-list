@@ -1990,7 +1990,7 @@ body.cal-searching .cw-card{display:none;}
 @media(prefers-reduced-motion:reduce){
   .note-year-row .note-month-ico svg{transition:none;}
 }
-.note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
+.note-year-group[open]:not([data-closing])>.note-year-row{background:var(--accent-light);}
 .note-year-months{display:flex;flex-direction:column;gap:0;padding:0;}
 .desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
 .desktop-note-index-groups .note-year-row{gap:var(--sp-8);padding-inline:var(--sp-12);}
