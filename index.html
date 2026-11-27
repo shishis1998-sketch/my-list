@@ -3314,6 +3314,17 @@ mark.shl{
   .desktop-chapter-layout .tl-chapter-single .tl-chapter-group-arrow{transform:rotate(-90deg);}
   .desktop-chapter-layout .tl-chapter-single[open] .tl-chapter-group-arrow{transform:none;}
   .desktop-chapter-layout .tl-chapter-group{padding-block:0;}
+  /* Full-width timeline headers; preserve the existing text inset. */
+  .desktop-chapter-layout .tl-chapter-group-head{
+    width:calc(100% + 2 * var(--sp-12));margin-inline:calc(-1 * var(--sp-12));
+    padding-inline:calc(var(--sp-12) + 2px);
+  }
+  .desktop-chapter-layout :is(.tl-chapter-group-head,.tl-chapter-single>.tl-head)>.desktop-hover-layer{
+    border-radius:calc(var(--rlg) - var(--bd));
+  }
+  .desktop-chapter-layout :is(.tl-chapter-group:not(.collapsed)>.tl-chapter-group-head,.tl-chapter-single[open]>.tl-head)>.desktop-hover-layer{
+    border-end-start-radius:0;border-end-end-radius:0;
+  }
   .desktop-chapter-layout :is(.tl-chapter-group-head,.tl-chapter-single>.tl-head,.desktop-chapter-heading){
     min-height:48px;box-sizing:border-box;
   }
@@ -21256,7 +21267,9 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   }
   function enter(event){
     if(!pointer.matches||event.pointerType==='touch'||event.target.closest('input,textarea,select,[contenteditable]')){clear();return;}
-    const target=event.target instanceof Element?event.target.closest(selector):null;
+    let target=event.target instanceof Element?event.target.closest(selector):null;
+    // Highlight the full section heading, including its trailing action space.
+    if(target?.matches('.tl-section-btn')&&target.parentElement.matches('.desktop-chapter-heading'))target=target.parentElement;
     if(target===active)return;
     if(!target||target.matches(excluded)||target.closest('[inert],[data-hover="off"]')||target.matches('body,html,.moverlay,.overlay,.modal,[role="dialog"],[class*="-overlay"],[class*="-mask"]')||!(target instanceof HTMLElement)){clear();return;}
     // Nested controls use their own highlight, never the enclosing card's.
