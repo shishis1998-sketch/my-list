@@ -439,7 +439,7 @@ body{font-family:var(--zh);color:var(--text-primary);min-height:100vh;font-size:
     background:var(--surface);color:var(--text-secondary);
     font:600 var(--fs-caption) var(--zh);cursor:pointer;
   }
-  .desktop-filter-toggle:is(:hover,[aria-expanded="true"],.has-filters){
+  .desktop-filter-toggle:is([aria-expanded="true"],.has-filters){
     border-color:var(--accent);color:var(--accent);
   }
   body:not(.notes-mode) .desktop-filter-toggle.has-filters{
@@ -2004,7 +2004,6 @@ body.cal-searching .cw-card{display:none;}
 .note-year-months .note-month-row{
   border:0;border-radius:var(--r);background:transparent;
 }
-.note-year-months .note-month-row:hover,
 .note-year-months .note-month-row:active,
 .note-year-months .note-month-row.month-tap{background:var(--accent-light);}
 .note-year-group .note-year-row .note-month-name{font-weight:700;}
@@ -3059,7 +3058,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-tag-pill svg{width:14px;height:14px;flex-shrink:0;}
 .memo-tag-menu{position:fixed;inset:auto;margin:0;box-sizing:border-box;min-width:140px;max-width:calc(100vw - 16px);max-height:min(320px,60vh);overflow:auto;padding:4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text-primary);font-size:var(--fs-caption);}
 .memo-tag-menu label{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--r);cursor:pointer;overflow-wrap:anywhere;}
-.memo-tag-menu label:hover,.memo-tag-menu label:focus-within{background:var(--accent-light);}
+.memo-tag-menu label:focus-within{background:var(--accent-light);}
 .memo-tag-menu input{margin:0;accent-color:var(--accent);}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
@@ -3077,7 +3076,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-account{display:flex;align-items:center;gap:var(--sp-6);min-width:0;flex:1;}
 .memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);cursor:pointer;}
 .memo-expand{margin-left:0;width:var(--memo-disclosure-width);height:32px;}
-.memo-expand:hover,.memo-expand:focus-visible{color:var(--accent);}
+.memo-expand:focus-visible{color:var(--accent);}
 .memo-expand svg{width:15px;height:15px;transform:translateX(-1.875px) rotate(-90deg);transition:transform 220ms cubic-bezier(.4,0,.2,1);}
 .memo-expand[aria-expanded="true"] svg{transform:translateX(0) rotate(0deg);}
 .memo-details{margin-inline-start:calc(var(--memo-disclosure-width) + var(--memo-disclosure-gap) - var(--memo-arrow-inset));overflow:hidden;overflow-anchor:none;}
@@ -3341,7 +3340,7 @@ mark.shl{
   .desktop-chapter-reader{padding:var(--sp-8) var(--sp-12);overflow-wrap:anywhere;}
   .desktop-chapter-section>.desktop-chapter-reader{padding:var(--sp-12) var(--sp-12) var(--sp-8);}
   .desktop-section-footer{display:flex;justify-content:flex-end;margin-top:var(--sp-8);}
-  .desktop-section-collapse:hover{color:var(--accent);}
+
   .desktop-chapter-section,
   .desktop-chapter-reader:has(>.tl-pts>:first-child){border-block-start:1px solid var(--border-soft);}
   .desktop-chapter-single>.desktop-chapter-reader{margin-inline:var(--sp-12);padding-inline:0;}
@@ -5393,10 +5392,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 .chapter-format[popover] .chapter-heading-menu{border-color:var(--accent);}
 .chapter-format[popover] .fmt-btn{border-color:transparent;}
 .chapter-format[popover] .fmt-btn:active{background:var(--press);}
-@media (hover:hover) and (pointer:fine){
-  .chapter-format[popover] .fmt-btn:hover{background:var(--accent-light);border-color:transparent;}
-  .chapter-format[popover] .chapter-heading-option:hover{background:var(--accent-light);outline:none;}
-}
 .chapter-format[popover]:not(:popover-open){display:none;}
 .chapter-format[popover]:popover-open{display:flex;}
 .chapter-format[popover].heading-menu-below .chapter-heading-menu{bottom:auto;top:calc(100% + 6px);}
@@ -5724,7 +5719,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 @media(min-width:1025px) and (pointer:fine){
   .desktop-note-index{min-width:0;}
   .desktop-note-tool{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:var(--r);background:transparent;color:var(--text-secondary);cursor:pointer;}
-  .desktop-note-tool:hover,.desktop-note-tool:focus-visible{color:var(--accent);background:var(--accent-light);}
+  .desktop-note-tool:focus-visible{color:var(--accent);background:var(--accent-light);}
   .desktop-note-tool svg{width:18px;height:18px;}
   .desktop-note-tags{position:relative;}
   .desktop-note-tags>summary{list-style:none;}
@@ -5732,7 +5727,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .desktop-note-tags[open]>summary{color:var(--accent);background:var(--accent-light);}
   .desktop-note-tag-menu{position:absolute;right:0;top:36px;z-index:5;min-width:140px;max-width:240px;max-height:280px;overflow:auto;padding:4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);}
   .desktop-note-tag-menu label{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:var(--r);font-size:var(--fs-caption);cursor:pointer;overflow-wrap:anywhere;}
-  .desktop-note-tag-menu label:hover{background:var(--accent-light);}
+
   .desktop-note-tag-menu input{accent-color:var(--accent);}
   .desktop-note-month{border:1px solid var(--border);border-radius:var(--rlg);background:var(--surface);margin-bottom:8px;overflow:hidden;}
   .note-year-months .desktop-note-month{
@@ -5741,13 +5736,13 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .note-year-months .desktop-note-month>summary{border-radius:var(--r);}
   .desktop-note-month>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 10px;box-sizing:border-box;font-size:var(--fs-sub);font-weight:600;cursor:pointer;}
   .desktop-note-month>summary::-webkit-details-marker{display:none;}
-  .desktop-note-month>summary:hover{background:var(--accent-light);}
+
   .desktop-note-month>summary svg{width:16px;height:16px;flex:none;transform:rotate(-90deg);}
   .desktop-note-month[open]>summary svg{transform:none;}
   .desktop-note-month>summary span{flex:1;}
   .desktop-note-month>summary small{font-weight:400;color:var(--text-muted);}
   .desktop-note-date{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:10px;border:0;border-top:1px solid var(--border-soft);background:transparent;color:var(--text-primary);font:inherit;text-align:left;cursor:pointer;}
-  .desktop-note-date:hover,.desktop-note-date[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
+  .desktop-note-date[aria-current="true"]{background:var(--accent-light);color:var(--accent);}
   .desktop-note-date-short{flex:none;color:var(--text-muted);font-size:var(--fs-caption);font-variant-numeric:tabular-nums;}
   .desktop-note-date-copy{flex:1;min-width:0;}
   .desktop-note-date-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -5779,7 +5774,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   .note-month-pane-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-12);padding-block:var(--sp-20) var(--sp-12);flex:none;}
   .note-month-pane-head h2{font-size:var(--fs-heading);line-height:var(--lh-tight);}
   .note-month-pane-close{border:0;background:transparent;color:var(--text-secondary);font-size:24px;cursor:pointer;width:32px;height:32px;border-radius:var(--r);}
-  .note-month-pane-close:hover{color:var(--accent);background:var(--accent-light);}
+
   .note-month-pane-scroll{flex:1;min-height:0;overflow:auto;padding-bottom:var(--sp-20);scrollbar-gutter:stable;}
   .note-month-pane .note-card.collect .note-preview{color:#1a1a1a;}
   .note-month-pane .note-card.collect .note-head{flex-wrap:wrap;}
@@ -5986,63 +5981,16 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .novu-opt-lbl,#appSidebar .novu-stepval{font-size:var(--fs-foot);}
   #appSidebar .novu-stepval{min-width:58px;white-space:nowrap;}
 }
-/* 悬停只描主题色边框，底色继续用来表达选中状态。 */
+/* 电脑悬停统一由 desktopAnimatedHover 管理；选中态与键盘焦点独立。 */
 @media (hover:hover) and (pointer:fine){
-  :is(.fchip,.dt-card:not(.dt-meta),.tsugg,.btn-g,
-      .cm-emoji-btn,.cal-recent-chip,.note-card,.fmt-btn,.add-field-btn):hover,
-  .nfrow .nfchip:hover{
-    border-color:var(--accent);
+  .desktop-hover-host{isolation:isolate;}
+  .desktop-hover-position{position:relative;}
+  .desktop-hover-layer{
+    position:absolute;inset:0;z-index:-1;pointer-events:none;
+    border-radius:var(--r);background:var(--accent-light);
+    transform-origin:top left;
   }
-  .nfrow .nfchip-dashed:hover{border-style:solid;}
-
-  /* 无完整边框的控件使用内描边，避免悬停时改变尺寸或遮住相邻行。 */
-  :is(.nlbl-btn:not(:where(#appSidebar *)),.sclear,.mclose,.tadd-btn,.tsugg-more,
-      .tmgr-link,.btn-d,.cmdel,.emoji-cell,.menubtn,.cal-navbtn,.cal-closebtn,
-      .cal-filter-row,.cal-scancel,.cal-sr,.cal-day,.cal-tl-row,
-      .cw-nav,.note-month-row,.note-act,.note-edit,.tl-btn,.tl-section-btn,
-      .memo-lock,.memo-btn,.memo-field-value.editable,.bb-sortopt,
-      .chapter-heading-option):hover,
-  .cal-grabrow:hover .cal-grab-bar,
-  #calViewPeriod :is(.year-btn,.year-picker-item,.daywrap:not(.empty)>.day:not(.cal-otherday)):hover{
-    outline:1px solid var(--accent);
-    outline-offset:-1px;
-  }
-  .memo-field-value.editable:hover{border-radius:var(--r);}
-
-  /* 主题色实底按钮在外侧留出间隔，让同色描边可见。 */
-  :is(.addbtn,.btn-p,.fchip.on,.nfrow .nfchip.on):hover{
-    outline:1px solid var(--accent);
-    outline-offset:1px;
-  }
-
-  /* 列表单条记录用卡片原有的圆角，多条记录在行内描边。 */
-  #mlist .media-month-card:has(>.mrow:only-child:hover:not([aria-current="true"])){border-color:var(--accent);}
-  #mlist .mrow:not([aria-current="true"],.media-month-card>.mrow:only-child):hover{
-    border-radius:calc(var(--rlg) - 1px);
-    box-shadow:inset 0 0 0 1px var(--accent);
-    content-visibility:visible;
-  }
-  #mlist .mrow:hover::after{display:none;}
-  #mlist .mrow:hover .cname{color:var(--accent);}
-}
-
-@media (max-width:1024px) and (hover:hover) and (pointer:fine){
-  #appSidebar :is(.nitem:not(.nitem-fs,.ncard-cats-desktop .nitem),.nlbl-btn):hover{
-    outline:1px solid var(--accent);
-    outline-offset:-1px;
-  }
-}
-@media (min-width:1025px) and (hover:hover) and (pointer:fine){
-  #detailBookNoteCard .tl-section-btn:hover{border-radius:var(--r);}
-  .desktop-chapter-controls>.nlbl-btn:hover:not(:focus-visible){outline:none;}
-  .desktop-chapter-controls>:is(.desktop-chapter-edit,.desktop-chapter-cancel):hover{color:var(--accent);}
-  .desktop-chapter-controls>.nlbl-btn:not(.desktop-chapter-edit):hover svg{stroke-width:3;}
-  #appSidebar :is(.sidebar-disclosure,.nlbl-btn,.nitem:not(.nitem-fs,:where(#nav-notes))):hover,
-  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes{
-    background:var(--surface);
-    border-color:transparent;
-    box-shadow:none;
-  }
+  .desktop-hover-host:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 }
 
 @media(min-width:1025px) and (pointer:fine){
@@ -6080,7 +6028,6 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
   #appSidebar .sidebar-notes-header>#nav-notes{font-weight:600;color:var(--text-primary);}
   #appSidebar .ncard .nitem.on:not(.nitem-fs),
   #appSidebar .sidebar-notes-header>#nav-notes.parent-on,
-  #appSidebar .sidebar-notes-header:has(>button:hover)>#nav-notes.parent-on,
   body.cal-open.cal-view-period #appSidebar #sidebarPeriodOptions>.nitem-cal,
   body.cal-open:not(.cal-view-period) #appSidebar #sidebarCalendarOptions>[data-calendar-view].on{
     background:var(--accent-light);color:var(--accent);
@@ -6147,7 +6094,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
     width:34px;height:34px;padding:0;border:0;border-radius:50%;background:transparent;
     color:var(--text-muted);font:400 25px/1 var(--zh);cursor:pointer;
   }
-  #syncModal .sync-desktop-head button:hover{background:var(--surface);color:var(--accent);}
+
   #syncModal .mbody{
     display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
     grid-auto-flow:row;grid-auto-rows:max-content;
@@ -6269,7 +6216,7 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
 .desktop-sort-menu{position:fixed;z-index:24;min-width:144px;padding:6px;border:1px solid var(--border);border-radius:8px;background:var(--surface);max-height:calc(100dvh - 80px);overflow-y:auto;}
 .desktop-sort-option{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--text-primary);padding:8px 10px;font:400 var(--fs-caption)/1.4 var(--zh);text-align:left;cursor:pointer;}
 .desktop-sort-option[aria-selected="true"]{background:var(--accent-light);color:var(--accent);font-weight:700;}
-.desktop-sort-option:is(:hover,:focus-visible){background:var(--accent-light);outline:none;color:var(--accent);}
+.desktop-sort-option:focus-visible{background:var(--accent-light);outline:none;color:var(--accent);}
 @media(min-width:1025px) and (pointer:fine){
   .app>.main>.topbar select.ssort{display:none;}
   .desktop-sort-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--desktop-toolbar-control-height);padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-secondary);font:600 var(--fs-caption)/1 var(--zh);cursor:pointer;flex-shrink:0;}
@@ -6311,7 +6258,6 @@ svg.novu-chevron.open{transform:rotate(0deg);}
 .diary-more-btn svg{width:18px;height:18px;flex:none;}
 .diary-more-btn:active{background:var(--accent-light);color:var(--accent);}
 .diary-more-btn:focus-visible{outline:1px solid var(--accent);outline-offset:2px;}
-@media(hover:hover) and (pointer:fine){.diary-more-btn:hover{color:var(--accent);background:var(--accent-light);}}
 #diaryActionMenu .diary-action-icon{width:20px;height:20px;flex:0 0 20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 
 /* 与书籍时间线的三个点菜单复用同一展开动画。 */
@@ -21225,6 +21171,53 @@ document.addEventListener('touchstart', function(){}, {passive:true});
  window.addEventListener('resize',reset,{passive:true});
  new MutationObserver(reset).observe(list,{childList:true,attributes:true,attributeFilter:['data-month-view']});
  new MutationObserver(()=>{if(!enabled())reset();}).observe(document.body,{attributes:true,attributeFilter:['class']});
+})();
+</script>
+
+<script>
+// Shared hover treatment; delegated events also cover dynamically rendered menus.
+(function desktopAnimatedHover(){
+  const pointer=matchMedia('(hover:hover) and (pointer:fine)');
+  const reduced=matchMedia('(prefers-reduced-motion:reduce)');
+  const selector='button,a[href],summary,[role="button"],[role="tab"],[role="menuitem"],[role="option"],[role="switch"],[onclick],.memo-tag-menu label,.desktop-note-tag-menu label,.cal-filter-row,.desktop-sort-option,.mrow,.note-card,.dt-card:not(.dt-meta),.cal-day,.cal-sr,.cal-tl-row,.memo-field-value.editable';
+  const excluded='.note-year-row,.nitem-fs,.theme-sw,.btn-p,.addbtn,.fchip.on,.nfchip.on,input,textarea,select,[contenteditable="true"],[disabled],[aria-disabled="true"],[data-hover="off"]';
+  const groupSelector='[data-hover-group],[role="menu"],[role="tablist"],.ncard,.nsec,.dt-tabs,.frow,.nfrow,.chapter-format,.desktop-sort-menu,.people-more-menu,.bb-sortmenu,.memo-tag-menu,.desktop-note-tag-menu,.note-year-months,.note-list,.tl-list';
+  let active=null,layer=null,animation=null,group=null,positioned=false;
+  function clear(){
+    if(animation)animation.cancel();animation=null;
+    if(layer)layer.remove();layer=null;
+    if(active){active.classList.remove('desktop-hover-host');if(positioned)active.classList.remove('desktop-hover-position');}
+    active=null;group=null;positioned=false;
+  }
+  function enter(event){
+    if(!pointer.matches||event.pointerType==='touch'||event.target.closest('input,textarea,select,[contenteditable]')){clear();return;}
+    const target=event.target instanceof Element?event.target.closest(selector):null;
+    if(target===active)return;
+    if(!target||target.matches(excluded)||target.closest('[inert],[data-hover="off"]')||target.matches('body,html,.moverlay,.overlay,.modal,[role="dialog"],[class*="-overlay"],[class*="-mask"]')||!(target instanceof HTMLElement)){clear();return;}
+    // Nested controls use their own highlight, never the enclosing card's.
+    const nextGroup=target.closest(groupSelector)||target.parentElement;
+    const previous=active&&group===nextGroup&&layer?layer.getBoundingClientRect():null;
+    clear();
+    active=target;group=nextGroup;
+    positioned=getComputedStyle(target).position==='static';
+    target.classList.add('desktop-hover-host');
+    if(positioned)target.classList.add('desktop-hover-position');
+    layer=document.createElement('span');layer.className='desktop-hover-layer';layer.setAttribute('aria-hidden','true');
+    target.appendChild(layer);
+    const rect=layer.getBoundingClientRect();
+    if(!reduced.matches&&rect.width&&rect.height){
+      const from=previous?{transform:`translate(${previous.x-rect.x}px,${previous.y-rect.y}px) scale(${previous.width/rect.width},${previous.height/rect.height})`,opacity:1}:{transform:'none',opacity:0};
+      animation=layer.animate([from,{transform:'none',opacity:1}],{duration:previous?300:150,easing:'cubic-bezier(.34,1.2,.64,1)'});
+    }
+  }
+  document.addEventListener('pointerover',enter,{passive:true});
+  document.addEventListener('pointerout',event=>{if(!event.relatedTarget)clear();},{passive:true});
+  document.addEventListener('pointerdown',event=>{if(event.pointerType==='touch')clear();},{passive:true});
+  window.addEventListener('scroll',clear,{capture:true,passive:true});
+  window.addEventListener('resize',clear,{passive:true});
+  window.addEventListener('blur',clear);
+  pointer.addEventListener('change',clear);
+  new MutationObserver(()=>{if(active&&!active.isConnected)clear();}).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body>
