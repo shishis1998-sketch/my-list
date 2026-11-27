@@ -6360,6 +6360,12 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 
 /* 手机收集、日记：末张卡片可完整滑过悬浮工具条。 */
 @media(max-width:1024px), (pointer:coarse){
+ /* 导航预留包含在首屏高度内，短内容不因 100vh 与底部 padding 叠加而滚动。 */
+ body.notes-mode:not(.cal-open):not(.sb-open):not(.detail-open){min-height:100dvh;}
+ body.notes-mode:not(.cal-open):not(.sb-open):not(.detail-open) .app{
+  min-height:calc(100dvh - 80px - env(safe-area-inset-bottom) - var(--kb,0px));
+ }
+ body.notes-mode:not(.cal-open):not(.sb-open):not(.detail-open) .app>.main{min-height:0;}
  body.notes-mode #nlist[data-month-view]{padding-bottom:56px;}
 }
 
