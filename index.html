@@ -21104,6 +21104,50 @@ document.addEventListener('touchstart', function(){}, {passive:true});
  }).observe(modal,{attributes:true,attributeFilter:['class']});
  reset();
 })();
+
+// 短月份详情只提供轻微上拖反馈，释放后返回原位，不产生滚动偏移。
+(function bindShortNoteDrag(){
+ const list=document.getElementById('nlist'),root=list.closest('.content');
+ let touch=null,animation=null;
+ const enabled=()=>isMobileLayout()&&list.hasAttribute('data-month-view')&&!!curNoteMonth&&
+  document.body.classList.contains('notes-mode')&&
+  !document.body.matches('.cal-open,.sb-open,.detail-open,.modal-open,.kb-open')&&
+  !document.querySelector('.moverlay.open')&&
+  document.scrollingElement.scrollHeight-document.scrollingElement.clientHeight<=3&&
+  !matchMedia('(prefers-reduced-motion:reduce)').matches;
+ function reset(){
+  touch=null;if(animation){animation.cancel();animation=null;}
+  list.style.removeProperty('translate');list.style.removeProperty('will-change');
+ }
+ function release(){
+  const y=list.style.translate;reset();
+  if(!y||!enabled())return;
+  list.style.willChange='translate';
+  const current=list.animate([{translate:y},{translate:'0 0'}],{duration:300,easing:'cubic-bezier(.2,.7,.3,1)'});
+  animation=current;current.onfinish=()=>{if(animation===current)reset();};
+ }
+ root.addEventListener('touchstart',e=>{
+  reset();
+  if(!enabled()||e.touches.length!==1||e.target.closest('button,a,input,textarea,select,[contenteditable],.vhdr'))return;
+  const t=e.touches[0];touch={x:t.clientX,y:t.clientY};
+ },{passive:true});
+ root.addEventListener('touchmove',e=>{
+  if(!touch)return;
+  if(!enabled()||e.touches.length!==1){reset();return;}
+  const t=e.touches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;
+  // 向下拖动交给浏览器，保留 Chrome 下拉刷新。
+  if(dy>=0||Math.abs(dx)>Math.abs(dy)){reset();return;}
+  if(e.cancelable){
+   e.preventDefault();list.style.willChange='translate';
+   list.style.translate='0 '+(-36*(1-Math.exp(dy/100)))+'px';
+  }
+ },{passive:false});
+ root.addEventListener('touchend',release,{passive:true});
+ root.addEventListener('touchcancel',release,{passive:true});
+ window.addEventListener('resize',reset,{passive:true});
+ new MutationObserver(reset).observe(list,{childList:true,attributes:true,attributeFilter:['data-month-view']});
+ new MutationObserver(()=>{if(!enabled())reset();}).observe(document.body,{attributes:true,attributeFilter:['class']});
+})();
 </script>
 </body>
 </html>
