@@ -1980,8 +1980,14 @@ body.cal-searching .cw-card{display:none;}
   color:var(--text-primary);font-family:var(--zh);
 }
 .note-year-row::-webkit-details-marker{display:none;}
-.note-year-row .note-month-ico svg{transform:rotate(-90deg);}
-.note-year-group[open]:not([data-closing])>.note-year-row .note-month-ico svg{transform:none;}
+.note-year-row .note-month-ico svg{
+  transform:rotate(180deg);transform-origin:center;
+  transition:transform 200ms cubic-bezier(.4,0,.2,1);
+}
+.note-year-group[open]:not([data-closing])>.note-year-row .note-month-ico svg{transform:rotate(0deg);}
+@media(prefers-reduced-motion:reduce){
+  .note-year-row .note-month-ico svg{transition:none;}
+}
 .note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
 .note-year-months{display:flex;flex-direction:column;gap:0;padding:0;}
 .desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
