@@ -6356,6 +6356,12 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
  body .media-tools.search-open:has(input.no-result){border-color:var(--danger)!important;}
 }
 
+
+/* 手机收集、日记：末张卡片可完整滑过悬浮工具条。 */
+@media(max-width:1024px), (pointer:coarse){
+ body.notes-mode #nlist[data-month-view]{padding-bottom:80px;}
+ html:has(body.notes-mode:not(.cal-open):not(.sb-open):not(.detail-open) #nlist[data-month-view]){overscroll-behavior-y:none;}
+}
 </style>
 <script>
 // 刷新后浏览器默认会「还原上次滚动位置」(history.scrollRestoration='auto')，
@@ -20988,6 +20994,55 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   new MutationObserver(schedule).observe(list,{childList:true,subtree:true,characterData:true});
   new ResizeObserver(schedule).observe(list);
   schedule();
+})();
+
+// 月份列表触底后继续上拖时提供阻力，松手返回原位。
+(function bindNoteBottomSpring(){
+ const list=document.getElementById('nlist');
+ if(!list)return;
+ const mobile=matchMedia('(max-width:1024px), (pointer:coarse)');
+ const reduced=matchMedia('(prefers-reduced-motion:reduce)');
+ let touch=null,animation=null;
+ const enabled=()=>mobile.matches&&!reduced.matches&&list.hasAttribute('data-month-view')&&
+  document.body.classList.contains('notes-mode')&&
+  !document.body.matches('.cal-open,.sb-open,.detail-open,.kb-open')&&
+  !document.querySelector('.moverlay.open');
+ const atBottom=()=>{const sc=document.scrollingElement;return sc&&sc.scrollHeight-sc.clientHeight-sc.scrollTop<=2;};
+ function reset(){
+  touch=null;
+  const y=list.style.translate;
+  list.style.removeProperty('translate');
+  if(animation){animation.cancel();animation=null;}
+  if(y&&enabled()){
+   animation=list.animate([{translate:y},{translate:'0 0'}],{duration:340,easing:'cubic-bezier(.22,1,.36,1)'});
+   animation.onfinish=()=>{animation=null;};
+  }
+ }
+ list.addEventListener('touchstart',e=>{
+  reset();
+  if(!enabled()||e.touches.length!==1||e.target.closest('button,a,input,textarea,select,[contenteditable]'))return;
+  if(animation){animation.cancel();animation=null;}
+  const t=e.touches[0];touch={x:t.clientX,y:t.clientY,edge:atBottom()?t.clientY:null};
+ },{passive:true});
+ list.addEventListener('touchmove',e=>{
+  if(!touch)return;
+  if(!enabled()||e.touches.length!==1){reset();return;}
+  const t=e.touches[0];
+  if(Math.abs(t.clientX-touch.x)>Math.abs(t.clientY-touch.y)){reset();return;}
+  if(!atBottom()){touch.edge=null;return;}
+  if(touch.edge===null)touch.edge=t.clientY;
+  const distance=touch.edge-t.clientY;
+  if(distance<=0){list.style.removeProperty('translate');return;}
+  if(e.cancelable){
+   e.preventDefault();
+   list.style.translate='0 '+(-56*(1-Math.exp(-distance/150)))+'px';
+  }
+ },{passive:false});
+ list.addEventListener('touchend',reset,{passive:true});
+ list.addEventListener('touchcancel',reset,{passive:true});
+ window.addEventListener('resize',reset,{passive:true});
+ new MutationObserver(reset).observe(list,{attributes:true,attributeFilter:['data-month-view'],childList:true});
+ new MutationObserver(reset).observe(document.body,{attributes:true,attributeFilter:['class']});
 })();
 </script>
 </body>
