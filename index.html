@@ -5557,7 +5557,7 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .sync-card{box-sizing:border-box;flex-shrink:0;width:100%;padding:var(--sp-12) var(--sp-14);margin:0;background:var(--surface);border:0;border-radius:var(--rxl);box-shadow:none;}
 #syncModal .sync-option-card{min-height:80px;align-content:center;}
 #syncModal .sync-readonly-card{height:48px;min-height:48px;padding:0 var(--sp-14);}
-#syncModal .sync-card>label,#syncModal .sync-card>.btn,#syncModal .sync-readonly,#sync-status-box b{
+#syncModal .sync-card>label,#syncModal .sync-card>.btn,#syncModal .sync-clear-card,#syncModal .sync-readonly,#sync-status-box b{
   font-family:var(--zh);font-size:var(--fs-sub);font-weight:600;line-height:24px;letter-spacing:0;text-transform:none;
 }
 #syncModal .sync-card>label{display:block;margin:0 0 var(--sp-8);color:var(--text-primary);}
@@ -5566,9 +5566,8 @@ body.cal-open.cal-view-food #foodAddBtn{display:grid;}
 #syncModal .sync-hint{margin:var(--sp-4) 0 0;}
 #syncModal .sync-card>.btn{display:block;width:100%;min-height:24px;height:auto;padding:0;margin:0;background:transparent;border:0;box-shadow:none;text-align:left;white-space:normal;}
 #syncModal .sync-card>.btn:active{background:var(--press);}
-#syncModal .sync-clear-card{display:flex;align-items:center;justify-content:flex-start;gap:var(--sp-8);min-height:48px;padding:0 var(--sp-14);background:var(--danger-bg);}
-#syncModal .sync-clear-card>.btn{flex:0 0 auto;width:auto;color:var(--danger);}
-#syncModal .sync-clear-card>.sync-hint{flex:0 1 auto;margin:0;color:var(--text-muted);font-size:var(--fs-caption);font-weight:400;text-align:left;}
+#syncModal .sync-clear-card{display:flex;align-items:center;justify-content:flex-start;min-height:48px;padding:0 var(--sp-14);background:var(--danger-bg);color:var(--danger);cursor:pointer;text-align:left;}
+#syncModal .sync-clear-card:active{background:var(--press);}
 #syncModal .sync-readonly{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-12);width:100%;min-height:48px;padding:0;margin:0;background:transparent;color:var(--text-primary);border:0;cursor:pointer;text-align:left;}
 #syncModal .sync-switch-track{position:relative;flex:0 0 42px;width:42px;height:24px;background:var(--border);border-radius:999px;transition:background .2s ease;}
 #syncModal .sync-switch-track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s ease;}
@@ -7269,10 +7268,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
       <input type="password" id="f-gh-pw" placeholder="留空则沿用本次解锁PIN" autocomplete="off" spellcheck="false">
     </div>
 
-    <div class="sync-card sync-clear-card">
-      <button class="btn btn-d" onclick="wipeLocalDevice()">清除数据</button>
-      <div class="sync-hint">仅清除本机数据</div>
-    </div>
+    <button type="button" class="sync-card sync-clear-card" onclick="wipeLocalDevice()">清除数据</button>
     </div><!-- /mbody -->
 
     <div class="mftr">
