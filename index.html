@@ -3062,7 +3062,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-tag-menu input{margin:0;accent-color:var(--accent);}
 
 /* 备忘卡片：电脑与手机共用标题 / 账号双行摘要。 */
-.memo-card{--memo-disclosure-width:32px;--memo-arrow-inset:12.25px;--memo-disclosure-gap:calc(var(--note-card-inset,var(--sp-16)) - var(--memo-arrow-inset));}
+.memo-card{--memo-disclosure-gap:var(--sp-8);}
 .memo-card .memo-head{gap:var(--memo-disclosure-gap);margin-bottom:var(--sp-2);}
 /* 展开与收起使用相同顶部间距，标题位置不随详情状态改变。 */
 .memo-card{padding-top:var(--sp-8);}
@@ -3070,21 +3070,19 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
   .memo-card{--note-card-inset:var(--sp-14);padding-top:var(--sp-6);}
 }
 .memo-card .memo-title{flex-basis:0;}
+.memo-toggle{border:0;background:transparent;padding:0;min-height:32px;text-align:left;font-family:inherit;cursor:pointer;}
+.memo-card{-webkit-touch-callout:none;}
+.memo-card .memo-head{-webkit-user-select:none;user-select:none;}
 .memo-card .memo-title{color:var(--text-primary);}
 .memo-card .memo-title.empty{color:var(--text-muted);}
 .memo-summary{display:flex;align-items:center;gap:var(--sp-8);min-width:0;}
 .memo-account{display:flex;align-items:center;gap:var(--sp-6);min-width:0;flex:1;}
-.memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);cursor:pointer;}
-.memo-expand{margin-left:0;width:var(--memo-disclosure-width);height:32px;}
-.memo-expand:focus-visible{color:var(--accent);}
-.memo-expand svg{width:15px;height:15px;transform:translateX(-1.875px) rotate(-90deg);transition:transform 220ms cubic-bezier(.4,0,.2,1);}
-.memo-expand[aria-expanded="true"] svg{transform:translateX(0) rotate(0deg);}
-.memo-details{margin-inline-start:calc(var(--memo-disclosure-width) + var(--memo-disclosure-gap) - var(--memo-arrow-inset));overflow:hidden;overflow-anchor:none;}
+.memo-account-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);}
+.memo-details{margin-inline-start:0;overflow:hidden;overflow-anchor:none;}
 .memo-details-clip{min-height:0;}
 /* 补齐标题在32px操作行内居中产生的留白，使内容底部与标题顶部一致。 */
 .memo-details-content{padding-top:var(--sp-4);padding-bottom:var(--sp-4);}
 /* 按箭头线条左端对齐卡片内边距，保留32px点击区；详情随标题一起对齐。 */
-.memo-expand{margin-left:calc(-1 * var(--memo-arrow-inset));flex-shrink:0;}
 /* 展开详情：字段名在上，内容在下，以细线分隔；两端共用。 */
 
 .memo-details .memo-fields{background:none;border-radius:0;padding:0;margin-bottom:0;}
@@ -3104,7 +3102,7 @@ body.rel-graph-open{overflow:hidden;}body.rel-graph-open .bottombar{display:none
 .memo-details:not(.is-expanded) .memo-field-value{color:var(--text-secondary);font-size:var(--fs-caption);line-height:var(--lh-normal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 @media(prefers-reduced-motion:reduce){
-  .memo-details,.memo-details-clip,.memo-expand svg{transition:none!important;}
+   .memo-details,.memo-details-clip{transition:none!important;}
 }
 
 /* ── 备忘·单字段编辑弹层（底部升起，只改点中的那一项）── */
@@ -17777,9 +17775,9 @@ function filteredNotes(){
       return false;
     });
   }
-  // 日记／收集置顶优先于当前排序；沿用 diaryPinnedAt 存储字段。
+  // 日记／收集／备忘置顶优先于当前排序；沿用 diaryPinnedAt 存储字段。
   const pinCmp=(a,b)=>{
-    if(curNoteSub!=='日记'&&curNoteSub!=='收集')return 0;
+    if(curNoteSub!=='日记'&&curNoteSub!=='收集'&&curNoteSub!=='备忘')return 0;
     const ap=Number(a.diaryPinnedAt)||0,bp=Number(b.diaryPinnedAt)||0;
     if(Boolean(ap)!==Boolean(bp))return bp?1:-1;
     return ap&&bp?bp-ap:0;
@@ -18367,7 +18365,7 @@ function enhanceNoteSwipe(list){
     const nid=card.getAttribute('data-nid');
     if(!nid) return;
     // 日记／收集通过右上角更多按钮操作，不创建滑动面板。
-    if(card.hasAttribute('data-diary-menu'))return;
+    if(card.hasAttribute('data-diary-menu')||card.classList.contains('memo-card'))return;
     // 包一层滑动容器：面板在下层（删除在右、编辑在左），卡片在上层可左右平移
     const wrap=document.createElement('div');
     wrap.className='swipe-wrap';
@@ -18422,7 +18420,7 @@ function openDiaryActionMenu(card,id,button){
   window.getSelection?.()?.removeAllRanges();
   const panel=menu.querySelector('.chapter-action-panel');
   const rect=button.getBoundingClientRect();
-  button.setAttribute('aria-expanded','true');
+  if(!card.classList.contains('memo-card'))button.setAttribute('aria-expanded','true');
   const x=rect.right,y=rect.top;
   const w=panel.offsetWidth,h=panel.offsetHeight;
   panel.style.left=Math.max(12,Math.min(x-w,window.innerWidth-w-12))+'px';
@@ -18442,7 +18440,7 @@ function closeDiaryActionMenu(){
 }
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&diaryActionCard){
-    const button=diaryActionCard.querySelector('.diary-more-btn');
+    const button=diaryActionCard.querySelector('.diary-more-btn,.memo-toggle');
     closeDiaryActionMenu();
     button?.focus({preventScroll:true});
   }
@@ -19810,7 +19808,7 @@ function renderMemoFieldRow(noteId,f){
   let valueCls='';
   if(shouldMask) valueCls='masked';
   else if(f.isNote) valueCls='note';
-  const valueHtml=`<div class="memo-field-value editable ${valueCls}" onclick="event.stopPropagation();openMemoSheet('${noteId}','${f.key}',${f.isNote?'true':'false'})">${displayValue}</div>`;
+  const valueHtml=`<div class="memo-field-value ${valueCls}">${displayValue}</div>`;
   const copyLabel=esc('复制'+f.label);
   const revealButton=f.isPassword
     ? `<button class="memo-btn" onclick="event.stopPropagation();toggleMemoReveal('${sk}')" title="${revealed?'隐藏密码':'显示密码'}" aria-label="${revealed?'隐藏密码':'显示密码'}" aria-pressed="${!!revealed}" type="button">${revealed?MEMO_ICON.eyeOff:MEMO_ICON.eye}</button>`
@@ -19931,20 +19929,71 @@ function closeMemoSheet(save){
 function renderMemoCard(n){
   const title=n.title||'（无标题）';
   const titleCls=n.title?'':' empty';
-  const all=memoCollectFields(n);
   const expanded=memoExpandedState.has(n.id);
-  return `<div class="note-card memo-card" data-nid="${n.id}" onclick="openNoteEdit('${n.id}')">
+  return `<div class="note-card memo-card" data-nid="${n.id}">
     <div class="memo-head" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')">
-      <button class="memo-btn memo-expand" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘" title="${expanded?'收起':'展开'}" type="button"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="memo-title${titleCls}">${n.title?hl(n.title):esc(title)}</div>
+      <button class="memo-title memo-toggle${titleCls}" type="button" onclick="event.stopPropagation();toggleMemoExpanded('${n.id}')" aria-expanded="${expanded}" aria-controls="memo-details-${n.id}" aria-label="${expanded?'收起':'展开'}备忘">${n.title?hl(n.title):esc(title)}</button>
       <div class="memo-tag-pills">${renderMemoTagPills(n)}</div>
-      <button class="note-act" onclick="event.stopPropagation();askDelNoteById('${n.id}')" title="删除" type="button">删除</button>
     </div>
     <div id="memo-details-${n.id}" class="memo-details${expanded?' is-expanded':''}">
       <div class="memo-details-clip">${renderMemoDetails(n)}</div>
     </div>
   </div>`;
 }
+
+// Memo actions share the diary menu; taps never enter the full editor.
+(function memoCardActions(){
+  let press=null,suppressed=null;
+  function cancel(){if(press)clearTimeout(press.timer);press=null;}
+  function show(card,x,y){
+    closeDiaryActionMenu();
+    openDiaryActionMenu(card,card.dataset.nid,{
+      getBoundingClientRect:()=>({right:x,top:y})
+    });
+  }
+  document.addEventListener('pointerdown',event=>{
+    cancel();
+    if(event.button!==0||!event.isPrimary)return;
+    const card=event.target.closest('.memo-card');
+    if(!card||event.target.closest('button:not(.memo-toggle),a,input,textarea,select,[contenteditable]'))return;
+    const state={card,x:event.clientX,y:event.clientY,id:event.pointerId,timer:null};
+    state.timer=setTimeout(()=>{
+      if(press!==state||!card.isConnected)return;
+      suppressed={card,until:Date.now()+1000};
+      show(card,state.x,state.y);
+      cancel();
+    },500);
+    press=state;
+  },{passive:true});
+  document.addEventListener('pointermove',event=>{
+    if(press&&event.pointerId===press.id&&Math.hypot(event.clientX-press.x,event.clientY-press.y)>8)cancel();
+  },{passive:true});
+  document.addEventListener('pointerup',event=>{
+    if(suppressed&&suppressed.card.contains(event.target))suppressed.until=Date.now()+800;
+    cancel();
+  },{passive:true});
+  document.addEventListener('pointercancel',cancel,{passive:true});
+  document.addEventListener('scroll',cancel,{capture:true,passive:true});
+  window.addEventListener('blur',cancel);
+  document.addEventListener('click',event=>{
+    if(suppressed&&Date.now()<suppressed.until&&suppressed.card.contains(event.target)){
+      event.preventDefault();event.stopImmediatePropagation();suppressed=null;
+    }
+  },true);
+  document.addEventListener('contextmenu',event=>{
+    const card=event.target.closest('.memo-card');
+    if(!card||event.target.closest('button:not(.memo-toggle),a,input,textarea,select,[contenteditable]'))return;
+    event.preventDefault();cancel();
+    if(diaryActionCard!==card)show(card,event.clientX,event.clientY);
+    suppressed={card,until:Date.now()+1000};
+  });
+  document.addEventListener('keydown',event=>{
+    const card=event.target.closest('.memo-card');
+    if(card&&(event.key==='ContextMenu'||(event.shiftKey&&event.key==='F10'))){
+      event.preventDefault();const rect=card.getBoundingClientRect();show(card,rect.right,rect.top);
+    }
+  });
+})();
 
 function renderMemoTagPills(n){
   const tags=n.tags&&n.tags.length?n.tags:['未分类'];
@@ -20008,7 +20057,7 @@ function openMemoTagMenu(event,noteId){
 function renderMemoAccount(n){
   const all=memoCollectFields(n);
   const account=!isEncLocked(n)&&all.find(f=>f.key==='username');
-  const accountHtml=account?`<div class="memo-account"><div class="memo-account-value" onclick="event.stopPropagation();openMemoSheet('${n.id}','username',false)">${hl(account.value)}</div></div>`:'';
+  const accountHtml=account?`<div class="memo-account"><div class="memo-account-value">${hl(account.value)}</div></div>`:'';
   return accountHtml;
 }
 
@@ -20034,7 +20083,7 @@ function toggleMemoExpanded(noteId){
   }
   const panel=document.getElementById('memo-details-'+noteId);
   const card=panel&&panel.closest('.memo-card');
-  const button=card&&card.querySelector('.memo-expand');
+  const button=card&&card.querySelector('.memo-toggle');
   const n=notes.find(item=>item.id===noteId);
   if(!panel||!button||!n){render();return;}
   // Capture the live height before cancelling, so a second click reverses smoothly.
@@ -21196,7 +21245,7 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   const pointer=matchMedia('(hover:hover) and (pointer:fine)');
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const selector='button,a[href],summary,[role="button"],[role="tab"],[role="menuitem"],[role="option"],[role="switch"],.nitem,.nlbl-btn,.fchip,.nfchip,.memo-tag-menu label,.desktop-note-tag-menu label,.cal-filter-row,.desktop-sort-option,.people-more-item,.bb-sortopt,.chapter-action-item,.chapter-heading-option,.emoji-cell,.cal-day';
-  const excluded='.mrow,.note-card,.dt-card,.memo-head,.memo-field-value,.memo-account-value,.cal-sr,.cal-tl-row,.note-title,.note-preview,.cnote,.desktop-chapter-reader,.note-year-row,.nitem-fs,.theme-sw,.btn-p,.addbtn,.fchip.on,.nfchip.on,input,textarea,select,[contenteditable="true"],[disabled],[aria-disabled="true"],[data-hover="off"]';
+  const excluded='.memo-toggle,.mrow,.note-card,.dt-card,.memo-head,.memo-field-value,.memo-account-value,.cal-sr,.cal-tl-row,.note-title,.note-preview,.cnote,.desktop-chapter-reader,.note-year-row,.nitem-fs,.theme-sw,.btn-p,.addbtn,.fchip.on,.nfchip.on,input,textarea,select,[contenteditable="true"],[disabled],[aria-disabled="true"],[data-hover="off"]';
   const groupSelector='[data-hover-group],[role="menu"],[role="tablist"],.ncard,.nsec,.dt-tabs,.frow,.nfrow,.chapter-format,.desktop-sort-menu,.people-more-menu,.bb-sortmenu,.memo-tag-menu,.desktop-note-tag-menu,.note-year-months,.note-list,.tl-list';
   let active=null,layer=null,animation=null,group=null,positioned=false;
   function clear(){
