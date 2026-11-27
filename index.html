@@ -20037,8 +20037,14 @@ function toggleMemoExpanded(noteId){
   const button=card&&card.querySelector('.memo-expand');
   const n=notes.find(item=>item.id===noteId);
   if(!panel||!button||!n){render();return;}
-  // Change layout once; animate opacity only to avoid per-frame reflow on phones.
-  if(panel._memoAnimation)panel._memoAnimation.cancel();
+  // Capture the live height before cancelling, so a second click reverses smoothly.
+  const wasAnimating=!!panel._memoAnimation;
+  const startHeight=panel.getBoundingClientRect().height;
+  const clip=panel.querySelector('.memo-details-clip');
+  const startOpacity=Number(getComputedStyle(clip).opacity);
+  if(panel._memoAnimation){panel._memoAnimation.onfinish=null;panel._memoAnimation.cancel();}
+  if(panel._memoFade)panel._memoFade.cancel();
+  panel._memoAnimation=null;panel._memoFade=null;
   // Keep the same field nodes mounted; closing only masks revealed passwords.
   if(!expanded){
     memoCollectFields(n).filter(f=>f.isPassword).forEach(f=>{
@@ -20065,11 +20071,21 @@ function toggleMemoExpanded(noteId){
   button.setAttribute('aria-expanded',String(expanded));
   button.setAttribute('aria-label',expanded?'收起备忘':'展开备忘');
   button.title=expanded?'收起':'展开';
-  if(expanded&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&panel.animate){
-    const animation=panel.animate([{opacity:0},{opacity:1}],{duration:140,easing:'ease-out'});
-    panel._memoAnimation=animation;
-    animation.onfinish=()=>{if(panel._memoAnimation===animation)panel._memoAnimation=null;};
-  }
+  // Measure the destination layout, keeping the username summary when closed.
+  const endHeight=panel.getBoundingClientRect().height;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches||!panel.animate)return;
+  // Keep all fields mounted until the closing height transition finishes.
+  panel.classList.add('is-expanded');
+  const timing={duration:260,easing:'cubic-bezier(.2,.8,.2,1)'};
+  const animation=panel.animate([{height:startHeight+'px'},{height:endHeight+'px'}],timing);
+  const fade=clip.animate([{opacity:expanded&&!wasAnimating ? 0 : startOpacity},{opacity:expanded?1:0}],timing);
+  panel._memoAnimation=animation;panel._memoFade=fade;
+  animation.onfinish=()=>{
+    if(panel._memoAnimation!==animation)return;
+    panel.classList.toggle('is-expanded',expanded);
+    panel._memoAnimation=null;panel._memoFade=null;
+    fade.cancel();
+  };
 
 }
 
