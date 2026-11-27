@@ -20819,16 +20819,8 @@ document.addEventListener('touchstart', function(){}, {passive:true});
     const y = window.scrollY || 0;
     // 笔记由上面的手势统一控制，不让短页面/顶部回弹的 scroll 覆盖手势结果。
     if(isNoteMode()){lastY=y;return;}
-    // 内容只比一屏多出一点点时不收。记录很少时文档只高出几十像素，
-    // 手一抖就滚过了阈值，整条导航跟着消失，看着像界面坏了；
-    // 而且本来也没多少地方可滚，腾这点空间毫无意义。要求至少还有半屏可滚。
-    if(document.documentElement.scrollHeight - window.innerHeight < window.innerHeight * 0.5){
-      document.body.classList.remove('tabs-hidden'); lastY = y; return;
-    }
-    const dy = y - lastY;
-    if(y < 40){ document.body.classList.remove('tabs-hidden'); }
-    else if(dy > THRESH){ document.body.classList.add('tabs-hidden'); }
-    else if(dy < -THRESH){ document.body.classList.remove('tabs-hidden'); }
+    // 书影列表底部导航常驻，不再按滚动方向收起。
+    document.body.classList.remove('tabs-hidden');
     lastY = y;
   }
   // 详情页时间线右下角那颗「编辑全文」：往下读就让开，往回滑再回来。
