@@ -6230,6 +6230,17 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
  .media-tools button:active{transform:scale(.92);}
 }
 
+/* 手机书籍详情试用文字下划线导航；上方通用胶囊样式及滑块节点保留供复用。 */
+@media(max-width:768px){
+  .dt-top-book .dt-tabs{padding:var(--sp-2) 0;}
+  .dt-top-book .dt-tabs .cal-vtoggle{padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;}
+  .dt-top-book .dt-tabs .cvt-thumb{display:none;}
+  .dt-top-book .dt-tabs .cal-vtoggle .cvt{flex:1;min-height:44px;padding:var(--sp-8) 0;border-radius:0;background:transparent;color:var(--text-secondary);font-weight:400;transition:color .15s;}
+  .dt-top-book .dt-tabs .cal-vtoggle .cvt.on{color:var(--accent);font-weight:700;}
+  .dt-top-book .dt-tabs .cvt.on::after{content:'';position:absolute;bottom:2px;left:50%;width:24px;height:2px;border-radius:2px;background:var(--accent);transform:translateX(-50%);}
+  .dt-top-book .dt-tabs .cvt:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+}
+
 /* 电脑端书籍详情：移除标题卡，保留右侧更多操作，使用文字下划线导航。 */
 @media(min-width:1025px) and (pointer:fine){
   .dt-top-book{position:relative;}
@@ -12460,7 +12471,7 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
     requestAnimationFrame(resetDetailTabScroll);
   }
   const thumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
-  if(oldI!==newI&&thumb&&fromTransform&&
+  if(oldI!==newI&&thumb&&getComputedStyle(thumb).display!=='none'&&fromTransform&&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     const tabs=thumb.closest('.dt-tabs');
     const tabBtns=tabs&&tabs.querySelectorAll('.cvt');
