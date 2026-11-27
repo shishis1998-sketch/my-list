@@ -21107,7 +21107,7 @@ document.addEventListener('touchstart', function(){}, {passive:true});
 
 // 短月份详情只提供轻微上拖反馈，释放后返回原位，不产生滚动偏移。
 (function bindShortNoteDrag(){
- const list=document.getElementById('nlist'),root=list.closest('.content');
+ const list=document.getElementById('nlist'),root=document;
  let touch=null,animation=null;
  const enabled=()=>isMobileLayout()&&list.hasAttribute('data-month-view')&&!!curNoteMonth&&
   document.body.classList.contains('notes-mode')&&
@@ -21128,7 +21128,7 @@ document.addEventListener('touchstart', function(){}, {passive:true});
  }
  root.addEventListener('touchstart',e=>{
   reset();
-  if(!enabled()||e.touches.length!==1||e.target.closest('button,a,input,textarea,select,[contenteditable],.vhdr'))return;
+  if(!enabled()||e.touches.length!==1||e.target.closest('.note-card,button,a,input,textarea,select,[contenteditable],.vhdr,.topbar,.bottombar,.sidebar,.moverlay,.note-floating-actions'))return;
   const t=e.touches[0];touch={x:t.clientX,y:t.clientY};
  },{passive:true});
  root.addEventListener('touchmove',e=>{
