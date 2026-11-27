@@ -10260,6 +10260,7 @@ let curCat='notes:', curSearch='', curSort='media-auto', curStatus='all', curSco
 // 标签筛选:多选(AND——命中需同时含全部选中标签);空数组=不筛选
 let curFilterTags=[];
 let curNoteSub=''; // 笔记子分类筛选
+const noteMonthByCategory=new Map();
 let curNoteMonth='';  // 收集/日记的月份明细；空值=月份总览
 let editId=null, curTags=[], delId=null, editCats=[];
 let editNoteId=null, curNoteTags=[], editNoteSubs=[];
@@ -14774,6 +14775,7 @@ function returnToMediaList(){
   scheduleCatRender();
 }
 function filterCat(cat){
+  if(isNoteMode())noteMonthByCategory.set(curCat,curNoteMonth);
   if(!isNoteMode())lastMediaListState=captureMediaListState();
   closeNoteViewSheet();
   cancelNoteMonthTap();
@@ -14793,7 +14795,8 @@ function filterCat(cat){
   curCat=cat;
   if(categoryChanged&&!isNoteMode()){curStatus=cat==='book'?'in-progress':'all';curScore='all';}
   curFilterTags=[];
-  curNoteMonth='';
+  // 跨页返回时恢复该笔记分类的月份；列表内重点当前分类仍回总览。
+  curNoteMonth=(!onList||categoryChanged)?(noteMonthByCategory.get(cat)||''):'';
   // 解析笔记模式的子分类
   if(isNoteMode()){
     setSidebarNotesExpanded(true);
