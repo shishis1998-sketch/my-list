@@ -6359,7 +6359,7 @@ svg:is(.app-icon-edit,.app-icon-delete){fill:none!important;stroke:currentColor;
 
 /* 手机收集、日记：末张卡片可完整滑过悬浮工具条。 */
 @media(max-width:1024px), (pointer:coarse){
- body.notes-mode #nlist[data-month-view]{padding-bottom:80px;}
+ body.notes-mode #nlist[data-month-view]{padding-bottom:40px;}
  html:has(body.notes-mode:not(.cal-open):not(.sb-open):not(.detail-open) #nlist[data-month-view]){overscroll-behavior-y:none;}
 }
 </style>
@@ -20996,10 +20996,11 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   schedule();
 })();
 
-// 月份列表触底后继续上拖时提供阻力，松手返回原位。
+// 月份列表的末端拖动与回弹；留白区域也可继续拖动。
 (function bindNoteBottomSpring(){
  const list=document.getElementById('nlist');
  if(!list)return;
+ const root=list.closest('.content');
  const mobile=matchMedia('(max-width:1024px), (pointer:coarse)');
  const reduced=matchMedia('(prefers-reduced-motion:reduce)');
  let touch=null,animation=null;
@@ -21007,42 +21008,57 @@ document.addEventListener('touchstart', function(){}, {passive:true});
   document.body.classList.contains('notes-mode')&&
   !document.body.matches('.cal-open,.sb-open,.detail-open,.kb-open')&&
   !document.querySelector('.moverlay.open');
- const atBottom=()=>{const sc=document.scrollingElement;return sc&&sc.scrollHeight-sc.clientHeight-sc.scrollTop<=2;};
- function reset(){
-  touch=null;
-  const y=list.style.translate;
-  list.style.removeProperty('translate');
+ const atBottom=()=>{const sc=document.scrollingElement;return sc&&sc.scrollHeight-sc.clientHeight-sc.scrollTop<=3;};
+ function stop(){
   if(animation){animation.cancel();animation=null;}
-  if(y&&enabled()){
-   animation=list.animate([{translate:y},{translate:'0 0'}],{duration:340,easing:'cubic-bezier(.22,1,.36,1)'});
-   animation.onfinish=()=>{animation=null;};
-  }
+  list.style.removeProperty('translate');list.style.removeProperty('will-change');
  }
- list.addEventListener('touchstart',e=>{
-  reset();
-  if(!enabled()||e.touches.length!==1||e.target.closest('button,a,input,textarea,select,[contenteditable]'))return;
-  if(animation){animation.cancel();animation=null;}
-  const t=e.touches[0];touch={x:t.clientX,y:t.clientY,edge:atBottom()?t.clientY:null};
+ function reset(){touch=null;stop();}
+ function release(){
+  touch=null;
+  const y=parseFloat((list.style.translate||'0 0').split(' ')[1])||0;
+  stop();
+  if(!y||!enabled())return;
+  // 阻尼弹簧的连续采样：先回位，轻微越过原点，再稳定落下。
+  const frames=Array.from({length:41},(_,i)=>{
+   const t=i/40*.62;
+   const offset=i===40?0:y*Math.exp(-9*t)*(Math.cos(13*t)+9/13*Math.sin(13*t));
+   return {translate:'0 '+offset+'px',offset:i/40};
+  });
+  list.style.willChange='translate';
+  const current=list.animate(frames,{duration:620,easing:'linear'});
+  animation=current;
+  current.onfinish=()=>{if(animation===current){animation=null;list.style.removeProperty('will-change');}};
+ }
+ root.addEventListener('touchstart',e=>{
+  if(!enabled()||e.touches.length!==1||e.target.closest('button,a,input,textarea,select,[contenteditable],.vhdr')){reset();return;}
+  const visual=getComputedStyle(list).translate.split(' ');
+  const offset=Math.min(0,parseFloat(visual[1])||0);
+  stop();
+  const t=e.touches[0];
+  touch={x:t.clientX,y:t.clientY,edge:atBottom()?t.clientY:null,offset};
+  if(offset)list.style.translate='0 '+offset+'px';
  },{passive:true});
- list.addEventListener('touchmove',e=>{
+ root.addEventListener('touchmove',e=>{
   if(!touch)return;
   if(!enabled()||e.touches.length!==1){reset();return;}
   const t=e.touches[0];
-  if(Math.abs(t.clientX-touch.x)>Math.abs(t.clientY-touch.y)){reset();return;}
+  if(Math.abs(t.clientX-touch.x)>Math.abs(t.clientY-touch.y)+8){release();return;}
   if(!atBottom()){touch.edge=null;return;}
   if(touch.edge===null)touch.edge=t.clientY;
-  const distance=touch.edge-t.clientY;
+  const distance=touch.edge-t.clientY-110*Math.log(Math.max(.001,1+touch.offset/84));
   if(distance<=0){list.style.removeProperty('translate');return;}
   if(e.cancelable){
    e.preventDefault();
-   list.style.translate='0 '+(-56*(1-Math.exp(-distance/150)))+'px';
+   list.style.willChange='translate';
+   list.style.translate='0 '+(-84*(1-Math.exp(-distance/110)))+'px';
   }
  },{passive:false});
- list.addEventListener('touchend',reset,{passive:true});
- list.addEventListener('touchcancel',reset,{passive:true});
+ root.addEventListener('touchend',release,{passive:true});
+ root.addEventListener('touchcancel',release,{passive:true});
  window.addEventListener('resize',reset,{passive:true});
  new MutationObserver(reset).observe(list,{attributes:true,attributeFilter:['data-month-view'],childList:true});
- new MutationObserver(reset).observe(document.body,{attributes:true,attributeFilter:['class']});
+ new MutationObserver(()=>{if(!enabled())reset();}).observe(document.body,{attributes:true,attributeFilter:['class']});
 })();
 </script>
 </body>
