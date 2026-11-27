@@ -671,6 +671,18 @@ body.pe-dragging{user-select:none;-webkit-user-select:none;}
   white-space:pre-wrap;margin-top:var(--sp-4);}
 .dt-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);}
 .dt-tags .ctag{margin:0;}
+.dt-intro-tags{display:none;}
+@media(max-width:768px){
+  .dt-book-tags-section{display:none;}
+  .dt-intro-tags{display:flex;flex-wrap:wrap;gap:var(--sp-6);margin-top:var(--sp-12);}
+  .dt-intro-tag{appearance:none;border:1px solid transparent;border-radius:999px;
+    padding:var(--sp-4) var(--sp-12);background:var(--accent-light);color:var(--accent);
+    font:400 var(--fs-caption)/var(--lh-normal) var(--zh);cursor:pointer;max-width:100%;
+    overflow-wrap:anywhere;transition:transform .15s,border-color .15s;}
+  .dt-intro-tag:active{transform:scale(.95);}
+  .dt-intro-tag:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+}
+
 /* 视图切换：概览 / 备注 / 时间线。控件本体直接复用日历页那颗胶囊分段器
    （.cal-vtoggle），两处是同一个东西，没必要各画一套。 */
 .dt-tabs{padding:var(--sp-2) 0;}
@@ -6216,6 +6228,17 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
  .media-tools button{display:grid;place-items:center;width:48px;height:48px;padding:0;border:0;border-radius:50%;color:var(--text-primary);background:transparent;cursor:pointer;}
  .media-tools .media-add{color:var(--on-accent);background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,0) 46%,rgba(0,0,0,.20)),var(--accent);}
  .media-tools button:active{transform:scale(.92);}
+}
+
+/* 手机书籍详情试用文字下划线导航；上方通用胶囊样式及滑块节点保留供复用。 */
+@media(max-width:768px){
+  .dt-top-book .dt-tabs{padding:var(--sp-2) 0;}
+  .dt-top-book .dt-tabs .cal-vtoggle{padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;}
+  .dt-top-book .dt-tabs .cvt-thumb{display:none;}
+  .dt-top-book .dt-tabs .cal-vtoggle .cvt{flex:1;min-height:44px;padding:var(--sp-8) 0;border-radius:0;background:transparent;color:var(--text-secondary);font-weight:400;transition:color .15s;}
+  .dt-top-book .dt-tabs .cal-vtoggle .cvt.on{color:var(--accent);font-weight:700;}
+  .dt-top-book .dt-tabs .cvt.on::after{content:'';position:absolute;bottom:2px;left:50%;width:24px;height:2px;border-radius:2px;background:var(--accent);transform:translateX(-50%);}
+  .dt-top-book .dt-tabs .cvt:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
 }
 
 /* 电脑端书籍详情：移除标题卡，保留右侧更多操作，使用文字下划线导航。 */
@@ -12448,7 +12471,7 @@ function setDetailTab(v){ dtSortPeople=false;  // 换栏目就退出排序态（
     requestAnimationFrame(resetDetailTabScroll);
   }
   const thumb=document.querySelector('#dtBody .dt-tabs .cvt-thumb');
-  if(oldI!==newI&&thumb&&fromTransform&&
+  if(oldI!==newI&&thumb&&getComputedStyle(thumb).display!=='none'&&fromTransform&&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     const tabs=thumb.closest('.dt-tabs');
     const tabBtns=tabs&&tabs.querySelectorAll('.cvt');
@@ -13231,11 +13254,16 @@ function renderDetail(previewBox=null, viewTab=dtTab){
       </div>
       <div class="dt-sec">
         <div class="dt-seclbl dt-overview-label">简介</div>
-      <div class="dt-card" role="button" tabindex="0" aria-label="编辑简介" onclick="tapNoteCard(event,'intro')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tapNoteCard(event,'intro')}">
-        ${item.intro?`<div class="dt-note dt-paragraphs">${renderDetailParagraphs(item.intro)}</div>`:'<div class="dt-tl-empty">点击添加简介</div>'}
+      <div class="dt-card">
+        <div role="button" tabindex="0" aria-label="编辑简介" onclick="tapNoteCard(event,'intro')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();tapNoteCard(event,'intro')}">
+          ${item.intro?`<div class="dt-note dt-paragraphs">${renderDetailParagraphs(item.intro)}</div>`:'<div class="dt-tl-empty">点击添加简介</div>'}
+        </div>
+        ${item.type==='book'?`<div class="dt-intro-tags" role="group" aria-label="标签">
+          ${(item.tags||[]).length?(item.tags||[]).map(t=>`<button type="button" class="dt-intro-tag" aria-haspopup="dialog" aria-label="编辑标签：${esc(t)}" onclick="openRecordTagsEditor()">${esc(t)}</button>`).join(''):'<button type="button" class="dt-intro-tag" aria-haspopup="dialog" onclick="openRecordTagsEditor()">＋ 添加标签</button>'}
+        </div>`:''}
       </div>
       </div>
-      <div class="dt-sec">
+      <div class="dt-sec${item.type==='book'?' dt-book-tags-section':''}">
         <div class="dt-seclbl dt-overview-label">标签</div>
       <div class="dt-card" role="button" tabindex="0" aria-label="编辑标签" onclick="openRecordTagsEditor()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRecordTagsEditor();}">
         ${tagsH?`<div class="dt-tags">${tagsH}</div>`:'<div class="dt-tl-empty">还没有标签，点这里添加</div>'}
