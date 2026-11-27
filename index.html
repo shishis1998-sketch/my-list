@@ -1981,7 +1981,7 @@ body.cal-searching .cw-card{display:none;}
 }
 .note-year-row::-webkit-details-marker{display:none;}
 .note-year-row .note-month-ico svg{transform:rotate(-90deg);}
-.note-year-group[open]>.note-year-row .note-month-ico svg{transform:none;}
+.note-year-group[open]:not([data-closing])>.note-year-row .note-month-ico svg{transform:none;}
 .note-year-row:hover,.note-year-row:active{background:var(--accent-light);}
 .note-year-months{display:flex;flex-direction:column;gap:0;padding:0;}
 .desktop-note-index-groups>.note-year-group{margin-bottom:var(--sp-10);}
@@ -18142,7 +18142,39 @@ function rememberNoteYear(el){
   const sub=el.dataset.sub;
   if(!noteYearExpanded.has(sub))noteYearExpanded.set(sub,new Set());
   const expanded=noteYearExpanded.get(sub);
-  if(el.open)expanded.add(el.dataset.year);else expanded.delete(el.dataset.year);
+  if(el.open&&!el.hasAttribute('data-closing'))expanded.add(el.dataset.year);else expanded.delete(el.dataset.year);
+}
+// Motion-Primitives Accordion 同款高度 + 透明度过渡，保留原生 summary 键盘操作。
+const noteYearAnimations=new WeakMap();
+function toggleNoteYear(event,summary){
+  event.preventDefault();
+  const group=summary.parentElement;
+  const content=group.querySelector('.note-year-months');
+  const previous=noteYearAnimations.get(group);
+  const expanding=!group.open||group.hasAttribute('data-closing');
+  const height=group.open?content.getBoundingClientRect().height:0;
+  const opacity=group.open?Number(getComputedStyle(content).opacity):0;
+  if(previous){previous.onfinish=null;previous.cancel();noteYearAnimations.delete(group);}
+  group.toggleAttribute('data-closing',!expanding);
+  group.open=true; // 收起动画完成前保留内容，避免原生 details 立即隐藏。
+  rememberNoteYear(group);
+  const finish=()=>{
+    group.open=expanding;
+    group.removeAttribute('data-closing');
+    content.style.removeProperty('overflow');
+    rememberNoteYear(group);
+  };
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||!content.animate){finish();return;}
+  const animation=content.animate([
+    {height:height+'px',opacity},
+    {height:expanding?content.scrollHeight+'px':'0px',opacity:expanding?1:0}
+  ],{duration:250,easing:'cubic-bezier(.25,.1,.25,1)'});
+  noteYearAnimations.set(group,animation);
+  content.style.overflow='hidden';
+  animation.onfinish=()=>{
+    finish();
+    noteYearAnimations.delete(group);
+  };
 }
 function renderNoteYearGroups(groups,keys,renderMonths){
   const years=new Map();
@@ -18155,7 +18187,7 @@ function renderNoteYearGroups(groups,keys,renderMonths){
   return [...years].map(([year,months])=>{
     const count=months.reduce((sum,key)=>sum+groups[key].length,0);
     return `<details class="note-year-group" data-year="${year}" data-sub="${esc(curNoteSub)}"${expanded.has(year)?' open':''} ontoggle="rememberNoteYear(this)">
-      <summary class="note-year-row"><span class="note-month-ico" aria-hidden="true"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="note-month-name">${year}年</span><span class="note-month-count">${count}</span></summary>
+      <summary class="note-year-row" onclick="toggleNoteYear(event,this)"><span class="note-month-ico" aria-hidden="true"><svg class="app-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span><span class="note-month-name">${year}年</span><span class="note-month-count">${count}</span></summary>
       <div class="note-year-months">${renderMonths(months)}</div>
     </details>`;
   }).join('');
