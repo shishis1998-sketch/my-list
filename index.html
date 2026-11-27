@@ -6237,7 +6237,9 @@ body.notes-mode[data-note-font] :is(.content,.note-month-pane,#noteModal,#noteMo
   .dt-top-book .dt-tabs .cvt-thumb{display:none;}
   .dt-top-book .dt-tabs .cal-vtoggle .cvt{flex:1;min-height:44px;padding:var(--sp-8) 0;border-radius:0;background:transparent;color:var(--text-secondary);font-weight:400;transition:color .15s;}
   .dt-top-book .dt-tabs .cal-vtoggle .cvt.on{color:var(--accent);font-weight:700;}
-  .dt-top-book .dt-tabs .cvt.on::after{content:'';position:absolute;bottom:2px;left:50%;width:24px;height:2px;border-radius:2px;background:var(--accent);transform:translateX(-50%);}
+  .dt-top-book .dt-tabs .cvt-label{position:relative;display:inline-block;}
+  .dt-top-book .dt-tabs .cvt.on::after{content:none;}
+  .dt-top-book .dt-tabs .cvt.on .cvt-label::after{content:'';position:absolute;bottom:-10px;left:0;right:0;height:2px;border-radius:2px;background:var(--accent);}
   .dt-top-book .dt-tabs .cvt:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
 }
 
@@ -13204,7 +13206,7 @@ function renderDetail(previewBox=null, viewTab=dtTab){
   const metaRows=[[ '首次添加',created ],[ '末次编辑',edited ]]
     .filter(([,value])=>value)
     .map(([label,value])=>`<div class="dt-meta-row"><span class="dt-meta-label">${label}</span><span class="dt-meta-value">${esc(value)}</span></div>`).join('');
-  const T=DT_TABS.map((t,i)=>`<button class="cvt${viewTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')">${t.lbl}</button>`).join('');
+  const T=DT_TABS.map((t,i)=>`<button class="cvt${viewTab===t.id?' on':''}" data-cv="${t.id}" onclick="setDetailTab('${t.id}')"><span class="cvt-label">${t.lbl}</span></button>`).join('');
   const thumbCls=['','m','y','h'][DT_TABS.findIndex(t=>t.id===viewTab)]||'';
   box.innerHTML=`
     <div class="dt-top${item.type==='book'?' dt-top-book':''}">
