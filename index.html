@@ -3332,7 +3332,8 @@ mark.shl{
   .desktop-chapter-reader .tl-pbody{font-size:calc(15px * var(--fs-scale));}
   /* 列表沿用原有字号：标题 fs-sub，年份与作者 fs-foot。 */
   .desktop-chapter-section:has(.tl-section-btn[hidden]){display:none;}
-  .desktop-chapter-heading{display:flex;align-items:center;gap:var(--sp-8);padding-inline-end:var(--sp-12);}
+  /* Keep the hover layer anchored here when the expanded sticky rule stops matching. */
+  .desktop-chapter-heading{position:relative;display:flex;align-items:center;gap:var(--sp-8);padding-inline-end:var(--sp-12);}
   .dt-top-book + .dt-sec .desktop-chapter-heading:has(>.tl-section-btn[aria-expanded="true"]){
     /* 标题底色铺到描边下方，遮住滚经顶边的文字。 */
     position:sticky;inset-block-start:0;z-index:3;background:var(--surface);
